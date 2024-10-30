@@ -1,0 +1,22 @@
+# Ignorar archivos de configuración de Node.js
+node_modules/
+npm-debug.log
+
+# Ignorar archivos de entorno
+.env
+
+# Ignorar archivos de compilación
+dist/
+build/
+
+# Ignorar carpetas específicas
+/public/uploads
+/tmp
+
+# Ignorar archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar todos los archivos de una extensión específica
+*.log
+*.tmp
