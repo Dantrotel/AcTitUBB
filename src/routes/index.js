@@ -1,11 +1,15 @@
+
 const express = require('express');
+const router = require('./src/routes'); // Asegúrate de la ruta según tu estructura de carpetas
+const app = express();
+const PORT = process.env.PORTmiddleware;
 
-const personRouter = require('./person.route');
+app.use(express.json()); // Para que pueda recibir JSON en las solicitudes
 
-function routerApi(app) {
-    const router = express.Router();
-    app.use('/api/v1', router);
-    router.use('/persons', personRouter);
-}
+// Configuración de rutas
+router(app);
 
-module.exports = routerApi;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+

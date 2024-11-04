@@ -15,7 +15,8 @@ class Person extends Model {
 
 // Definición del esquema de la tabla
 const PersonSchema = {
-    Rut: {
+    rut: {
+
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -36,6 +37,11 @@ const PersonSchema = {
         allowNull: false,
         field: 'email',
     },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        field: 'password',
+    },
     role: {
         type: DataTypes.ENUM(
             'admin',
@@ -50,6 +56,11 @@ const PersonSchema = {
         ),
         allowNull: false,
         field: 'role',
+    },
+    sessionToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'session_token',
     },
 };
 
