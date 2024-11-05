@@ -1,84 +1,46 @@
-const PersonService = require('../services/persons.service');
-const service = new PersonService();
-const passport = require('passport');
+import { UserModel } from '../models/person.model.js';
+import bcrypt from 'bcryptjs';
 
-const create = async (req, res) => {
+const register = async (req, res) => {
     try {
-        const person = await service.create(req.body);
-        res.json({ success: true, data: person });
-    } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
+        console.log(req.body);
+        const  {nombre, email, password} = req.body;
+
+        if (!nombre || !email || !password) {
+            return res.status(400).json({message: "Missing required fields"});
+        }
+
+        const user = await UserModel.findPersonByEmail(email);
+
+        if (user) {
+            return res.status(409).json({message: "User already exists"});
+        }
+
+        const salt = await bcrypt.genSaltSync(10);
+        const hash = await bcrypt.hashSync(password, salt);
+
+        const newUser = await UserModel.createPerson(nombre, email, hash);
+        console.log('Nombre:', nombre, 'Email:', email, 'Password:', password);
+
+
+
+        return res.json({ok: true, message: "new user created", user: newUser});
+    } catch (error) {     
+        console.log(error);
+        return res.status(500).json({message: "Internal server error"});
     }
 };
 
-const find = async (req, res) => {
-    try {
-        const persons = await service.find();
-        res.json({ success: true, data: persons });
-    } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
-    }
-};
-
-const findById = async (req, res) => {
-    try {
-        const person = await service.findById(req.params.id);
-        res.json({ success: true, data: person });
-    } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
-    }
-};
-
-const update = async (req, res) => {
-    try {
-        const person = await service.update(req.params.id, req.body);
-        res.json({ success: true, data: person });
-    } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
-    }
-};
-
-const remove = async (req, res) => {
-    try {
-        const person = await service.delete(req.params.id);
-        res.json({ success: true, data: person });
-    } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
-    }
-};
-
-// Método para el login
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const { person, sessionToken } = await service.login(email, password);
-        res.json({ success: true, data: { person, sessionToken } });
+        
     } catch (error) {
-        res.status(401).send({ success: false, message: error.message });
+        console.log(error);
+        return res.status(500).json({message: "Internal server error"});
     }
 };
 
-// Método para el logout
-const logout = async (req, res) => {
-    try {
-        const { email } = req.body;
-        await service.logout(email);
-        res.json({ success: true, message: 'Sesión cerrada correctamente' });
-    } catch (error) {
-        res.status(500).send({ success: false, message: error.message });
-    }
+export const personController = {
+    register,
+    login
 };
-
-// Ruta para redirigir a Google
-const googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
-
-// Ruta de callback de Google
-const googleAuthCallback = passport.authenticate('google', {
-    failureRedirect: '/login',
-    session: false
-}, (req, res) => {
-    const user = req.user;
-    res.json({ success: true, data: { user } });
-});
-
-module.exports = { create, find, findById, update, remove, login, logout, googleAuth, googleAuthCallback };
