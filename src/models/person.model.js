@@ -1,14 +1,14 @@
 import e from 'express';
 import {db} from '../db/connection.db.js';
 
-const createPerson = async (rut, nombre, apellido, email, telefono, password, rol_id) => {
+const createPerson = async (rut, nombre, apellido, email, telefono, password) => {
     const query = {
         text: `
-            INSERT INTO person ( rut, nombre, apellido, email, telefono, password, rol_id) 
-            VALUES ($1, $2, $3)
+            INSERT INTO person ( rut, nombre, apellido, email, telefono, password) 
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING email, nombre, apellido;
         `,
-        values: [rut, nombre, apellido, email, telefono, password, rol_id],
+        values: [rut, nombre, apellido, email, telefono, password],
     };
 
     const {rows} = await db.query(query);

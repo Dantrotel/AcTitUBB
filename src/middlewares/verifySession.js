@@ -1,20 +1,20 @@
-// src/middleware/verifySession.js
-const Person = require('../db/models/person.model');
+import jwt from 'jsonwebtoken';
 
-async function verifySession(req, res, next) {
-  const { email, sessionToken } = req.headers;
+const verifySession = async (req, res, next) => {
+  let token = req.headers.authorization;
 
-  if (!email || !sessionToken) {
-    return res.status(401).json({ error: 'No autorizado: faltan credenciales' });
+  if (!token) {
+    return res.status(401).json({message: "Unauthorized"});
   }
 
-  const user = await Person.findOne({ where: { email } });
-  if (!user || user.sessionToken !== sessionToken) {
-    return res.status(401).json({ error: 'Sesión no válida o expirada' });
-  }
+  token = token.split(" ")[1];
 
-  req.user = user; // Adjunta el usuario a la solicitud para usarlo en las rutas protegidas
-  next();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.log(error);
+    return res.status(401).json({message: "Unauthorized"});
+  }
 }
-
-module.exports = verifySession;
