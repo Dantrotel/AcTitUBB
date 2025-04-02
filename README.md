@@ -28,13 +28,14 @@ Este proyecto es una aplicación web diseñada para realizar seguimiento de estu
 **La estructura de carpetas en este proyecto es la siguiente:**
 ```bash
 /src
-|-- /config       # Configuraciones generales y variables de entorno
-|-- /controllers  # Controladores para la lógica del negocio
-|-- /db/models    # Definición de modelos de la base de datos
-|-- /libs         # Librerías y utilidades auxiliares
-|-- /routes       # Rutas de la API
-|-- /services     # Servicios para la interacción con la base de datos y otros sistemas
-/frontend         # Carpeta para el frontend de React
+   |-- /backend
+      |-- /config       # Configuraciones generales y variables de entorno
+      |-- /controllers  # Controladores para la lógica del negocio
+      |-- /db/models    # Definición de modelos de la base de datos
+      |-- /libs         # Librerías y utilidades auxiliares
+      |-- /routes       # Rutas de la API
+      |-- /services     # Servicios para la interacción con la base de datos y otros sistemas
+   |-- /frontend         # Carpeta para el frontend de React
 ```
 
 # Instalación
