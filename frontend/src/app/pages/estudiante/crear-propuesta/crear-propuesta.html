@@ -1,0 +1,10 @@
+<h2>Crear Nueva Propuesta</h2>
+<form (ngSubmit)="crear()">
+  <label>Título:</label>
+  <input [(ngModel)]="titulo" name="titulo" required />
+
+  <label>Descripción:</label>
+  <textarea [(ngModel)]="descripcion" name="descripcion" required></textarea>
+
+  <button type="submit">Enviar</button>
+</form>

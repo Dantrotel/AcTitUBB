@@ -1,0 +1,28 @@
+<div class="register-container">
+  <h2>Registro</h2>
+  <form (ngSubmit)="register()">
+    <label>
+      RUT:
+      <input [(ngModel)]="rut" name="rut" required placeholder="12345678-9" />
+    </label>
+    <br /><br />
+    <label>
+      Nombre:
+      <input [(ngModel)]="nombre" name="nombre" required placeholder="Juan Edgardo" />
+    </label>
+    <br /><br />
+    <label>
+      Email:
+      <input [(ngModel)]="email" name="email" required placeholder="correo@alumnos.ubiobio.cl" />
+    </label>
+    <br /><br />
+    <label>
+      Contraseña:
+      <input [(ngModel)]="password" name="password" required type="password" placeholder="Contraseña" />
+    </label>
+    <br /><br />
+    <button type="submit">Registrarse</button>
+  </form>
+
+  <p *ngIf="mensaje">{{ mensaje }}</p>
+</div>

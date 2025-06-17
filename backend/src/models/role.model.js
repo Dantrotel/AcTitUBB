@@ -1,0 +1,72 @@
+import { pool } from "../db/connectionDB.js";
+
+// Crear un nuevo rol
+const createRole = async (nombre) => {
+    const [rows] = await pool.query(
+        `
+        INSERT INTO roles (nombre) 
+        VALUES (?)
+        `,
+        [nombre]
+    );
+
+    const insertId = rows.insertId;
+    const [result] = await pool.query(
+        `SELECT id, nombre FROM roles WHERE id = ?`,
+        [insertId]
+    );
+    return result[0];
+};
+
+// Buscar un rol por su nombre
+const findRoleByName = async (nombre) => {
+    const [rows] = await pool.query(
+        `
+        SELECT * FROM roles
+        WHERE nombre = ?
+        `,
+        [nombre]
+    );
+
+    return rows[0] || null;
+};
+
+// Actualizar un rol por su nombre
+const updateRole = async (nombre, newName) => {
+    await pool.query(
+        `
+        UPDATE roles
+        SET nombre = ?
+        WHERE nombre = ?
+        `,
+        [newName, nombre]
+    );
+
+    const [rows] = await pool.query(
+        `
+        SELECT id, nombre FROM roles
+        WHERE nombre = ?
+        `,
+        [newName]
+    );
+
+    return rows[0] || null;
+};
+
+// Eliminar un rol por su nombre
+const deleteRole = async (nombre) => {
+    await pool.query(
+        `
+        DELETE FROM roles
+        WHERE nombre = ?
+        `,
+        [nombre]
+    );
+};
+
+export const RoleModel = {
+    createRole,
+    findRoleByName,
+    updateRole,
+    deleteRole
+};
