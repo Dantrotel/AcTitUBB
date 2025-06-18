@@ -1,0 +1,15 @@
+<div class="home-container">
+  <div class="perfil">
+    <h2>Bienvenido, {{ profesor.nombre }}</h2>
+    <p>{{ profesor.email }}</p>
+    <button mat-button color="warn" (click)="cerrarSesion()">Cerrar sesión</button>
+  </div>
+
+  <div class="opciones">
+    <mat-card *ngFor="let opcion of opciones" class="opcion-card" (click)="navegar(opcion.ruta)">
+      <mat-icon>{{ opcion.icono }}</mat-icon>
+      <h3>{{ opcion.titulo }}</h3>
+      <p>{{ opcion.descripcion }}</p>
+    </mat-card>
+  </div>
+</div>

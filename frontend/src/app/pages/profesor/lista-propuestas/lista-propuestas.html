@@ -1,0 +1,20 @@
+<div class="contenedor">
+  <h2>📌 Propuestas Disponibles</h2>
+
+  <ul *ngIf="propuestas.length > 0; else sinPropuestas" class="lista-propuestas">
+    <li *ngFor="let propuesta of propuestas" class="propuesta">
+      <div class="info">
+        <strong class="titulo">{{ propuesta.titulo }}</strong>
+        <span class="estado">Estado: {{ propuesta.estado }}</span>
+      </div>
+      <div class="acciones">
+        <button (click)="verDetalle(propuesta.id)">🔍 Ver Detalle</button>
+        <button (click)="asignarse(propuesta.id)">✅ Asignarme</button>
+      </div>
+    </li>
+  </ul>
+
+  <ng-template #sinPropuestas>
+    <p>No hay propuestas disponibles en este momento.</p>
+  </ng-template>
+</div>

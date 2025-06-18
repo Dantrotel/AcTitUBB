@@ -47,3 +47,11 @@ export const eliminarPropuesta = async (id) => {
   const [result] = await pool.execute(`DELETE FROM propuestas WHERE id = ?`, [id]);
   return result.affectedRows > 0;
 };
+
+export const obtenerPropuestasPorProfesor = async (profesor_rut) => {
+  const [rows] = await pool.execute(
+    `SELECT * FROM propuestas WHERE profesor_rut = ?`,
+    [profesor_rut]
+  );
+  return rows;
+};

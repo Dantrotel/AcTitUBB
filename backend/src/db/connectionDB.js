@@ -157,6 +157,7 @@ export const createTables = async () => {
 
         connection.release();
         console.log("✅ Tablas creadas/verificadas correctamente");
+        console.log("✅ Base de datos inicializada correctamente");
     } catch (error) {
         console.error("❌ Error creando/verificando las tablas:", error);
         throw error;

@@ -95,6 +95,7 @@ export const obtenerPropuestaPorId = async (req, res) => {
   }
 };
 
+
 export const eliminarPropuesta = async (req, res) => {
   try {
     const { id } = req.params;
@@ -151,3 +152,16 @@ export const ActualizarPropuesta = async (req, res) => {
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 }
+
+export const getPropuestasPorProfesor = async (req, res) => {
+  try {
+    const profesor_rut = req.rut;
+
+    const propuestas = await PropuestasService.getPropuestasAsignadasAlProfesor(profesor_rut);
+
+    res.status(200).json(propuestas);
+  } catch (error) {
+    console.error('Error al obtener propuestas del profesor:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
