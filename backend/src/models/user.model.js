@@ -11,7 +11,7 @@ const createPerson = async (rut, nombre, email, password) => {
     }
 
     const [roles] = await pool.execute(
-        `SELECT id FROM roles WHERE nombre = ?`,
+        `SELECT id FROM Roles WHERE nombre = ?`,
         [nombreRol]
     );
 
@@ -22,16 +22,16 @@ const createPerson = async (rut, nombre, email, password) => {
     const rol_id = roles[0].id;
 
     const [result] = await pool.execute(
-        `INSERT INTO usuarios (rut, nombre, email, password, rol_id) 
+        `INSERT INTO Usuarios (rut, nombre, email, password, rol_id) 
          VALUES (?, ?, ?, ?, ?)`,
         [rut, nombre, email, password, rol_id]
-    );
+    )
     return { email, nombre, rol_id };
 };
 
 const findPersonByEmail = async (email) => {
     const [rows] = await pool.execute(
-        `SELECT rut, nombre, email, password, rol_id FROM usuarios WHERE email = ?`,
+        `SELECT rut, nombre, email, password, rol_id FROM Usuarios WHERE email = ?`,
         [email]
     );
     return rows[0];
@@ -39,14 +39,14 @@ const findPersonByEmail = async (email) => {
 
 const findPersonByRut = async (rut) => {
     const [rows] = await pool.execute(
-        `SELECT rut, nombre, email, password, rol_id FROM usuarios WHERE rut = ?`,
+        `SELECT rut, nombre, email, password, rol_id FROM Usuarios WHERE rut = ?`,
         [rut]
     );
     return rows[0];
 };
 
 const findpersonAll = async () => {
-    const [rows] = await pool.execute(`SELECT * FROM usuarios`);
+    const [rows] = await pool.execute(`SELECT * FROM Usuarios`);
     return rows;
 };
 
