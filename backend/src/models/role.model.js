@@ -4,7 +4,7 @@ import { pool } from "../db/connectionDB.js";
 const createRole = async (nombre) => {
     const [rows] = await pool.query(
         `
-        INSERT INTO roles (nombre) 
+        INSERT INTO Roles (nombre) 
         VALUES (?)
         `,
         [nombre]
@@ -12,7 +12,7 @@ const createRole = async (nombre) => {
 
     const insertId = rows.insertId;
     const [result] = await pool.query(
-        `SELECT id, nombre FROM roles WHERE id = ?`,
+        `SELECT id, nombre FROM Roles WHERE id = ?`,
         [insertId]
     );
     return result[0];
@@ -22,7 +22,7 @@ const createRole = async (nombre) => {
 const findRoleByName = async (nombre) => {
     const [rows] = await pool.query(
         `
-        SELECT * FROM roles
+        SELECT * FROM Roles
         WHERE nombre = ?
         `,
         [nombre]
@@ -35,7 +35,7 @@ const findRoleByName = async (nombre) => {
 const updateRole = async (nombre, newName) => {
     await pool.query(
         `
-        UPDATE roles
+        UPDATE Roles
         SET nombre = ?
         WHERE nombre = ?
         `,
@@ -44,7 +44,7 @@ const updateRole = async (nombre, newName) => {
 
     const [rows] = await pool.query(
         `
-        SELECT id, nombre FROM roles
+        SELECT id, nombre FROM Roles
         WHERE nombre = ?
         `,
         [newName]
@@ -57,7 +57,7 @@ const updateRole = async (nombre, newName) => {
 const deleteRole = async (nombre) => {
     await pool.query(
         `
-        DELETE FROM roles
+        DELETE FROM Roles
         WHERE nombre = ?
         `,
         [nombre]
