@@ -89,10 +89,10 @@ export const eliminarPropuesta = async (id) => {
   return await PropuestasModel.eliminarPropuesta(id);
 };
 
-export const getPropuestasAsignadasAlProfesor = async (profesorId) => {
-  if (!rutValido(profesorId)) {
+export const getPropuestasAsignadasAlProfesor = async (profesor_rut) => {
+  if (!rutValido(profesor_rut)) {
     throw new Error('RUT de profesor no válido');
   }
 
-  return await PropuestasModel.obtenerPropuestasPorProfesor(profesorId);
+  return await PropuestasModel.obtenerPropuestasPorProfesor(profprofesor_rut);
 };
