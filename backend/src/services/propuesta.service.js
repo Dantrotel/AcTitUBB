@@ -29,19 +29,21 @@ export const actualizarPropuesta = async (id, data) => {
   try {
     if (isNaN(id)) throw new Error('ID de propuesta inválido');
 
-    if (!data.titulo?.trim() || !data.descripcion?.trim() || !data.fecha_envio) {
+    if (!data.titulo?.trim() || !data.descripcion?.trim()) {
       throw new Error('Faltan datos obligatorios para actualizar la propuesta');
     }
 
-    if (!fechaValida(data.fecha_envio)) {
-      throw new Error('La fecha de envío no es válida');
-    }
+    const fechaEnvio = data.fecha_envio || new Date();
 
-    return await PropuestasModel.actualizarPropuesta(id, data);
+    return await PropuestasModel.actualizarPropuesta(id, {
+      ...data,
+      fecha_envio: fechaEnvio,
+    });
   } catch (error) {
     throw error;
   }
 };
+
 
 export const asignarProfesor = async (id, profesor_rut) => {
   try {

@@ -1,0 +1,39 @@
+.detalle-propuesta {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f5f9ff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+  h2 {
+    margin-bottom: 1.5rem;
+    color: #004b8d;
+  }
+
+  .campo {
+    margin-bottom: 1rem;
+
+    strong {
+      display: block;
+      font-weight: 600;
+      color: #333;
+    }
+
+    p, a {
+      margin: 0.3rem 0 0;
+      color: #555;
+    }
+
+    a {
+      color: #0066cc;
+      text-decoration: underline;
+    }
+  }
+
+  .error {
+    text-align: center;
+    color: red;
+    font-weight: bold;
+  }
+}
