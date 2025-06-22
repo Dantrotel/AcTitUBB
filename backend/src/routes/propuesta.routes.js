@@ -16,6 +16,6 @@ routerProp.get('/profesor/:rut', verifySession, checkRole('2','3'), PropuestaCon
 // Generales (todos los roles)
 routerProp.get('/', verifySession, PropuestaController.obtenerPropuestas)
 routerProp.get('/get/:id', verifySession, PropuestaController.obtenerPropuestaPorId)
-routerProp.delete('/:id', verifySession, checkRole('2'), PropuestaController.eliminarPropuesta)
+routerProp.delete('/:id', verifySession, checkRole('1'), PropuestaController.eliminarPropuesta)
 
 export default routerProp;

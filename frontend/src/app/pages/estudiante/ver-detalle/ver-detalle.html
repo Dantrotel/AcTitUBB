@@ -1,0 +1,30 @@
+<div class="detalle-propuesta" *ngIf="propuesta; else errorTpl">
+  <h2>Detalle de la Propuesta</h2>
+
+  <div class="campo">
+    <strong>Título:</strong>
+    <p>{{ propuesta.titulo }}</p>
+  </div>
+
+  <div class="campo">
+    <strong>Descripción:</strong>
+    <p>{{ propuesta.descripcion }}</p>
+  </div>
+
+  <div class="campo" *ngIf="propuesta.fecha_envio">
+    <strong>Fecha de Envío:</strong>
+    <p>{{ propuesta.fecha_envio | date: 'medium' }}</p>
+  </div>
+
+  <div class="campo" *ngIf="propuesta.archivo">
+    <strong>Archivo adjunto:</strong>
+    <a [href]="'http://localhost:3000/' + propuesta.archivo" target="_blank">Ver archivo</a>
+  </div>
+</div>
+
+<ng-template #errorTpl>
+  <div class="error">
+    <p *ngIf="error">{{ error }}</p>
+    <p *ngIf="!error">Cargando propuesta...</p>
+  </div>
+</ng-template>

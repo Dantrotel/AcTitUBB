@@ -124,10 +124,12 @@ export const descargarArchivo = (req, res) => {
 export const ActualizarPropuesta = async (req, res) => {
   try {
     const { id } = req.params;
-    const { titulo, descripcion, fecha_envio } = req.body;
+    const { titulo, descripcion } = req.body;
     const estudiante_rut = req.rut;
 
-    if (!titulo || !descripcion || !estudiante_rut || !fecha_envio) {
+    const fechaEnvioFinal = new Date(); // fecha automática
+
+    if (!titulo || !descripcion || !estudiante_rut) {
       return res.status(400).json({ message: 'Faltan datos obligatorios.' });
     }
 
@@ -140,7 +142,7 @@ export const ActualizarPropuesta = async (req, res) => {
       titulo,
       descripcion,
       estudiante_rut,
-      fecha_envio,
+      fecha_envio: fechaEnvioFinal,
       archivo: archivoPath,
     });
 
@@ -151,7 +153,8 @@ export const ActualizarPropuesta = async (req, res) => {
     console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
-}
+};
+
 
 export const getPropuestasPorProfesor = async (req, res) => {
   try {

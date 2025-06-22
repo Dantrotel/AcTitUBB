@@ -26,7 +26,7 @@ export class ListarPropuestasComponent implements OnInit {
   }
 
   verdetalle(id: number) {
-    this.router.navigate(['propuestas/', id]);
+    this.router.navigate(['propuestas/ver-detalle', id]);
   }
 
   eliminarPropuesta(id: number) {

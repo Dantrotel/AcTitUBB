@@ -32,7 +32,7 @@ export class ApiService {
   }
 
   getPropuestaById(id: string) {
-    return this.http.get(`${this.baseUrl}/propuestas/${id}`, {
+    return this.http.get(`${this.baseUrl}/propuestas/get/${id}`, {
       headers: this.getHeaders()
     });
   }
@@ -62,7 +62,7 @@ export class ApiService {
   }
 
   deletePropuesta(id: string) {
-    return this.http.delete(`${this.baseUrl}/${id}`, {
+    return this.http.delete(`${this.baseUrl}/propuestas/${id}`, {
       headers: this.getHeaders()
     });
   }
