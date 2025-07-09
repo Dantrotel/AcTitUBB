@@ -1,11 +1,12 @@
 import { Router } from 'express'
 import * as PropuestaController from '../controllers/propuesta.controller.js'
 import { verifySession, checkRole } from '../middlewares/verifySession.js'
+import { uploadPropuesta } from '../middlewares/uploader.js'
 
 const routerProp = Router()
 
 // Estudiantes
-routerProp.post('/', verifySession, checkRole('1'), PropuestaController.crearPropuestaController)
+routerProp.post('/', verifySession, checkRole('1'), uploadPropuesta ,PropuestaController.crearPropuestaController)
 routerProp.put('/:id', verifySession, checkRole('1'), PropuestaController.ActualizarPropuesta)
 
 // Profesores

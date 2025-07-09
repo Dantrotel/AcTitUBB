@@ -37,11 +37,15 @@ export class ApiService {
     });
   }
 
-  createPropuesta(data: any) {
-    return this.http.post(`${this.baseUrl}/propuestas/`, data, {
-      headers: this.getHeaders()
-    });
-  }
+ createPropuesta(data: FormData) {
+  const token = localStorage.getItem('token');
+  return this.http.post(`${this.baseUrl}/propuestas/`, data, {
+    headers: new HttpHeaders({
+      Authorization: `Bearer ${token}`
+    })
+    // ¡NO pongas Content-Type aquí!
+  });
+}
 
   updatePropuesta(id: string, data: any) {
     return this.http.put(`${this.baseUrl}/propuestas/${id}`, data, {
@@ -56,7 +60,7 @@ export class ApiService {
   }
 
   asignarPropuesta(id: string, data: any) {
-    return this.http.put(`${this.baseUrl}/${id}/asignar-profesor`, data, {
+    return this.http.put(`${this.baseUrl}/propuestas/${id}/asignar-profesor`, data, {
       headers: this.getHeaders()
     });
   }
@@ -67,6 +71,12 @@ export class ApiService {
     });
   }
 
+  descargarArchivo(nombreArchivo: string) {
+    const url = `${this.baseUrl}/descargar/${nombreArchivo}`;
+    return this.http.get(url, {
+      headers: this.getHeaders(),
+      responseType: 'blob' // Muy importante para descargar archivos binarios
+    });
   
-
+  }
 }

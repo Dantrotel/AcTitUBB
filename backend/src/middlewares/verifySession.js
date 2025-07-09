@@ -1,13 +1,19 @@
 import jwt from 'jsonwebtoken';
+import { isBlacklisted } from './blacklist.js'; // ajusta la ruta según tu proyecto
 
 export const verifySession = async (req, res, next) => {
   let token = req.headers.authorization;
 
   if (!token) {
-    return res.status(401).json({message: "Unauthorized"});
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   token = token.split(" ")[1];
+
+  // Verificar si el token está en la blacklist
+  if (isBlacklisted(token)) {
+    return res.status(401).json({ message: "Token revoked. Please login again." });
+  }
 
   try {
     const { rut, rol_id } = jwt.verify(token, process.env.JWT_SECRET);
@@ -16,7 +22,7 @@ export const verifySession = async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    return res.status(401).json({message: "Unauthorized"});
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };
 

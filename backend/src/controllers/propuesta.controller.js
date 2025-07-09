@@ -2,8 +2,9 @@ import * as PropuestasService from '../services/propuesta.service.js';
 import path from 'path';
 
 export const crearPropuestaController = async (req, res) => {
-  console.log('Crear propuesta controller');
-  console.log(req.body);
+   console.log('BODY:', req.body);
+  console.log('FILE:', req.file);
+
   try {
     const { titulo, descripcion, fecha_envio, estado } = req.body;
     const estudiante_rut = req.rut;
@@ -12,20 +13,22 @@ export const crearPropuestaController = async (req, res) => {
       return res.status(400).json({ message: 'Faltan datos obligatorios' });
     }
 
+    // Nombre del archivo (si se subió)
+    const archivo = req.file ? req.file.filename : null;
+
     const nuevaPropuestaId = await PropuestasService.crearPropuesta({
       titulo,
       descripcion,
       estudiante_rut,
       fecha_envio,
       estado: estado || 'pendiente',
+      archivo,
     });
-   
 
     return res.status(201).json({ message: 'Propuesta creada', id: nuevaPropuestaId });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
-    
   }
 };
 
@@ -75,6 +78,7 @@ export const revisarPropuesta = async (req, res) => {
 export const obtenerPropuestas = async (req, res) => {
   try {
     const propuestas = await PropuestasService.obtenerPropuestas();
+     console.log('propuestas obtenidas: ', propuestas );
     return res.json(propuestas);
   } catch (error) {
     console.error(error);

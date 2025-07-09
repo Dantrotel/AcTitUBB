@@ -6,24 +6,57 @@ import { CrearPropuestaComponent } from './pages/estudiante/crear-propuesta/crea
 import { ListarPropuestasComponent } from './pages/estudiante/lista-propuestas/lista-propuestas';
 import { ActualizarPropuestaComponent } from './pages/estudiante/editar-propuesta/editar-propuesta';
 import { VerPropuestaComponent } from './pages/estudiante/ver-detalle/ver-detalle';
-import { HomeProfesorComponent } from './pages/profesores/home/homeP';
-// import { ListaPropuestasProfesorComponent } from './pages/profesor/lista-propuestas/lista-propuestas';
+import { HomeProfesor } from './pages/profesor/home-profesor/home-profesor';
+import { PropuestasTodas } from './pages/profesor/AllPropuestas/propuestas-todas';
+import { AuthGuard } from './guards/auth.guard';
+//
 
 
 
 export const routes: Routes = [
-    { path: '', redirectTo: '/login', pathMatch: 'full' },
-    { path: 'login', component: LoginComponent },
-    { path: 'register', component: RegisterComponent },
-    //estudiantes
-    { path: 'estudiante', component: EstudianteHomeComponent },
-    { path: 'propuestas/crear', component: CrearPropuestaComponent },
-    { path: 'propuestas/listar-propuesta', component: ListarPropuestasComponent},
-    { path: 'propuestas/editar-propuesta/:id', component: ActualizarPropuestaComponent},
-    { path: 'propuestas/ver-detalle/:id', component: VerPropuestaComponent },
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
 
-    // //profesores
-    { path: 'profesor', component: HomeProfesorComponent },
+  // Rutas públicas
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+
+  // Rutas protegidas con AuthGuard
+  { path: 'estudiante', component: EstudianteHomeComponent, canActivate: [AuthGuard] },
+  { path: 'propuestas/crear', component: CrearPropuestaComponent, canActivate: [AuthGuard] },
+  { path: 'propuestas/listar-propuesta', component: ListarPropuestasComponent, canActivate: [AuthGuard] },
+  { path: 'propuestas/editar-propuesta/:id', component: ActualizarPropuestaComponent, canActivate: [AuthGuard] },
+  { path: 'propuestas/ver-detalle/:id', component: VerPropuestaComponent, canActivate: [AuthGuard] },
+
+  {
+    path: 'profesor',
+    children: [
+      {
+        path: '',
+        component: HomeProfesor,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'propuestas/todas',
+        component: PropuestasTodas,
+        canActivate: [AuthGuard]
+      }
+      //{
+    //     path: 'visualizacion/:id',
+    //     loadComponent: () =>
+    //       import('./profesor/propuesta-visualizacion/propuesta-visualizacion.component').then(m => m.PropuestaVisualizacionComponent),
+    //   },
+    //   {
+    //     path: 'detalle/:id',
+    //     loadComponent: () =>
+    //       import('./profesor/propuesta-detalle/propuesta-detalle.component').then(m => m.PropuestaDetalleComponent),
+    //   },
+    //   {
+    //     path: 'comentario/:id',
+    //     loadComponent: () =>
+    //       import('./profesor/propuesta-comentario/propuesta-comentario.component').then(m => m.PropuestaComentarioComponent),
+    //   },
+    ],
+  },
 
 
 

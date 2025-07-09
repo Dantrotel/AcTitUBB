@@ -2,10 +2,12 @@ import { UserModel } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validarRUT } from '../services/RutVal.service.js';
+import { addToken } from '../middlewares/blacklist.js'; 
 
 const register = async (req, res) => {
     try {
         const { rut, nombre, email, password } = req.body;
+        console.log("Datos recibidos para registro:", req.body);
 
         if (!rut || !nombre || !email || !password) {
             return res.status(400).json({ message: "Missing required fields" });
@@ -85,6 +87,9 @@ const login = async (req, res) => {
             ok: true,
             message: "User logged in",
             user: user.email,
+            rol_id: user.rol_id,
+            rut: user.rut,
+            nombre: user.nombre,
             token: token
         });
 
@@ -95,20 +100,19 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-
-        if (!token) {
-            return res.status(400).json({ message: "No token provided" });
-        }
-
-        // Podrías guardar el token en una blacklist aquí si lo deseas
-
-        return res.status(200).json({ message: "User logged out successfully" });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal server error", error });
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(400).json({ message: "No token provided" });
     }
+
+    addToken(token); // agrega token a la blacklist
+
+    return res.status(200).json({ message: "User logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
 };
 
 export const loginController = {
