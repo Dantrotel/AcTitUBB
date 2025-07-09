@@ -138,7 +138,7 @@ export const createTables = async () => {
             );
         `);
 
-        await connection.query(`CREATE TABLE IF NOT EXISTS propuestas (
+        await connection.query(`CREATE TABLE IF NOT EXISTS Propuestas (
             id INT AUTO_INCREMENT PRIMARY KEY,
             titulo VARCHAR(255) NOT NULL,
             descripcion TEXT NOT NULL,
