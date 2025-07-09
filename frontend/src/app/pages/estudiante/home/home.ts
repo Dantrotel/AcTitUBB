@@ -44,11 +44,12 @@ export class EstudianteHomeComponent {
   constructor(private router: Router) {}
 
   navegar(ruta: string) {
-    this.router.navigate([ruta]);
+    this.router.navigate([ruta]); 
   }
 
   cerrarSesion() {
     localStorage.removeItem('token');
     this.router.navigate(['/login']);
+
   }
 }

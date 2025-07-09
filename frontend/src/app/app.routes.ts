@@ -6,7 +6,7 @@ import { CrearPropuestaComponent } from './pages/estudiante/crear-propuesta/crea
 import { ListarPropuestasComponent } from './pages/estudiante/lista-propuestas/lista-propuestas';
 import { ActualizarPropuestaComponent } from './pages/estudiante/editar-propuesta/editar-propuesta';
 import { VerPropuestaComponent } from './pages/estudiante/ver-detalle/ver-detalle';
-// import { HomeProfesorComponent } from './pages/profesor/home/homeP';
+import { HomeProfesorComponent } from './pages/profesores/home/homeP';
 // import { ListaPropuestasProfesorComponent } from './pages/profesor/lista-propuestas/lista-propuestas';
 
 
@@ -23,9 +23,7 @@ export const routes: Routes = [
     { path: 'propuestas/ver-detalle/:id', component: VerPropuestaComponent },
 
     // //profesores
-    // { path: 'profesor', component: HomeProfesorComponent },
-    // { path: 'propuestas/asignadas', component: ListaPropuestasProfesorComponent },
-    // { path: 'propuestas/disponibles', component: ListaPropuestasProfesorComponent },
+    { path: 'profesor', component: HomeProfesorComponent },
 
 
 
