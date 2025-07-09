@@ -1,10 +1,10 @@
 import { pool } from "../db/connectionDB.js";
 
-export const crearPropuesta = async ({ titulo, descripcion, estudiante_rut, fecha_envio}) => {
+export const crearPropuesta = async ({ titulo, descripcion, estudiante_rut, fecha_envio, archivo }) => {
   const [result] = await pool.execute(
-    `INSERT INTO Propuestas (titulo, descripcion, estudiante_rut, fecha_envio)
-     VALUES (?, ?, ?, ?)`,
-    [titulo, descripcion, estudiante_rut, fecha_envio]
+    `INSERT INTO Propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo)
+     VALUES (?, ?, ?, ?, ?)`,
+    [titulo, descripcion, estudiante_rut, fecha_envio, archivo]
   );
   return result.insertId;
 };
@@ -34,14 +34,33 @@ export const revisarPropuesta = async (id, { comentarios_profesor, estado }) => 
 };
 
 export const obtenerPropuestas = async () => {
-  const [rows] = await pool.execute(`SELECT * FROM Propuestas`);
+  const [rows] = await pool.execute(`
+    SELECT p.*, 
+           u.nombre AS nombre_estudiante,
+           up.nombre AS nombre_profesor
+    FROM Propuestas p
+    LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+    LEFT JOIN usuarios up ON p.profesor_rut = up.rut
+  `);
   return rows;
 };
 
+
 export const obtenerPropuestaPorId = async (id) => {
-  const [rows] = await pool.execute(`SELECT * FROM Propuestas WHERE id = ?`, [id]);
+  const [rows] = await pool.execute(`
+    SELECT 
+      p.*, 
+      ue.nombre AS nombre_estudiante,
+      up.nombre AS nombre_profesor
+    FROM Propuestas p
+    LEFT JOIN usuarios ue ON p.estudiante_rut = ue.rut
+    LEFT JOIN usuarios up ON p.profesor_rut = up.rut
+    WHERE p.id = ?
+  `, [id]);
+
   return rows[0];
 };
+
 
 export const eliminarPropuesta = async (id) => {
   const [result] = await pool.execute(`DELETE FROM Propuestas WHERE id = ?`, [id]);

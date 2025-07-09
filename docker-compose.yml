@@ -6,10 +6,10 @@ services:
     container_name: mysql_actitubb
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: dantrottel
-      MYSQL_USER: dantrottel_user
-      MYSQL_PASSWORD: clave123
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: actitubb
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 1234
     ports:
       - "3306:3306"
     volumes:
@@ -24,12 +24,9 @@ services:
       - "3000:3000"
     depends_on:
       - mysql
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: dantrottel_user
-      DB_PASSWORD: clave123
-      DB_NAME: dantrottel
+    env_file:
+      - .env
+
 
   frontend:
     build: ./frontend

@@ -1,10 +1,13 @@
 <h2>Crear Nueva Propuesta</h2>
 <form (ngSubmit)="crear()">
   <label>Título:</label>
-  <input [(ngModel)]="titulo" name="titulo" required />
+  <input [(ngModel)]="titulo" name="titulo" placeholder="titulo" required />
 
   <label>Descripción:</label>
-  <textarea [(ngModel)]="descripcion" name="descripcion" required></textarea>
+  <textarea [(ngModel)]="descripcion" name="descripcion" placeholder="descripcion" required></textarea>
+  <input type="file" (change)="onFileChange($event)" accept=".pdf,.doc,.docx" name="archivo" required />
+
+  <button type="submit">Crear propuesta</button>
 
   <button type="submit">Enviar</button>
 </form>

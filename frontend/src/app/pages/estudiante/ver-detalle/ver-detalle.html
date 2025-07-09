@@ -1,25 +1,50 @@
 <div class="detalle-propuesta" *ngIf="propuesta; else errorTpl">
   <h2>Detalle de la Propuesta</h2>
 
+  <div class="campo"><strong>Título:</strong> {{ propuesta.titulo }}</div>
+  <div class="campo"><strong>Descripción:</strong> {{ propuesta.descripcion }}</div>
+  
   <div class="campo">
-    <strong>Título:</strong>
-    <p>{{ propuesta.titulo }}</p>
+    <strong>Estudiante:</strong> {{ propuesta.nombre_estudiante }}
+  </div>
+  
+  <div class="campo" *ngIf="propuesta.profesor_rut || propuesta.nombre_profesor">
+    <strong>Profesor (RUT):</strong> {{ propuesta.profesor_rut || 'No asignado' }} — {{ propuesta.nombre_profesor || 'No asignado' }}
+  </div>
+  <div class="campo" *ngIf="!propuesta.profesor_rut && !propuesta.nombre_profesor">
+    <strong>Profesor:</strong> Sin asignar
   </div>
 
-  <div class="campo">
-    <strong>Descripción:</strong>
-    <p>{{ propuesta.descripcion }}</p>
+  <div class="campo"><strong>Estado:</strong> {{ propuesta.estado }}</div>
+
+  <div class="campo" *ngIf="propuesta.comentarios_profesor">
+    <strong>Comentarios Profesor:</strong>
+    <p>{{ propuesta.comentarios_profesor }}</p>
   </div>
 
   <div class="campo" *ngIf="propuesta.fecha_envio">
-    <strong>Fecha de Envío:</strong>
-    <p>{{ propuesta.fecha_envio | date: 'medium' }}</p>
+    <strong>Fecha de Envío:</strong> {{ propuesta.fecha_envio | date:'medium' }}
   </div>
 
-  <div class="campo" *ngIf="propuesta.archivo">
-    <strong>Archivo adjunto:</strong>
-    <a [href]="'http://localhost:3000/' + propuesta.archivo" target="_blank">Ver archivo</a>
+  <div class="campo" *ngIf="propuesta.fecha_revision">
+    <strong>Fecha de Revisión:</strong> {{ propuesta.fecha_revision | date:'medium' }}
   </div>
+
+  <div class="campo" *ngIf="propuesta.asignado_por">
+    <strong>Asignado Por:</strong> {{ propuesta.asignado_por }}
+  </div>
+
+  <div class="campo">
+    <strong>Archivo adjunto:</strong>
+     <button (click)="descargarArchivo(propuesta.archivo)">Descargar archivo</button>
+  </div>
+
+
+<div class="campo" *ngIf="esProfesor && !propuesta.profesor_rut">
+  <button (click)="asignarme()" class="btn-asignar">Asignarme esta propuesta</button>
+</div>
+
+
 </div>
 
 <ng-template #errorTpl>
@@ -28,3 +53,6 @@
     <p *ngIf="!error">Cargando propuesta...</p>
   </div>
 </ng-template>
+
+
+

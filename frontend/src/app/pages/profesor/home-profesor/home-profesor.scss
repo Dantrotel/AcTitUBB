@@ -1,0 +1,29 @@
+.card-container {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.opcion-card {
+  width: 280px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  text-align: center;
+  padding: 1rem;
+}
+
+.opcion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.icono {
+  font-size: 48px;
+  color: #3f51b5;
+  margin-bottom: 0.5rem;
+}
+
+.acciones {
+  margin-top: 3rem;
+}
