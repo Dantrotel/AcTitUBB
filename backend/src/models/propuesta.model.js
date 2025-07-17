@@ -39,8 +39,8 @@ export const obtenerPropuestas = async () => {
            u.nombre AS nombre_estudiante,
            up.nombre AS nombre_profesor
     FROM Propuestas p
-    LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
-    LEFT JOIN usuarios up ON p.profesor_rut = up.rut
+    LEFT JOIN Usuarios u ON p.estudiante_rut = u.rut
+    LEFT JOIN Usuarios up ON p.profesor_rut = up.rut
   `);
   return rows;
 };
@@ -53,8 +53,8 @@ export const obtenerPropuestaPorId = async (id) => {
       ue.nombre AS nombre_estudiante,
       up.nombre AS nombre_profesor
     FROM Propuestas p
-    LEFT JOIN usuarios ue ON p.estudiante_rut = ue.rut
-    LEFT JOIN usuarios up ON p.profesor_rut = up.rut
+    LEFT JOIN Usuarios ue ON p.estudiante_rut = ue.rut
+    LEFT JOIN Usuarios up ON p.profesor_rut = up.rut
     WHERE p.id = ?
   `, [id]);
 
