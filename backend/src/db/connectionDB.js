@@ -9,6 +9,26 @@ if (!DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME || !DB_PORT) {
     throw new Error("❌ Missing required environment variables for database connection");
 }
 
+export const waitForMySQL = async (retries = 10, delay = 3000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const connection = await mysql.createConnection({
+                host: DB_HOST,
+                user: DB_USER,
+                password: DB_PASSWORD,
+                port: DB_PORT,
+            });
+            await connection.end();
+            console.log("✅ MySQL está disponible");
+            return;
+        } catch (err) {
+            console.log(`🔄 Esperando MySQL (${i + 1}/${retries})...`);
+            await new Promise(res => setTimeout(res, delay));
+        }
+    }
+    throw new Error('❌ No se pudo conectar a MySQL después de varios intentos');
+};
+
 // Paso 1: Crear la base de datos si no existe
 const initDatabase = async () => {
     try {
