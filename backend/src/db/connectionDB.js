@@ -88,6 +88,7 @@ export const createTables = async () => {
                 email VARCHAR(100) NOT NULL UNIQUE,
                 password VARCHAR(255) NOT NULL,
                 rol_id INT NOT NULL,
+                confirmado BOOLEAN DEFAULT FALSE,
                 FOREIGN KEY (rol_id) REFERENCES Roles(id)
             );
         `);

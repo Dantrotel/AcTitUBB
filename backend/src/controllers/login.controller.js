@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validarRUT } from '../services/RutVal.service.js';
 import { addToken } from '../middlewares/blacklist.js'; 
+import { sendConfirmationEmail } from '../services/email.service.js';
 
 const register = async (req, res) => {
     try {
@@ -31,17 +32,18 @@ const register = async (req, res) => {
 
         const newUser = await UserModel.createPerson(rut, nombre, email, hash);
 
-        const token = jwt.sign(
-            { rut: newUser.rut, rol_id: newUser.rol_id },
+        const confirmToken = jwt.sign(
+            { email: newUser.email },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '1d' }
         );
+
+        await sendConfirmationEmail(newUser.email, confirmToken);
 
         return res.status(201).json({
             ok: true,
-            message: "User created",
-            user: newUser.email,
-            token: token
+            message: "User created, please confirm your email",
+            user: newUser.email
         });
 
     } catch (error) {
@@ -49,6 +51,7 @@ const register = async (req, res) => {
         return res.status(500).json({ message: "Internal server error", error });
     }
 };
+
 
 const login = async (req, res) => {
     try {
@@ -68,6 +71,9 @@ const login = async (req, res) => {
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
+        }
+        if (!user.verificado) {
+            return res.status(401).json({ message: "Debes confirmar tu correo para iniciar sesión" });
         }
 
         const match = await bcrypt.compare(password, user.password);
