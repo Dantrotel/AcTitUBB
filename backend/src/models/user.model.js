@@ -22,11 +22,11 @@ const createPerson = async (rut, nombre, email, password) => {
     const rol_id = roles[0].id;
 
     const [result] = await pool.execute(
-        `INSERT INTO Usuarios (rut, nombre, email, password, rol_id) 
-         VALUES (?, ?, ?, ?, ?)`,
-        [rut, nombre, email, password, rol_id]
-    )
-    return { email, nombre, rol_id };
+        `INSERT INTO Usuarios (rut, nombre, email, password, rol_id, confirmado) 
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [rut, nombre, email, password, rol_id, false]
+        );
+        return { email, nombre, rol_id };
 };
 
 const findPersonByEmail = async (email) => {
