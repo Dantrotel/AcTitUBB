@@ -38,7 +38,11 @@ const register = async (req, res) => {
             { expiresIn: '1d' }
         );
 
+        console.log('EMAIL_USER:', process.env.EMAIL_USER);
+        console.log('EMAIL_PASS:', process.env.EMAIL_PASS);
+
         await sendConfirmationEmail(newUser.email, confirmToken);
+
 
         return res.status(201).json({
             ok: true,
