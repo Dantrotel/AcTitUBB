@@ -188,6 +188,8 @@ export const createTables = async () => {
 
 // Función principal para inicializar todo
 export const initializeDatabase = async () => {
+    await waitForMySQL();
     await initDatabase();
     await createTables();
+
 };
