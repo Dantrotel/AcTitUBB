@@ -2,15 +2,14 @@
   <header class="header">
     <div class="user-info">
       <h1>Bienvenido, {{estudiante.nombre}}</h1>
-      <p>{{estudiante.carrera}} • {{estudiante.matricula}}</p>
     </div>
-    <button mat-icon-button class="logout-btn" (click)="cerrarSesion()" matTooltip="Cerrar sesión">
+    <button mat-icon-button class="logout-btn" (click)="cerrarSesion()" matTooltip="Cerrar sesión" aria-label="Cerrar sesión">
       <mat-icon>logout</mat-icon>
     </button>
   </header>
 
   <div class="options-grid">
-    <mat-card *ngFor="let opcion of opciones" class="option-card" (click)="navegar(opcion.ruta)">
+    <mat-card *ngFor="let opcion of opciones" class="option-card" (click)="navegar(opcion.ruta)" role="button" tabindex="0" (keyup.enter)="navegar(opcion.ruta)">
       <mat-card-header>
         <mat-icon mat-card-avatar>{{opcion.icono}}</mat-icon>
         <mat-card-title>{{opcion.titulo}}</mat-card-title>
@@ -19,13 +18,11 @@
         <p>{{opcion.descripcion}}</p>
       </mat-card-content>
       <mat-card-actions>
-        <button mat-button color="primary">Acceder</button>
+        <button mat-button color="primary" (click)="navegar(opcion.ruta); $event.stopPropagation();">Acceder</button>
       </mat-card-actions>
     </mat-card>
   </div>
-  <button class="logout-btn" (click)="cerrarSesion()" matTooltip="Cerrar sesión">
-    <mat-icon>logout</mat-icon>
-  </button>
+
   <footer class="footer">
     <p>© 2023 AcTitUBB. Todos los derechos reservados.</p>
   </footer>

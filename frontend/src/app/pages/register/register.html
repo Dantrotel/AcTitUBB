@@ -1,28 +1,63 @@
 <div class="register-container">
-  <h2>Registro</h2>
-  <form (ngSubmit)="register()">
-    <label>
-      RUT:
-      <input [(ngModel)]="rut" name="rut" required placeholder="12345678-9" />
-    </label>
-    <br /><br />
-    <label>
-      Nombre:
-      <input [(ngModel)]="nombre" name="nombre" required placeholder="Juan Edgardo" />
-    </label>
-    <br /><br />
-    <label>
-      Email:
-      <input [(ngModel)]="email" name="email" required placeholder="correo@alumnos.ubiobio.cl" />
-    </label>
-    <br /><br />
-    <label>
-      Contraseña:
-      <input [(ngModel)]="password" name="password" required type="password" placeholder="Contraseña" />
-    </label>
-    <br /><br />
-    <button type="submit">Registrarse</button>
+  <h2>Registro - AcTitUBB</h2>
+
+  <form (ngSubmit)="register()" novalidate>
+    <div class="form-group">
+      <label for="rut">RUT</label>
+      <input
+        type="text"
+        id="rut"
+        [(ngModel)]="rut"
+        name="rut"
+        required
+        placeholder="12345678-9"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="nombre">Nombre completo</label>
+      <input
+        type="text"
+        id="nombre"
+        [(ngModel)]="nombre"
+        name="nombre"
+        required
+        placeholder="Ej: Juan Edgardo"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Correo institucional</label>
+      <input
+        type="email"
+        id="email"
+        [(ngModel)]="email"
+        name="email"
+        required
+        placeholder="correo@alumnos.ubiobio.cl"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Contraseña</label>
+      <input
+        type="password"
+        id="password"
+        [(ngModel)]="password"
+        name="password"
+        required
+        placeholder="********"
+      />
+    </div>
+
+    <button type="submit" [disabled]="!rut || !nombre || !email || !password">
+      Registrarse
+    </button>
+
+    <button type="button" class="back-button" (click)="volver()">
+      Volver atrás
+    </button>
   </form>
 
-  <p *ngIf="mensaje">{{ mensaje }}</p>
+  <p *ngIf="mensaje" class="success-message">{{ mensaje }}</p>
 </div>

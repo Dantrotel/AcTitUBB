@@ -1,13 +1,21 @@
-<h2>Mis Propuestas</h2>
-<ul>
-  <li *ngFor="let propuesta of propuestas">
-    <strong>{{ propuesta.titulo }}</strong> - Estado: {{ propuesta.estado }}<br />
-    Comentarios: {{ propuesta.comentarios_profesor || 'Sin comentarios' }}
-    <br />
-    <button (click)="irAEditar(propuesta.id)">Editar</button>
-    <button (click)="eliminarPropuesta(propuesta.id)">Eliminar</button>
-    <button (click)="verdetalle(propuesta.id)">Ver Detalles</button>
-  </li>
+<div class="propuestas-container">
+  <h2>Mis Propuestas</h2>
+  <ul class="propuestas-list">
+    <li *ngFor="let propuesta of propuestas" class="propuesta-item">
+      <div class="propuesta-header">
+        <strong class="titulo">{{ propuesta.titulo }}</strong>
+        <span class="estado">Estado: {{ propuesta.estado }}</span>
+      </div>
 
-</ul>
+      <p class="comentarios">
+        <strong>Comentarios:</strong> {{ propuesta.comentarios_profesor || 'Sin comentarios' }}
+      </p>
 
+      <div class="acciones">
+        <button class="btn btn-editar" (click)="irAEditar(propuesta.id)">Editar</button>
+        <button class="btn btn-eliminar" (click)="eliminarPropuesta(propuesta.id)">Eliminar</button>
+        <button class="btn btn-detalles" (click)="verdetalle(propuesta.id)">Ver Detalles</button>
+      </div>
+    </li>
+  </ul>
+</div>

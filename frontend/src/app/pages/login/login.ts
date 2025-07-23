@@ -79,4 +79,14 @@ login() {
     this.router.navigate(['/register']);
   }
 
+  get esRutValido(): boolean {
+  const rutRegex = /^[0-9]{7,8}-[0-9kK]{1}$/;
+  return rutRegex.test(this.usuario.trim());
+  }
+
+  get esCorreoValido(): boolean {
+    const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return correoRegex.test(this.usuario.trim());
+  }
+
 }

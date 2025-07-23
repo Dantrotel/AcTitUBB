@@ -1,31 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ApiService } from '../../../services/api';
+
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule,   MatCardModule,    // Módulo para mat-card y sus componentes relacionados
-    MatIconModule,    // Módulo para los iconos
-    MatButtonModule,  // Módulo para los botones
-    MatTooltipModule ], // Módulo para los tooltips],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule
+  ],
   templateUrl: './home.html',
   styleUrls: ['./home.scss']
 })
-
-export class EstudianteHomeComponent {
-  // Datos del estudiante (puedes obtenerlos del servicio de autenticación)
-  estudiante = {
-    nombre: 'Nombre del Estudiante',
-    matricula: 'MAT12345',
-    carrera: 'Ingeniería de Software'
-  };
-
-  // Opciones disponibles
+export class EstudianteHomeComponent implements OnInit {
+  estudiante: any = {};
   opciones = [
     { 
       titulo: 'Crear Propuesta', 
@@ -41,15 +38,53 @@ export class EstudianteHomeComponent {
     }
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private ApiService: ApiService) {}
+
+ ngOnInit() {
+    // Obtener rut del token o del localStorage
+    const token = localStorage.getItem('token');
+    let rut = '';
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      rut = payload.rut;
+    }
+
+    if (rut) {
+      this.buscarUserByRut(rut);
+    } else {
+      // Fallback
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        this.estudiante.nombre = userData.nombre || 'Estudiante';
+        this.estudiante.matricula = userData.matricula || '';
+        this.estudiante.carrera = userData.carrera || '';
+      } else {
+        this.estudiante.nombre = 'Estudiante';
+      }
+    }
+  }
+
+  buscarUserByRut(rut: string) {
+    this.ApiService.buscaruserByrut(rut).subscribe({
+      next: (data: any) => {
+        this.estudiante = data;
+      },
+      error: (err) => {
+        console.error('Error al obtener usuario:', err);
+        this.estudiante.nombre = 'Estudiante';
+      }
+    });
+  }
+
 
   navegar(ruta: string) {
-    this.router.navigate([ruta]); 
+    this.router.navigate([ruta]);
   }
 
   cerrarSesion() {
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     this.router.navigate(['/login']);
-
   }
 }

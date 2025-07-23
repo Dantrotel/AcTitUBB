@@ -31,7 +31,7 @@ const createPerson = async (rut, nombre, email, password) => {
 
 const findPersonByEmail = async (email) => {
     const [rows] = await pool.execute(
-        `SELECT rut, nombre, email, password, rol_id FROM Usuarios WHERE email = ?`,
+        `SELECT rut, nombre, email, password, rol_id, confirmado FROM Usuarios WHERE email = ?`,
         [email]
     );
     return rows[0];
@@ -39,7 +39,7 @@ const findPersonByEmail = async (email) => {
 
 const findPersonByRut = async (rut) => {
     const [rows] = await pool.execute(
-        `SELECT rut, nombre, email, password, rol_id FROM Usuarios WHERE rut = ?`,
+        `SELECT rut, nombre, email, password, rol_id, confirmado FROM Usuarios WHERE rut = ?`,
         [rut]
     );
     return rows[0];
@@ -50,9 +50,17 @@ const findpersonAll = async () => {
     return rows;
 };
 
+const confirmarCuentaPorEmail = async (email) =>{
+  const query = 'UPDATE usuarios SET confirmado = 1 WHERE email = ?';
+  const [result] = await pool.execute(query, [email]);
+  return result;
+}
+
+
 export const UserModel = {
     createPerson,
     findPersonByEmail,
     findPersonByRut,
     findpersonAll,
+    confirmarCuentaPorEmail
 };

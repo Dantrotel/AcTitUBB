@@ -27,13 +27,11 @@ export class ApiService {
 
   getPropuestas() {
     return this.http.get(`${this.baseUrl}/propuestas/`, {
-      headers: this.getHeaders()
     });
   }
 
   getPropuestaById(id: string) {
     return this.http.get(`${this.baseUrl}/propuestas/get/${id}`, {
-      headers: this.getHeaders()
     });
   }
 
@@ -43,40 +41,37 @@ export class ApiService {
     headers: new HttpHeaders({
       Authorization: `Bearer ${token}`
     })
-    // ¡NO pongas Content-Type aquí!
   });
 }
 
   updatePropuesta(id: string, data: any) {
     return this.http.put(`${this.baseUrl}/propuestas/${id}`, data, {
-      headers: this.getHeaders()
     });
   }
 
   revisarPropuesta(id: string, data: any) {
     return this.http.put(`${this.baseUrl}/${id}/revisar`, data, {
-      headers: this.getHeaders()
     });
   }
 
   asignarPropuesta(id: string, data: any) {
     return this.http.put(`${this.baseUrl}/propuestas/${id}/asignar-profesor`, data, {
-      headers: this.getHeaders()
     });
   }
 
   deletePropuesta(id: string) {
     return this.http.delete(`${this.baseUrl}/propuestas/${id}`, {
-      headers: this.getHeaders()
     });
   }
 
   descargarArchivo(nombreArchivo: string) {
     const url = `${this.baseUrl}/descargar/${nombreArchivo}`;
     return this.http.get(url, {
-      headers: this.getHeaders(),
       responseType: 'blob' // Muy importante para descargar archivos binarios
     });
-  
+  }
+
+  buscaruserByrut(rut:string){
+    return this.http.get(`${this.baseUrl}/users/${rut}`);
   }
 }

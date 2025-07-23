@@ -1,13 +1,47 @@
-<h2>Crear Nueva Propuesta</h2>
-<form (ngSubmit)="crear()">
-  <label>Título:</label>
-  <input [(ngModel)]="titulo" name="titulo" placeholder="titulo" required />
+<div class="propuesta-container">
+  <h2>Crear Nueva Propuesta</h2>
+  <form class="propuesta-form" (ngSubmit)="crear()">
+    <div class="form-group">
+      <label for="titulo">Título:</label>
+      <input
+        id="titulo"
+        [(ngModel)]="titulo"
+        name="titulo"
+        placeholder="Título"
+        required
+      />
+    </div>
 
-  <label>Descripción:</label>
-  <textarea [(ngModel)]="descripcion" name="descripcion" placeholder="descripcion" required></textarea>
-  <input type="file" (change)="onFileChange($event)" accept=".pdf,.doc,.docx" name="archivo" required />
+    <div class="form-group">
+      <label for="descripcion">Descripción:</label>
+      <textarea
+        id="descripcion"
+        [(ngModel)]="descripcion"
+        name="descripcion"
+        placeholder="Descripción"
+        required
+      ></textarea>
+    </div>
 
-  <button type="submit">Crear propuesta</button>
+    <div class="form-group">
+      <label for="archivo">Archivo adjunto:</label>
+      <input
+        type="file"
+        id="archivo"
+        (change)="onFileChange($event)"
+        accept=".pdf,.doc,.docx"
+        name="archivo"
+        required
+      />
+    </div>
 
-  <button type="submit">Enviar</button>
-</form>
+    <div class="buttons">
+      <button type="submit" class="btn-primary" [disabled]="!titulo || !descripcion || !archivo">
+        Crear propuesta
+      </button>
+      <button type="button" class="btn-secondary" (click)="volver()">
+        Volver
+      </button>
+    </div>
+  </form>
+</div>

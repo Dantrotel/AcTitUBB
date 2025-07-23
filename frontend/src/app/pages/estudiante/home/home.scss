@@ -1,75 +1,137 @@
-// Usa @use en lugar de @import (recomendado para Dart Sass 2.0.0+)
-@use '@angular/material' as mat;
+// Paleta de colores UBB
+$ubb-blue: #002f6c;      // Azul oscuro UBB
+$ubb-light-blue: #005aa7; // Azul claro UBB
+$ubb-gray-light: #f4f6f8; // Gris muy claro para fondos
+$ubb-gray-medium: #7a7a7a; // Gris medio para textos secundarios
+$ubb-red: #d32f2f;        // Rojo para alertas / logout
 
-// Variables personalizadas
-$primary-color: #3f51b5;
-$accent-color: #ff4081;
-$warn-color: #f44336;
-$background-color: #f5f5f5;
-$text-color: #333;
-$secondary-text: #666;
+@use '@angular/material' as mat;
+@use 'sass:color';
 
 .container {
-  padding: 20px;
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  background-color: $ubb-gray-light;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 47, 108, 0.15);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding: 20px;
-  background-color: $background-color;
-  border-radius: 8px;
+  margin-bottom: 2rem;
+  padding: 1.5rem 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 47, 108, 0.1);
 
   .user-info {
     h1 {
       margin: 0;
-      color: $primary-color;
-      font-size: 24px;
+      color: $ubb-blue;
+      font-size: 2rem;
+      font-weight: 700;
     }
 
     p {
-      margin: 5px 0 0;
-      color: $secondary-text;
+      margin: 0.25rem 0 0;
+      color: $ubb-gray-medium;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
     }
   }
 
-  .logout-btn {
-    color: $warn-color;
+ .logout-btn {
+  color: $ubb-red;
+  font-size: 1.5rem;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: color.scale($ubb-red, $lightness: -10%);
+    background-color: transparent;
   }
+}
 }
 
 .options-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.8rem;
 }
 
 .option-card {
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  height: 100%;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 47, 108, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-8px);
+    box-shadow: 0 14px 30px rgba(0, 47, 108, 0.25);
   }
 
-  .mat-icon {
-    font-size: 36px;
-    height: 36px;
-    width: 36px;
-    color: $primary-color;
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+
+    .mat-icon {
+      font-size: 40px !important;
+      height: 40px;
+      width: 40px;
+      color: $ubb-blue;
+      margin-right: 1rem;
+    }
+
+    mat-card-title {
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: $ubb-blue;
+    }
   }
 
-  .card-actions {
+  mat-card-content {
+    flex-grow: 1;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    color: $ubb-gray-medium;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  mat-card-actions {
+    padding: 0 1.5rem 1.2rem 1.5rem;
     display: flex;
     justify-content: flex-end;
+
+    button {
+      background-color: $ubb-blue;
+      color: white;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 0.45rem 1.25rem;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: $ubb-light-blue;
+      }
+    }
   }
+}
+
+.footer {
+  margin-top: 3rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: $ubb-gray-medium;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 1rem 0;
 }

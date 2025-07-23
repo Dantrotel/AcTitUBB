@@ -1,10 +1,25 @@
-<h2>Actualizar Propuesta</h2>
-<form (ngSubmit)="actualizar()">
-  <label>Título:</label>
-  <input [(ngModel)]="propuesta.titulo" name="titulo" required />
+<div class="formulario-actualizar">
+  <h2>Actualizar Propuesta</h2>
 
-  <label>Descripción:</label>
-  <textarea [(ngModel)]="propuesta.descripcion" name="descripcion" required></textarea>
+  <form (ngSubmit)="actualizar()">
+    <div class="form-group">
+      <label for="titulo">Título:</label>
+      <input id="titulo" [(ngModel)]="propuesta.titulo" name="titulo" required />
+    </div>
 
-  <button type="submit">Actualizar</button>
-</form>
+    <div class="form-group">
+      <label for="descripcion">Descripción:</label>
+      <textarea
+        id="descripcion"
+        [(ngModel)]="propuesta.descripcion"
+        name="descripcion"
+        required
+      ></textarea>
+    </div>
+
+    <div class="acciones">
+      <button type="submit" class="btn-primario">Actualizar</button>
+      <button type="button" class="btn-secundario" (click)="volver()">Volver</button>
+    </div>
+  </form>
+</div>
