@@ -1,50 +1,70 @@
 <div class="detalle-propuesta" *ngIf="propuesta; else errorTpl">
   <h2>Detalle de la Propuesta</h2>
 
-  <div class="campo"><strong>Título:</strong> {{ propuesta.titulo }}</div>
-  <div class="campo"><strong>Descripción:</strong> {{ propuesta.descripcion }}</div>
-  
   <div class="campo">
-    <strong>Estudiante:</strong> {{ propuesta.nombre_estudiante }}
-  </div>
-  
-  <div class="campo" *ngIf="propuesta.profesor_rut || propuesta.nombre_profesor">
-    <strong>Profesor (RUT):</strong> {{ propuesta.profesor_rut || 'No asignado' }} — {{ propuesta.nombre_profesor || 'No asignado' }}
-  </div>
-  <div class="campo" *ngIf="!propuesta.profesor_rut && !propuesta.nombre_profesor">
-    <strong>Profesor:</strong> Sin asignar
+    <label>Título:</label>
+    <span>{{ propuesta.titulo }}</span>
   </div>
 
-  <div class="campo"><strong>Estado:</strong> {{ propuesta.estado }}</div>
+  <div class="campo">
+    <label>Descripción:</label>
+    <span>{{ propuesta.descripcion }}</span>
+  </div>
+
+  <div class="campo">
+    <label>Estudiante:</label>
+    <span>{{ propuesta.nombre_estudiante }}</span>
+  </div>
+
+  <div class="campo">
+    <label>Profesor:</label>
+    <span>
+      {{ propuesta.profesor_rut || 'No asignado' }} — 
+      {{ propuesta.nombre_profesor || 'No asignado' }}
+    </span>
+  </div>
+
+  <div class="campo">
+    <label>Estado:</label>
+    <span>{{ propuesta.estado }}</span>
+  </div>
 
   <div class="campo" *ngIf="propuesta.comentarios_profesor">
-    <strong>Comentarios Profesor:</strong>
+    <label>Comentarios del Profesor:</label>
     <p>{{ propuesta.comentarios_profesor }}</p>
   </div>
 
   <div class="campo" *ngIf="propuesta.fecha_envio">
-    <strong>Fecha de Envío:</strong> {{ propuesta.fecha_envio | date:'medium' }}
+    <label>Fecha de Envío:</label>
+    <span>{{ propuesta.fecha_envio | date: 'medium' }}</span>
   </div>
 
   <div class="campo" *ngIf="propuesta.fecha_revision">
-    <strong>Fecha de Revisión:</strong> {{ propuesta.fecha_revision | date:'medium' }}
+    <label>Fecha de Revisión:</label>
+    <span>{{ propuesta.fecha_revision | date: 'medium' }}</span>
   </div>
 
   <div class="campo" *ngIf="propuesta.asignado_por">
-    <strong>Asignado Por:</strong> {{ propuesta.asignado_por }}
+    <label>Asignado Por:</label>
+    <span>{{ propuesta.asignado_por }}</span>
   </div>
 
   <div class="campo">
-    <strong>Archivo adjunto:</strong>
-     <button (click)="descargarArchivo(propuesta.archivo)">Descargar archivo</button>
+    <label>Archivo Adjunto:</label>
+    <button (click)="descargarArchivo(propuesta.archivo)" class="btn-secundario">
+      Descargar archivo
+    </button>
   </div>
 
+  <div class="acciones" *ngIf="esProfesor && !propuesta.profesor_rut">
+    <button (click)="asignarme()" class="btn-asignar">
+      Asignarme esta propuesta
+    </button>
+  </div>
 
-<div class="campo" *ngIf="esProfesor && !propuesta.profesor_rut">
-  <button (click)="asignarme()" class="btn-asignar">Asignarme esta propuesta</button>
-</div>
-
-
+  <div class="acciones">
+    <button (click)="volver()" class="btn-volver">← Volver</button>
+  </div>
 </div>
 
 <ng-template #errorTpl>
@@ -53,6 +73,3 @@
     <p *ngIf="!error">Cargando propuesta...</p>
   </div>
 </ng-template>
-
-
-

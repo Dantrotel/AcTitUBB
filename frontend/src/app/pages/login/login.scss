@@ -6,60 +6,93 @@
   background: #eaeaea url('/assets/ubb-background.png') no-repeat center center;
   background-size: cover;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 1rem;
 }
 
 .login-container {
   background-color: white;
-  padding: 2.5rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   border-top: 6px solid #002f6c;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .login-container h2 {
   color: #002f6c;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   text-align: center;
+  font-size: 1.8rem;
 }
 
 .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
   font-weight: 600;
-  color: #333;
+  color: #444;
   margin-bottom: 0.5rem;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.6rem;
+  padding: 0.75rem;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 1rem;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .form-group input:focus {
-  border-color: #002f6c;
+  border-color: #004494;
+  box-shadow: 0 0 0 3px rgba(0, 47, 108, 0.1);
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.login-button,
+.secondary-button {
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 .login-button {
   background-color: #002f6c;
   color: white;
   border: none;
-  padding: 0.7rem;
-  width: 100%;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
 }
 
 .login-button:hover {
   background-color: #004494;
+  transform: scale(1.02);
+}
+
+.secondary-button {
+  background-color: #eaeaea;
+  border: 1px solid #ccc;
+  color: #002f6c;
+}
+
+.secondary-button:hover {
+  background-color: #f4f4f4;
+  transform: scale(1.02);
 }

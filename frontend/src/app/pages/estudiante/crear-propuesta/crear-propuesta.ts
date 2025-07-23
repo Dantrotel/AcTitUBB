@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-crear-propuesta',
@@ -15,7 +16,7 @@ export class CrearPropuestaComponent {
   descripcion = '';
   archivo: File | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private router: Router) {}
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -44,5 +45,8 @@ export class CrearPropuestaComponent {
         alert('Hubo un error al crear la propuesta');
       }
     });
+  }
+   volver() {
+    this.router.navigate(['/estudiante']);
   }
 }

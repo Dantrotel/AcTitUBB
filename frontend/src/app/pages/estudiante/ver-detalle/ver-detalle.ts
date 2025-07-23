@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services/api'; // Ajusta si tu path es distinto
 import { saveAs } from 'file-saver'; // Asegúrate de tener instalado file-saver
@@ -19,7 +19,8 @@ export class VerPropuestaComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private location:Location
   ) {}
 
   ngOnInit(): void {
@@ -64,6 +65,9 @@ export class VerPropuestaComponent implements OnInit {
       next: () => alert('Te has asignado esta propuesta correctamente.'),
       error: () => alert('No se pudo asignar la propuesta.')
     });
+  }
+   volver() {
+  this.location.back();
   }
 }
 

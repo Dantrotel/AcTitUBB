@@ -38,9 +38,6 @@ const register = async (req, res) => {
             { expiresIn: '1d' }
         );
 
-        console.log('EMAIL_USER:', process.env.EMAIL_USER);
-        console.log('EMAIL_PASS:', process.env.EMAIL_PASS);
-
         await sendConfirmationEmail(newUser.email, confirmToken);
 
 
@@ -76,7 +73,7 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        if (!user.verificado) {
+        if (!user.confirmado) {
             return res.status(401).json({ message: "Debes confirmar tu correo para iniciar sesión" });
         }
 
@@ -84,8 +81,6 @@ const login = async (req, res) => {
         if (!match) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
-
-        console.log("Usuario que inicia sesión:", user.rut);
 
         const token = jwt.sign(
             { rut: user.rut, rol_id: user.rol_id },
@@ -125,8 +120,31 @@ const logout = async (req, res) => {
   }
 };
 
+const findUserByRut = async (req, res) => {
+  try {
+    const { rut } = req.params;
+    if (!rut) {
+      return res.status(400).json({ message: 'Falta el RUT' });
+    }
+
+    const user = await UserModel.findPersonByRut(rut);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Ojo: no devolver contraseña ni datos sensibles
+    delete user.password;
+
+    return res.json(user);
+  } catch (error) {
+    console.error('Error al buscar usuario por RUT:', error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 export const loginController = {
     register,
     login,
     logout,
+    findUserByRut
 };

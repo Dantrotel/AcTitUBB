@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 
 @Component({
@@ -17,7 +17,9 @@ export class ActualizarPropuestaComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router,
+    private location:Location
   ) {}
 
   ngOnInit() {
@@ -58,5 +60,8 @@ export class ActualizarPropuestaComponent implements OnInit {
         alert('Error al actualizar la propuesta');
       }
     });
+  }
+  volver() {
+  this.location.back();
   }
 }
