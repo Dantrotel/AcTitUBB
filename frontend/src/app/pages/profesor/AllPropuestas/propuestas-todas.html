@@ -1,7 +1,11 @@
-<h2>Todas las Propuestas</h2>
+<h2 class="titulo-seccion">Todas las Propuestas</h2>
 
 <div class="cards-container">
-  <mat-card *ngFor="let propuesta of propuestas" class="propuesta-card" (click)="verDetalle(propuesta.id)" matRipple>
+  <mat-card *ngFor="let propuesta of propuestas"
+            class="propuesta-card"
+            (click)="verDetalle(propuesta.id)"
+            matRipple>
+    
     <mat-card-header>
       <mat-card-title>{{ propuesta.titulo }}</mat-card-title>
       <mat-card-subtitle>Estudiante: {{ propuesta.nombre_estudiante }}</mat-card-subtitle>
@@ -10,7 +14,7 @@
     <mat-card-content>
       <p><strong>Profesor:</strong> {{ propuesta.nombre_profesor || 'Sin asignar' }}</p>
       <p><strong>Estado:</strong> {{ propuesta.estado }}</p>
-      <p><strong>Fecha envío:</strong> {{ propuesta.fecha_envio | date:'mediumDate' }}</p>
+      <p><strong>Fecha de envío:</strong> {{ propuesta.fecha_envio | date:'mediumDate' }}</p>
     </mat-card-content>
   </mat-card>
 </div>

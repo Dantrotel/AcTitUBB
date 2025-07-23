@@ -3,7 +3,7 @@ import * as PropuestasModel from '../models/propuesta.model.js';
 // Utilidad para validar RUT chileno simple
 const rutValido = (rut) => /^\d{7,8}-[\dkK]$/.test(rut);
 const fechaValida = (fecha) => !isNaN(new Date(fecha));
-const estadosValidos = ['Pendiente', 'En revisión', 'Aprobada', 'Rechazada'];
+export const estadosValidos = ['pendiente', 'correcciones', 'aprobada', 'rechazada'];
 
 export const crearPropuesta = async (data) => {
   try {
@@ -63,15 +63,18 @@ export const revisarPropuesta = async (id, data) => {
   try {
     if (isNaN(id)) throw new Error('ID de propuesta inválido');
 
-    if (!data.comentario?.trim()) {
+    const comentario = data.comentario || data.comentarios_profesor;
+    const { estado } = data;
+
+    if (!comentario || comentario.trim().length === 0) {
       throw new Error('El comentario no puede estar vacío');
     }
 
-    if (!data.estado || !estadosValidos.includes(data.estado)) {
+    if (!estado || !estadosValidos.includes(estado)) {
       throw new Error('Estado inválido');
     }
 
-    return await PropuestasModel.revisarPropuesta(id, data);
+    return await PropuestasModel.revisarPropuesta(id, { comentarios_profesor: comentario, estado });
   } catch (error) {
     throw error;
   }
@@ -96,5 +99,5 @@ export const getPropuestasAsignadasAlProfesor = async (profesor_rut) => {
     throw new Error('RUT de profesor no válido');
   }
 
-  return await PropuestasModel.obtenerPropuestasPorProfesor(profprofesor_rut);
+  return await PropuestasModel.obtenerPropuestasPorProfesor(profesor_rut);
 };

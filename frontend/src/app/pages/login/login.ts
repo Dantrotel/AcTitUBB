@@ -30,14 +30,13 @@ login() {
   } else {
     payload.rut = this.usuario;
   }
+  
 
   console.log('Payload enviado al backend:', payload);
 
   this.apiService.login(payload).subscribe(
     (res: any) => {
       console.log('Login exitoso:', res);
-      // Aquí podrías redirigir al usuario a otra página
-      //tomar el token y decofificarlo para obtener el rol_id
       const token = res.token;
       if (!token) {
         console.error('No se recibió un token de autenticación');

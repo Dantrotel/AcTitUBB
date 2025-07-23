@@ -1,0 +1,25 @@
+<!-- Nuevo archivo sugerido: revisar-propuesta.html -->
+<div class="revisar-propuesta-container" *ngIf="esProfesor && propuesta; else errorTpl">
+  <h2>Revisar Propuesta</h2>
+  <div>
+    <strong>Título:</strong> {{ propuesta.titulo }}<br>
+    <strong>Descripción:</strong> {{ propuesta.descripcion }}<br>
+    <strong>Estado actual:</strong> {{ propuesta.estado }}
+  </div>
+  <form (ngSubmit)="guardarRevision()">
+    <div>
+      <label for="estado">Nuevo Estado:</label>
+      <select id="estado" [(ngModel)]="estado" name="estado" required>
+        <option *ngFor="let est of estados" [value]="est">{{ est }}</option>
+      </select>
+    </div>
+    <div>
+      <label for="comentarios">Comentarios:</label>
+      <textarea id="comentarios" [(ngModel)]="comentarios" name="comentarios" required></textarea>
+    </div>
+    <button type="submit">Guardar Revisión</button>
+  </form>
+</div>
+<ng-template #errorTpl>
+  <div class="error">{{ error || 'Cargando...' }}</div>
+</ng-template>

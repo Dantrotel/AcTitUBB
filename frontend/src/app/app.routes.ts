@@ -9,6 +9,8 @@ import { VerPropuestaComponent } from './pages/estudiante/ver-detalle/ver-detall
 import { HomeProfesor } from './pages/profesor/home-profesor/home-profesor';
 import { PropuestasTodas } from './pages/profesor/AllPropuestas/propuestas-todas';
 import { AuthGuard } from './guards/auth.guard';
+import { PropuestasAsignadasComponent } from './pages/profesor/asignadas/asignadas';
+import { RevisarPropuestaComponent } from './pages/profesor/revisarPropuesta/revisar-propuesta';
 //
 
 
@@ -39,22 +41,18 @@ export const routes: Routes = [
         path: 'propuestas/todas',
         component: PropuestasTodas,
         canActivate: [AuthGuard]
+      },
+      {
+        path: 'propuestas/asignadas',
+        component: PropuestasAsignadasComponent,
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'propuestas/revisar/:id',
+        component: RevisarPropuestaComponent,
+        canActivate: [AuthGuard]
       }
-      //{
-    //     path: 'visualizacion/:id',
-    //     loadComponent: () =>
-    //       import('./profesor/propuesta-visualizacion/propuesta-visualizacion.component').then(m => m.PropuestaVisualizacionComponent),
-    //   },
-    //   {
-    //     path: 'detalle/:id',
-    //     loadComponent: () =>
-    //       import('./profesor/propuesta-detalle/propuesta-detalle.component').then(m => m.PropuestaDetalleComponent),
-    //   },
-    //   {
-    //     path: 'comentario/:id',
-    //     loadComponent: () =>
-    //       import('./profesor/propuesta-comentario/propuesta-comentario.component').then(m => m.PropuestaComentarioComponent),
-    //   },
+
     ],
   },
 

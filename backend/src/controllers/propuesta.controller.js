@@ -65,6 +65,9 @@ export const revisarPropuesta = async (req, res) => {
       return res.status(400).json({ message: 'Estado inválido.' });
     }
 
+    console.log('Estado recibido:', estado);
+    console.log('Estados válidos:', estadosValidos);
+
     const success = await PropuestasService.revisarPropuesta(id, { comentarios_profesor, estado });
     if (!success) return res.status(404).json({ message: 'Propuesta no encontrada' });
 
