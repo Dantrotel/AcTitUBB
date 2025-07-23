@@ -51,7 +51,7 @@ const findpersonAll = async () => {
 };
 
 const confirmarCuentaPorEmail = async (email) =>{
-  const query = 'UPDATE usuarios SET confirmado = 1 WHERE email = ?';
+  const query = 'UPDATE Usuarios SET confirmado = 1 WHERE email = ?';
   const [result] = await pool.execute(query, [email]);
   return result;
 }

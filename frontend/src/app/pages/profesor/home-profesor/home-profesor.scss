@@ -1,29 +1,88 @@
-.card-container {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  margin-top: 2rem;
-}
+// 🎨 Variables locales (definidas aquí porque no usas styles.scss)
+$ubb-azul: #0033a0;
+$ubb-celeste: #00a9e0;
+$ubb-gris: #e6e7e8;
+$ubb-negro: #000000;
+$ubb-blanco: #ffffff;
+$ubb-rojo: #d50032;
 
-.opcion-card {
-  width: 280px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+$font-stack: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+.contenedor-home {
+  max-width: 960px;
+  margin: 3rem auto;
+  padding: 2rem;
   text-align: center;
-  padding: 1rem;
+  background-color: $ubb-blanco;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  font-family: $font-stack;
 }
 
-.opcion-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.titulo {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: $ubb-azul;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 0 $ubb-gris;
 }
 
-.icono {
-  font-size: 48px;
-  color: #3f51b5;
-  margin-bottom: 0.5rem;
+.tarjetas-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.tarjeta {
+  width: 250px;
+  padding: 1.5rem 1rem;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(135deg, $ubb-celeste 0%, $ubb-azul 100%);
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  h3 {
+    margin-top: 0.5rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  p {
+    font-size: 0.95rem;
+    color: #f0f0f0;
+    margin-top: 0.5rem;
+  }
+
+  .icono {
+    font-size: 48px;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .acciones {
-  margin-top: 3rem;
+  margin-top: 2rem;
+
+  button {
+    font-weight: 600;
+    padding: 0.6rem 1.6rem;
+    font-size: 1rem;
+    border-radius: 8px;
+
+    mat-icon {
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+  }
 }

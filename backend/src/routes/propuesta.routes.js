@@ -14,6 +14,7 @@ routerProp.put('/:id/revisar', verifySession, checkRole('2'), PropuestaControlle
 routerProp.put('/:id/asignar-profesor', verifySession, checkRole('2','3'), PropuestaController.asignarProfesor)
 routerProp.get('/profesor/:rut', verifySession, checkRole('2','3'), PropuestaController.getPropuestasPorProfesor)
 
+
 // Generales (todos los roles)
 routerProp.get('/', verifySession, PropuestaController.obtenerPropuestas)
 routerProp.get('/get/:id', verifySession, PropuestaController.obtenerPropuestaPorId)

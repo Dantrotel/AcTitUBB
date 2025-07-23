@@ -1,0 +1,85 @@
+$ubb-azul: #0033a0;
+$ubb-celeste: #00a9e0;
+$ubb-gris: #e6e7e8;
+$ubb-blanco: #ffffff;
+$ubb-rojo: #d50032;
+
+.revisar-propuesta-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 2rem 2.5rem;
+  background: $ubb-blanco;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  h2 {
+    color: $ubb-azul;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  div {
+    margin-bottom: 1.2rem;
+    font-size: 1.05rem;
+    color: $ubb-azul;
+
+    strong {
+      color: $ubb-celeste;
+    }
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+
+    label {
+      font-weight: 600;
+      color: $ubb-azul;
+      margin-bottom: 0.3rem;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid $ubb-gris;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      background: #f8fafd;
+      resize: vertical;
+    }
+
+    textarea {
+      min-height: 80px;
+      max-height: 200px;
+    }
+
+    button[type="submit"] {
+      background: linear-gradient(90deg, $ubb-celeste 0%, $ubb-azul 100%);
+      color: $ubb-blanco;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.5rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+      &:hover {
+        background: linear-gradient(90deg, $ubb-azul 0%, $ubb-celeste 100%);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      }
+    }
+  }
+}
+
+.error {
+  color: $ubb-rojo;
+  text-align: center;
+  margin-top: 2rem;
+  font-weight: 600;
+}

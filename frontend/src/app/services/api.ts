@@ -26,12 +26,20 @@ export class ApiService {
   }
 
   getPropuestas() {
+    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
     });
   }
 
   getPropuestaById(id: string) {
+    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/get/${id}`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
     });
   }
 
@@ -49,18 +57,30 @@ export class ApiService {
     });
   }
 
-  revisarPropuesta(id: string, data: any) {
-    return this.http.put(`${this.baseUrl}/${id}/revisar`, data, {
+  revisarPropuesta(id: string, data: { comentarios_profesor: string, estado: string }) {
+    const token = localStorage.getItem('token');
+    return this.http.put(`${this.baseUrl}/propuestas/${id}/revisar`, data, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
     });
   }
 
   asignarPropuesta(id: string, data: any) {
+    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}/asignar-profesor`, data, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
     });
   }
 
   deletePropuesta(id: string) {
+    const token = localStorage.getItem('token');
     return this.http.delete(`${this.baseUrl}/propuestas/${id}`, {
+       headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
     });
   }
 
@@ -73,5 +93,19 @@ export class ApiService {
 
   buscaruserByrut(rut:string){
     return this.http.get(`${this.baseUrl}/users/${rut}`);
+  }
+
+  getPropuestasAsignadasProfesor(profesor_rut: string) {
+    const token = localStorage.getItem('token');
+    return this.http.get(`${this.baseUrl}/propuestas/profesor/${profesor_rut}`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
+  getBaseUrl(): string {
+    // Reemplaza la URL base por la que uses en tu ApiService
+    return 'http://localhost:3000/api/v1';
   }
 }

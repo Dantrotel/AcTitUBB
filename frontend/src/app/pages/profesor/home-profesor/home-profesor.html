@@ -1,16 +1,22 @@
-<h2>Bienvenido, {{ profesor.nombre }}</h2>
+<section class="contenedor-home">
+  <h2 class="titulo">👨‍🏫 Bienvenido, {{ profesor.nombre }}</h2>
 
-<p><strong>Correo:</strong> {{ profesor.correo }}</p>
-<p><strong>Departamento:</strong> {{ profesor.departamento }}</p>
+  <div class="tarjetas-opciones">
+    <mat-card
+      *ngFor="let opcion of opciones"
+      class="tarjeta animacion"
+      (click)="navegar(opcion.ruta)"
+      matTooltip="{{ opcion.descripcion }}"
+    >
+      <mat-icon class="icono">{{ opcion.icono }}</mat-icon>
+      <h3>{{ opcion.titulo }}</h3>
+      <p>{{ opcion.descripcion }}</p>
+    </mat-card>
+  </div>
 
-<div class="card-container">
-  <mat-card *ngFor="let opcion of opciones" class="opcion-card" (click)="navegar(opcion.ruta)" matTooltip="{{ opcion.descripcion }}">
-    <mat-icon class="icono">{{ opcion.icono }}</mat-icon>
-    <mat-card-title>{{ opcion.titulo }}</mat-card-title>
-    <mat-card-content>{{ opcion.descripcion }}</mat-card-content>
-  </mat-card>
-</div>
-
-<div class="acciones">
-  <button mat-raised-button color="warn" (click)="cerrarSesion()">Cerrar Sesión</button>
-</div>
+  <div class="acciones">
+    <button mat-raised-button color="warn" (click)="cerrarSesion()">
+      <mat-icon>logout</mat-icon> Cerrar Sesión
+    </button>
+  </div>
+</section>
