@@ -1,59 +1,194 @@
-# Frontend
+# 🎓 AcTitUBB Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.2.
+Interfaz de usuario moderna y responsive para el Sistema de Gestión de Títulos de Grado de la Universidad del Bío-Bío.
 
-## Development server
+## 🛠️ Tecnologías
 
-To start a local development server, run:
+- **Angular** 18+ con Standalone Components
+- **TypeScript** 5+
+- **SCSS** para estilos
+- **Angular Material** (opcional)
+- **Vite** como build tool
 
+## 🏗️ Arquitectura del Frontend
+
+```
+src/app/
+├── 📂 pages/                    # Páginas organizadas por rol
+│   ├── 📂 estudiante/           # Módulo del estudiante
+│   │   └── home/                # Dashboard del estudiante
+│   ├── 📂 profesor/             # Módulo del profesor
+│   │   └── home-profesor/       # Dashboard del profesor
+│   ├── 📂 admin/                # Módulo del administrador
+│   │   ├── gestion-usuarios/    # Gestión de usuarios
+│   │   ├── gestion-profesores/  # Gestión de profesores
+│   │   ├── gestion-propuestas/  # Gestión de propuestas
+│   │   ├── gestion-calendario/  # Gestión del calendario
+│   │   └── asignaciones/        # Asignaciones
+│   ├── 📂 propuestas/           # Gestión de propuestas
+│   │   ├── crear-propuesta/     # Crear nueva propuesta
+│   │   ├── editar-propuesta/    # Editar propuesta existente
+│   │   ├── lista-propuestas/    # Lista de propuestas
+│   │   ├── ver-detalle/         # Detalle de propuesta
+│   │   └── revisar-propuesta/   # Revisar propuesta (profesor)
+│   ├── 📂 login/                # Autenticación
+│   └── 📂 register/             # Registro de usuarios
+├── 📂 services/                 # Servicios de Angular
+│   └── api.ts                   # Servicio principal de API
+├── 📂 guards/                   # Guards de autenticación
+│   └── auth.guard.ts            # Guard de autenticación
+└── 📂 components/               # Componentes reutilizables
+    └── calendar-modal/          # Modal del calendario
+```
+
+## 🚀 Desarrollo Local
+
+### Instalación
+```bash
+npm install
+```
+
+### Servidor de desarrollo
 ```bash
 ng serve
 ```
+La aplicación estará disponible en `http://localhost:4200/`
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### Build para producción
 ```bash
-ng generate component component-name
+ng build --configuration=production
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+### Build con Docker
 ```bash
-ng generate --help
+docker build -t actitubb-frontend .
+docker run -p 80:80 actitubb-frontend
 ```
 
-## Building
+## ⚙️ Configuración
 
-To build the project run:
+### Variables de entorno
+Modifica estos archivos para diferentes entornos:
 
-```bash
-ng build
-```
+**Desarrollo local:**
+- `src/app/services/api.ts` (línea 9): 
+  ```typescript
+  private baseUrl = 'http://localhost:3000/api/v1';
+  ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+**Producción:**
+- `src/app/services/api.ts` (línea 9):
+  ```typescript
+  private baseUrl = 'http://TU_IP_SERVIDOR:3000/api/v1';
+  ```
 
-## Running unit tests
+### Angular Configuration
+- **Angular budgets**: Configurados en `angular.json` para aplicaciones grandes
+- **Build optimization**: Configurado para producción
+- **Asset management**: Recursos estáticos en `public/`
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## 🧪 Testing
 
+### Tests unitarios
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
+### Tests e2e
 ```bash
 ng e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Linting
+```bash
+ng lint
+```
 
-## Additional Resources
+## 📦 Build y Deployment
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+### Build con optimizaciones
+```bash
+# Build de producción
+ng build --configuration=production
+
+# Analizar el bundle
+ng build --stats-json
+npx webpack-bundle-analyzer dist/frontend/stats.json
+```
+
+### Docker Deploy
+```bash
+# Build de la imagen
+docker build -t actitubb-frontend .
+
+# Deploy con Nginx
+docker run -d -p 80:80 actitubb-frontend
+```
+
+## 🎨 Estructura de Estilos
+
+- **Estilos globales**: `src/styles.scss`
+- **Estilos por componente**: Cada componente tiene su `.scss`
+- **Variables**: Definidas en cada componente según necesidad
+- **Responsive**: Mobile-first approach
+
+## 🔧 Configuración de Nginx
+
+El frontend se sirve a través de Nginx con:
+- Compresión gzip
+- Cache headers optimizados
+- Proxy para API del backend
+- Fallback para rutas de Angular (SPA)
+
+Configuración en: `nginx.conf`
+
+## 📱 Características
+
+### Por Rol de Usuario:
+
+**🎓 Estudiante:**
+- Dashboard personalizado
+- Crear y editar propuestas
+- Subir archivos
+- Ver comentarios de profesores
+- Calendario de fechas importantes
+
+**👨‍🏫 Profesor:**
+- Dashboard de propuestas asignadas
+- Revisar y comentar propuestas
+- Gestionar múltiples estudiantes
+- Crear fechas específicas
+
+**🏛️ Administrador:**
+- Gestión completa de usuarios
+- Asignación de profesores
+- Administración del calendario
+- Vista general del sistema
+
+## 🐛 Troubleshooting
+
+### Error de CORS
+Si ves errores de CORS, verifica:
+1. La URL del backend en `api.ts`
+2. La configuración CORS del backend
+3. Que ambos servicios estén corriendo
+
+### Error de build
+Si el build falla por tamaño:
+```bash
+# Los budgets ya están configurados en angular.json
+# Si necesitas ajustarlos más:
+ng build --configuration=production --optimization=false
+```
+
+### Problemas de permisos
+```bash
+# En desarrollo
+sudo chown -R $USER:$GROUP node_modules/
+npm install
+```
+
+---
+
+**📧 Contacto**: [daniel.aguayo@alumnos.ubiobio.cl](mailto:daniel.aguayo@alumnos.ubiobio.cl)  
+**🏫 Universidad del Bío-Bío** - 2025
