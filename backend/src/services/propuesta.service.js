@@ -3,7 +3,7 @@ import * as PropuestasModel from '../models/propuesta.model.js';
 // Utilidad para validar RUT chileno simple
 const rutValido = (rut) => /^\d{7,8}-[\dkK]$/.test(rut);
 const fechaValida = (fecha) => !isNaN(new Date(fecha));
-export const estadosValidos = ['pendiente', 'correcciones', 'aprobada', 'rechazada'];
+export const estadosValidos = ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'];
 
 export const crearPropuesta = async (data) => {
   try {

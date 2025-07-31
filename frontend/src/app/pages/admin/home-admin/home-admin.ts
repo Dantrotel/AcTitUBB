@@ -93,6 +93,10 @@ export class HomeAdminComponent implements OnInit {
     this.router.navigate(['/admin/asignaciones']);
   }
 
+  irAGestionCalendario() {
+    this.router.navigate(['/admin/calendario']);
+  }
+
   cerrarSesion() {
     localStorage.removeItem('token');
     this.router.navigate(['/login']);

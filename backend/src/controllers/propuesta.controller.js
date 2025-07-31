@@ -60,7 +60,7 @@ export const revisarPropuesta = async (req, res) => {
       return res.status(400).json({ message: 'Faltan comentarios o estado.' });
     }
 
-    const estadosValidos = ['pendiente', 'correcciones', 'aprobada', 'rechazada'];
+    const estadosValidos = ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'];
     if (!estadosValidos.includes(estado)) {
       return res.status(400).json({ message: 'Estado inválido.' });
     }

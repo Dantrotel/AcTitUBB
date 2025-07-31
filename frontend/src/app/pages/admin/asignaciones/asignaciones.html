@@ -1,47 +1,29 @@
-<!-- Navbar del administrador -->
-<nav class="admin-navbar">
-  <div class="navbar-brand">
-    <i class="fas fa-shield-alt"></i>
-    <span>AcTitUBB - Gestión de Asignaciones</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <button class="btn-secondary" (click)="volver()">
-      <i class="fas fa-arrow-left"></i>
-      Volver al Panel
-    </button>
-  </div>
-</nav>
-
-<!-- Contenido principal -->
-<div class="main-container">
-  <!-- Header -->
-  <div class="page-header">
+<!-- Contenedor principal -->
+<div class="asignaciones-container">
+  <!-- Header principal -->
+  <div class="header">
     <div class="header-content">
-      <h1>Gestión de Asignaciones</h1>
-      <p>Administra las asignaciones de profesores a propuestas</p>
+      <h1><i class="fas fa-user-plus"></i> Gestión de Asignaciones</h1>
+      <p>Administra las asignaciones de profesores a propuestas de título</p>
     </div>
-    <div class="header-stats">
-      <div class="stat-item">
-        <span class="stat-number">{{ asignaciones.length }}</span>
-        <span class="stat-label">Total</span>
-      </div>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
     </div>
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="loading-spinner">
-      <i class="fas fa-spinner fa-spin"></i>
-    </div>
-    <p>Cargando asignaciones...</p>
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <h3>Cargando asignaciones...</h3>
+    <p>Obteniendo información de todas las asignaciones registradas</p>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error && !loading" class="error-state">
-    <div class="error-icon">
-      <i class="fas fa-exclamation-triangle"></i>
-    </div>
+  <div *ngIf="error && !loading" class="error-container">
+    <i class="fas fa-exclamation-triangle"></i>
     <h3>Error al cargar las asignaciones</h3>
     <p>{{ error }}</p>
     <button class="btn-primary" (click)="cargarAsignaciones()">
@@ -50,150 +32,155 @@
     </button>
   </div>
 
-  <!-- Filtros -->
-  <div *ngIf="!loading && !error" class="filters-section">
-    <div class="filters-grid">
-      <div class="filter-group">
-        <label for="filtroProfesor">Profesor:</label>
-        <input 
-          type="text" 
-          id="filtroProfesor" 
-          [(ngModel)]="filtroProfesor" 
-          placeholder="Buscar por profesor"
-          class="filter-input"
-        >
-      </div>
-
-      <div class="filter-group">
-        <label for="filtroEstudiante">Estudiante:</label>
-        <input 
-          type="text" 
-          id="filtroEstudiante" 
-          [(ngModel)]="filtroEstudiante" 
-          placeholder="Buscar por estudiante"
-          class="filter-input"
-        >
-      </div>
-
-      <div class="filter-group">
-        <label for="filtroEstado">Estado:</label>
-        <select id="filtroEstado" [(ngModel)]="filtroEstado" class="filter-select">
-          <option value="">Todos los estados</option>
-          <option value="Pendiente">Pendiente</option>
-          <option value="En Revisión">En Revisión</option>
-          <option value="Aprobada">Aprobada</option>
-          <option value="Correcciones">Correcciones</option>
-        </select>
-      </div>
-
-      <div class="filter-actions">
-        <button class="btn-secondary" (click)="limpiarFiltros()">
-          <i class="fas fa-times"></i>
-          Limpiar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lista de asignaciones -->
-  <div *ngIf="!loading && !error" class="asignaciones-section">
-    <div class="section-header">
-      <h2>Asignaciones ({{ asignacionesFiltradas.length }})</h2>
+  <!-- Contenido principal -->
+  <div *ngIf="!loading && !error">
+    <!-- Botón de volver (oculto en desktop, visible en móvil) -->
+    <div class="volver-section mobile-only">
+      <button class="btn-volver" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver al Panel de Administración
+      </button>
     </div>
 
-    <div *ngIf="asignacionesFiltradas.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <i class="fas fa-user-plus"></i>
-      </div>
-      <h3>No se encontraron asignaciones</h3>
-      <p>No hay asignaciones que coincidan con los filtros aplicados</p>
-    </div>
-
-    <div *ngIf="asignacionesFiltradas.length > 0" class="asignaciones-grid">
-      <div *ngFor="let asignacion of asignacionesFiltradas" class="asignacion-card">
-        <div class="card-header">
-          <div class="asignacion-info">
-            <div class="asignacion-icon">
-              <i class="fas fa-link"></i>
-            </div>
-            <div class="asignacion-details">
-              <h3>{{ asignacion.propuesta }}</h3>
-              <p class="asignacion-date">Asignado el {{ formatearFecha(asignacion.fechaAsignacion) }}</p>
-            </div>
-          </div>
-          <div class="asignacion-badges">
-            <div class="estado-badge" [class]="obtenerClaseEstado(asignacion.estado)">
-              {{ asignacion.estado }}
-            </div>
-            <div class="progreso-badge" [class]="obtenerClaseProgreso(asignacion.progreso)">
-              {{ asignacion.progreso }}%
-            </div>
-          </div>
+    <!-- Filtros -->
+    <div class="filtros-section">
+      <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+      <div class="filtros-grid">
+        <div class="filtro-grupo">
+          <label for="filtroProfesor">Profesor:</label>
+          <input 
+            type="text" 
+            id="filtroProfesor" 
+            [(ngModel)]="filtroProfesor" 
+            placeholder="Buscar por profesor"
+          >
         </div>
 
-        <div class="card-content">
-          <div class="asignacion-data">
-            <div class="data-row">
-              <div class="data-item">
-                <i class="fas fa-user-graduate"></i>
-                <span><strong>Estudiante:</strong> {{ asignacion.estudiante }}</span>
-              </div>
-              <div class="data-item">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span><strong>Profesor:</strong> {{ asignacion.profesor }}</span>
-              </div>
-            </div>
-            <div class="data-row">
-              <div class="data-item">
-                <i class="fas fa-id-card"></i>
-                <span><strong>RUT Estudiante:</strong> {{ asignacion.estudianteRut }}</span>
-              </div>
-              <div class="data-item">
-                <i class="fas fa-id-card"></i>
-                <span><strong>RUT Profesor:</strong> {{ asignacion.profesorRut }}</span>
-              </div>
-            </div>
-            <div class="data-row">
-              <div class="data-item">
-                <i class="fas fa-calendar"></i>
-                <span><strong>Fecha Asignación:</strong> {{ formatearFecha(asignacion.fechaAsignacion) }}</span>
-              </div>
-              <div class="data-item">
-                <i class="fas fa-percentage"></i>
-                <span><strong>Progreso:</strong> {{ asignacion.progreso }}%</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="progreso-bar">
-            <div class="progreso-fill" [style.width.%]="asignacion.progreso" [class]="obtenerClaseProgreso(asignacion.progreso)"></div>
-          </div>
+        <div class="filtro-grupo">
+          <label for="filtroEstudiante">Estudiante:</label>
+          <input 
+            type="text" 
+            id="filtroEstudiante" 
+            [(ngModel)]="filtroEstudiante" 
+            placeholder="Buscar por estudiante"
+          >
         </div>
 
-        <div class="card-actions">
-          <button class="btn-primary" (click)="verDetalle(asignacion)">
-            <i class="fas fa-eye"></i>
-            Ver Detalle
-          </button>
-          
-          <button class="btn-accent" (click)="reasignarProfesor(asignacion)">
-            <i class="fas fa-user-plus"></i>
-            Reasignar
-          </button>
-          
-          <button class="btn-danger" (click)="eliminarAsignacion(asignacion)">
-            <i class="fas fa-trash"></i>
-            Eliminar
+        <div class="filtro-grupo">
+          <label for="filtroEstado">Estado:</label>
+          <select id="filtroEstado" [(ngModel)]="filtroEstado">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="En Revisión">En Revisión</option>
+            <option value="Aprobada">Aprobada</option>
+            <option value="Correcciones">Correcciones</option>
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          <label>&nbsp;</label>
+          <button class="btn-secondary" (click)="limpiarFiltros()">
+            <i class="fas fa-times"></i>
+            Limpiar Filtros
           </button>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Footer -->
-<footer class="main-footer">
-  <div class="footer-content">
-    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Gestión de Asignaciones</p>
+    <!-- Lista de asignaciones -->
+    <div class="asignaciones-section">
+      <div class="section-header">
+        <h3><i class="fas fa-link"></i> Asignaciones Registradas</h3>
+        <div class="contador">{{ asignacionesFiltradas.length }} asignaciones</div>
+      </div>
+
+      <div *ngIf="asignacionesFiltradas.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <h3>No se encontraron asignaciones</h3>
+        <p>No hay asignaciones que coincidan con los filtros aplicados</p>
+      </div>
+
+      <div *ngIf="asignacionesFiltradas.length > 0" class="asignaciones-table-container">
+        <table class="asignaciones-table">
+          <thead>
+            <tr>
+              <th>Propuesta</th>
+              <th>Estudiante</th>
+              <th>Profesor</th>
+              <th>Estado</th>
+              <th>Fecha Asignación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let asignacion of asignacionesFiltradas">
+              <td>
+                <div class="propuesta-info">
+                  <div class="propuesta-icon">
+                    <i class="fas fa-file-alt"></i>
+                  </div>
+                  <div class="propuesta-details">
+                    <strong>{{ asignacion.titulo_propuesta }}</strong>
+                    <span>ID: {{ asignacion.propuesta_id }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="estudiante-info">
+                  <div class="estudiante-avatar">
+                    <i class="fas fa-user-graduate"></i>
+                  </div>
+                  <div class="estudiante-details">
+                    <strong>{{ asignacion.nombre_estudiante }}</strong>
+                    <span>{{ asignacion.estudiante_rut }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="profesor-info">
+                  <div class="profesor-avatar">
+                    <i class="fas fa-user-tie"></i>
+                  </div>
+                  <div class="profesor-details">
+                    <strong>{{ asignacion.nombre_profesor }}</strong>
+                    <span>{{ asignacion.profesor_rut }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="estado-badge" [class]="obtenerClaseEstado(asignacion.estado_propuesta)">
+                  {{ asignacion.estado_propuesta }}
+                </span>
+              </td>
+              <td>
+                <span class="fecha-asignacion">{{ formatearFecha(asignacion.fecha_asignacion) }}</span>
+              </td>
+              <td>
+                <div class="acciones">
+                  <button class="btn btn-primary" (click)="verDetalle(asignacion)" title="Ver detalle">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  
+                  <button class="btn btn-warning" (click)="reasignarProfesor(asignacion)" title="Reasignar profesor">
+                    <i class="fas fa-user-plus"></i>
+                  </button>
+                  
+                  <button class="btn btn-danger" (click)="eliminarAsignacion(asignacion)" title="Eliminar asignación">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</footer> 
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Sistema de Gestión de Títulos</p>
+  </div>
+</div> 

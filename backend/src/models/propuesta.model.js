@@ -26,16 +26,30 @@ export const asignarProfesor = async (propuesta_id, profesor_rut) => {
 };
 
 export const revisarPropuesta = async (id, { comentarios_profesor, estado }) => {
+  // Mapear el nombre del estado al ID correspondiente
+  const estadoMap = {
+    'pendiente': 1,
+    'en_revision': 2,
+    'correcciones': 3,
+    'aprobada': 4,
+    'rechazada': 5
+  };
+  
+  const estado_id = estadoMap[estado];
+  if (!estado_id) {
+    throw new Error(`Estado inválido: ${estado}`);
+  }
+  
   const [result] = await pool.execute(
-    `UPDATE propuestas SET comentarios_profesor = ?, estado = ?, fecha_revision = NOW() WHERE id = ?`,
-    [comentarios_profesor, estado, id]
+    `UPDATE propuestas SET comentarios_profesor = ?, estado_id = ?, fecha_revision = NOW() WHERE id = ?`,
+    [comentarios_profesor, estado_id, id]
   );
   return result.affectedRows > 0;
 };
 
 export const aprobarPropuesta = async (id, proyecto_id) => {
   const [result] = await pool.execute(
-    `UPDATE propuestas SET estado = 'aprobada', fecha_aprobacion = NOW(), proyecto_id = ? WHERE id = ?`,
+    `UPDATE propuestas SET estado_id = 4, fecha_aprobacion = NOW(), proyecto_id = ? WHERE id = ?`,
     [proyecto_id, id]
   );
   return result.affectedRows > 0;
@@ -44,6 +58,7 @@ export const aprobarPropuesta = async (id, proyecto_id) => {
 export const obtenerPropuestas = async () => {
   const [rows] = await pool.execute(`
     SELECT p.*, 
+           ep.nombre AS estado,
            u.nombre AS nombre_estudiante,
            GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
            (SELECT up2.nombre FROM asignaciones_propuestas ap2 
@@ -53,6 +68,7 @@ export const obtenerPropuestas = async () => {
             INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
             WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
     FROM propuestas p
+    LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
     LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
     LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
@@ -66,6 +82,7 @@ export const obtenerPropuestaPorId = async (id) => {
   const [rows] = await pool.execute(`
     SELECT 
       p.*, 
+      ep.nombre AS estado,
       ue.nombre AS nombre_estudiante,
       GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
       GROUP_CONCAT(DISTINCT up.rut) AS profesores_ruts,
@@ -73,6 +90,7 @@ export const obtenerPropuestaPorId = async (id) => {
        INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
        WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
     FROM propuestas p
+    LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN usuarios ue ON p.estudiante_rut = ue.rut
     LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
     LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
@@ -86,8 +104,10 @@ export const obtenerPropuestaPorId = async (id) => {
 export const obtenerPropuestasPorEstudiante = async (estudiante_rut) => {
   const [rows] = await pool.execute(`
     SELECT p.*, 
+           ep.nombre AS estado,
            GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados
     FROM propuestas p
+    LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
     LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
     WHERE p.estudiante_rut = ?
@@ -100,9 +120,11 @@ export const obtenerPropuestasPorEstudiante = async (estudiante_rut) => {
 export const obtenerPropuestasPorProfesor = async (profesor_rut) => {
   const [rows] = await pool.execute(`
     SELECT p.*, 
+           ep.nombre AS estado,
            u.nombre AS nombre_estudiante
     FROM propuestas p
     INNER JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
+    LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
     WHERE ap.profesor_rut = ?
     ORDER BY p.fecha_envio DESC

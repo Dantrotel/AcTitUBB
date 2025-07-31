@@ -1,26 +1,50 @@
-FROM ubuntu:22.04 AS builder
+# Etapa de construcción
+FROM node:20-alpine AS builder
 
-RUN apt-get update && apt-get install -y curl gnupg git
-
-# Instalar Node.js 20 + Angular CLI
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-  && apt-get install -y nodejs \
-  && npm install -g @angular/cli \
-  && apt-get clean
+# Instalar dependencias de sistema
+RUN apk add --no-cache git python3 make g++
 
 WORKDIR /app
 
+# Copiar archivos de dependencias
 COPY package*.json ./
-RUN npm install
 
+# Instalar dependencias (incluyendo dev para build)
+RUN npm ci
+
+# Copiar código fuente
 COPY . .
 
-# Construir el frontend
-RUN npm run build
+# Construir el frontend para producción
+RUN npm run build --prod
 
-# Imagen final con nginx
+# Etapa de producción con nginx
 FROM nginx:alpine
+
+# Instalar herramientas para debugging si es necesario
+RUN apk add --no-cache curl
+
+# Copiar archivos construidos
 COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
+
+# Copiar configuración de nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Crear usuario nginx y dar permisos
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    chown -R nginx:nginx /etc/nginx/conf.d
+RUN touch /var/run/nginx.pid && chown -R nginx:nginx /var/run/nginx.pid
+
+# Cambiar al usuario nginx para seguridad
+USER nginx
+
 EXPOSE 80
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:80/ || exit 1
+
+# Comando para ejecutar nginx
+CMD ["nginx", "-g", "daemon off;"]

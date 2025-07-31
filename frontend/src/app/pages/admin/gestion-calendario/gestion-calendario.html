@@ -1,0 +1,252 @@
+<div class="gestion-calendario-container">
+  <div class="header">
+    <div class="header-content">
+      <h1><i class="fas fa-calendar-alt"></i> Gestión de Calendario</h1>
+      <p>Administra las fechas globales del sistema académico</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner"></i>
+    </div>
+    <h3>Cargando fechas...</h3>
+    <p>Obteniendo información del calendario</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar fechas</h3>
+    <p>{{error}}</p>
+    <button class="btn-primary" (click)="cargarFechas()">
+      <i class="fas fa-sync-alt"></i>
+      Reintentar
+    </button>
+  </div>
+
+  <div *ngIf="!loading && !error">
+    <!-- Sección de nueva fecha -->
+    <div class="nueva-fecha-section">
+      <div class="section-header">
+        <h2><i class="fas fa-plus"></i> Crear Nueva Fecha Global</h2>
+        <button class="btn-toggle" (click)="mostrarFormulario = !mostrarFormulario">
+          <i [class]="mostrarFormulario ? 'fas fa-minus' : 'fas fa-plus'"></i>
+          {{mostrarFormulario ? 'Ocultar' : 'Mostrar'}} Formulario
+        </button>
+      </div>
+
+      <div class="formulario-container" [class.visible]="mostrarFormulario">
+        <form (ngSubmit)="crearFecha()" #fechaForm="ngForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="titulo">Título *</label>
+              <input 
+                type="text" 
+                id="titulo" 
+                name="titulo"
+                [(ngModel)]="nuevaFecha.titulo" 
+                required
+                placeholder="Ej: Inicio de Semestre">
+            </div>
+
+            <div class="form-group">
+              <label for="fecha">Fecha *</label>
+              <input 
+                type="date" 
+                id="fecha" 
+                name="fecha"
+                [(ngModel)]="nuevaFecha.fecha" 
+                required>
+            </div>
+
+            <div class="form-group">
+              <label for="tipo_fecha">Tipo de Fecha *</label>
+              <select 
+                id="tipo_fecha" 
+                name="tipo_fecha"
+                [(ngModel)]="nuevaFecha.tipo_fecha" 
+                required>
+                <option value="">Seleccionar tipo...</option>
+                <option value="academica">Académica</option>
+                <option value="entrega">Entrega</option>
+                <option value="defensa">Defensa</option>
+                <option value="reunion">Reunión</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="descripcion">Descripción</label>
+              <textarea 
+                id="descripcion" 
+                name="descripcion"
+                [(ngModel)]="nuevaFecha.descripcion" 
+                rows="3"
+                placeholder="Descripción opcional de la fecha..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!fechaForm.form.valid || guardando">
+              <i class="fas fa-save"></i>
+              {{guardando ? 'Guardando...' : 'Crear Fecha'}}
+            </button>
+            <button type="button" class="btn-secondary" (click)="limpiarFormulario()">
+              <i class="fas fa-eraser"></i>
+              Limpiar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="estadisticas-section" *ngIf="estadisticas">
+      <h2><i class="fas fa-chart-bar"></i> Estadísticas</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{estadisticas.total_fechas}}</div>
+            <div class="stat-label">Total de Fechas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-globe"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{estadisticas.fechas_globales}}</div>
+            <div class="stat-label">Fechas Globales</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{estadisticas.fechas_especificas}}</div>
+            <div class="stat-label">Fechas Específicas</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{estadisticas.fechas_futuras}}</div>
+            <div class="stat-label">Fechas Futuras</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de fechas globales -->
+    <div class="fechas-section">
+      <div class="section-header">
+        <h2><i class="fas fa-list"></i> Fechas Globales ({{fechasGlobales.length}})</h2>
+        <div class="section-actions">
+          <button class="btn-secondary" (click)="cargarFechas()">
+            <i class="fas fa-sync-alt"></i>
+            Actualizar
+          </button>
+        </div>
+      </div>
+
+      <div class="fechas-grid" *ngIf="fechasGlobales.length > 0; else noFechas">
+        <div class="fecha-card" *ngFor="let fecha of fechasGlobales" [class]="'tipo-' + fecha.tipo_fecha">
+          <div class="fecha-header">
+            <div class="fecha-icon">
+              <i [class]="getIconoTipoFecha(fecha.tipo_fecha)"></i>
+            </div>
+            <div class="fecha-info">
+              <h3>{{fecha.titulo}}</h3>
+              <p class="fecha-date">{{fecha.fecha | date:'fullDate':'es-ES'}}</p>
+            </div>
+            <div class="fecha-actions">
+              <button class="btn-edit" (click)="editarFecha(fecha)" title="Editar">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-delete" (click)="confirmarEliminar(fecha)" title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="fecha-details" *ngIf="fecha.descripcion">
+            <p>{{fecha.descripcion}}</p>
+          </div>
+          
+          <div class="fecha-meta">
+            <span class="tipo-badge">{{getTipoFechaLabel(fecha.tipo_fecha)}}</span>
+            <span class="creador">Creado por: {{fecha.nombre_creador}}</span>
+            <span class="fecha-creacion">{{fecha.created_at | date:'short':'es-ES'}}</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noFechas>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-calendar-times"></i>
+          </div>
+          <h3>No hay fechas globales</h3>
+          <p>Aún no se han creado fechas globales en el sistema</p>
+          <button class="btn-primary" (click)="mostrarFormulario = true">
+            <i class="fas fa-plus"></i>
+            Crear Primera Fecha
+          </button>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Botón volver móvil -->
+    <div class="volver-section mobile-only">
+      <button class="btn-volver" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver al Panel de Administración
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Títulos</p>
+  </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal-overlay" *ngIf="mostrarModalEliminar" (click)="cancelarEliminar()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Confirmar Eliminación</h3>
+      <button class="close-btn" (click)="cancelarEliminar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>¿Estás seguro de que deseas eliminar la fecha "<strong>{{fechaAEliminar?.titulo}}</strong>"?</p>
+      <p class="warning">Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="eliminarFecha()" [disabled]="eliminando">
+        <i class="fas fa-trash"></i>
+        {{eliminando ? 'Eliminando...' : 'Eliminar'}}
+      </button>
+      <button class="btn-secondary" (click)="cancelarEliminar()">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

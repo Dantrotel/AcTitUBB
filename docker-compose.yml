@@ -4,31 +4,71 @@ services:
     container_name: mysql_actitubb
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
       MYSQL_DATABASE: actitubb
+      MYSQL_USER: actitubb_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-actitubb123}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/src/db/database.sql:/docker-entrypoint-initdb.d/database.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - actitubb_network
 
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: dockerfile
     container_name: backend_actitubb
+    restart: always
     ports:
       - "3000:3000"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     env_file:
       - ./backend/.env
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=actitubb
+      - DB_USER=actitubb_user
+      - DB_PASSWORD=${MYSQL_PASSWORD:-actitubb123}
+    volumes:
+      - ./backend/uploads:/app/uploads
+    networks:
+      - actitubb_network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: dockerfile
     container_name: frontend_actitubb
+    restart: always
     ports:
-      - "4200:80"
+      - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    environment:
+      - API_URL=http://backend:3000
+    networks:
+      - actitubb_network
 
 volumes:
   mysql_data:
+
+networks:
+  actitubb_network:
+    driver: bridge

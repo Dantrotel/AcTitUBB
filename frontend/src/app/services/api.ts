@@ -17,6 +17,81 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
+  // ===== MÉTODOS PARA EL CALENDARIO =====
+
+  // Estudiante: obtener sus fechas (globales + específicas del profesor)
+  getMisFechasCalendario() {
+    return this.http.get(`${this.baseUrl}/calendario/estudiante/mis-fechas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estudiante: obtener fechas próximas
+  getFechasProximas(limite?: number) {
+    const url = limite ? 
+      `${this.baseUrl}/calendario/estudiante/proximas?limite=${limite}` : 
+      `${this.baseUrl}/calendario/estudiante/proximas`;
+    return this.http.get(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: crear fecha global
+  crearFechaGlobal(data: any) {
+    return this.http.post(`${this.baseUrl}/calendario/admin/global`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: obtener fechas globales
+  getFechasGlobales() {
+    return this.http.get(`${this.baseUrl}/calendario/admin/globales`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: obtener estadísticas de fechas
+  getEstadisticasFechas() {
+    return this.http.get(`${this.baseUrl}/calendario/admin/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: crear fecha específica para estudiante
+  crearFechaEspecifica(data: any) {
+    return this.http.post(`${this.baseUrl}/calendario/profesor/especifica`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: obtener sus fechas creadas
+  getMisFechasProfesor() {
+    return this.http.get(`${this.baseUrl}/calendario/profesor/mis-fechas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // General: obtener fecha por ID
+  getFechaPorId(id: string) {
+    return this.http.get(`${this.baseUrl}/calendario/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // General: actualizar fecha
+  actualizarFecha(id: string, data: any) {
+    return this.http.put(`${this.baseUrl}/calendario/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // General: eliminar fecha
+  eliminarFecha(id: string) {
+    return this.http.delete(`${this.baseUrl}/calendario/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   login(data: any) {
     return this.http.post(`${this.baseUrl}/users/login`, data);
   }
