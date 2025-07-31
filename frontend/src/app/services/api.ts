@@ -104,6 +104,15 @@ export class ApiService {
     });
   }
 
+  getPropuestasEstudiante(estudiante_rut: string) {
+    const token = localStorage.getItem('token');
+    return this.http.get(`${this.baseUrl}/propuestas/estudiante/${estudiante_rut}`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
   getBaseUrl(): string {
     // Reemplaza la URL base por la que uses en tu ApiService
     return 'http://localhost:3000/api/v1';

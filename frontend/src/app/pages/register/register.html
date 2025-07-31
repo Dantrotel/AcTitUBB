@@ -1,9 +1,15 @@
 <div class="register-container">
-  <h2>Registro - AcTitUBB</h2>
+  <div class="logo-container">
+    <div class="logo">AcTitUBB</div>
+  </div>
+  
+  <h2>Crear Cuenta</h2>
 
   <form (ngSubmit)="register()" novalidate>
     <div class="form-group">
-      <label for="rut">RUT</label>
+      <label for="rut">
+        <i class="fa fa-id-card"></i> RUT
+      </label>
       <input
         type="text"
         id="rut"
@@ -11,11 +17,14 @@
         name="rut"
         required
         placeholder="12345678-9"
+        autocomplete="off"
       />
     </div>
 
     <div class="form-group">
-      <label for="nombre">Nombre completo</label>
+      <label for="nombre">
+        <i class="fa fa-user"></i> Nombre completo
+      </label>
       <input
         type="text"
         id="nombre"
@@ -23,11 +32,14 @@
         name="nombre"
         required
         placeholder="Ej: Juan Edgardo"
+        autocomplete="off"
       />
     </div>
 
     <div class="form-group">
-      <label for="email">Correo institucional</label>
+      <label for="email">
+        <i class="fa fa-envelope"></i> Correo institucional
+      </label>
       <input
         type="email"
         id="email"
@@ -35,11 +47,14 @@
         name="email"
         required
         placeholder="correo@alumnos.ubiobio.cl"
+        autocomplete="off"
       />
     </div>
 
     <div class="form-group">
-      <label for="password">Contraseña</label>
+      <label for="password">
+        <i class="fa fa-lock"></i> Contraseña
+      </label>
       <input
         type="password"
         id="password"
@@ -47,17 +62,27 @@
         name="password"
         required
         placeholder="********"
+        autocomplete="new-password"
       />
     </div>
 
-    <button type="submit" [disabled]="!rut || !nombre || !email || !password">
-      Registrarse
-    </button>
+    <div class="button-group">
+      <button type="submit" [disabled]="!rut || !nombre || !email || !password">
+        <i class="fa fa-user-plus"></i> Registrarse
+      </button>
 
-    <button type="button" class="back-button" (click)="volver()">
-      Volver atrás
-    </button>
+      <button type="button" class="back-button" (click)="volver()">
+        <i class="fa fa-arrow-left"></i> Volver atrás
+      </button>
+    </div>
   </form>
 
-  <p *ngIf="mensaje" class="success-message">{{ mensaje }}</p>
+  <p *ngIf="mensaje" class="success-message">
+    <i class="fa" [ngClass]="{'fa-check-circle': !mensaje.includes('Error'), 'fa-exclamation-circle': mensaje.includes('Error')}"></i>
+    {{ mensaje }}
+  </p>
+
+  <div class="footer">
+    <p>Universidad del Bío-Bío &copy; {{currentYear}}</p>
+  </div>
 </div>

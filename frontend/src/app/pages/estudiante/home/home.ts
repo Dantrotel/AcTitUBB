@@ -23,6 +23,7 @@ import { ApiService } from '../../../services/api';
 })
 export class EstudianteHomeComponent implements OnInit {
   estudiante: any = {};
+  showUserMenu = false;
   opciones = [
     { 
       titulo: 'Crear Propuesta', 
@@ -77,12 +78,21 @@ export class EstudianteHomeComponent implements OnInit {
     });
   }
 
+  fechaActual(): Date {
+    return new Date();
+  }
+
+  toggleUserMenu() {
+    this.showUserMenu = !this.showUserMenu;
+  }
 
   navegar(ruta: string) {
+    this.showUserMenu = false; // Cerrar menú al navegar
     this.router.navigate([ruta]);
   }
 
   cerrarSesion() {
+    this.showUserMenu = false;
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
     this.router.navigate(['/login']);

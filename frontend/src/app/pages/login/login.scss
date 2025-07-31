@@ -1,98 +1,622 @@
-:host {
+@use 'sass:color';
+
+// Variables
+$primary-blue: #2196F3;
+$primary-pink: #E91E63;
+$dark-pink: #C2185B;
+$university-blue: #0066CC;
+$text-dark: #333;
+$text-light: #666;
+$text-lighter: #999;
+$border-color: #ddd;
+$background-light: #f8f9fa;
+$background-input: #f9f9f9;
+$white: #ffffff;
+
+// UBB Colors
+$ubb-blue: #1e5799;
+$ubb-blue-light: #2989d8;
+$ubb-blue-lighter: #7db9e8;
+$ubb-red: #E20613;
+$ubb-light-gray: #BBBBBB;
+$ubb-gray: #F3E4E4;
+$ubb-dark-gray: #666;
+
+// UBB Gradients
+$ubb-blue-gradient: linear-gradient(135deg, #1e5799, #207cca, #2989d8, #7db9e8);
+$ubb-gray-gradient: linear-gradient(to right, #BBBBBB 0%, #F3E4E4 31.3%, #F8F8F8 45.3%, #F3E4E4 66%, #BBBBBB 100%);
+$ubb-red-gradient: linear-gradient(to right, #E20613 0%, #F39D75 51.6%, #E20613 100%);
+$ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
+
+// Mixins
+@mixin flex-center {
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: #eaeaea url('/assets/ubb-background.png') no-repeat center center;
-  background-size: cover;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding: 1rem;
+  justify-content: center;
 }
 
-.login-container {
-  background-color: white;
-  padding: 2.5rem;
-  border-radius: 16px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+@mixin transition($property: all, $duration: 0.3s) {
+  transition: $property $duration ease;
+}
+
+@mixin button-style($bg-color, $hover-color) {
+  background: $bg-color;
+  color: $white;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  @include transition(background-color);
+  
+  &:hover {
+    background: $hover-color;
+  }
+}
+
+// Estilos principales
+.adecca-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: $ubb-blue-gradient;
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.adecca-container {
   width: 100%;
-  max-width: 420px;
-  border-top: 6px solid #002f6c;
-  animation: fadeIn 0.5s ease-in-out;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.6s ease-in-out;
+  position: relative;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.adecca-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  transform: rotate(30deg);
+  z-index: -1;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.login-container h2 {
-  color: #002f6c;
-  margin-bottom: 2rem;
-  text-align: center;
-  font-size: 1.8rem;
+// Header
+.adecca-header {
+  padding: 2rem 1.5rem;
+  background: $ubb-gray-gradient;
+  border-bottom: 3px solid $ubb-blue;
+  position: relative;
+
+  .logo-section {
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      
+      .logo-text {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: $ubb-blue;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        padding-bottom: 5px;
+      }
+      
+      .logo-text::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, $ubb-blue, transparent);
+        border-radius: 2px;
+      }
+      
+      .logo-dots {
+        display: flex;
+        gap: 8px;
+        margin-left: 1rem;
+        
+        .dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          
+          &.dot-green { background: $ubb-blue; }
+          &.dot-blue { background: $ubb-blue-light; }
+          &.dot-purple { background: $ubb-red; }
+          &.dot-orange { background: $ubb-blue-lighter; }
+          &.dot-red { background: $ubb-red; }
+          &.dot-teal { background: $ubb-blue; }
+        }
+      }
+    }
+    
+    .welcome-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: $ubb-blue;
+      text-align: center;
+      margin: 0;
+    }
+  }
 }
 
-.form-group {
-  margin-bottom: 1.5rem;
+// Contenido principal
+.adecca-content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  padding: 40px;
 }
 
-.form-group label {
-  display: block;
-  font-weight: 600;
-  color: #444;
-  margin-bottom: 0.5rem;
+// Sección del login
+.login-section {
+  .login-container {
+    .form-title {
+      color: $ubb-blue;
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      font-weight: 700;
+      text-align: center;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    .form-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(to right, $ubb-blue, $ubb-red);
+      border-radius: 2px;
+    }
+    
+    .login-form {
+      .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+        
+        .form-label {
+          display: flex;
+          align-items: center;
+          margin-bottom: 0.5rem;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: $ubb-blue;
+          transition: all 0.3s ease;
+          
+          i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+            color: $ubb-blue-light;
+          }
+        }
+        
+        .input-wrapper {
+          position: relative;
+          
+          .form-input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            padding-left: 2.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            
+            &:focus {
+              outline: none;
+              border-color: $ubb-blue-light;
+              background: $white;
+              box-shadow: 0 0 0 4px rgba($ubb-blue-light, 0.2);
+            }
+            
+            &::placeholder {
+              color: #aaa;
+              opacity: 0.7;
+              font-size: 0.9rem;
+            }
+          }
+          
+          .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            color: $ubb-blue-light;
+          }
+        }
+        
+        &:hover .form-label {
+          color: $ubb-blue-light;
+        }
+      }
+      
+      .forgot-password {
+        text-align: right;
+        margin: 0.5rem 0 1.5rem;
+        
+        .forgot-link {
+          color: $ubb-blue;
+          text-decoration: none;
+          font-size: 0.85rem;
+          transition: all 0.3s ease;
+          
+          &:hover {
+            color: $ubb-red;
+            text-decoration: underline;
+          }
+        }
+      }
+      
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        
+        .login-button {
+          background: $ubb-button-gradient;
+          color: $white;
+          border: none;
+          padding: 1rem;
+          border-radius: 12px;
+          font-size: 1.1rem;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba($ubb-blue-light, 0.3);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          
+          i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+          }
+          
+          &:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba($ubb-blue-light, 0.4);
+          }
+          
+          &:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 10px rgba($ubb-blue-light, 0.3);
+          }
+        }
+        
+        .secondary-button {
+          background: transparent;
+          border: 2px solid $ubb-blue-light;
+          color: $ubb-blue-light;
+          padding: 0.9rem;
+          border-radius: 12px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          
+          &:hover {
+            background-color: rgba($ubb-blue-light, 0.1);
+            transform: translateY(-2px);
+          }
+          
+          &:active {
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+    
+    .help-section {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: rgba($ubb-blue-lighter, 0.1);
+      border-radius: 12px;
+      border: 1px solid rgba($ubb-blue, 0.2);
+      
+      .help-text {
+        color: $ubb-blue;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        i {
+          margin-right: 8px;
+          font-size: 1.1rem;
+        }
+      }
+      
+      .manual-link {
+        color: $ubb-blue-light;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          color: $ubb-red;
+          text-decoration: underline;
+        }
+      }
+    }
+  }
 }
 
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.3s, box-shadow 0.3s;
+// Sección informativa
+.info-section {
+  flex: 1;
+  padding: 2rem;
+  background-color: rgba($ubb-blue, 0.05);
+
+  .info-block {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba($ubb-blue, 0.1);
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+
+    .info-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      color: $ubb-blue;
+      
+      i {
+        background: $ubb-blue-gradient;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: $text-dark;
+      line-height: 1.6;
+
+      strong {
+        color: $ubb-blue;
+        font-weight: 600;
+      }
+    }
+  }
 }
 
-.form-group input:focus {
-  border-color: #004494;
-  box-shadow: 0 0 0 3px rgba(0, 47, 108, 0.1);
-}
-
-.button-group {
+// Footer
+.adecca-footer {
+  padding: 2rem 1.5rem;
+  background: $ubb-gray-gradient;
+  border-top: 3px solid $ubb-blue;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  align-items: center;
+
+  .university-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+
+    .university-logo {
+      display: flex;
+      align-items: center;
+
+      .logo-placeholder {
+        width: 60px;
+        height: 60px;
+        background-color: $ubb-blue;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        border-radius: 12px;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba($ubb-blue, 0.3);
+        position: relative;
+        overflow: hidden;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 80%);
+        }
+        
+        i {
+          position: relative;
+          z-index: 1;
+        }
+      }
+
+      .university-info {
+        .university-name {
+          font-weight: 800;
+          color: $ubb-blue;
+          font-size: 1.2rem;
+          letter-spacing: 1px;
+        }
+
+        .university-subtitle {
+          color: $ubb-dark-gray;
+          font-size: 0.85rem;
+          font-style: italic;
+        }
+      }
+    }
+  }
+
+  .accreditation-section {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+
+    .accreditation-card {
+      border: 2px solid $ubb-blue;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+      .accreditation-main {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: $ubb-red;
+        margin-bottom: 0.5rem;
+      }
+
+      .accreditation-details {
+        text-align: center;
+
+        .accreditation-years {
+          font-weight: 600;
+          color: $ubb-blue;
+          margin-bottom: 0.25rem;
+        }
+
+        .accreditation-period,
+        .accreditation-areas {
+          font-size: 0.8rem;
+          color: $ubb-dark-gray;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+  }
+  
+  .copyright {
+    width: 100%;
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.5rem 0;
+    
+    p {
+      font-size: 0.8rem;
+      color: #333;
+      margin: 0;
+      font-style: italic;
+    }
+  }
 }
 
-.login-button,
-.secondary-button {
-  padding: 0.75rem;
-  border-radius: 10px;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+// Responsive Design
+@media (max-width: 768px) {
+  .adecca-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 20px;
+  }
+  
+  .adecca-footer {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+
+    .accreditation-section {
+      .accreditation-card {
+        flex-direction: column;
+        gap: 10px;
+
+        .accreditation-details {
+          padding-left: 0;
+          padding-top: 10px;
+        }
+      }
+    }
+  }
+
+  .adecca-header {
+    padding: 20px;
+
+    .logo-section {
+      .logo {
+        .logo-text {
+          font-size: 32px;
+        }
+      }
+      .welcome-title {
+        font-size: 20px;
+      }
+    }
+  }
 }
 
-.login-button {
-  background-color: #002f6c;
-  color: white;
-  border: none;
+@media (max-width: 480px) {
+  .login-section {
+    .login-container {
+      .button-group {
+        .login-button,
+        .secondary-button {
+          padding: 12px 15px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
 }
 
-.login-button:hover {
-  background-color: #004494;
-  transform: scale(1.02);
-}
-
-.secondary-button {
-  background-color: #eaeaea;
-  border: 1px solid #ccc;
-  color: #002f6c;
-}
-
-.secondary-button:hover {
-  background-color: #f4f4f4;
-  transform: scale(1.02);
-}

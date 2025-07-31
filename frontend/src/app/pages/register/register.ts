@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
@@ -11,14 +11,21 @@ import { Router } from '@angular/router';
   templateUrl: './register.html',
   styleUrls: ['./register.scss']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   rut = '';
   nombre = '';
   email = '';
   password = '';
   mensaje = '';
+  currentYear: number;
 
-  constructor(private apiService: ApiService, private router: Router) {}
+  constructor(private apiService: ApiService, private router: Router) {
+    this.currentYear = new Date().getFullYear();
+  }
+
+  ngOnInit(): void {
+    // Inicialización del componente si es necesario
+  }
 
  register() {
   if (!this.rut || !this.nombre || !this.email || !this.password) {
@@ -59,8 +66,6 @@ export class RegisterComponent {
     }
   });
 }
-
-   
 
   volver() {
     this.router.navigate(['/login']); // Cambia a la ruta que uses

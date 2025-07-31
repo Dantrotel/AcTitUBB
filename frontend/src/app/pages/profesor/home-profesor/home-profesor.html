@@ -1,22 +1,171 @@
-<section class="contenedor-home">
-  <h2 class="titulo">👨‍🏫 Bienvenido, {{ profesor.nombre }}</h2>
+<!-- Navbar con navegación -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="navegar('propuestas/todas')">
+      <i class="fas fa-list-alt"></i>
+      <span>Todas las Propuestas</span>
+    </div>
+    
+    <div class="action-item" (click)="navegar('propuestas/asignadas')">
+      <i class="fas fa-tasks"></i>
+      <span>Asignadas</span>
+    </div>
+    
+    <div class="action-item user-menu" (click)="toggleUserMenu()" >
+      <i class="fas fa-user-circle"></i>
+      <span>{{profesor.nombre || 'Profesor'}}</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showUserMenu">
+        <div class="dropdown-item" (click)="navegar('perfil')">
+          <i class="fas fa-user"></i>
+          <span>Mi Perfil</span>
+        </div>
+        <div class="dropdown-item" (click)="cerrarSesion()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
 
-  <div class="tarjetas-opciones">
-    <mat-card
-      *ngFor="let opcion of opciones"
-      class="tarjeta animacion"
-      (click)="navegar(opcion.ruta)"
-      matTooltip="{{ opcion.descripcion }}"
-    >
-      <mat-icon class="icono">{{ opcion.icono }}</mat-icon>
-      <h3>{{ opcion.titulo }}</h3>
-      <p>{{ opcion.descripcion }}</p>
-    </mat-card>
+<!-- Contenido principal -->
+<div class="main-container">
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1><i class="fas fa-chalkboard-teacher"></i> ¡Bienvenido, {{profesor.nombre || 'Profesor'}}!</h1>
+      <p class="status-text">
+        <i class="fas fa-info-circle"></i>
+        Panel de gestión de propuestas de título
+      </p>
+    </div>
+    
+    <div class="welcome-illustration">
+      <i class="fas fa-rocket"></i>
+    </div>
   </div>
 
-  <div class="acciones">
-    <button mat-raised-button color="warn" (click)="cerrarSesion()">
-      <mat-icon>logout</mat-icon> Cerrar Sesión
-    </button>
+  <!-- Dashboard Cards -->
+  <div class="dashboard-grid">
+    <div class="dashboard-card primary-card" (click)="navegar('propuestas/asignadas')">
+      <div class="card-icon">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="card-content">
+        <h3>Propuestas Asignadas</h3>
+        <p>Revisa las propuestas que estás evaluando actualmente</p>
+        <button class="btn-primary">
+          <i class="fas fa-eye"></i>
+          Ver asignadas
+        </button>
+      </div>
+    </div>
+    
+    <div class="dashboard-card secondary-card" (click)="navegar('propuestas/todas')">
+      <div class="card-icon">
+        <i class="fas fa-list-alt"></i>
+      </div>
+      <div class="card-content">
+        <h3>Todas las Propuestas</h3>
+        <p>Consulta el listado completo de propuestas del sistema</p>
+        <button class="btn-primary">
+          <i class="fas fa-search"></i>
+          Explorar
+        </button>
+      </div>
+    </div>
+    
+    <div class="dashboard-card accent-card">
+      <div class="card-icon">
+        <i class="fas fa-chart-bar"></i>
+      </div>
+      <div class="card-content">
+        <h3>Estadísticas</h3>
+        <div class="stats-item">
+          <i class="fas fa-file-alt"></i>
+          <span>{{ estadisticas.totalPropuestas || 0 }} Propuestas Totales</span>
+        </div>
+        <div class="stats-item">
+          <i class="fas fa-clock"></i>
+          <span>{{ estadisticas.pendientes || 0 }} Pendientes de Revisión</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-card action-card">
+      <div class="card-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="card-content">
+        <h3>Actividad Reciente</h3>
+        <div class="activity-item">
+          <i class="fas fa-clock"></i>
+          <span>Última revisión: {{ ultimaActividad || 'N/A' }}</span>
+        </div>
+        <div class="activity-item">
+          <i class="fas fa-check-circle"></i>
+          <span>{{ estadisticas.revisadas || 0 }} Propuestas Revisadas</span>
+        </div>
+      </div>
+    </div>
   </div>
-</section>
+
+  <!-- Sección de acciones rápidas -->
+  <div class="quick-actions-section">
+    <h2>Acciones Rápidas</h2>
+    <div class="quick-actions-grid">
+      <div class="quick-action-item" (click)="navegar('propuestas/todas')">
+        <div class="action-icon">
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="action-content">
+          <h4>Buscar Propuestas</h4>
+          <p>Encuentra propuestas específicas</p>
+        </div>
+      </div>
+      
+      <div class="quick-action-item" (click)="navegar('propuestas/asignadas')">
+        <div class="action-icon">
+          <i class="fas fa-edit"></i>
+        </div>
+        <div class="action-content">
+          <h4>Revisar Pendientes</h4>
+          <p>Propuestas que requieren tu atención</p>
+        </div>
+      </div>
+      
+      <div class="quick-action-item">
+        <div class="action-icon">
+          <i class="fas fa-download"></i>
+        </div>
+        <div class="action-content">
+          <h4>Reportes</h4>
+          <p>Generar reportes de evaluación</p>
+        </div>
+      </div>
+      
+      <div class="quick-action-item">
+        <div class="action-icon">
+          <i class="fas fa-cog"></i>
+        </div>
+        <div class="action-content">
+          <h4>Configuración</h4>
+          <p>Gestionar preferencias</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
+  </div>
+</footer>

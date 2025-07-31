@@ -1,0 +1,218 @@
+<!-- Navbar con navegación -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="volver()" matTooltip="Volver al inicio">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver</span>
+    </div>
+    
+    <div class="action-item" (click)="recargarPropuestas()" matTooltip="Recargar propuestas">
+      <i class="fas fa-sync-alt"></i>
+      <span>Recargar</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1><i class="fas fa-tasks"></i> Propuestas Asignadas</h1>
+      <p>Revisa las propuestas que tienes asignadas para evaluar</p>
+    </div>
+    
+    <div class="header-stats">
+      <div class="stat-item">
+        <div class="stat-number">{{ totalPropuestas }}</div>
+        <div class="stat-label">Total Asignadas</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ propuestasPendientes }}</div>
+        <div class="stat-label">Pendientes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ propuestasEnCorrecciones }}</div>
+        <div class="stat-label">Correcciones</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{ propuestasAprobadas }}</div>
+        <div class="stat-label">Aprobadas</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros y búsqueda -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        placeholder="Buscar propuestas asignadas..." 
+        [(ngModel)]="filtroBusqueda"
+        (input)="aplicarFiltros()"
+      >
+    </div>
+    
+    <div class="filter-options">
+      <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en_revision">En Revisión</option>
+        <option value="aprobada">Aprobada</option>
+        <option value="rechazada">Rechazada</option>
+        <option value="correcciones">Correcciones</option>
+      </select>
+      
+      <select [(ngModel)]="ordenarPor" (change)="aplicarFiltros()">
+        <option value="fecha">Ordenar por fecha</option>
+        <option value="titulo">Ordenar por título</option>
+        <option value="estudiante">Ordenar por estudiante</option>
+        <option value="estado">Ordenar por estado</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Lista de propuestas -->
+  <div class="propuestas-container">
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <p>Cargando propuestas asignadas...</p>
+    </div>
+
+    <div *ngIf="error" class="error-state">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>Error al cargar propuestas</h3>
+      <p>{{ error }}</p>
+      <button class="btn-primary" (click)="recargarPropuestas()">
+        <i class="fas fa-redo"></i>
+        Intentar de nuevo
+      </button>
+    </div>
+
+    <div *ngIf="!loading && !error && propuestasFiltradas.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3>No hay propuestas asignadas</h3>
+      <p>{{ filtroBusqueda || filtroEstado ? 'Intenta ajustar los filtros de búsqueda' : 'No tienes propuestas asignadas en este momento' }}</p>
+    </div>
+
+    <div class="propuestas-grid" *ngIf="!loading && !error && propuestasPaginadas.length > 0">
+      <div 
+        class="propuesta-card" 
+        *ngFor="let propuesta of propuestasPaginadas"
+        (click)="verDetalle(propuesta.id)"
+      >
+        <div class="card-header">
+          <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
+            {{ obtenerEstadoDisplay(propuesta.estado) }}
+          </div>
+          <div class="fecha">
+            <i class="fas fa-calendar-alt"></i>
+            {{ propuesta.fecha_envio | date:'shortDate' }}
+          </div>
+        </div>
+        
+        <div class="card-content">
+          <h3 class="titulo">{{ propuesta.titulo }}</h3>
+          <p class="descripcion">{{ propuesta.descripcion | slice:0:100 }}{{ propuesta.descripcion?.length > 100 ? '...' : '' }}</p>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <i class="fas fa-user-graduate"></i>
+              <span>{{ propuesta.nombre_estudiante || propuesta.alumnoNombre || 'Estudiante no especificado' }}</span>
+            </div>
+            
+            <div class="info-item" *ngIf="propuesta.comentarios_profesor">
+              <i class="fas fa-comment"></i>
+              <span>{{ propuesta.comentarios_profesor | slice:0:50 }}{{ propuesta.comentarios_profesor?.length > 50 ? '...' : '' }}</span>
+            </div>
+            
+            <div class="info-item" *ngIf="propuesta.fecha_revision">
+              <i class="fas fa-clock"></i>
+              <span>Última revisión: {{ propuesta.fecha_revision | date:'shortDate' }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-actions">
+          <button class="btn-primary" (click)="verDetalle(propuesta.id); $event.stopPropagation()">
+            <i class="fas fa-eye"></i>
+            Ver Detalle
+          </button>
+          
+          <button 
+            class="btn-accent" 
+            (click)="revisarPropuesta(propuesta.id); $event.stopPropagation()"
+          >
+            <i class="fas fa-edit"></i>
+            Revisar
+          </button>
+          
+          <button 
+            class="btn-secondary" 
+            (click)="descargarArchivo(propuesta.archivo); $event.stopPropagation()"
+            *ngIf="propuesta.archivo"
+          >
+            <i class="fas fa-download"></i>
+            Descargar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paginación -->
+  <div class="pagination-section" *ngIf="!loading && !error && propuestasFiltradas.length > 0">
+    <div class="pagination-info">
+      Mostrando {{ (paginaActual - 1) * elementosPorPagina + 1 }} - {{ Math.min(paginaActual * elementosPorPagina, propuestasFiltradas.length) }} de {{ propuestasFiltradas.length }} propuestas
+    </div>
+    
+    <div class="pagination-controls">
+      <button 
+        class="btn-pagination" 
+        [disabled]="paginaActual === 1"
+        (click)="cambiarPagina(paginaActual - 1)"
+      >
+        <i class="fas fa-chevron-left"></i>
+        Anterior
+      </button>
+      
+      <div class="page-numbers">
+        <button 
+          *ngFor="let pagina of obtenerPaginas()" 
+          class="page-number"
+          [class.active]="pagina === paginaActual"
+          (click)="cambiarPagina(pagina)"
+        >
+          {{ pagina }}
+        </button>
+      </div>
+      
+      <button 
+        class="btn-pagination" 
+        [disabled]="paginaActual === totalPaginas"
+        (click)="cambiarPagina(paginaActual + 1)"
+      >
+        Siguiente
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
+  </div>
+</footer>

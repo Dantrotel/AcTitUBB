@@ -1,0 +1,217 @@
+<!-- Navbar con navegación -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="volver()" matTooltip="Volver">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver</span>
+    </div>
+    
+    <div class="action-item" (click)="recargarPropuesta()" matTooltip="Recargar">
+      <i class="fas fa-sync-alt"></i>
+      <span>Recargar</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando detalles de la propuesta...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar la propuesta</h3>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="recargarPropuesta()">
+      <i class="fas fa-redo"></i>
+      Intentar de nuevo
+    </button>
+  </div>
+
+  <!-- Detalle de la propuesta -->
+  <div *ngIf="propuesta && !loading" class="propuesta-detail">
+    <!-- Header de la propuesta -->
+    <div class="detail-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h1><i class="fas fa-file-alt"></i> {{ propuesta.titulo }}</h1>
+          <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
+            {{ obtenerEstadoDisplay(propuesta.estado) }}
+          </div>
+        </div>
+        <p class="description">{{ propuesta.descripcion }}</p>
+      </div>
+      
+      <div class="header-actions">
+        <button class="btn-primary" (click)="descargarArchivo(propuesta.archivo)" *ngIf="propuesta.archivo">
+          <i class="fas fa-download"></i>
+          Descargar Archivo
+        </button>
+        
+        <button 
+          class="btn-accent" 
+          (click)="asignarme()" 
+          *ngIf="esProfesor && !propuesta.profesor_rut"
+        >
+          <i class="fas fa-user-plus"></i>
+          Asignarme
+        </button>
+        
+        <button 
+          class="btn-secondary" 
+          (click)="revisarPropuesta(propuesta.id)" 
+          *ngIf="esProfesor && propuesta.profesor_rut"
+        >
+          <i class="fas fa-edit"></i>
+          Revisar
+        </button>
+      </div>
+    </div>
+
+    <!-- Información principal -->
+    <div class="detail-grid">
+      <!-- Información básica -->
+      <div class="detail-card">
+        <div class="card-header">
+          <i class="fas fa-info-circle"></i>
+          <h3>Información Básica</h3>
+        </div>
+        <div class="card-content">
+          <div class="info-item">
+            <div class="info-label">
+              <i class="fas fa-user-graduate"></i>
+              <span>Estudiante</span>
+            </div>
+            <div class="info-value">{{ propuesta.nombre_estudiante || 'No especificado' }}</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">
+              <i class="fas fa-chalkboard-teacher"></i>
+              <span>Profesor Asignado</span>
+            </div>
+            <div class="info-value">
+              {{ propuesta.nombre_profesor || 'Sin asignar' }}
+              <span class="rut-info" *ngIf="propuesta.profesor_rut">({{ propuesta.profesor_rut }})</span>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="propuesta.asignado_por">
+            <div class="info-label">
+              <i class="fas fa-user-cog"></i>
+              <span>Asignado Por</span>
+            </div>
+            <div class="info-value">{{ propuesta.asignado_por }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fechas -->
+      <div class="detail-card">
+        <div class="card-header">
+          <i class="fas fa-calendar-alt"></i>
+          <h3>Fechas</h3>
+        </div>
+        <div class="card-content">
+          <div class="info-item" *ngIf="propuesta.fecha_envio">
+            <div class="info-label">
+              <i class="fas fa-paper-plane"></i>
+              <span>Fecha de Envío</span>
+            </div>
+            <div class="info-value">{{ propuesta.fecha_envio | date:'fullDate' }}</div>
+          </div>
+          
+          <div class="info-item" *ngIf="propuesta.fecha_revision">
+            <div class="info-label">
+              <i class="fas fa-clock"></i>
+              <span>Última Revisión</span>
+            </div>
+            <div class="info-value">{{ propuesta.fecha_revision | date:'fullDate' }}</div>
+          </div>
+          
+          <div class="info-item" *ngIf="propuesta.created_at">
+            <div class="info-label">
+              <i class="fas fa-plus-circle"></i>
+              <span>Creado</span>
+            </div>
+            <div class="info-value">{{ propuesta.created_at | date:'shortDate' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comentarios del profesor -->
+      <div class="detail-card" *ngIf="propuesta.comentarios_profesor">
+        <div class="card-header">
+          <i class="fas fa-comments"></i>
+          <h3>Comentarios del Profesor</h3>
+        </div>
+        <div class="card-content">
+          <div class="comentarios-content">
+            <p>{{ propuesta.comentarios_profesor }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archivo adjunto -->
+      <div class="detail-card" *ngIf="propuesta.archivo">
+        <div class="card-header">
+          <i class="fas fa-paperclip"></i>
+          <h3>Archivo Adjunto</h3>
+        </div>
+        <div class="card-content">
+          <div class="archivo-info">
+            <div class="archivo-icon">
+              <i class="fas fa-file"></i>
+            </div>
+            <div class="archivo-details">
+              <div class="archivo-name">{{ propuesta.archivo }}</div>
+              <div class="archivo-actions">
+                <button class="btn-primary" (click)="descargarArchivo(propuesta.archivo)">
+                  <i class="fas fa-download"></i>
+                  Descargar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones adicionales -->
+    <div class="detail-actions">
+      <button class="btn-secondary" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+      
+      <button 
+        class="btn-accent" 
+        (click)="editarPropuesta(propuesta.id)" 
+        *ngIf="!esProfesor"
+      >
+        <i class="fas fa-edit"></i>
+        Editar Propuesta
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
+  </div>
+</footer>

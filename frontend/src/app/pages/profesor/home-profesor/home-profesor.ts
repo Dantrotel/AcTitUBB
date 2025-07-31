@@ -22,20 +22,13 @@ import { ApiService } from '../../../services/api';
 })
 export class HomeProfesor implements OnInit {
   profesor: any = {};
-  opciones = [
-    {
-      titulo: 'Propuestas Asignadas',
-      icono: 'assignment_turned_in',
-      descripcion: 'Revisa las propuestas que estás evaluando',
-      ruta: 'profesor/propuestas/asignadas'
-    },
-    {
-      titulo: 'Ver Todas las Propuestas',
-      icono: 'visibility',
-      descripcion: 'Consulta el listado completo de propuestas',
-      ruta: 'profesor/propuestas/todas'
-    }
-  ];
+  showUserMenu = false;
+  estadisticas: any = {
+    totalPropuestas: 0,
+    pendientes: 0,
+    revisadas: 0
+  };
+  ultimaActividad: string = '';
 
   constructor(private ApiService: ApiService, private router: Router) {}
 
@@ -63,6 +56,8 @@ export class HomeProfesor implements OnInit {
         this.profesor.nombre = 'Profesor';
       }
     }
+
+    this.cargarEstadisticas();
   }
 
   buscarUserByRut(rut: string) {
@@ -76,12 +71,47 @@ export class HomeProfesor implements OnInit {
     });
   }
 
+  cargarEstadisticas() {
+    // Cargar estadísticas del profesor
+    this.ApiService.getPropuestas().subscribe({
+      next: (data: any) => {
+        this.estadisticas.totalPropuestas = data.length || 0;
+        this.estadisticas.pendientes = data.filter((p: any) => p.estado === 'Pendiente').length || 0;
+        this.estadisticas.revisadas = data.filter((p: any) => p.estado !== 'Pendiente').length || 0;
+        
+        // Simular última actividad
+        this.ultimaActividad = 'Hace 2 días';
+      },
+      error: (err) => {
+        console.error('Error al cargar estadísticas:', err);
+      }
+    });
+  }
+
+  asignarme(id: string) {
+    this.ApiService.asignarPropuesta(id, {}).subscribe({
+      next: () => alert('Te has asignado esta propuesta correctamente.'),
+      error: () => alert('No se pudo asignar la propuesta.')
+    });
+  }
+
+  toggleUserMenu() {
+    this.showUserMenu = !this.showUserMenu;
+  }
+
   navegar(ruta: string) {
+    this.showUserMenu = false; // Cerrar menú al navegar
     this.router.navigate([ruta]);
   }
 
   cerrarSesion() {
+    this.showUserMenu = false;
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     this.router.navigate(['/login']);
+  }
+
+  fechaActual(): Date {
+    return new Date();
   }
 }

@@ -1,29 +1,145 @@
-<div class="container">
-  <header class="header">
-    <div class="user-info">
-      <h1>Bienvenido, {{estudiante.nombre}}</h1>
+<!-- Navbar con acciones rápidas -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="navegar('propuestas/crear')" >
+      <i class="fas fa-plus-circle"></i>
+      <span>Crear Propuesta</span>
     </div>
-    <button mat-icon-button class="logout-btn" (click)="cerrarSesion()" matTooltip="Cerrar sesión" aria-label="Cerrar sesión">
-      <mat-icon>logout</mat-icon>
-    </button>
-  </header>
+    
+    <div class="action-item" (click)="navegar('propuestas/listar-propuesta')" >
+      <i class="fas fa-list-alt"></i>
+      <span>Mis Propuestas</span>
+    </div>
+    
+    <div class="action-item user-menu" (click)="toggleUserMenu()" >
+      <i class="fas fa-user-circle"></i>
+      <span>{{estudiante.nombre || 'Estudiante'}}</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showUserMenu">
+        <div class="dropdown-item" (click)="navegar('perfil')">
+          <i class="fas fa-user"></i>
+          <span>Mi Perfil</span>
+        </div>
+        <div class="dropdown-item" (click)="cerrarSesion()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
 
-  <div class="options-grid">
-    <mat-card *ngFor="let opcion of opciones" class="option-card" (click)="navegar(opcion.ruta)" role="button" tabindex="0" (keyup.enter)="navegar(opcion.ruta)">
-      <mat-card-header>
-        <mat-icon mat-card-avatar>{{opcion.icono}}</mat-icon>
-        <mat-card-title>{{opcion.titulo}}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p>{{opcion.descripcion}}</p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button color="primary" (click)="navegar(opcion.ruta); $event.stopPropagation();">Acceder</button>
-      </mat-card-actions>
-    </mat-card>
+<!-- Contenido principal -->
+<div class="main-container">
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1>¡Bienvenido, {{estudiante.nombre || 'Estudiante'}}!</h1>
+      <p class="status-text">
+        <i class="fas fa-info-circle"></i>
+        Estado actual: <span class="status-badge">Proyecto en revisión</span>
+      </p>
+    </div>
+    
+    <div class="welcome-illustration">
+      <i class="fas fa-rocket"></i>
+    </div>
   </div>
 
-  <footer class="footer">
-    <p>© 2023 AcTitUBB. Todos los derechos reservados.</p>
-  </footer>
+  <!-- Dashboard Cards -->
+  <div class="dashboard-grid">
+    <div class="dashboard-card primary-card">
+      <div class="card-icon">
+        <i class="fas fa-clipboard-check"></i>
+      </div>
+      <div class="card-content">
+        <h3>Última Revisión</h3>
+        <p>Enviada el 25 julio, comentarios pendientes</p>
+        <button class="btn-primary" (click)="navegar('propuestas/ver-detalle')">
+          <i class="fas fa-eye"></i>
+          Ver detalles
+        </button>
+      </div>
+    </div>
+    
+    <div class="dashboard-card secondary-card">
+      <div class="card-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="card-content">
+        <h3>Progreso del Proyecto</h3>
+        <p>Fase 3: Correcciones finales</p>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 75%"></div>
+        </div>
+        <span class="progress-text">75% Completado</span>
+      </div>
+    </div>
+    
+    <div class="dashboard-card accent-card">
+      <div class="card-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="card-content">
+        <h3>Próximas Fechas</h3>
+        <div class="date-item">
+          <i class="fas fa-clock"></i>
+          <span>Entrega final: 15 Diciembre</span>
+        </div>
+        <div class="date-item">
+          <i class="fas fa-gavel"></i>
+          <span>Defensa: 20 Diciembre</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-card action-card" (click)="navegar('propuestas/crear')">
+      <div class="card-icon">
+        <i class="fas fa-plus"></i>
+      </div>
+      <div class="card-content">
+        <h3>Crear Nueva Propuesta</h3>
+        <p>Inicia una nueva propuesta para tu proyecto de título</p>
+        <button class="btn-secondary">
+          <i class="fas fa-arrow-right"></i>
+          Comenzar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de estadísticas rápidas -->
+  <div class="stats-section">
+    <h2>Resumen de Actividad</h2>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number">3</div>
+        <div class="stat-label">Propuestas Enviadas</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">2</div>
+        <div class="stat-label">En Revisión</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">1</div>
+        <div class="stat-label">Aprobadas</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">15</div>
+        <div class="stat-label">Días Restantes</div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
+  </div>
+</footer>

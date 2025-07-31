@@ -1,88 +1,539 @@
-// 🎨 Variables locales (definidas aquí porque no usas styles.scss)
-$ubb-azul: #0033a0;
-$ubb-celeste: #00a9e0;
-$ubb-gris: #e6e7e8;
-$ubb-negro: #000000;
-$ubb-blanco: #ffffff;
-$ubb-rojo: #d50032;
+// Variables de colores
+$ubb-blue: #1e5799;
+$ubb-blue-light: #2989d8;
+$ubb-blue-lighter: #7db9e8;
+$ubb-blue-dark: #0c3d80;
+$ubb-red: #b71c1c;
+$ubb-red-light: #e53935;
+$ubb-red-dark: #7f0000;
+$ubb-white: #ffffff;
+$ubb-light-gray: #f8f9fa;
+$ubb-gray: #e9ecef;
+$ubb-dark-gray: #6c757d;
+$ubb-black: #212529;
+$ubb-success: #28a745;
+$ubb-warning: #ffc107;
+$ubb-info: #17a2b8;
 
-$font-stack: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+// Gradientes
+$ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
+$ubb-success-gradient: linear-gradient(135deg, $ubb-success 0%, #20c997 100%);
+$ubb-warning-gradient: linear-gradient(135deg, $ubb-warning 0%, #fd7e14 100%);
+$ubb-info-gradient: linear-gradient(135deg, $ubb-info 0%, #6f42c1 100%);
 
-.contenedor-home {
-  max-width: 960px;
-  margin: 3rem auto;
-  padding: 2rem;
-  text-align: center;
-  background-color: $ubb-blanco;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  font-family: $font-stack;
+// Animaciones
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.titulo {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: $ubb-azul;
-  margin-bottom: 2rem;
-  text-shadow: 1px 1px 0 $ubb-gris;
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.tarjetas-opciones {
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+// Estilos globales
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: $ubb-light-gray;
+  color: $ubb-black;
+}
+
+// Navbar
+.navbar {
+  background: $ubb-white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2rem;
-  margin-bottom: 3rem;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $ubb-blue-dark;
+
+    i {
+      color: $ubb-blue;
+      margin-right: 0.5rem;
+      font-size: 1.8rem;
+    }
+  }
+
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .action-item {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: $ubb-dark-gray;
+      font-weight: 500;
+
+      i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      &:hover {
+        background-color: $ubb-light-gray;
+        color: $ubb-blue;
+        transform: translateY(-2px);
+      }
+
+      &.user-menu {
+        position: relative;
+        background-color: $ubb-light-gray;
+        border: 1px solid $ubb-gray;
+
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: $ubb-white;
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+          min-width: 200px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-10px);
+          transition: all 0.3s ease;
+          z-index: 1001;
+
+          &.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+          }
+
+          .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+
+            i {
+              margin-right: 0.75rem;
+              width: 16px;
+            }
+
+            &:hover {
+              background-color: $ubb-light-gray;
+            }
+
+            &:first-child {
+              border-radius: 8px 8px 0 0;
+            }
+
+            &:last-child {
+              border-radius: 0 0 8px 8px;
+              color: $ubb-red;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-.tarjeta {
-  width: 250px;
-  padding: 1.5rem 1rem;
-  border-radius: 18px;
-  text-align: center;
-  background: linear-gradient(135deg, $ubb-celeste 0%, $ubb-azul 100%);
-  color: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+// Contenedor principal
+.main-container {
+  margin-top: 70px;
+  padding: 2rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+// Sección de bienvenida
+.welcome-section {
+  background: $ubb-blue-gradient;
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: $ubb-white;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    z-index: 1;
+  }
+
+  .welcome-content {
+    z-index: 2;
+    position: relative;
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      i {
+        margin-right: 0.5rem;
+      }
+    }
+
+    .status-text {
+      font-size: 1.1rem;
+      opacity: 0.9;
+
+      i {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+
+  .welcome-illustration {
+    z-index: 2;
+    position: relative;
+
+    i {
+      font-size: 4rem;
+      opacity: 0.8;
+      animation: pulse 2s infinite;
+    }
+  }
+}
+
+// Grid del dashboard
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+// Tarjetas del dashboard
+.dashboard-card {
+  background: $ubb-white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   }
 
-  h3 {
-    margin-top: 0.5rem;
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #ffffff;
+  .card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 1.5rem;
+      color: $ubb-white;
+    }
   }
 
-  p {
-    font-size: 0.95rem;
-    color: #f0f0f0;
-    margin-top: 0.5rem;
+  .card-content {
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: $ubb-black;
+    }
+
+    p {
+      color: $ubb-dark-gray;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
   }
 
-  .icono {
-    font-size: 48px;
-    color: #fff;
-    margin-bottom: 0.5rem;
+  &.primary-card {
+    .card-icon {
+      background: $ubb-blue-gradient;
+    }
+  }
+
+  &.secondary-card {
+    .card-icon {
+      background: $ubb-success-gradient;
+    }
+  }
+
+  &.accent-card {
+    .card-icon {
+      background: $ubb-warning-gradient;
+    }
+
+    .stats-item, .activity-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      i {
+        color: $ubb-warning;
+        margin-right: 0.5rem;
+        width: 16px;
+      }
+
+      span {
+        color: $ubb-dark-gray;
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  &.action-card {
+    .card-icon {
+      background: $ubb-info-gradient;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      i {
+        color: $ubb-info;
+        margin-right: 0.5rem;
+        width: 16px;
+      }
+
+      span {
+        color: $ubb-dark-gray;
+        font-size: 0.95rem;
+      }
+    }
   }
 }
 
-.acciones {
-  margin-top: 2rem;
+// Botones
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: $ubb-blue-gradient;
+  color: $ubb-white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 15px rgba($ubb-blue, 0.3);
 
-  button {
+  i {
+    margin-right: 0.5rem;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba($ubb-blue, 0.4);
+  }
+}
+
+// Sección de acciones rápidas
+.quick-actions-section {
+  background: $ubb-white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+  h2 {
+    font-size: 1.5rem;
     font-weight: 600;
-    padding: 0.6rem 1.6rem;
-    font-size: 1rem;
-    border-radius: 8px;
+    color: $ubb-black;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
 
-    mat-icon {
-      vertical-align: middle;
-      margin-right: 0.4rem;
+  .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+
+    .quick-action-item {
+      display: flex;
+      align-items: center;
+      padding: 1.5rem;
+      border-radius: 12px;
+      background: $ubb-light-gray;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        background: rgba($ubb-blue, 0.05);
+      }
+
+      .action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: $ubb-blue-gradient;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+
+        i {
+          color: $ubb-white;
+          font-size: 1.2rem;
+        }
+      }
+
+      .action-content {
+        flex: 1;
+
+        h4 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: $ubb-black;
+          margin-bottom: 0.25rem;
+        }
+
+        p {
+          color: $ubb-dark-gray;
+          font-size: 0.9rem;
+          margin: 0;
+        }
+      }
+    }
+  }
+}
+
+// Footer
+.main-footer {
+  margin-top: 3rem;
+  padding: 2rem;
+  text-align: center;
+  color: $ubb-dark-gray;
+  border-top: 1px solid $ubb-gray;
+
+  .footer-content {
+    p {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 1rem;
+
+    .navbar-actions {
+      .action-item {
+        span {
+          display: none;
+        }
+
+        i {
+          margin-right: 0;
+        }
+      }
+    }
+  }
+
+  .main-container {
+    padding: 1rem;
+  }
+
+  .welcome-section {
+    padding: 2rem;
+    flex-direction: column;
+    text-align: center;
+
+    .welcome-content h1 {
+      font-size: 2rem;
+    }
+
+    .welcome-illustration {
+      margin-top: 1rem;
+    }
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    .navbar-brand span {
+      display: none;
+    }
+  }
+
+  .welcome-section {
+    .welcome-content h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .quick-action-item {
+    flex-direction: column;
+    text-align: center;
+
+    .action-icon {
+      margin-right: 0;
+      margin-bottom: 1rem;
     }
   }
 }
