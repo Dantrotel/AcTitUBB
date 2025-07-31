@@ -15,6 +15,7 @@ export class CrearPropuestaComponent {
   titulo = '';
   descripcion = '';
   archivo: File | null = null;
+  isSubmitting = false;
 
   constructor(private apiService: ApiService, private router: Router) {}
 
@@ -29,6 +30,8 @@ export class CrearPropuestaComponent {
       return;
     }
 
+    this.isSubmitting = true;
+
     const formData = new FormData();
     formData.append('titulo', this.titulo);
     formData.append('descripcion', this.descripcion);
@@ -39,14 +42,22 @@ export class CrearPropuestaComponent {
       next: (res: any) => {
         console.log('Propuesta creada:', res);
         alert('Propuesta creada con éxito');
+        this.isSubmitting = false;
+        this.router.navigate(['/estudiante']);
       },
       error: (err: any) => {
         console.error('Error:', err);
         alert('Hubo un error al crear la propuesta');
+        this.isSubmitting = false;
       }
     });
   }
-   volver() {
+
+  volver() {
     this.router.navigate(['/estudiante']);
+  }
+
+  fechaActual(): Date {
+    return new Date();
   }
 }

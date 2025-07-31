@@ -15,8 +15,13 @@ import { Router } from '@angular/router';
 export class LoginComponent {
   usuario = '';
   password = '';
+  currentYear: number;
 
-  constructor(private apiService: ApiService, private router:Router) {}
+  constructor(private apiService: ApiService, private router:Router) {
+    this.currentYear = new Date().getFullYear();
+  }
+  
+
 
 
 login() {

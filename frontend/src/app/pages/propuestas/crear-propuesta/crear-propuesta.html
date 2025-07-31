@@ -1,0 +1,173 @@
+<!-- Navbar con navegación -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="volver()" matTooltip="Volver al inicio">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <div class="form-header">
+    <div class="header-content">
+      <h1><i class="fas fa-file-alt"></i> Crear Nueva Propuesta</h1>
+      <p>Completa el formulario para enviar tu propuesta de proyecto de título</p>
+    </div>
+    
+    <div class="header-illustration">
+      <i class="fas fa-rocket"></i>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="form-container">
+    <form class="propuesta-form" (ngSubmit)="crear()">
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-info-circle"></i>
+          <h3>Información Básica</h3>
+        </div>
+        
+        <div class="form-group">
+          <label for="titulo">
+            <i class="fas fa-heading"></i>
+            Título del Proyecto
+          </label>
+          <input
+            id="titulo"
+            type="text"
+            [(ngModel)]="titulo"
+            name="titulo"
+            placeholder="Ingresa el título de tu propuesta..."
+            required
+            class="form-input"
+          />
+          <div class="input-icon">
+            <i class="fas fa-edit"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">
+            <i class="fas fa-align-left"></i>
+            Descripción del Proyecto
+          </label>
+          <textarea
+            id="descripcion"
+            [(ngModel)]="descripcion"
+            name="descripcion"
+            placeholder="Describe detalladamente tu propuesta de proyecto..."
+            required
+            class="form-textarea"
+            rows="6"
+          ></textarea>
+          <div class="textarea-icon">
+            <i class="fas fa-file-text"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-paperclip"></i>
+          <h3>Documento Adjunto</h3>
+        </div>
+        
+        <div class="form-group">
+          <label for="archivo">
+            <i class="fas fa-upload"></i>
+            Archivo de Propuesta
+          </label>
+          <div class="file-upload-container">
+            <input
+              type="file"
+              id="archivo"
+              (change)="onFileChange($event)"
+              accept=".pdf,.doc,.docx"
+              name="archivo"
+              required
+              class="file-input"
+            />
+            <div class="file-upload-area" [class.has-file]="archivo">
+              <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+              </div>
+              <div class="upload-text">
+                <span class="upload-title">
+                  {{ archivo ? archivo.name : 'Selecciona un archivo' }}
+                </span>
+                <span class="upload-subtitle">
+                  {{ archivo ? 'Archivo seleccionado' : 'PDF, DOC o DOCX (máx. 10MB)' }}
+                </span>
+              </div>
+              <button type="button" class="upload-btn">
+                <i class="fas fa-folder-open"></i>
+                Explorar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de la propuesta -->
+      <div class="form-section summary-section" *ngIf="titulo || descripcion">
+        <div class="section-header">
+          <i class="fas fa-eye"></i>
+          <h3>Vista Previa</h3>
+        </div>
+        
+        <div class="summary-card">
+          <div class="summary-item">
+            <span class="summary-label">Título:</span>
+            <span class="summary-value">{{ titulo || 'No especificado' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Descripción:</span>
+            <span class="summary-value">{{ descripcion || 'No especificada' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Archivo:</span>
+            <span class="summary-value">{{ archivo ? archivo.name : 'No seleccionado' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn-secondary" 
+          (click)="volver()"
+        >
+          <i class="fas fa-arrow-left"></i>
+          Cancelar
+        </button>
+        
+        <button 
+          type="submit" 
+          class="btn-primary" 
+          [disabled]="!titulo || !descripcion || !archivo"
+          [class.loading]="isSubmitting"
+        >
+          <i class="fas fa-paper-plane" *ngIf="!isSubmitting"></i>
+          <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+          {{ isSubmitting ? 'Enviando...' : 'Crear Propuesta' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
+  </div>
+</footer>
