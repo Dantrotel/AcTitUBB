@@ -92,8 +92,29 @@ export const obtenerPropuestas = async (req, res) => {
 export const obtenerPropuestaPorId = async (req, res) => {
   try {
     const { id } = req.params;
+    const userRut = req.rut;
+    const userRole = req.rol_id;
+
+    console.log('🔍 Debug permisos - ID propuesta:', id);
+    console.log('🔍 Debug permisos - User RUT:', userRut);
+    console.log('🔍 Debug permisos - User Role:', userRole);
+
     const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
     if (!propuesta) return res.status(404).json({ message: 'Propuesta no encontrada' });
+
+    console.log('🔍 Debug permisos - Propuesta encontrada:', {
+      id: propuesta.id,
+      estudiante_rut: propuesta.estudiante_rut,
+      profesor_rut: propuesta.profesor_rut
+    });
+
+    // Verificar permisos de visualización
+    const puedeVer = await PropuestasService.verificarPermisosVisualizacion(propuesta, userRut, userRole);
+    console.log('🔍 Debug permisos - Puede ver:', puedeVer);
+
+    if (!puedeVer) {
+      return res.status(403).json({ message: 'No tienes permisos para ver esta propuesta' });
+    }
 
     return res.json(propuesta);
   } catch (error) {
@@ -138,6 +159,17 @@ export const ActualizarPropuesta = async (req, res) => {
 
     if (!titulo || !descripcion || !estudiante_rut) {
       return res.status(400).json({ message: 'Faltan datos obligatorios.' });
+    }
+
+    // Verificar permisos de edición
+    const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
+    if (!propuesta) {
+      return res.status(404).json({ message: 'Propuesta no encontrada' });
+    }
+
+    const puedeEditar = await PropuestasService.verificarPermisosEdicion(propuesta, estudiante_rut);
+    if (!puedeEditar) {
+      return res.status(403).json({ message: 'No tienes permisos para editar esta propuesta' });
     }
 
     let archivoPath = null;

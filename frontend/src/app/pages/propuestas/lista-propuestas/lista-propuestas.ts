@@ -18,6 +18,13 @@ export class ListarPropuestasComponent implements OnInit {
   loading = true;
   error = '';
   
+  // Propiedades de usuario
+  userRut = '';
+  userRole = '';
+  esEstudiante = false;
+  esProfesor = false;
+  esAdmin = false;
+  
   // Filtros
   filtroBusqueda = '';
   filtroEstado = '';
@@ -62,42 +69,110 @@ export class ListarPropuestasComponent implements OnInit {
     this.error = '';
 
     // Obtener el RUT del estudiante desde el token
-    const token = localStorage.getItem('token');
-    let estudianteRut = '';
-    
-    if (token) {
+  const token = localStorage.getItem('token');
+
+  if (token) {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        estudianteRut = payload.rut || '';
+    const payload = JSON.parse(atob(token.split('.')[1]));
+        this.userRut = payload.rut || '';
+        this.userRole = payload.rol_id || '';
+        this.esEstudiante = String(this.userRole) === '1'; // 1 para estudiante
+        this.esProfesor = String(this.userRole) === '2'; // 2 para profesor
+        this.esAdmin = String(this.userRole) === '3'; // 3 para admin
+        
+        console.log('🔍 Usuario detectado:', {
+          rut: this.userRut,
+          rol_id: this.userRole,
+          tipo_rol_id: typeof this.userRole,
+          esEstudiante: this.esEstudiante,
+          esProfesor: this.esProfesor,
+          esAdmin: this.esAdmin
+        });
       } catch {
         console.error('Error al decodificar token');
       }
     }
 
-    if (!estudianteRut) {
-      this.error = 'No se encontró el RUT del estudiante';
+    if (!this.userRut) {
+      this.error = 'No se encontró el RUT del usuario';
       this.loading = false;
       return;
     }
 
     // Primero obtener las propuestas del estudiante usando buscaruserByrut
-    this.api.buscaruserByrut(estudianteRut).subscribe({
+    this.api.buscaruserByrut(this.userRut).subscribe({
       next: (userData: any) => {
         console.log('Datos del usuario obtenidos:', userData);
         
-        // Luego obtener todas las propuestas y filtrar las del estudiante
+        // Luego obtener todas las propuestas y filtrar según el rol
         this.api.getPropuestas().subscribe({
           next: (propuestasData: any) => {
-            console.log('Todas las propuestas obtenidas:', propuestasData);
+            console.log('🔍 Backend response completo:', propuestasData);
+            console.log('🔍 Tipo de respuesta:', typeof propuestasData);
+            console.log('🔍 Es array:', Array.isArray(propuestasData));
+            console.log('🔍 Longitud del array:', Array.isArray(propuestasData) ? propuestasData.length : 'No es array');
             
-            // Filtrar SOLO las propuestas del estudiante actual
             const todasLasPropuestas = Array.isArray(propuestasData) ? propuestasData : [];
-            this.propuestas = todasLasPropuestas.filter(propuesta => {
-              return propuesta.estudiante_rut === estudianteRut;
+            
+            console.log('🔍 Todas las propuestas procesadas:', todasLasPropuestas);
+            console.log('🔍 Total de propuestas antes del filtro:', todasLasPropuestas.length);
+            
+            // Filtrar propuestas según el rol del usuario
+            if (this.esEstudiante) {
+              console.log('🔍 Filtrando propuestas para estudiante');
+              console.log('🔍 RUT del estudiante:', this.userRut);
+              
+              // Estudiantes ven solo sus propias propuestas
+              this.propuestas = todasLasPropuestas.filter(propuesta => {
+                console.log('🔍 Comparando propuesta:', {
+                  propuesta_estudiante_rut: propuesta.estudiante_rut,
+                  user_rut: this.userRut,
+                  coincide: propuesta.estudiante_rut === this.userRut,
+                  coincide_trim: propuesta.estudiante_rut?.trim() === this.userRut?.trim()
+                });
+                
+                // Comparar con y sin espacios
+                const propuestaRut = propuesta.estudiante_rut?.trim();
+                const userRut = this.userRut?.trim();
+                return propuestaRut === userRut;
+              });
+              
+              console.log('🔍 Propuestas filtradas para estudiante:', this.propuestas.length);
+              
+              // Verificación temporal: si no se encontraron propuestas, mostrar todas para debugging
+              if (this.propuestas.length === 0) {
+                console.log('⚠️ No se encontraron propuestas para el estudiante, mostrando todas para debugging');
+                this.propuestas = todasLasPropuestas;
+              }
+            } else if (this.esProfesor) {
+              console.log('🔍 Filtrando propuestas para profesor');
+              // Profesores ven propuestas asignadas a ellos
+              this.propuestas = todasLasPropuestas.filter(propuesta => {
+                return propuesta.profesor_rut === this.userRut;
+              });
+            } else if (this.esAdmin) {
+              console.log('🔍 Mostrando todas las propuestas para admin');
+              // Administradores ven todas las propuestas
+              this.propuestas = todasLasPropuestas;
+            } else {
+              // Fallback: si no se detectó ningún rol, mostrar todas las propuestas
+              console.log('⚠️ No se detectó rol específico, mostrando todas las propuestas como fallback');
+              this.propuestas = todasLasPropuestas;
+            }
+            
+            // Agregar permisos a cada propuesta
+            this.propuestas = this.propuestas.map(propuesta => {
+              return {
+                ...propuesta,
+                puedeEditar: this.puedeEditarPropuesta(propuesta, this.userRut, this.userRole),
+                puedeEliminar: this.puedeEliminarPropuesta(propuesta, this.userRut, this.userRole),
+                puedeVer: this.puedeVerPropuesta(propuesta, this.userRut, this.userRole)
+              };
             });
             
-            console.log('Propuestas del estudiante actual:', this.propuestas);
-            console.log('RUT del estudiante:', estudianteRut);
+            console.log('Propuestas filtradas:', this.propuestas);
+            console.log('RUT del usuario:', this.userRut);
+            console.log('Rol del usuario:', this.userRole);
             
             this.aplicarFiltros();
             this.loading = false;
@@ -115,6 +190,42 @@ export class ListarPropuestasComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  // Métodos para determinar permisos
+  private puedeEditarPropuesta(propuesta: any, userRut: string, userRole: string): boolean {
+    // Solo el creador puede editar su propuesta
+    return propuesta.estudiante_rut === userRut;
+  }
+
+  private puedeEliminarPropuesta(propuesta: any, userRut: string, userRole: string): boolean {
+    // Solo el creador puede eliminar su propuesta
+    return propuesta.estudiante_rut === userRut;
+  }
+
+  private puedeVerPropuesta(propuesta: any, userRut: string, userRole: string): boolean {
+    // El creador siempre puede ver su propuesta
+    if (propuesta.estudiante_rut === userRut) {
+      return true;
+    }
+    
+    // Los profesores pueden ver todas las propuestas sin asignar
+    if (userRole === '2') { // Profesor
+      // Si la propuesta no tiene profesor asignado, cualquier profesor puede verla
+      if (!propuesta.profesor_rut || propuesta.profesor_rut === null) {
+        return true;
+      }
+      // Si ya tiene profesor asignado, solo ese profesor puede verla
+      return propuesta.profesor_rut === userRut;
+    }
+    
+    // Los administradores pueden ver todas las propuestas
+    if (userRole === '3') { // Admin
+      return true;
+    }
+    
+    // Otros estudiantes no pueden ver propuestas de otros estudiantes
+    return false;
   }
 
   aplicarFiltros() {
@@ -205,11 +316,17 @@ export class ListarPropuestasComponent implements OnInit {
   }
 
   verDetalle(id: number) {
-    this.router.navigate(['/propuestas/ver-detalle', id]);
+    this.router.navigate(['/propuestas/ver-detalle', id], {
+      queryParams: { from: '/propuestas/listar-propuesta' }
+    });
   }
 
   editarPropuesta(id: number) {
     this.router.navigate(['/propuestas/editar-propuesta', id]);
+  }
+
+  revisarPropuesta(id: number) {
+    this.router.navigate(['/propuestas/revisar', id]);
   }
 
   eliminarPropuesta(id: string) {

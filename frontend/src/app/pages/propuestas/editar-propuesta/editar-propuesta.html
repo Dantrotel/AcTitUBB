@@ -1,25 +1,323 @@
-<div class="formulario-actualizar">
-  <h2>Actualizar Propuesta</h2>
+<div class="editar-propuesta-container">
+  <!-- Header con navegación -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="btn-back" (click)="volver()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Volver
+        </button>
+        <h1 class="page-title">Editar Propuesta</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="recargarPropuesta()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M3 21v-5h5"/>
+          </svg>
+          Recargar
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <form (ngSubmit)="actualizar()">
-    <div class="form-group">
-      <label for="titulo">Título:</label>
-      <input id="titulo" [(ngModel)]="propuesta.titulo" name="titulo" required />
+  <!-- Estado de carga -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p class="loading-text">Cargando propuesta...</p>
+    </div>
+  </div>
+
+  <!-- Estado de error -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-card">
+      <div class="error-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h3 class="error-title">Error al cargar</h3>
+      <p class="error-message">{{ error }}</p>
+      <div class="error-actions">
+        <button class="btn-primary" (click)="recargarPropuesta()">Reintentar</button>
+        <button class="btn-secondary" (click)="volver()">Volver</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario principal -->
+  <div *ngIf="!loading && !error" class="form-container">
+    <!-- Información de la propuesta -->
+    <div class="info-card">
+      <div class="info-header">
+        <h2 class="info-title">Información de la Propuesta</h2>
+        <div class="estado-badge" [class]="'estado-' + propuesta.estado?.toLowerCase()">
+          {{ obtenerEstadoDisplay(propuesta.estado) }}
+        </div>
+      </div>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">ID:</span>
+          <span class="info-value">#{{ propuesta.id }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Fecha de envío:</span>
+          <span class="info-value">{{ formatearFecha(propuesta.fecha_envio) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Estudiante:</span>
+          <span class="info-value">{{ propuesta.nombre_estudiante }}</span>
+        </div>
+        <div class="info-item" *ngIf="propuesta.profesor_rut">
+          <span class="info-label">Profesor asignado:</span>
+          <span class="info-value">{{ propuesta.profesores_asignados || 'Sin asignar' }}</span>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="descripcion">Descripción:</label>
-      <textarea
-        id="descripcion"
-        [(ngModel)]="propuesta.descripcion"
-        name="descripcion"
-        required
-      ></textarea>
-    </div>
+    <!-- Formulario de edición -->
+    <form class="edit-form" (ngSubmit)="actualizar()" #editForm="ngForm">
+      <div class="form-section">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Detalles de la Propuesta
+        </h3>
+        
+        <div class="form-group">
+          <label for="titulo" class="form-label">
+            Título de la Propuesta
+            <span class="required">*</span>
+          </label>
+          <input 
+            id="titulo" 
+            type="text" 
+            [(ngModel)]="propuesta.titulo" 
+            name="titulo" 
+            class="form-input"
+            placeholder="Ingresa el título de tu propuesta"
+            required
+            [class.invalid]="editForm.submitted && !propuesta.titulo?.trim()"
+          />
+          <div *ngIf="editForm.submitted && !propuesta.titulo?.trim()" class="error-field">
+            El título es obligatorio
+          </div>
+        </div>
 
-    <div class="acciones">
-      <button type="submit" class="btn-primario">Actualizar</button>
-      <button type="button" class="btn-secundario" (click)="volver()">Volver</button>
+        <div class="form-group">
+          <label for="descripcion" class="form-label">
+            Descripción
+            <span class="required">*</span>
+          </label>
+          <textarea 
+            id="descripcion" 
+            [(ngModel)]="propuesta.descripcion" 
+            name="descripcion" 
+            class="form-textarea"
+            placeholder="Describe detalladamente tu propuesta..."
+            required
+            rows="6"
+            [class.invalid]="editForm.submitted && !propuesta.descripcion?.trim()"
+          ></textarea>
+          <div *ngIf="editForm.submitted && !propuesta.descripcion?.trim()" class="error-field">
+            La descripción es obligatoria
+          </div>
+          <div class="char-counter">
+            {{ propuesta.descripcion?.length || 0 }} caracteres
+          </div>
+        </div>
+      </div>
+
+      <!-- Archivo actual -->
+      <div class="form-section" *ngIf="propuesta.archivo">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14,2 14,8 20,8"/>
+          </svg>
+          Archivo Actual
+        </h3>
+        <div class="file-info">
+          <div class="file-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+          </div>
+          <div class="file-details">
+            <span class="file-name">{{ propuesta.archivo }}</span>
+            <span class="file-size">Archivo adjunto</span>
+          </div>
+          <div class="file-actions">
+            <button type="button" class="btn-download" (click)="descargarArchivo(propuesta.archivo)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Descargar
+            </button>
+            <button type="button" class="btn-danger" (click)="eliminarArchivo()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+              </svg>
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subir nuevo archivo -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7,10 12,15 17,10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          {{ propuesta.archivo ? 'Cambiar Archivo' : 'Subir Archivo' }}
+        </h3>
+        
+        <div class="file-upload-container">
+          <div class="file-upload-area" 
+               [class.dragover]="isDragOver"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)"
+               (click)="fileInput.click()">
+            
+            <div class="upload-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            
+            <div class="upload-text">
+              <h4>{{ propuesta.archivo ? 'Cambiar archivo' : 'Subir archivo' }}</h4>
+              <p>Arrastra y suelta tu archivo aquí o <span class="upload-link">haz clic para seleccionar</span></p>
+              <p class="file-types">Tipos permitidos: PDF, DOC, DOCX, TXT (Max: 10MB)</p>
+            </div>
+            
+            <input #fileInput 
+                   type="file" 
+                   (change)="onFileSelected($event)"
+                   accept=".pdf,.doc,.docx,.txt"
+                   style="display: none;">
+          </div>
+          
+          <!-- Archivo seleccionado -->
+          <div *ngIf="nuevoArchivo" class="selected-file">
+            <div class="selected-file-info">
+              <div class="file-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                </svg>
+              </div>
+              <div class="file-details">
+                <span class="file-name">{{ nuevoArchivo.name }}</span>
+                <span class="file-size">{{ formatearTamanioArchivo(nuevoArchivo.size) }}</span>
+              </div>
+              <button type="button" class="btn-remove" (click)="removerNuevoArchivo()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Mensaje de error -->
+          <div *ngIf="archivoError" class="file-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            {{ archivoError }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Comentarios del profesor -->
+      <div class="form-section" *ngIf="propuesta.comentarios_profesor">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Comentarios del Profesor
+        </h3>
+        <div class="comentarios-card">
+          <div class="comentarios-content">
+            <p class="comentarios-text">{{ propuesta.comentarios_profesor }}</p>
+          </div>
+          <div class="comentarios-footer">
+            <span class="comentarios-date">{{ formatearFecha(propuesta.fecha_revision) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones del formulario -->
+      <div class="form-actions">
+        <div class="actions-left">
+          <button type="button" class="btn-secondary" (click)="volver()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Cancelar
+          </button>
+        </div>
+        <div class="actions-right">
+          <button type="button" class="btn-secondary" (click)="recargarPropuesta()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M3 21v-5h5"/>
+            </svg>
+            Recargar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="saving">
+            <svg *ngIf="saving" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <svg *ngIf="!saving" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17,21 17,13 7,13 7,21"/>
+              <polyline points="7,3 7,8 15,8"/>
+            </svg>
+            {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Toast de notificación -->
+  <div *ngIf="showToast" class="toast" [class]="'toast-' + toastType">
+    <div class="toast-content">
+      <svg *ngIf="toastType === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22,4 12,14.01 9,11.01"/>
+      </svg>
+      <svg *ngIf="toastType === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <span class="toast-message">{{ toastMessage }}</span>
     </div>
-  </form>
+    <button class="toast-close" (click)="cerrarToast()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
 </div>

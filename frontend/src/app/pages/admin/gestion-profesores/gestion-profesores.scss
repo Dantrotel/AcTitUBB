@@ -1,0 +1,352 @@
+.gestion-profesores-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 20px;
+
+  .header {
+    background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 75, 141, 0.3);
+
+    h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    p {
+      margin: 10px 0 0 0;
+      text-align: center;
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+  }
+
+  .filtros-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+    h3 {
+      color: #004b8d;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+
+      .filtro-grupo {
+        label {
+          display: block;
+          margin-bottom: 8px;
+          color: #495057;
+          font-weight: 500;
+        }
+
+        input, select {
+          width: 100%;
+          padding: 12px 15px;
+          border: 2px solid #e9ecef;
+          border-radius: 8px;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+
+          &:focus {
+            outline: none;
+            border-color: #004b8d;
+            box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.1);
+          }
+        }
+      }
+    }
+  }
+
+  .profesores-section {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+    .section-header {
+      background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
+      color: white;
+      padding: 20px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .contador {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 500;
+      }
+    }
+
+    .profesores-table {
+      width: 100%;
+      border-collapse: collapse;
+
+      th {
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        padding: 15px;
+        text-align: left;
+        border-bottom: 2px solid #dee2e6;
+
+        &:first-child {
+          padding-left: 25px;
+        }
+
+        &:last-child {
+          padding-right: 25px;
+        }
+      }
+
+      td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+
+        &:first-child {
+          padding-left: 25px;
+        }
+
+        &:last-child {
+          padding-right: 25px;
+        }
+      }
+
+      tr {
+        transition: background-color 0.3s ease;
+
+        &:hover {
+          background-color: #f8f9fa;
+        }
+
+        &:last-child td {
+          border-bottom: none;
+        }
+      }
+
+      .estado-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-transform: uppercase;
+
+        &.activo {
+          background: #d4edda;
+          color: #155724;
+        }
+
+        &.inactivo {
+          background: #f8d7da;
+          color: #721c24;
+        }
+      }
+
+      .acciones {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .btn {
+          padding: 8px 12px;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+
+          &.btn-primary {
+            background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
+            color: white;
+
+            &:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(0, 75, 141, 0.3);
+            }
+          }
+
+          &.btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+
+            &:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            }
+          }
+
+          &.btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: white;
+
+            &:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+            }
+          }
+
+          &.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+            color: white;
+
+            &:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e9ecef;
+      border-top: 4px solid #004b8d;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  .error-container {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+    text-align: center;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+    .empty-icon {
+      font-size: 4rem;
+      color: #6c757d;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      color: #495057;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #6c757d;
+      margin-bottom: 0;
+    }
+  }
+
+  .footer {
+    text-align: center;
+    padding: 30px 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .gestion-profesores-container {
+    padding: 15px;
+
+    .header {
+      padding: 20px;
+      margin-bottom: 20px;
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .filtros-section {
+      padding: 20px;
+      margin-bottom: 20px;
+
+      .filtros-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+    }
+
+    .profesores-section {
+      .section-header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+
+      .profesores-table {
+        th, td {
+          padding: 10px;
+          font-size: 0.9rem;
+
+          &:first-child {
+            padding-left: 15px;
+          }
+
+          &:last-child {
+            padding-right: 15px;
+          }
+        }
+
+        .acciones {
+          flex-direction: column;
+          gap: 5px;
+
+          .btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+      }
+    }
+  }
+} 

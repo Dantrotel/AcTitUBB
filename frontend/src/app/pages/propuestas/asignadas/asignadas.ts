@@ -186,7 +186,9 @@ export class PropuestasAsignadasComponent implements OnInit {
   }
 
   verDetalle(id: number) {
-    this.router.navigate(['/propuestas/ver-detalle', id]);
+    this.router.navigate(['/propuestas/ver-detalle', id], {
+      queryParams: { from: '/profesor/propuestas/asignadas' }
+    });
   }
 
   revisarPropuesta(id: number) {

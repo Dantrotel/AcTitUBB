@@ -11,9 +11,12 @@ import { PropuestasTodas } from './pages/propuestas/AllPropuestas/propuestas-tod
 import { AuthGuard } from './guards/auth.guard';
 import { PropuestasAsignadasComponent } from './pages/propuestas/asignadas/asignadas';
 import { RevisarPropuestaComponent } from './pages/propuestas/revisarPropuesta/revisar-propuesta';
-//
-
-
+import { HomeAdminComponent } from './pages/admin/home-admin/home-admin';
+import { GestionPropuestasComponent } from './pages/admin/gestion-propuestas/gestion-propuestas';
+import { AsignarProfesorComponent } from './pages/admin/asignar-profesor/asignar-profesor';
+import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion-usuarios';
+import { GestionProfesoresComponent } from './pages/admin/gestion-profesores/gestion-profesores';
+import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -30,6 +33,14 @@ export const routes: Routes = [
   { path: 'propuestas/ver-detalle/:id', component: VerPropuestaComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/asignadas', component: PropuestasAsignadasComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/todas', component: PropuestasTodas, canActivate: [AuthGuard] },
+
+  // Rutas del administrador
+  { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard] },
+  { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard] },
+  { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard] },
+  { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard] },
+  { path: 'admin/profesores', component: GestionProfesoresComponent, canActivate: [AuthGuard] },
+  { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
 
   {
     path: 'profesor',
@@ -54,11 +65,6 @@ export const routes: Routes = [
         component: RevisarPropuestaComponent,
         canActivate: [AuthGuard]
       }
-
     ],
   },
-
-
-
-
 ];

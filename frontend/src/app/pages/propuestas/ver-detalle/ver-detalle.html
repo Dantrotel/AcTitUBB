@@ -72,11 +72,29 @@
         
         <button 
           class="btn-secondary" 
-          (click)="revisarPropuesta(propuesta.id)" 
-          *ngIf="esProfesor && propuesta.profesor_rut"
+          (click)="dejarComentarios(propuesta.id)" 
+          *ngIf="puedeDejarComentarios()"
         >
-          <i class="fas fa-edit"></i>
-          Revisar
+          <i class="fas fa-comments"></i>
+          Dejar Comentarios
+        </button>
+        
+        <button 
+          class="btn-accent" 
+          (click)="asignarProfesor(propuesta.id)" 
+          *ngIf="puedeAsignarProfesor()"
+        >
+          <i class="fas fa-user-plus"></i>
+          Asignar Profesor
+        </button>
+        
+        <button 
+          class="btn-danger" 
+          (click)="eliminarPropuesta(propuesta.id)" 
+          *ngIf="puedeEliminarPropuesta()"
+        >
+          <i class="fas fa-trash"></i>
+          Eliminar
         </button>
       </div>
     </div>
@@ -200,7 +218,7 @@
       <button 
         class="btn-accent" 
         (click)="editarPropuesta(propuesta.id)" 
-        *ngIf="!esProfesor"
+        *ngIf="puedeEditarPropuesta()"
       >
         <i class="fas fa-edit"></i>
         Editar Propuesta
