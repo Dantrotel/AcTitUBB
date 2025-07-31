@@ -1,20 +1,39 @@
-FROM ubuntu:22.04
+# Usar imagen oficial de Node.js más liviana
+FROM node:18-alpine
 
-# Instalar Node.js
-RUN apt-get update && apt-get install -y curl gnupg \
-  && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-  && apt-get install -y nodejs \
-  && apt-get clean
+# Instalar dependencias del sistema necesarias para producción
+RUN apk add --no-cache \
+    curl \
+    bash \
+    mysql-client \
+    && rm -rf /var/cache/apk/*
+
+# Crear usuario no-root para seguridad
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
 
 WORKDIR /app
 
+# Copiar archivos de dependencias y instalar
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production && npm cache clean --force
 
+# Copiar código fuente
 COPY . .
+
+# Crear directorio de uploads y dar permisos
+RUN mkdir -p uploads/propuestas && chown -R nodejs:nodejs /app
+
+# Cambiar al usuario no-root
+USER nodejs
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Usar comando de producción
+CMD ["npm", "start"]
 
 

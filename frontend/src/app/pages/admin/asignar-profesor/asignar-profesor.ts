@@ -117,7 +117,9 @@ export class AsignarProfesorComponent implements OnInit {
     this.router.navigate(['/admin/propuestas']);
   }
 
-  obtenerEstadoDisplay(estado: string): string {
+  obtenerEstadoDisplay(estado: string | undefined): string {
+    if (!estado) return 'Sin estado';
+    
     const estadosMap: { [key: string]: string } = {
       'pendiente': 'Pendiente',
       'en_revision': 'En Revisión',
@@ -128,7 +130,9 @@ export class AsignarProfesorComponent implements OnInit {
     return estadosMap[estado] || estado;
   }
 
-  obtenerClaseEstado(estado: string): string {
+  obtenerClaseEstado(estado: string | undefined): string {
+    if (!estado) return 'estado-sin-estado';
+    
     const estadoLower = estado.toLowerCase();
     if (estadoLower === 'pendiente') return 'estado-pendiente';
     if (estadoLower === 'en_revision') return 'estado-revision';

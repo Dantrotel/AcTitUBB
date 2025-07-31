@@ -132,7 +132,27 @@ CREATE TABLE IF NOT EXISTS avances (
     FOREIGN KEY (profesor_revisor) REFERENCES usuarios(rut)
 );
 
--- Tabla de Fechas Importantes
+-- Tabla de Fechas Importantes del Calendario
+CREATE TABLE IF NOT EXISTS fechas_calendario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    fecha DATE NOT NULL,
+    tipo_fecha ENUM('global', 'academica', 'entrega', 'revision', 'defensa', 'reunion', 'otro') DEFAULT 'otro',
+    -- Campos para determinar visibilidad
+    es_global BOOLEAN DEFAULT FALSE, -- Si es true, la ve todo el mundo (fechas del admin)
+    creado_por_rut VARCHAR(10) NOT NULL, -- RUT del que creó la fecha (admin o profesor)
+    profesor_rut VARCHAR(10) NULL, -- Si no es global, RUT del profesor (para fechas específicas)
+    estudiante_rut VARCHAR(10) NULL, -- Si es específica para un estudiante
+    activa BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut)
+);
+
+-- Tabla de Fechas Importantes (mantener la original para compatibilidad con proyectos)
 CREATE TABLE IF NOT EXISTS fechas_importantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -203,6 +223,13 @@ INSERT INTO estados_proyectos (nombre, descripcion) VALUES
 ('presentado', 'Proyecto presentado'),
 ('defendido', 'Proyecto defendido exitosamente');
 
+-- Datos de ejemplo para fechas del calendario (comentado para evitar errores de FK)
+-- INSERT INTO fechas_calendario (titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut) VALUES
+-- ('Inicio Semestre', 'Inicio del semestre académico', '2025-03-01', 'academica', TRUE, '11111111-1'),
+-- ('Fecha límite primera entrega', 'Fecha límite para primera entrega de propuestas', '2025-04-15', 'entrega', TRUE, '11111111-1'),
+-- ('Semana de defensa', 'Semana destinada para defensas de título', '2025-06-15', 'defensa', TRUE, '11111111-1'),
+-- ('Fin Semestre', 'Fin del semestre académico', '2025-07-15', 'academica', TRUE, '11111111-1');
+
 -- Roles de profesores en proyectos
 INSERT INTO roles_profesores (nombre, descripcion) VALUES
 ('profesor_guia', 'Profesor que guía el desarrollo del proyecto'),
@@ -219,6 +246,9 @@ CREATE INDEX idx_proyectos_estado ON proyectos(estado_id);
 CREATE INDEX idx_avances_proyecto ON avances(proyecto_id);
 CREATE INDEX idx_avances_estado ON avances(estado_id);
 CREATE INDEX idx_fechas_proyecto ON fechas_importantes(proyecto_id);
+CREATE INDEX idx_fechas_calendario_global ON fechas_calendario(es_global, fecha);
+CREATE INDEX idx_fechas_calendario_profesor ON fechas_calendario(profesor_rut, fecha);
+CREATE INDEX idx_fechas_calendario_estudiante ON fechas_calendario(estudiante_rut, fecha);
 CREATE INDEX idx_reuniones_proyecto ON reuniones(proyecto_id);
 CREATE INDEX idx_asignaciones_propuesta ON asignaciones_propuestas(propuesta_id);
 CREATE INDEX idx_asignaciones_proyecto ON asignaciones_proyectos(proyecto_id);

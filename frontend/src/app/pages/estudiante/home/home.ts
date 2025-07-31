@@ -174,6 +174,32 @@ export class EstudianteHomeComponent implements OnInit {
   }
 
   generarProximasFechas() {
+    // Primero intentar cargar fechas desde el backend
+    this.ApiService.getFechasProximas(3).subscribe({
+      next: (response: any) => {
+        console.log('Fechas próximas del backend:', response);
+        this.proximasFechas = response.map((fecha: any) => ({
+          titulo: fecha.titulo,
+          fecha: new Date(fecha.fecha),
+          icono: this.getIconoTipoFecha(fecha.tipo_fecha),
+          esDelBackend: true,
+          creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
+        }));
+        
+        // Si no hay fechas del backend, generar fechas basadas en propuestas como fallback
+        if (this.proximasFechas.length === 0) {
+          this.generarFechasFallback();
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar fechas próximas:', error);
+        // Fallback a la funcionalidad anterior
+        this.generarFechasFallback();
+      }
+    });
+  }
+
+  generarFechasFallback() {
     this.proximasFechas = [];
     
     if (this.propuestas.length > 0) {
@@ -212,6 +238,19 @@ export class EstudianteHomeComponent implements OnInit {
         }
       ];
     }
+  }
+
+  getIconoTipoFecha(tipo: string): string {
+    const iconos: { [key: string]: string } = {
+      'global': 'fas fa-globe',
+      'academica': 'fas fa-graduation-cap',
+      'entrega': 'fas fa-clock',
+      'revision': 'fas fa-search',
+      'defensa': 'fas fa-gavel',
+      'reunion': 'fas fa-users',
+      'otro': 'fas fa-calendar-day'
+    };
+    return iconos[tipo] || 'fas fa-calendar-day';
   }
 
   obtenerFaseProyecto(): string {

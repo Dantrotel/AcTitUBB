@@ -17,6 +17,7 @@ import { AsignarProfesorComponent } from './pages/admin/asignar-profesor/asignar
 import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion-usuarios';
 import { GestionProfesoresComponent } from './pages/admin/gestion-profesores/gestion-profesores';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
+import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -41,6 +42,7 @@ export const routes: Routes = [
   { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard] },
   { path: 'admin/profesores', component: GestionProfesoresComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
+  { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
 
   {
     path: 'profesor',

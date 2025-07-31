@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ApiService } from '../../services/api';
 
 @Component({
   selector: 'app-calendar-modal',
@@ -98,18 +99,40 @@ export class CalendarModalComponent implements OnInit, OnChanges {
   calendarDays: any[] = [];
   selectedDateEvents: any[] = [];
   upcomingEvents: any[] = [];
+  fechasCalendario: any[] = []; // Fechas del backend
+  loading = false;
+
+  constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     console.log('CalendarModal ngOnInit - Propuestas recibidas:', this.propuestas);
-    this.generateEvents();
-    this.generateCalendar();
+    this.cargarFechasCalendario();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['propuestas'] && !changes['propuestas'].firstChange) {
-      this.generateEvents();
-      this.generateCalendar();
+      this.cargarFechasCalendario();
     }
+  }
+
+  cargarFechasCalendario() {
+    this.loading = true;
+    this.apiService.getMisFechasCalendario().subscribe({
+      next: (response: any) => {
+        console.log('Fechas del calendario cargadas:', response);
+        this.fechasCalendario = response;
+        this.generateEvents();
+        this.generateCalendar();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar fechas del calendario:', error);
+        // Fallback a la funcionalidad anterior si hay error
+        this.generateEvents();
+        this.generateCalendar();
+        this.loading = false;
+      }
+    });
   }
 
   generateCalendar() {
@@ -146,7 +169,25 @@ export class CalendarModalComponent implements OnInit, OnChanges {
   generateEvents() {
     this.upcomingEvents = [];
     console.log('Generando eventos con propuestas:', this.propuestas);
+    console.log('Fechas del calendario backend:', this.fechasCalendario);
     
+    // Primero agregar fechas del backend (admin y profesor)
+    if (this.fechasCalendario && this.fechasCalendario.length > 0) {
+      this.fechasCalendario.forEach(fecha => {
+        const fechaDate = new Date(fecha.fecha);
+        this.upcomingEvents.push({
+          titulo: fecha.titulo,
+          fecha: fechaDate,
+          icono: this.getIconoTipoFecha(fecha.tipo_fecha),
+          descripcion: fecha.descripcion || `Fecha ${fecha.es_global ? 'global' : 'específica'} - ${fecha.tipo_creador}`,
+          tipo: fecha.tipo_fecha,
+          esDelBackend: true,
+          creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
+        });
+      });
+    }
+    
+    // Luego agregar eventos basados en propuestas
     if (this.propuestas.length > 0) {
       // Generar eventos basados en las propuestas
       this.propuestas.forEach(propuesta => {
@@ -295,6 +336,19 @@ export class CalendarModalComponent implements OnInit, OnChanges {
 
   closeModal() {
     this.close.emit();
+  }
+
+  getIconoTipoFecha(tipo: string): string {
+    const iconos: { [key: string]: string } = {
+      'global': 'fas fa-globe',
+      'academica': 'fas fa-graduation-cap',
+      'entrega': 'fas fa-clock',
+      'revision': 'fas fa-search',
+      'defensa': 'fas fa-gavel',
+      'reunion': 'fas fa-users',
+      'otro': 'fas fa-calendar-day'
+    };
+    return iconos[tipo] || 'fas fa-calendar-day';
   }
 
   getDiasConEventos(): number {

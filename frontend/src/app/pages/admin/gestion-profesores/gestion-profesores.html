@@ -1,47 +1,29 @@
-<!-- Navbar del administrador -->
-<nav class="admin-navbar">
-  <div class="navbar-brand">
-    <i class="fas fa-shield-alt"></i>
-    <span>AcTitUBB - Gestión de Profesores</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <button class="btn-secondary" (click)="volver()">
-      <i class="fas fa-arrow-left"></i>
-      Volver al Panel
-    </button>
-  </div>
-</nav>
-
-<!-- Contenido principal -->
-<div class="main-container">
-  <!-- Header -->
-  <div class="page-header">
+<!-- Contenedor principal -->
+<div class="gestion-profesores-container">
+  <!-- Header principal -->
+  <div class="header">
     <div class="header-content">
-      <h1>Gestión de Profesores</h1>
-      <p>Administra todos los profesores del sistema</p>
+      <h1><i class="fas fa-chalkboard-teacher"></i> Gestión de Profesores</h1>
+      <p>Administra todos los profesores del sistema de títulos</p>
     </div>
-    <div class="header-stats">
-      <div class="stat-item">
-        <span class="stat-number">{{ profesores.length }}</span>
-        <span class="stat-label">Total</span>
-      </div>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
     </div>
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="loading-spinner">
-      <i class="fas fa-spinner fa-spin"></i>
-    </div>
-    <p>Cargando profesores...</p>
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <h3>Cargando profesores...</h3>
+    <p>Obteniendo información de todos los profesores registrados</p>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error && !loading" class="error-state">
-    <div class="error-icon">
-      <i class="fas fa-exclamation-triangle"></i>
-    </div>
+  <div *ngIf="error && !loading" class="error-container">
+    <i class="fas fa-exclamation-triangle"></i>
     <h3>Error al cargar los profesores</h3>
     <p>{{ error }}</p>
     <button class="btn-primary" (click)="cargarProfesores()">
@@ -50,151 +32,137 @@
     </button>
   </div>
 
-  <!-- Filtros -->
-  <div *ngIf="!loading && !error" class="filters-section">
-    <div class="filters-grid">
-      <div class="filter-group">
-        <label for="filtroEspecialidad">Especialidad:</label>
-        <input 
-          type="text" 
-          id="filtroEspecialidad" 
-          [(ngModel)]="filtroEspecialidad" 
-          placeholder="Buscar por especialidad"
-          class="filter-input"
-        >
-      </div>
-
-      <div class="filter-group">
-        <label for="filtroNombre">Nombre:</label>
-        <input 
-          type="text" 
-          id="filtroNombre" 
-          [(ngModel)]="filtroNombre" 
-          placeholder="Buscar por nombre"
-          class="filter-input"
-        >
-      </div>
-
-      <div class="filter-group">
-        <label for="filtroEstado">Estado:</label>
-        <select id="filtroEstado" [(ngModel)]="filtroEstado" class="filter-select">
-          <option value="">Todos los estados</option>
-          <option value="Activo">Activo</option>
-          <option value="Inactivo">Inactivo</option>
-        </select>
-      </div>
-
-      <div class="filter-actions">
-        <button class="btn-secondary" (click)="limpiarFiltros()">
-          <i class="fas fa-times"></i>
-          Limpiar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lista de profesores -->
-  <div *ngIf="!loading && !error" class="profesores-section">
-    <div class="section-header">
-      <h2>Profesores ({{ profesoresFiltrados.length }})</h2>
+  <!-- Contenido principal -->
+  <div *ngIf="!loading && !error">
+    <!-- Botón de volver (oculto en desktop, visible en móvil) -->
+    <div class="volver-section mobile-only">
+      <button class="btn-volver" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver al Panel de Administración
+      </button>
     </div>
 
-    <div *ngIf="profesoresFiltrados.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <i class="fas fa-chalkboard-teacher"></i>
-      </div>
-      <h3>No se encontraron profesores</h3>
-      <p>No hay profesores que coincidan con los filtros aplicados</p>
-    </div>
-
-    <div *ngIf="profesoresFiltrados.length > 0" class="profesores-grid">
-      <div *ngFor="let profesor of profesoresFiltrados" class="profesor-card">
-        <div class="card-header">
-          <div class="profesor-info">
-            <div class="profesor-avatar">
-              <i class="fas fa-user-tie"></i>
-            </div>
-            <div class="profesor-details">
-              <h3>{{ profesor.nombre }}</h3>
-              <p class="profesor-email">{{ profesor.email }}</p>
-              <p class="profesor-especialidad">Profesor</p>
-            </div>
-          </div>
-          <div class="profesor-badges">
-            <div class="estado-badge" [class]="obtenerClaseEstado(profesor.confirmado ? 'Activo' : 'Inactivo')">
-              {{ profesor.confirmado ? 'Activo' : 'Inactivo' }}
-            </div>
-            <div class="capacidad-badge" [class]="obtenerClaseCapacidad('Disponible')">
-              Disponible
-            </div>
-          </div>
+    <!-- Filtros -->
+    <div class="filtros-section">
+      <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+      <div class="filtros-grid">
+        <div class="filtro-grupo">
+          <label for="filtroEspecialidad">Especialidad:</label>
+          <input 
+            type="text" 
+            id="filtroEspecialidad" 
+            [(ngModel)]="filtroEspecialidad" 
+            placeholder="Buscar por especialidad"
+          >
         </div>
 
-        <div class="card-content">
-          <div class="profesor-data">
-            <div class="data-item">
-              <i class="fas fa-id-card"></i>
-              <span><strong>RUT:</strong> {{ profesor.rut }}</span>
-            </div>
-            <div class="data-item">
-              <i class="fas fa-graduation-cap"></i>
-              <span><strong>Especialidad:</strong> Profesor</span>
-            </div>
-            <div class="data-item">
-              <i class="fas fa-file-alt"></i>
-              <span><strong>Propuestas Asignadas:</strong> 0</span>
-            </div>
-            <div class="data-item">
-              <i class="fas fa-circle"></i>
-              <span><strong>Estado:</strong> {{ profesor.confirmado ? 'Activo' : 'Inactivo' }}</span>
-            </div>
-          </div>
-
-          <div class="profesor-stats">
-            <div class="stat-item">
-              <div class="stat-label">Propuestas Asignadas</div>
-              <div class="stat-value" [class]="obtenerClasePropuestas(0)">
-                0
-              </div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-label">Capacidad</div>
-              <div class="stat-value" [class]="obtenerClaseCapacidad('Disponible')">
-                Disponible
-              </div>
-            </div>
-          </div>
+        <div class="filtro-grupo">
+          <label for="filtroNombre">Nombre:</label>
+          <input 
+            type="text" 
+            id="filtroNombre" 
+            [(ngModel)]="filtroNombre" 
+            placeholder="Buscar por nombre"
+          >
         </div>
 
-        <div class="card-actions">
-          <button class="btn-primary" (click)="editarProfesor(profesor)">
-            <i class="fas fa-edit"></i>
-            Editar
-          </button>
-          
-          <button class="btn-accent" (click)="verPropuestasAsignadas(profesor)">
-            <i class="fas fa-list"></i>
-            Ver Propuestas
-          </button>
-          
-          <button class="btn-secondary" (click)="cambiarEstado(profesor)">
-            <i class="fas fa-toggle-on"></i>
-            Cambiar Estado
-          </button>
-          
-          <button class="btn-danger" (click)="eliminarProfesor(profesor)">
-            <i class="fas fa-trash"></i>
-            Eliminar
+        <div class="filtro-grupo">
+          <label for="filtroEstado">Estado:</label>
+          <select id="filtroEstado" [(ngModel)]="filtroEstado">
+            <option value="">Todos los estados</option>
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          <label>&nbsp;</label>
+          <button class="btn-secondary" (click)="limpiarFiltros()">
+            <i class="fas fa-times"></i>
+            Limpiar Filtros
           </button>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Footer -->
-<footer class="main-footer">
-  <div class="footer-content">
-    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Gestión de Profesores</p>
+    <!-- Lista de profesores -->
+    <div class="profesores-section">
+      <div class="section-header">
+        <h3><i class="fas fa-users"></i> Profesores Registrados</h3>
+        <div class="contador">{{ profesoresFiltrados.length }} profesores</div>
+      </div>
+
+      <div *ngIf="profesoresFiltrados.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <h3>No se encontraron profesores</h3>
+        <p>No hay profesores que coincidan con los filtros aplicados</p>
+      </div>
+
+      <div *ngIf="profesoresFiltrados.length > 0" class="profesores-table-container">
+        <table class="profesores-table">
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>RUT</th>
+              <th>Email</th>
+              <th>Estado</th>
+              <th>Propuestas Asignadas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let profesor of profesoresFiltrados">
+              <td>
+                <div class="profesor-info">
+                  <div class="profesor-avatar">
+                    <i class="fas fa-user-tie"></i>
+                  </div>
+                  <div class="profesor-details">
+                    <strong>{{ profesor.nombre }}</strong>
+                    <span>Profesor</span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ profesor.rut }}</td>
+              <td>{{ profesor.email }}</td>
+              <td>
+                <span class="estado-badge" [class]="obtenerClaseEstado(profesor.confirmado ? 'Activo' : 'Inactivo')">
+                  {{ profesor.confirmado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <span class="propuestas-count">0</span>
+              </td>
+              <td>
+                <div class="acciones">
+                  <button class="btn btn-primary" (click)="editarProfesor(profesor)" title="Editar profesor">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  
+                  <button class="btn btn-success" (click)="verPropuestasAsignadas(profesor)" title="Ver propuestas asignadas">
+                    <i class="fas fa-list"></i>
+                  </button>
+                  
+                  <button class="btn btn-warning" (click)="cambiarEstado(profesor)" title="Cambiar estado">
+                    <i class="fas fa-toggle-on"></i>
+                  </button>
+                  
+                  <button class="btn btn-danger" (click)="eliminarProfesor(profesor)" title="Eliminar profesor">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</footer> 
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Sistema de Gestión de Títulos</p>
+  </div>
+</div> 

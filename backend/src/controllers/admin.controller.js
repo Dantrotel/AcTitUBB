@@ -84,13 +84,14 @@ export const obtenerTodasLasAsignaciones = async (req, res) => {
         ap.profesor_rut,
         ap.fecha_asignacion,
         p.titulo as titulo_propuesta,
-        p.estado as estado_propuesta,
+        ep.nombre as estado_propuesta,
         ue.nombre as nombre_estudiante,
         ue.rut as estudiante_rut,
         up.nombre as nombre_profesor,
         up.email as email_profesor
       FROM asignaciones_propuestas ap
       INNER JOIN propuestas p ON ap.propuesta_id = p.id
+      INNER JOIN estados_propuestas ep ON p.estado_id = ep.id
       INNER JOIN usuarios ue ON p.estudiante_rut = ue.rut
       INNER JOIN usuarios up ON ap.profesor_rut = up.rut
       ORDER BY ap.fecha_asignacion DESC
