@@ -6,7 +6,7 @@ import { HttpHeaders } from '@angular/common/http';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000/api/v1';
+  private baseUrl = '/api/v1';
    private getHeaders() {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
@@ -194,8 +194,8 @@ export class ApiService {
   }
 
   getBaseUrl(): string {
-    // Reemplaza la URL base por la que uses en tu ApiService
-    return 'http://localhost:3000/api/v1';
+    // URL base usando el proxy de Nginx
+    return '/api/v1';
   }
 
   // ===== MÉTODOS DE ADMINISTRACIÓN =====
