@@ -1,0 +1,178 @@
+<!-- Navbar del administrador -->
+<nav class="admin-navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-shield-alt"></i>
+    <span>AcTitUBB - Gestión de Propuestas</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <button class="btn-secondary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver al Panel
+    </button>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestión de Propuestas</h1>
+      <p>Administra todas las propuestas del sistema</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-number">{{ propuestas.length }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando propuestas...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar las propuestas</h3>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="cargarPropuestas()">
+      <i class="fas fa-redo"></i>
+      Intentar de nuevo
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div *ngIf="!loading && !error" class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="filtroEstado">Estado:</label>
+        <select id="filtroEstado" [(ngModel)]="filtroEstado" class="filter-select">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_revision">En Revisión</option>
+          <option value="aprobada">Aprobada</option>
+          <option value="rechazada">Rechazada</option>
+          <option value="correcciones">Correcciones</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroEstudiante">Estudiante:</label>
+        <input 
+          type="text" 
+          id="filtroEstudiante" 
+          [(ngModel)]="filtroEstudiante" 
+          placeholder="Buscar por nombre o RUT"
+          class="filter-input"
+        >
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroProfesor">Profesor:</label>
+        <input 
+          type="text" 
+          id="filtroProfesor" 
+          [(ngModel)]="filtroProfesor" 
+          placeholder="Buscar por nombre o RUT"
+          class="filter-input"
+        >
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn-secondary" (click)="limpiarFiltros()">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de propuestas -->
+  <div *ngIf="!loading && !error" class="propuestas-section">
+    <div class="section-header">
+      <h2>Propuestas ({{ propuestasFiltradas.length }})</h2>
+    </div>
+
+    <div *ngIf="propuestasFiltradas.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <h3>No se encontraron propuestas</h3>
+      <p>No hay propuestas que coincidan con los filtros aplicados</p>
+    </div>
+
+    <div *ngIf="propuestasFiltradas.length > 0" class="propuestas-grid">
+      <div *ngFor="let propuesta of propuestasFiltradas" class="propuesta-card">
+        <div class="card-header">
+          <div class="propuesta-title">
+            <h3>{{ propuesta.titulo }}</h3>
+            <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
+              {{ obtenerEstadoDisplay(propuesta.estado) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="propuesta-info">
+            <div class="info-item">
+              <i class="fas fa-user-graduate"></i>
+              <span><strong>Estudiante:</strong> {{ propuesta.nombre_estudiante || 'No especificado' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <i class="fas fa-chalkboard-teacher"></i>
+              <span><strong>Profesor:</strong> {{ propuesta.nombre_profesor || 'Sin asignar' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <i class="fas fa-calendar"></i>
+              <span><strong>Fecha:</strong> {{ formatearFecha(propuesta.fecha_envio) }}</span>
+            </div>
+          </div>
+
+          <div class="propuesta-description">
+            <p>{{ propuesta.descripcion }}</p>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-primary" (click)="verDetalle(propuesta.id)">
+            <i class="fas fa-eye"></i>
+            Ver Detalle
+          </button>
+          
+          <button class="btn-secondary" (click)="editarPropuesta(propuesta.id)">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          
+          <button class="btn-accent" (click)="asignarProfesor(propuesta.id)">
+            <i class="fas fa-user-plus"></i>
+            Asignar Profesor
+          </button>
+          
+          <button class="btn-danger" (click)="eliminarPropuesta(propuesta.id)">
+            <i class="fas fa-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Gestión de Propuestas</p>
+  </div>
+</footer> 

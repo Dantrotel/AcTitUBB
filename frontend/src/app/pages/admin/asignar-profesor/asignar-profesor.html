@@ -1,0 +1,182 @@
+<!-- Navbar del administrador -->
+<nav class="admin-navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-shield-alt"></i>
+    <span>AcTitUBB - Asignar Profesor</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <button class="btn-secondary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando información de la propuesta...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar la propuesta</h3>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
+
+  <!-- Contenido de asignación -->
+  <div *ngIf="propuesta && !loading" class="asignacion-content">
+    <!-- Información de la propuesta -->
+    <div class="propuesta-info-card">
+      <div class="card-header">
+        <h2>Información de la Propuesta</h2>
+      </div>
+      
+      <div class="card-content">
+        <div class="propuesta-details">
+          <div class="detail-row">
+            <div class="detail-label">
+              <i class="fas fa-file-alt"></i>
+              <span>Título:</span>
+            </div>
+            <div class="detail-value">{{ propuesta.titulo }}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div class="detail-label">
+              <i class="fas fa-user-graduate"></i>
+              <span>Estudiante:</span>
+            </div>
+            <div class="detail-value">{{ propuesta.nombre_estudiante || 'No especificado' }}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div class="detail-label">
+              <i class="fas fa-calendar"></i>
+              <span>Fecha de Envío:</span>
+            </div>
+            <div class="detail-value">{{ formatearFecha(propuesta.fecha_envio) }}</div>
+          </div>
+          
+          <div class="detail-row">
+            <div class="detail-label">
+              <i class="fas fa-info-circle"></i>
+              <span>Estado:</span>
+            </div>
+            <div class="detail-value">
+              <span class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
+                {{ obtenerEstadoDisplay(propuesta.estado) }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="detail-row" *ngIf="propuesta.profesor_rut">
+            <div class="detail-label">
+              <i class="fas fa-chalkboard-teacher"></i>
+              <span>Profesor Actual:</span>
+            </div>
+            <div class="detail-value">{{ propuesta.nombre_profesor || propuesta.profesor_rut }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de asignación -->
+    <div class="asignacion-form-card">
+      <div class="card-header">
+        <h2>Asignar Profesor</h2>
+      </div>
+      
+      <div class="card-content">
+        <div class="form-group">
+          <label for="profesorSelect">Seleccionar Profesor:</label>
+          <select 
+            id="profesorSelect" 
+            [(ngModel)]="profesorSeleccionado" 
+            class="form-select"
+            [disabled]="guardando"
+          >
+            <option value="">-- Selecciona un profesor --</option>
+            <option *ngFor="let profesor of profesores" [value]="profesor.rut">
+              {{ profesor.nombre }} ({{ profesor.rut }})
+            </option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            class="btn-primary" 
+            (click)="asignarProfesor()"
+            [disabled]="!profesorSeleccionado || guardando"
+          >
+            <i class="fas fa-user-plus"></i>
+            {{ guardando ? 'Asignando...' : 'Asignar Profesor' }}
+          </button>
+          
+          <button 
+            *ngIf="propuesta.profesor_rut"
+            class="btn-danger" 
+            (click)="quitarAsignacion()"
+            [disabled]="guardando"
+          >
+            <i class="fas fa-user-minus"></i>
+            {{ guardando ? 'Removiendo...' : 'Quitar Asignación' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de profesores disponibles -->
+    <div class="profesores-card">
+      <div class="card-header">
+        <h2>Profesores Disponibles</h2>
+      </div>
+      
+      <div class="card-content">
+        <div class="profesores-grid">
+          <div *ngFor="let profesor of profesores" class="profesor-item">
+            <div class="profesor-info">
+              <div class="profesor-avatar">
+                <i class="fas fa-user-tie"></i>
+              </div>
+              <div class="profesor-details">
+                <h4>{{ profesor.nombre }}</h4>
+                <p>{{ profesor.rut }}</p>
+                <p class="profesor-email">{{ profesor.email }}</p>
+              </div>
+            </div>
+            <div class="profesor-actions">
+              <button 
+                class="btn-accent" 
+                (click)="profesorSeleccionado = profesor.rut"
+                [disabled]="guardando"
+              >
+                <i class="fas fa-check"></i>
+                Seleccionar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Asignación de Profesores</p>
+  </div>
+</footer> 

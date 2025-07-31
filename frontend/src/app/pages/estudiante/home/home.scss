@@ -266,10 +266,16 @@ body {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  user-select: none;
 
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
   }
 
   .card-icon {
@@ -440,10 +446,26 @@ body {
       padding: 1.5rem;
       border-radius: 12px;
       background: $ubb-light-gray;
-      transition: transform 0.3s ease;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      user-select: none;
 
       &:hover {
         transform: translateY(-3px);
+        background: $ubb-blue;
+        color: $ubb-white;
+
+        .stat-number {
+          color: $ubb-white;
+        }
+
+        .stat-label {
+          color: $ubb-white;
+        }
+      }
+
+      &:active {
+        transform: translateY(-1px);
       }
 
       .stat-number {

@@ -98,6 +98,36 @@ export const getPropuestasAsignadasAlProfesor = async (profesor_rut) => {
   if (!rutValido(profesor_rut)) {
     throw new Error('RUT de profesor no válido');
   }
-
   return await PropuestasModel.obtenerPropuestasPorProfesor(profesor_rut);
+};
+
+// Métodos para verificar permisos
+export const verificarPermisosVisualizacion = async (propuesta, userRut, userRole) => {
+  // El creador siempre puede ver su propuesta
+  if (propuesta.estudiante_rut === userRut) {
+    return true;
+  }
+  
+  // Los profesores pueden ver todas las propuestas sin asignar
+  if (userRole === 2) { // Profesor
+    // Si la propuesta no tiene profesor asignado, cualquier profesor puede verla
+    if (!propuesta.profesor_rut || propuesta.profesor_rut === null) {
+      return true;
+    }
+    // Si ya tiene profesor asignado, solo ese profesor puede verla
+    return propuesta.profesor_rut === userRut;
+  }
+  
+  // Los administradores pueden ver todas las propuestas
+  if (userRole === 3) { // Admin
+    return true;
+  }
+  
+  // Otros estudiantes no pueden ver propuestas de otros estudiantes
+  return false;
+};
+
+export const verificarPermisosEdicion = async (propuesta, userRut) => {
+  // Solo el creador puede editar su propuesta
+  return propuesta.estudiante_rut === userRut;
 };

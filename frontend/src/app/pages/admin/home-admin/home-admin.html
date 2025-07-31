@@ -1,0 +1,171 @@
+<!-- Navbar del administrador -->
+<nav class="admin-navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-shield-alt"></i>
+    <span>AcTitUBB - Administración</span>
+  </div>
+  
+  <div class="navbar-user">
+    <div class="user-info">
+      <i class="fas fa-user-cog"></i>
+      <span>{{ userName || 'Administrador' }}</span>
+    </div>
+    <button class="btn-logout" (click)="cerrarSesion()">
+      <i class="fas fa-sign-out-alt"></i>
+      Cerrar Sesión
+    </button>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Header con bienvenida -->
+  <div class="welcome-header">
+    <div class="welcome-content">
+      <h1>Panel de Administración</h1>
+      <p>Gestión completa del sistema de propuestas de título</p>
+    </div>
+    <div class="welcome-icon">
+      <i class="fas fa-cogs"></i>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando estadísticas del sistema...</p>
+  </div>
+
+  <!-- Dashboard de estadísticas -->
+  <div *ngIf="!loading" class="stats-dashboard">
+    <h2 class="section-title">
+      <i class="fas fa-chart-bar"></i>
+      Estadísticas del Sistema
+    </h2>
+    
+    <div class="stats-grid">
+      <!-- Total de Propuestas -->
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ estadisticas.totalPropuestas }}</h3>
+          <p>Total de Propuestas</p>
+        </div>
+      </div>
+
+      <!-- Propuestas Pendientes -->
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ estadisticas.propuestasPendientes }}</h3>
+          <p>Pendientes</p>
+        </div>
+      </div>
+
+      <!-- Propuestas en Revisión -->
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ estadisticas.propuestasEnRevision }}</h3>
+          <p>En Revisión</p>
+        </div>
+      </div>
+
+      <!-- Propuestas Aprobadas -->
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ estadisticas.propuestasAprobadas }}</h3>
+          <p>Aprobadas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secciones de administración -->
+  <div class="admin-sections">
+    <h2 class="section-title">
+      <i class="fas fa-tools"></i>
+      Herramientas de Administración
+    </h2>
+    
+    <div class="sections-grid">
+      <!-- Gestión de Propuestas -->
+      <div class="section-card" (click)="irAGestionPropuestas()">
+        <div class="card-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="card-content">
+          <h3>Gestión de Propuestas</h3>
+          <p>Ver, editar y administrar todas las propuestas del sistema</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gestión de Usuarios -->
+      <div class="section-card" (click)="irAGestionUsuarios()">
+        <div class="card-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="card-content">
+          <h3>Gestión de Usuarios</h3>
+          <p>Administrar estudiantes, profesores y roles del sistema</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gestión de Profesores -->
+      <div class="section-card" (click)="irAGestionProfesores()">
+        <div class="card-icon">
+          <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div class="card-content">
+          <h3>Gestión de Profesores</h3>
+          <p>Administrar profesores y sus capacidades de revisión</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asignaciones -->
+      <div class="section-card" (click)="irAAsignaciones()">
+        <div class="card-icon">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="card-content">
+          <h3>Asignaciones</h3>
+          <p>Asignar profesores a propuestas y gestionar responsabilidades</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Panel de Administración</p>
+  </div>
+</footer> 

@@ -158,13 +158,24 @@
             Ver Detalle
           </button>
           
+          <!-- Botón Editar para estudiantes -->
           <button 
             class="btn-secondary" 
             (click)="editarPropuesta(propuesta.id); $event.stopPropagation()"
-            *ngIf="propuesta.puedeEditar"
+            *ngIf="esEstudiante && propuesta.puedeEditar"
           >
             <i class="fas fa-edit"></i>
             Editar
+          </button>
+          
+          <!-- Botón Revisar para profesores -->
+          <button 
+            class="btn-accent" 
+            (click)="revisarPropuesta(propuesta.id); $event.stopPropagation()"
+            *ngIf="esProfesor"
+          >
+            <i class="fas fa-edit"></i>
+            Revisar
           </button>
           
           <button 

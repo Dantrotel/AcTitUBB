@@ -1,0 +1,176 @@
+<!-- Navbar del administrador -->
+<nav class="admin-navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-shield-alt"></i>
+    <span>AcTitUBB - Gestión de Usuarios</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <button class="btn-secondary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver al Panel
+    </button>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestión de Usuarios</h1>
+      <p>Administra todos los usuarios del sistema</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-number">{{ usuarios.length }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando usuarios...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar los usuarios</h3>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="cargarUsuarios()">
+      <i class="fas fa-redo"></i>
+      Intentar de nuevo
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div *ngIf="!loading && !error" class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="filtroRol">Rol:</label>
+        <select id="filtroRol" [(ngModel)]="filtroRol" class="filter-select">
+          <option value="">Todos los roles</option>
+          <option value="estudiante">Estudiante</option>
+          <option value="profesor">Profesor</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroNombre">Nombre:</label>
+        <input 
+          type="text" 
+          id="filtroNombre" 
+          [(ngModel)]="filtroNombre" 
+          placeholder="Buscar por nombre"
+          class="filter-input"
+        >
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroRut">RUT:</label>
+        <input 
+          type="text" 
+          id="filtroRut" 
+          [(ngModel)]="filtroRut" 
+          placeholder="Buscar por RUT"
+          class="filter-input"
+        >
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn-secondary" (click)="limpiarFiltros()">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de usuarios -->
+  <div *ngIf="!loading && !error" class="usuarios-section">
+    <div class="section-header">
+      <h2>Usuarios ({{ usuariosFiltrados.length }})</h2>
+    </div>
+
+    <div *ngIf="usuariosFiltrados.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <h3>No se encontraron usuarios</h3>
+      <p>No hay usuarios que coincidan con los filtros aplicados</p>
+    </div>
+
+    <div *ngIf="usuariosFiltrados.length > 0" class="usuarios-grid">
+      <div *ngFor="let usuario of usuariosFiltrados" class="usuario-card">
+        <div class="card-header">
+          <div class="usuario-info">
+            <div class="usuario-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="usuario-details">
+              <h3>{{ usuario.nombre }}</h3>
+              <p class="usuario-email">{{ usuario.email }}</p>
+            </div>
+          </div>
+          <div class="usuario-badges">
+            <div class="rol-badge" [class]="obtenerClaseRol(usuario.rol_nombre)">
+              {{ usuario.rol_nombre }}
+            </div>
+            <div class="estado-badge" [class]="obtenerClaseEstado(usuario.confirmado ? 'Activo' : 'Inactivo')">
+              {{ usuario.confirmado ? 'Activo' : 'Inactivo' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="usuario-data">
+            <div class="data-item">
+              <i class="fas fa-id-card"></i>
+              <span><strong>RUT:</strong> {{ usuario.rut }}</span>
+            </div>
+            <div class="data-item">
+              <i class="fas fa-user-tag"></i>
+              <span><strong>Rol:</strong> {{ usuario.rol_nombre }}</span>
+            </div>
+            <div class="data-item">
+              <i class="fas fa-circle"></i>
+              <span><strong>Estado:</strong> {{ usuario.confirmado ? 'Activo' : 'Inactivo' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-primary" (click)="editarUsuario(usuario)">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          
+          <button class="btn-accent" (click)="cambiarEstado(usuario)">
+            <i class="fas fa-toggle-on"></i>
+            Cambiar Estado
+          </button>
+          
+          <button class="btn-danger" (click)="eliminarUsuario(usuario)">
+            <i class="fas fa-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Gestión de Usuarios</p>
+  </div>
+</footer> 

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ApiService } from '../../../services/api';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -15,11 +15,16 @@ export class VerPropuestaComponent implements OnInit {
   loading = true;
   error = '';
   esProfesor = false;
+  esEstudiante = false;
+  esAdmin = false;
+  userRut = '';
+  userRole = '';
 
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {}
 
   ngOnInit(): void {
@@ -28,13 +33,29 @@ export class VerPropuestaComponent implements OnInit {
   }
 
   private verificarTipoUsuario(): void {
-    const userData = localStorage.getItem('userData');
-    if (userData) {
+    const token = localStorage.getItem('token');
+    if (token) {
       try {
-        const user = JSON.parse(userData);
-        this.esProfesor = user.role === 'profesor';
-      } catch {
-        this.esProfesor = false;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.userRut = payload.rut || '';
+        this.userRole = payload.rol_id || '';
+        
+        console.log('🔍 Token payload:', payload);
+        console.log('🔍 User RUT:', this.userRut);
+        console.log('🔍 User Role:', this.userRole);
+        
+        // Determinar el tipo de usuario (manejar tanto string como number)
+        this.esEstudiante = String(this.userRole) === '1';
+        this.esProfesor = String(this.userRole) === '2';
+        this.esAdmin = String(this.userRole) === '3';
+        
+        console.log('🔍 Tipo de usuario:', {
+          esEstudiante: this.esEstudiante,
+          esProfesor: this.esProfesor,
+          esAdmin: this.esAdmin
+        });
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
       }
     }
   }
@@ -44,21 +65,32 @@ export class VerPropuestaComponent implements OnInit {
     this.error = '';
 
     const id = this.route.snapshot.paramMap.get('id');
+    const fromRoute = this.route.snapshot.queryParamMap.get('from');
+    
     if (!id) {
       this.error = 'ID de propuesta no válido';
       this.loading = false;
       return;
     }
 
+    console.log('🔍 Frontend - Iniciando carga de propuesta ID:', id);
+    console.log('🔍 Frontend - User RUT:', this.userRut);
+    console.log('🔍 Frontend - User Role:', this.userRole);
+    console.log('🔍 Frontend - From route:', fromRoute);
+
     this.api.getPropuestaById(id).subscribe({
       next: (data: any) => {
-        console.log('Propuesta obtenida:', data);
+        console.log('🔍 Frontend - Propuesta obtenida exitosamente:', data);
         this.propuesta = data;
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error al cargar propuesta:', err);
-        this.error = 'No se pudo cargar la propuesta';
+        console.error('🔍 Frontend - Error al cargar propuesta:', err);
+        if (err.status === 403) {
+          this.error = 'No tienes permisos para ver esta propuesta';
+        } else {
+          this.error = 'No se pudo cargar la propuesta';
+        }
         this.loading = false;
       }
     });
@@ -147,11 +179,27 @@ export class VerPropuestaComponent implements OnInit {
   }
 
   volver() {
-    // Determinar la ruta de retorno según el tipo de usuario
-    if (this.esProfesor) {
-      this.router.navigate(['/profesor']);
+    // Obtener el parámetro 'from' para saber desde dónde viene
+    const fromRoute = this.route.snapshot.queryParamMap.get('from');
+    
+    if (fromRoute) {
+      // Si hay un parámetro 'from', usar esa ruta
+      this.router.navigate([fromRoute]);
+    } else if (window.history.length > 1) {
+      // Si no hay parámetro 'from' pero hay historial, volver atrás
+      this.location.back();
     } else {
-      this.router.navigate(['/estudiante']);
+      // Si no hay historial, usar la lógica por defecto según el rol
+      if (this.esProfesor) {
+        // Para profesores, ir a la página de propuestas asignadas
+        this.router.navigate(['/profesor/propuestas/asignadas']);
+      } else if (this.esEstudiante) {
+        // Para estudiantes, ir a su página principal
+        this.router.navigate(['/estudiante']);
+      } else {
+        // Para otros roles, ir a la página principal
+        this.router.navigate(['/']);
+      }
     }
   }
 
@@ -161,6 +209,67 @@ export class VerPropuestaComponent implements OnInit {
 
   fechaActual(): Date {
     return new Date();
+  }
+
+  // Verificar si el usuario puede editar la propuesta (solo estudiantes que crearon la propuesta)
+  puedeEditarPropuesta(): boolean {
+    const puedeEditar = this.esEstudiante && this.propuesta && this.propuesta.estudiante_rut === this.userRut;
+    console.log('🔍 Puede editar propuesta:', {
+      esEstudiante: this.esEstudiante,
+      estudianteRut: this.propuesta?.estudiante_rut,
+      userRut: this.userRut,
+      puedeEditar: puedeEditar
+    });
+    return puedeEditar;
+  }
+
+  // Verificar si el profesor puede dejar comentarios (solo si la propuesta está asignada a él)
+  puedeDejarComentarios(): boolean {
+    const puedeComentar = this.esProfesor && this.propuesta && this.propuesta.profesor_rut === this.userRut;
+    console.log('🔍 Puede dejar comentarios:', {
+      esProfesor: this.esProfesor,
+      profesorRut: this.propuesta?.profesor_rut,
+      userRut: this.userRut,
+      puedeComentar: puedeComentar
+    });
+    return puedeComentar;
+  }
+
+  // Verificar si el administrador puede asignar profesores
+  puedeAsignarProfesor(): boolean {
+    return this.esAdmin && this.propuesta;
+  }
+
+  // Verificar si el administrador puede eliminar propuestas
+  puedeEliminarPropuesta(): boolean {
+    return this.esAdmin && this.propuesta;
+  }
+
+  // Método para ir a la página de revisión (dejar comentarios)
+  dejarComentarios(id: number) {
+    this.router.navigate(['/profesor/propuestas/revisar', id]);
+  }
+
+  // Método para asignar profesor (solo admin)
+  asignarProfesor(id: number) {
+    this.router.navigate(['/admin/asignar-profesor', id]);
+  }
+
+  // Método para eliminar propuesta (solo admin)
+  eliminarPropuesta(id: number) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.')) {
+      this.api.deletePropuesta(id.toString()).subscribe({
+        next: () => {
+          console.log('Propuesta eliminada exitosamente');
+          alert('Propuesta eliminada exitosamente');
+          this.volver();
+        },
+        error: (err) => {
+          console.error('Error al eliminar propuesta:', err);
+          alert('Error al eliminar la propuesta');
+        }
+      });
+    }
   }
 }
 
