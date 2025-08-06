@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000/api/v1';
+  private baseUrl = 'http://146.83.198.35:1714/api/v1';
    private getHeaders() {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
