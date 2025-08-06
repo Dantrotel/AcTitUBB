@@ -179,12 +179,13 @@ const executeDatabaseScript = async () => {
                         commandCount++;
                         console.log(`✅ Comando ${commandCount} ejecutado`);
                     } catch (error) {
-                        // Ignorar errores de "already exists"
+                        // Ignorar errores de "already exists" y índices duplicados
                         if (error.code === 'ER_DUP_ENTRY' || 
                             error.message.includes('already exists') ||
                             error.message.includes('Duplicate entry') ||
                             error.code === 'ER_DUP_KEYNAME' ||
                             error.message.includes('Duplicate key name') ||
+                            error.message.includes('Duplicate index') ||
                             error.code === 'ER_DUP_USERNAME' ||
                             error.message.includes('Duplicate user') ||
                             error.code === 'ER_DB_CREATE_EXISTS' ||
@@ -196,7 +197,9 @@ const executeDatabaseScript = async () => {
                             error.code === 'ER_FK_INCOMPATIBLE_COLUMNS' ||
                             error.message.includes('incompatible') ||
                             error.code === 'ER_FK_CANNOT_OPEN_PARENT' ||
-                            error.message.includes('Failed to open the referenced table')) {
+                            error.message.includes('Failed to open the referenced table') ||
+                            error.code === 'ER_CANT_DROP_FIELD_OR_KEY' ||
+                            error.message.includes("check that column/key exists")) {
                             console.log(`⚠️  Comando ${commandCount + 1} ya existe o no aplica, continuando...`);
                         } else {
                             console.error(`❌ Error en comando:`, error.message);

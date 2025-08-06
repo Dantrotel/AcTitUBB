@@ -6,7 +6,7 @@ import { HttpHeaders } from '@angular/common/http';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = '/api/v1';
+  private baseUrl = 'http://localhost:3000/api/v1';
    private getHeaders() {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
