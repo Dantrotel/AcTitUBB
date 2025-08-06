@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendConfirmationEmail = async (email, token) => {
-  const confirmationUrl = `http://146.83.198.35:1714/api/v1/users/confirm/${token}`;
+  const confirmationUrl = `http://146.83.194.188:8090/api/v1/users/confirm/${token}`;
 
   const mailOptions = {
     from: `"AcTitUBB" <${process.env.EMAIL_USER}>`,
