@@ -37,12 +37,29 @@
 
 <!-- Contenido principal -->
 <div class="main-container">
+  <!-- Mensaje de error -->
+  <div class="error-banner" *ngIf="hasError">
+    <div class="error-content">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>{{ errorMensaje }}</span>
+      <div class="error-actions">
+        <button class="btn-retry" (click)="recargarDatos()">
+          <i class="fas fa-redo"></i>
+          Reintentar
+        </button>
+        <button class="btn-close" (click)="ocultarError()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="welcome-section">
     <div class="welcome-content">
       <h1>¡Bienvenido, {{estudiante.nombre || 'Estudiante'}}!</h1>
       <p class="status-text">
         <i class="fas fa-info-circle"></i>
-        Estado actual: <span class="status-badge">Proyecto en revisión</span>
+        Estado actual: <span class="status-badge" [ngClass]="getEstadoClass()">{{ getEstadoTexto() }}</span>
       </p>
     </div>
     
@@ -51,8 +68,16 @@
     </div>
   </div>
 
+  <!-- Indicador de carga -->
+  <div class="loading-overlay" *ngIf="loadingPropuestas || loadingEstudiante">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>{{ loadingEstudiante ? 'Cargando perfil...' : 'Cargando propuestas...' }}</p>
+    </div>
+  </div>
+
   <!-- Dashboard Cards -->
-  <div class="dashboard-grid">
+  <div class="dashboard-grid" [class.loading]="loadingPropuestas || loadingEstudiante">
     <div class="dashboard-card primary-card" (click)="navegarAUltimaPropuesta()">
       <div class="card-icon">
         <i class="fas fa-clipboard-check"></i>
@@ -61,11 +86,7 @@
         <h3>Última Revisión</h3>
         <p *ngIf="ultimaPropuesta">
           Enviada el {{ultimaPropuesta.fecha_envio | date:'dd MMM'}}, 
-          {{ultimaPropuesta.estado === 'pendiente' ? 'pendiente de revisión' : 
-            ultimaPropuesta.estado === 'en_revision' ? 'en revisión' : 
-            ultimaPropuesta.estado === 'aprobada' ? 'aprobada' : 
-            ultimaPropuesta.estado === 'correcciones' ? 'requiere correcciones' : 
-            ultimaPropuesta.estado === 'rechazada' ? 'rechazada' : 'en proceso'}}
+          {{getEstadoTextoCard()}}
         </p>
         <p *ngIf="!ultimaPropuesta">No hay propuestas enviadas</p>
         <button class="btn-primary">
@@ -121,6 +142,37 @@
           <i class="fas fa-arrow-right"></i>
           Comenzar
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información del profesor asignado -->
+  <div class="profesor-info" *ngIf="ultimaPropuesta">
+    <div class="profesor-card">
+      <div class="card-header">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <h3>Profesor Asignado</h3>
+      </div>
+      <div class="card-content">
+        <div class="profesor-details" *ngIf="ultimaPropuesta.nombre_profesor">
+          <div class="profesor-avatar">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <div class="profesor-info-text">
+            <h4>{{ ultimaPropuesta.nombre_profesor }}</h4>
+            <p>{{ ultimaPropuesta.profesor_email || 'Email no disponible' }}</p>
+            <span class="rut-badge">{{ ultimaPropuesta.profesor_rut }}</span>
+          </div>
+        </div>
+        <div class="no-profesor" *ngIf="!ultimaPropuesta.nombre_profesor">
+          <div class="no-profesor-icon">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="no-profesor-text">
+            <h4>Sin profesor asignado</h4>
+            <p>Tu propuesta está pendiente de asignación</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>

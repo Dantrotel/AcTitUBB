@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS propuestas (
     fecha_aprobacion DATE NULL,
     proyecto_id INT NULL, -- Se llena cuando se aprueba y se crea el proyecto
     archivo VARCHAR(255),
+    nombre_archivo_original VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),

@@ -6,6 +6,7 @@ import {
     obtenerFechasPorProfesorController,
     obtenerFechasParaEstudianteController,
     obtenerFechasProximasController,
+    obtenerFechasProximasEstudianteController,
     obtenerFechaPorIdController,
     actualizarFechaController,
     eliminarFechaController,
@@ -40,9 +41,15 @@ router.get('/profesor/mis-fechas', verifySession, obtenerFechasPorProfesorContro
 router.get('/estudiante/mis-fechas', verifySession, obtenerFechasParaEstudianteController);
 
 // Obtener fechas próximas para el estudiante
-router.get('/estudiante/proximas', verifySession, obtenerFechasProximasController);
+router.get('/estudiante/proximas', verifySession, obtenerFechasProximasEstudianteController);
 
 // ===== RUTAS GENERALES =====
+
+// Obtener fechas globales visibles para todos los usuarios (sin restricción de rol)
+router.get('/globales', verifySession, obtenerFechasGlobalesController);
+
+// Obtener fechas próximas visibles para todos los usuarios (sin restricción de rol)
+router.get('/proximas', verifySession, obtenerFechasProximasController);
 
 // Obtener fecha por ID (con control de permisos)
 router.get('/:id', verifySession, obtenerFechaPorIdController);

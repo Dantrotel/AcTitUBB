@@ -2,6 +2,7 @@ import e from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model.js';
 import { loginController } from '../controllers/login.controller.js';
+import { verifySession } from '../middlewares/verifySession.js';
 
 const router = e.Router();
 
@@ -38,5 +39,6 @@ router.get('/confirm/:token', async (req, res) => {
 });
 
 router.get('/:rut', loginController.findUserByRut)
+router.put('/perfil', verifySession, loginController.actualizarPerfil)
 
 export default router;

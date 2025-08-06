@@ -168,10 +168,10 @@ export class CalendarModalComponent implements OnInit, OnChanges {
 
   generateEvents() {
     this.upcomingEvents = [];
-    console.log('Generando eventos con propuestas:', this.propuestas);
+    console.log('Generando eventos SOLO desde la base de datos');
     console.log('Fechas del calendario backend:', this.fechasCalendario);
     
-    // Primero agregar fechas del backend (admin y profesor)
+    // SOLO agregar fechas reales del backend (NO generar fechas dummy)
     if (this.fechasCalendario && this.fechasCalendario.length > 0) {
       this.fechasCalendario.forEach(fecha => {
         const fechaDate = new Date(fecha.fecha);
@@ -185,112 +185,15 @@ export class CalendarModalComponent implements OnInit, OnChanges {
           creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
         });
       });
+      console.log('✅ Eventos generados desde BD:', this.upcomingEvents.length);
+    } else {
+      console.log('ℹ️  No hay fechas en la base de datos para mostrar');
     }
     
-    // Luego agregar eventos basados en propuestas
-    if (this.propuestas.length > 0) {
-      // Generar eventos basados en las propuestas
-      this.propuestas.forEach(propuesta => {
-        console.log('Procesando propuesta:', propuesta);
-        const fechaEnvio = new Date(propuesta.fecha_envio);
-        console.log('Fecha de envío parseada:', fechaEnvio);
-        
-        // Evento de envío de propuesta
-        this.upcomingEvents.push({
-          titulo: `Envío: ${propuesta.titulo}`,
-          fecha: fechaEnvio,
-          icono: 'fas fa-paper-plane',
-          descripcion: 'Propuesta enviada para revisión',
-          tipo: 'envio'
-        });
-        
-        // Si la propuesta tiene profesor asignado, agregar eventos del profesor
-        if (propuesta.profesor_rut) {
-          // Revisión del profesor (7 días después del envío)
-          const revisionProfesor = new Date(fechaEnvio.getTime() + (7 * 24 * 60 * 60 * 1000));
-          this.upcomingEvents.push({
-            titulo: `Revisión Profesor: ${propuesta.nombre_profesor || 'Profesor'}`,
-            fecha: revisionProfesor,
-            icono: 'fas fa-user-tie',
-            descripcion: 'Revisión y comentarios del profesor',
-            tipo: 'revision'
-          });
-          
-          // Entrega de correcciones (si el estado es correcciones)
-          if (propuesta.estado === 'correcciones') {
-            const correcciones = new Date(fechaEnvio.getTime() + (14 * 24 * 60 * 60 * 1000));
-            this.upcomingEvents.push({
-              titulo: 'Entrega de Correcciones',
-              fecha: correcciones,
-              icono: 'fas fa-edit',
-              descripcion: 'Fecha límite para entregar correcciones',
-              tipo: 'correcciones'
-            });
-          }
-        }
-        
-        // Evento de entrega final (30 días después)
-        const entregaFinal = new Date(fechaEnvio.getTime() + (30 * 24 * 60 * 60 * 1000));
-        this.upcomingEvents.push({
-          titulo: 'Entrega Final',
-          fecha: entregaFinal,
-          icono: 'fas fa-clock',
-          descripcion: 'Fecha límite para entrega final',
-          tipo: 'entrega'
-        });
-        
-        // Evento de defensa (45 días después)
-        const defensa = new Date(fechaEnvio.getTime() + (45 * 24 * 60 * 60 * 1000));
-        this.upcomingEvents.push({
-          titulo: 'Defensa',
-          fecha: defensa,
-          icono: 'fas fa-gavel',
-          descripcion: 'Presentación y defensa del proyecto',
-          tipo: 'defensa'
-        });
-      });
-    } else {
-      // Eventos por defecto del año académico
-      const hoy = new Date();
-      this.upcomingEvents = [
-        {
-          titulo: 'Inicio Semestre',
-          fecha: new Date(hoy.getFullYear(), 2, 1), // 1 de marzo
-          icono: 'fas fa-play',
-          descripcion: 'Inicio del semestre académico',
-          tipo: 'academico'
-        },
-        {
-          titulo: 'Entrega Final',
-          fecha: new Date(hoy.getFullYear(), 11, 15), // 15 de diciembre
-          icono: 'fas fa-clock',
-          descripcion: 'Fecha límite para entrega final',
-          tipo: 'entrega'
-        },
-        {
-          titulo: 'Defensa',
-          fecha: new Date(hoy.getFullYear(), 11, 20), // 20 de diciembre
-          icono: 'fas fa-gavel',
-          descripcion: 'Presentación y defensa del proyecto',
-          tipo: 'defensa'
-        }
-      ];
-      
-      // Agregar eventos de prueba para el mes actual
-      const eventoPrueba = new Date();
-      eventoPrueba.setDate(eventoPrueba.getDate() + 5); // 5 días desde hoy
-      this.upcomingEvents.push({
-        titulo: 'Evento de Prueba',
-        fecha: eventoPrueba,
-        icono: 'fas fa-star',
-        descripcion: 'Evento de prueba para verificar funcionamiento',
-        tipo: 'academico'
-      });
-    }
     
     // Ordenar por fecha
     this.upcomingEvents.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
-    console.log('Eventos generados:', this.upcomingEvents);
+    console.log('✅ Eventos finales (solo desde BD):', this.upcomingEvents.length);
   }
 
   hasEventOnDate(date: Date): boolean {

@@ -195,7 +195,7 @@
               <i class="fas fa-file"></i>
             </div>
             <div class="archivo-details">
-              <div class="archivo-name">{{ propuesta.archivo }}</div>
+              <div class="archivo-name">{{ propuesta.nombre_archivo_original || propuesta.archivo }}</div>
               <div class="archivo-actions">
                 <button class="btn-primary" (click)="descargarArchivo(propuesta.archivo)">
                   <i class="fas fa-download"></i>

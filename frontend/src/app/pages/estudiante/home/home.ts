@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,7 +23,7 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
   templateUrl: './home.html',
   styleUrls: ['./home.scss']
 })
-export class EstudianteHomeComponent implements OnInit {
+export class EstudianteHomeComponent implements OnInit, OnDestroy {
   estudiante: any = {};
   showUserMenu = false;
   propuestas: any[] = [];
@@ -37,6 +37,15 @@ export class EstudianteHomeComponent implements OnInit {
     diasRestantes: 0
   };
   showCalendarModal = false;
+  
+  // Estados de carga y errores
+  loadingPropuestas = false;
+  loadingEstudiante = false;
+  errorMensaje = '';
+  hasError = false;
+
+  // Timer para verificación periódica del token
+  private tokenCheckInterval: any;
   
   opciones = [
     { 
@@ -56,6 +65,14 @@ export class EstudianteHomeComponent implements OnInit {
   constructor(private router: Router, private ApiService: ApiService) {}
 
    ngOnInit() {
+    // Verificar autenticación antes de cargar datos
+    if (!this.ApiService.checkTokenAndRedirect()) {
+      return; // Si el token expiró, ya se redirigió al login
+    }
+
+    // Iniciar verificación periódica del token cada 5 minutos
+    this.startTokenCheck();
+
     // Obtener rut del token o del localStorage
     const token = localStorage.getItem('token');
     let rut = '';
@@ -81,20 +98,76 @@ export class EstudianteHomeComponent implements OnInit {
     }
   }
 
+  ngOnDestroy() {
+    // Limpiar el timer cuando el componente se destruye
+    if (this.tokenCheckInterval) {
+      clearInterval(this.tokenCheckInterval);
+    }
+  }
+
+  private startTokenCheck() {
+    // Verificar token cada 5 minutos (300000 ms)
+    this.tokenCheckInterval = setInterval(() => {
+      if (!this.ApiService.isAuthenticated()) {
+        console.warn('Token expirado durante verificación periódica');
+        this.ApiService.logout();
+      }
+    }, 300000); // 5 minutos
+  }
+
   buscarUserByRut(rut: string) {
+    this.loadingEstudiante = true;
     this.ApiService.buscaruserByrut(rut).subscribe({
       next: (data: any) => {
         this.estudiante = data;
+        this.loadingEstudiante = false;
+        console.log('✅ Datos del estudiante cargados:', this.estudiante);
       },
       error: (err) => {
         console.error('Error al obtener usuario:', err);
         this.estudiante.nombre = 'Estudiante';
+        this.loadingEstudiante = false;
+        this.mostrarError('No se pudo cargar la información del usuario');
       }
     });
   }
 
   cargarPropuestas(rut: string) {
-    // Obtener todas las propuestas y filtrar las del estudiante
+    this.loadingPropuestas = true;
+    // Usar el nuevo endpoint específico para estudiantes
+    this.ApiService.getMisPropuestas().subscribe({
+      next: (data: any) => {
+        this.propuestas = Array.isArray(data) ? data : [];
+        this.loadingPropuestas = false;
+        console.log('✅ Propuestas del estudiante cargadas:', this.propuestas);
+        
+        // Debug información del profesor
+        if (this.propuestas.length > 0) {
+          console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
+          console.log('🔍 Campos relacionados al profesor:');
+          console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
+          console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
+          console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
+          console.log('  - profesor_email:', this.propuestas[0].profesor_email);
+        }
+        
+        this.calcularEstadisticas();
+        this.obtenerUltimaPropuesta();
+        this.calcularProgresoProyecto();
+        this.generarProximasFechas();
+      },
+      error: (err) => {
+        console.error('Error al cargar propuestas del estudiante:', err);
+        this.loadingPropuestas = false;
+        // Fallback al método anterior en caso de error
+        this.cargarPropuestasFallback(rut);
+      }
+    });
+  }
+
+  // Método fallback por si el nuevo endpoint falla
+  private cargarPropuestasFallback(rut: string) {
+    console.warn('⚠️ Usando método fallback para cargar propuestas');
     this.ApiService.getPropuestas().subscribe({
       next: (data: any) => {
         const todasLasPropuestas = Array.isArray(data) ? data : [];
@@ -108,24 +181,40 @@ export class EstudianteHomeComponent implements OnInit {
         this.generarProximasFechas();
       },
       error: (err) => {
-        console.error('Error al cargar propuestas:', err);
+        console.error('Error en método fallback:', err);
+        this.mostrarError('No se pudieron cargar las propuestas. Intenta recargar la página.');
+        // Mostrar interfaz vacía pero funcional
+        this.propuestas = [];
+        this.calcularEstadisticas();
+        this.obtenerUltimaPropuesta();
+        this.calcularProgresoProyecto();
+        this.generarProximasFechas();
       }
     });
   }
 
   calcularEstadisticas() {
     this.estadisticas.totalPropuestas = this.propuestas.length;
+    
+    // Usar estado_id para mayor precisión (según orden correcto en BD)
     this.estadisticas.enRevision = this.propuestas.filter(p => 
-      p.estado === 'en_revision' || p.estado === 'pendiente'
+      p.estado_id === 1 || p.estado_id === 2 // Pendiente o En revisión
     ).length;
+    
     this.estadisticas.aprobadas = this.propuestas.filter(p => 
-      p.estado === 'aprobada'
+      p.estado_id === 4 // Aprobada
     ).length;
     
     // Calcular días restantes hasta el final del año académico
     const hoy = new Date();
     const finAno = new Date(hoy.getFullYear(), 11, 31); // 31 de diciembre
     this.estadisticas.diasRestantes = Math.ceil((finAno.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Si los días son negativos (año ya terminó), calcular para el próximo año
+    if (this.estadisticas.diasRestantes < 0) {
+      const finProximoAno = new Date(hoy.getFullYear() + 1, 11, 31);
+      this.estadisticas.diasRestantes = Math.ceil((finProximoAno.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+    }
   }
 
   obtenerUltimaPropuesta() {
@@ -135,6 +224,12 @@ export class EstudianteHomeComponent implements OnInit {
         return new Date(b.fecha_envio).getTime() - new Date(a.fecha_envio).getTime();
       });
       this.ultimaPropuesta = this.propuestas[0];
+      
+      console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
+      console.log('🔍 Info profesor en última propuesta:');
+      console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
+      console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
+      console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
     }
   }
 
@@ -144,101 +239,71 @@ export class EstudianteHomeComponent implements OnInit {
       return;
     }
 
-    // Calcular progreso basado en el estado de las propuestas
-    let progreso = 0;
-    const totalPropuestas = this.propuestas.length;
+    // Calcular progreso basado en la ÚLTIMA propuesta (la más relevante)
+    const ultimaPropuesta = this.ultimaPropuesta || this.propuestas[0];
     
-    this.propuestas.forEach(propuesta => {
-      switch (propuesta.estado) {
-        case 'pendiente':
-          progreso += 10;
-          break;
-        case 'en_revision':
-          progreso += 30;
-          break;
-        case 'aprobada':
-          progreso += 60;
-          break;
-        case 'correcciones':
-          progreso += 40;
-          break;
-        case 'rechazada':
-          progreso += 20;
-          break;
-        default:
-          progreso += 10;
-      }
-    });
+    if (!ultimaPropuesta) {
+      this.progresoProyecto = 0;
+      return;
+    }
 
-    this.progresoProyecto = Math.min(100, Math.round(progreso / totalPropuestas));
+    // Calcular progreso basado en estado_id de la última propuesta (orden correcto)
+    switch (ultimaPropuesta.estado_id) {
+      case 1: // Pendiente
+        this.progresoProyecto = 20;
+        break;
+      case 2: // En revisión
+        this.progresoProyecto = 40;
+        break;
+      case 3: // Correcciones
+        this.progresoProyecto = 60;
+        break;
+      case 4: // Aprobada
+        this.progresoProyecto = 100;
+        break;
+      case 5: // Rechazada
+        this.progresoProyecto = 10;
+        break;
+      default:
+        this.progresoProyecto = 15;
+    }
+
+    // Bonus de progreso si tiene múltiples propuestas (experiencia)
+    if (this.propuestas.length > 1) {
+      this.progresoProyecto = Math.min(100, this.progresoProyecto + (this.propuestas.length - 1) * 5);
+    }
   }
 
   generarProximasFechas() {
-    // Primero intentar cargar fechas desde el backend
+    // SOLO cargar fechas reales desde la base de datos
     this.ApiService.getFechasProximas(3).subscribe({
       next: (response: any) => {
         console.log('Fechas próximas del backend:', response);
-        this.proximasFechas = response.map((fecha: any) => ({
-          titulo: fecha.titulo,
-          fecha: new Date(fecha.fecha),
-          icono: this.getIconoTipoFecha(fecha.tipo_fecha),
-          esDelBackend: true,
-          creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
-        }));
         
-        // Si no hay fechas del backend, generar fechas basadas en propuestas como fallback
-        if (this.proximasFechas.length === 0) {
-          this.generarFechasFallback();
+        if (Array.isArray(response) && response.length > 0) {
+          this.proximasFechas = response.map((fecha: any) => ({
+            titulo: fecha.titulo,
+            fecha: new Date(fecha.fecha),
+            icono: this.getIconoTipoFecha(fecha.tipo_fecha),
+            esDelBackend: true,
+            creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
+          }));
+          console.log('✅ Fechas cargadas desde BD:', this.proximasFechas.length);
+        } else {
+          this.proximasFechas = [];
+          console.log('ℹ️  No hay fechas en la base de datos');
         }
       },
       error: (error) => {
         console.error('Error al cargar fechas próximas:', error);
-        // Fallback a la funcionalidad anterior
-        this.generarFechasFallback();
+        // NO generar fechas dummy - solo dejar vacío
+        this.proximasFechas = [];
+        console.log('⚠️  Error cargando fechas, lista vacía');
       }
     });
   }
 
-  generarFechasFallback() {
-    this.proximasFechas = [];
-    
-    if (this.propuestas.length > 0) {
-      // Fecha de entrega final (30 días desde la última propuesta)
-      const ultimaFecha = new Date(this.ultimaPropuesta?.fecha_envio || new Date());
-      const entregaFinal = new Date(ultimaFecha.getTime() + (30 * 24 * 60 * 60 * 1000));
-      
-      // Fecha de defensa (45 días desde la última propuesta)
-      const defensa = new Date(ultimaFecha.getTime() + (45 * 24 * 60 * 60 * 1000));
-      
-      this.proximasFechas = [
-        {
-          titulo: 'Entrega final',
-          fecha: entregaFinal,
-          icono: 'fas fa-clock'
-        },
-        {
-          titulo: 'Defensa',
-          fecha: defensa,
-          icono: 'fas fa-gavel'
-        }
-      ];
-    } else {
-      // Fechas por defecto si no hay propuestas
-      const hoy = new Date();
-      this.proximasFechas = [
-        {
-          titulo: 'Entrega final',
-          fecha: new Date(hoy.getFullYear(), 11, 15), // 15 de diciembre
-          icono: 'fas fa-clock'
-        },
-        {
-          titulo: 'Defensa',
-          fecha: new Date(hoy.getFullYear(), 11, 20), // 20 de diciembre
-          icono: 'fas fa-gavel'
-        }
-      ];
-    }
-  }
+
 
   getIconoTipoFecha(tipo: string): string {
     const iconos: { [key: string]: string } = {
@@ -305,8 +370,125 @@ export class EstudianteHomeComponent implements OnInit {
 
   cerrarSesion() {
     this.showUserMenu = false;
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-    this.router.navigate(['/login']);
+    this.ApiService.logout();
+  }
+
+  // Métodos para estado dinámico
+  getEstadoTexto(): string {
+    if (!this.ultimaPropuesta) {
+      return 'Sin propuestas';
+    }
+
+    // Mapear estado_id a texto descriptivo (según orden en BD)
+    switch (this.ultimaPropuesta.estado_id) {
+      case 1: // Pendiente
+        return 'Propuesta pendiente';
+      case 2: // En revisión
+        return 'En revisión';
+      case 3: // Correcciones
+        return 'Requiere correcciones';
+      case 4: // Aprobada
+        return 'Propuesta aprobada';
+      case 5: // Rechazada
+        return 'Propuesta rechazada';
+      default:
+        // Fallback usando campo 'estado' si existe
+        if (this.ultimaPropuesta.estado) {
+          return this.formatearEstado(this.ultimaPropuesta.estado);
+        }
+        return 'Estado desconocido';
+    }
+  }
+
+  // Método específico para la card (texto más descriptivo)
+  getEstadoTextoCard(): string {
+    if (!this.ultimaPropuesta) {
+      return 'sin información';
+    }
+
+    // Mapear estado_id a texto descriptivo para la card (según orden en BD)
+    switch (this.ultimaPropuesta.estado_id) {
+      case 1: // Pendiente
+        return 'pendiente de revisión';
+      case 2: // En revisión
+        return 'en revisión';
+      case 3: // Correcciones
+        return 'requiere correcciones';
+      case 4: // Aprobada
+        return 'aprobada';
+      case 5: // Rechazada
+        return 'rechazada';
+      default:
+        // Fallback usando campo 'estado' si existe
+        if (this.ultimaPropuesta.estado) {
+          return this.formatearEstadoCard(this.ultimaPropuesta.estado);
+        }
+        return 'en proceso';
+    }
+  }
+
+  getEstadoClass(): string {
+    if (!this.ultimaPropuesta) {
+      return 'status-neutral';
+    }
+
+    switch (this.ultimaPropuesta.estado_id) {
+      case 1: // Pendiente
+        return 'status-pending';
+      case 2: // En revisión
+        return 'status-review';
+      case 3: // Correcciones
+        return 'status-corrections';
+      case 4: // Aprobada
+        return 'status-approved';
+      case 5: // Rechazada
+        return 'status-rejected';
+      default:
+        return 'status-neutral';
+    }
+  }
+
+  private formatearEstado(estado: string): string {
+    const estadoMap: { [key: string]: string } = {
+      'pendiente': 'Propuesta pendiente',
+      'en_revision': 'En revisión',
+      'aprobada': 'Propuesta aprobada',
+      'correcciones': 'Requiere correcciones',
+      'rechazada': 'Propuesta rechazada'
+    };
+    return estadoMap[estado] || 'Estado desconocido';
+  }
+
+  private formatearEstadoCard(estado: string): string {
+    const estadoMap: { [key: string]: string } = {
+      'pendiente': 'pendiente de revisión',
+      'en_revision': 'en revisión',
+      'aprobada': 'aprobada',
+      'correcciones': 'requiere correcciones',
+      'rechazada': 'rechazada'
+    };
+    return estadoMap[estado] || 'en proceso';
+  }
+
+  // Métodos de manejo de errores
+  private mostrarError(mensaje: string) {
+    this.hasError = true;
+    this.errorMensaje = mensaje;
+    console.error('❌ Error:', mensaje);
+    
+    // Ocultar error después de 8 segundos
+    setTimeout(() => {
+      this.ocultarError();
+    }, 8000);
+  }
+
+  ocultarError() {
+    this.hasError = false;
+    this.errorMensaje = '';
+  }
+
+  recargarDatos() {
+    this.ocultarError();
+    this.ngOnInit();
   }
 }

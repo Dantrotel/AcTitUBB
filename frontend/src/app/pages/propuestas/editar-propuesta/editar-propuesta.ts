@@ -237,37 +237,32 @@ export class ActualizarPropuestaComponent implements OnInit {
     const fecha = new Date(this.propuesta.fecha_envio);
     this.propuesta.fecha_envio = this.formatearFechaHoraParaMySQL(fecha);
 
-    // Si hay un nuevo archivo, subirlo primero
+    // Si hay un nuevo archivo, enviar con FormData
     if (this.nuevoArchivo) {
-      this.subirArchivoYActualizar();
+      this.actualizarPropuestaConArchivo();
     } else {
-      this.actualizarPropuesta();
+      // Si no hay archivo nuevo, enviar solo los datos
+      this.actualizarPropuestaSinArchivo();
     }
   }
 
-  private subirArchivoYActualizar() {
+  private actualizarPropuestaConArchivo() {
     const formData = new FormData();
-    formData.append('archivo', this.nuevoArchivo!);
     
-    // Aquí deberías tener un endpoint para subir archivos
-    // Por ahora, simularemos la subida
-    this.mostrarToast('Subiendo archivo...', 'success');
+    // Agregar los datos de la propuesta
+    formData.append('titulo', this.propuesta.titulo);
+    formData.append('descripcion', this.propuesta.descripcion);
     
-    // Simular subida de archivo
-    setTimeout(() => {
-      // Generar nombre único para el archivo
-      const timestamp = Date.now();
-      const extension = this.nuevoArchivo!.name.split('.').pop();
-      this.propuesta.archivo = `${timestamp}-${Math.random().toString(36).substring(2)}.${extension}`;
-      
-      this.actualizarPropuesta();
-    }, 1000);
-  }
+    // Agregar el archivo
+    if (this.nuevoArchivo) {
+      formData.append('archivo', this.nuevoArchivo);
+    }
 
-  private actualizarPropuesta() {
-    this.apiService.updatePropuesta(this.propuestaId, this.propuesta).subscribe({
+    this.mostrarToast('Actualizando propuesta con archivo...', 'success');
+
+    this.apiService.updatePropuestaWithFile(this.propuestaId, formData).subscribe({
       next: (res: any) => {
-        console.log('Propuesta actualizada:', res);
+        console.log('Propuesta actualizada con archivo:', res);
         this.saving = false;
         this.mostrarToast('Propuesta actualizada con éxito', 'success');
         
@@ -280,23 +275,53 @@ export class ActualizarPropuestaComponent implements OnInit {
         }, 2000);
       },
       error: (err: any) => {
-        console.error('Error al actualizar:', err);
-        this.saving = false;
-        
-        if (err.status === 401) {
-          this.mostrarToast('Sesión expirada. Por favor, inicia sesión nuevamente.', 'error');
-          // Redirigir al login después de un delay
-          setTimeout(() => {
-            localStorage.removeItem('token');
-            this.router.navigate(['/login']);
-          }, 3000);
-        } else if (err.status === 403) {
-          this.mostrarToast('No tienes permisos para actualizar esta propuesta', 'error');
-        } else {
-          this.mostrarToast('Error al actualizar la propuesta', 'error');
-        }
+        console.error('Error al actualizar con archivo:', err);
+        this.manejarErrorActualizacion(err);
       }
     });
+  }
+
+  private actualizarPropuestaSinArchivo() {
+    // Enviar solo los datos sin archivo
+    const datosActualizacion = {
+      titulo: this.propuesta.titulo,
+      descripcion: this.propuesta.descripcion
+    };
+
+    this.apiService.updatePropuesta(this.propuestaId, datosActualizacion).subscribe({
+      next: (res: any) => {
+        console.log('Propuesta actualizada:', res);
+        this.saving = false;
+        this.mostrarToast('Propuesta actualizada con éxito', 'success');
+        
+        // Redirigir después de un breve delay
+        setTimeout(() => {
+          this.volver();
+        }, 2000);
+      },
+      error: (err: any) => {
+        console.error('Error al actualizar:', err);
+        this.manejarErrorActualizacion(err);
+      }
+    });
+  }
+
+  private manejarErrorActualizacion(err: any) {
+    this.saving = false;
+    
+    if (err.status === 401) {
+      this.mostrarToast('Sesión expirada. Por favor, inicia sesión nuevamente.', 'error');
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        this.router.navigate(['/login']);
+      }, 3000);
+    } else if (err.status === 403) {
+      this.mostrarToast('No tienes permisos para actualizar esta propuesta', 'error');
+    } else if (err.status === 400) {
+      this.mostrarToast('Error en los datos enviados. Verifica la información.', 'error');
+    } else {
+      this.mostrarToast('Error al actualizar la propuesta', 'error');
+    }
   }
 
   recargarPropuesta() {
@@ -314,7 +339,9 @@ export class ActualizarPropuestaComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = nombreArchivo;
+        // Usar el nombre original si está disponible, sino usar el nombre del archivo
+        const nombreDescarga = this.propuesta.nombre_archivo_original || nombreArchivo;
+        link.download = nombreDescarga;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

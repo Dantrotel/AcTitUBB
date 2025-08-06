@@ -7,7 +7,8 @@ const routerProp = Router()
 
 // Estudiantes
 routerProp.post('/', verifySession, checkRole('1'), uploadPropuesta ,PropuestaController.crearPropuestaController)
-routerProp.put('/:id', verifySession, checkRole('1'), PropuestaController.ActualizarPropuesta)
+routerProp.put('/:id', verifySession, checkRole('1'), uploadPropuesta, PropuestaController.ActualizarPropuesta)
+routerProp.get('/estudiante/mis-propuestas', verifySession, checkRole('1'), PropuestaController.getPropuestasEstudiante)
 
 // Profesores
 routerProp.put('/:id/revisar', verifySession, checkRole('2'), PropuestaController.revisarPropuesta)

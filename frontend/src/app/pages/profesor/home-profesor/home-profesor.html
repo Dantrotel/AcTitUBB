@@ -98,20 +98,24 @@
       </div>
     </div>
     
-    <div class="dashboard-card action-card">
+    <div class="dashboard-card action-card" (click)="abrirCalendario()">
       <div class="card-icon">
         <i class="fas fa-calendar-alt"></i>
       </div>
       <div class="card-content">
-        <h3>Actividad Reciente</h3>
-        <div class="activity-item">
-          <i class="fas fa-clock"></i>
-          <span>Última revisión: {{ ultimaActividad || 'N/A' }}</span>
+        <h3>Calendario de Fechas</h3>
+        <div class="date-item" *ngFor="let fecha of proximasFechas">
+          <i [class]="fecha.icono"></i>
+          <span>{{fecha.titulo}}: {{fecha.fecha | date:'dd MMM'}}</span>
         </div>
-        <div class="activity-item">
-          <i class="fas fa-check-circle"></i>
-          <span>{{ estadisticas.revisadas || 0 }} Propuestas Revisadas</span>
+        <div class="date-item" *ngIf="proximasFechas.length === 0">
+          <i class="fas fa-info-circle"></i>
+          <span>No hay fechas programadas</span>
         </div>
+        <button class="btn-secondary">
+          <i class="fas fa-calendar"></i>
+          Ver Calendario
+        </button>
       </div>
     </div>
   </div>
@@ -139,26 +143,6 @@
           <p>Propuestas que requieren tu atención</p>
         </div>
       </div>
-      
-      <div class="quick-action-item">
-        <div class="action-icon">
-          <i class="fas fa-download"></i>
-        </div>
-        <div class="action-content">
-          <h4>Reportes</h4>
-          <p>Generar reportes de evaluación</p>
-        </div>
-      </div>
-      
-      <div class="quick-action-item">
-        <div class="action-icon">
-          <i class="fas fa-cog"></i>
-        </div>
-        <div class="action-content">
-          <h4>Configuración</h4>
-          <p>Gestionar preferencias</p>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -169,3 +153,10 @@
     <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
   </div>
 </footer>
+
+<!-- Modal del Calendario -->
+<app-calendar-modal 
+  *ngIf="showCalendarModal"
+  [propuestas]="[]"
+  (close)="cerrarCalendario()">
+</app-calendar-modal>

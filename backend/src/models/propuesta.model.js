@@ -1,20 +1,109 @@
 import { pool } from "../db/connectionDB.js";
 
-export const crearPropuesta = async ({ titulo, descripcion, estudiante_rut, fecha_envio, archivo }) => {
-  const [result] = await pool.execute(
-    `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo)
-     VALUES (?, ?, ?, ?, ?)`,
-    [titulo, descripcion, estudiante_rut, fecha_envio, archivo]
-  );
-  return result.insertId;
+export const crearPropuesta = async ({ titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original }) => {
+  try {
+    // Verificar si la columna nombre_archivo_original existe
+    const [columns] = await pool.execute(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = 'actitubb' AND TABLE_NAME = 'propuestas' 
+       AND COLUMN_NAME = 'nombre_archivo_original'`
+    );
+    
+    if (columns.length > 0) {
+      // La columna existe, incluirla en la query
+      const [result] = await pool.execute(
+        `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original]
+      );
+      return result.insertId;
+    } else {
+      // La columna no existe, usar query sin ella
+      console.warn('⚠️  Columna nombre_archivo_original no existe aún. Ejecutar migración.');
+      const [result] = await pool.execute(
+        `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo)
+         VALUES (?, ?, ?, ?, ?)`,
+        [titulo, descripcion, estudiante_rut, fecha_envio, archivo]
+      );
+      return result.insertId;
+    }
+  } catch (error) {
+    console.error('Error en crearPropuesta:', error.message);
+    // Fallback: intentar sin la columna nombre_archivo_original
+    const [result] = await pool.execute(
+      `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo)
+       VALUES (?, ?, ?, ?, ?)`,
+      [titulo, descripcion, estudiante_rut, fecha_envio, archivo]
+    );
+    return result.insertId;
+  }
 };
 
-export const actualizarPropuesta = async (id, { titulo, descripcion, fecha_envio }) => {
-  const [result] = await pool.execute(
-    `UPDATE propuestas SET titulo = ?, descripcion = ?, fecha_envio = ? WHERE id = ?`,
-    [titulo, descripcion, fecha_envio, id]
-  );
+export const actualizarPropuesta = async (id, { titulo, descripcion, fecha_envio, archivo, nombre_archivo_original }) => {
+  let query = `UPDATE propuestas SET titulo = ?, descripcion = ?, fecha_envio = ?`;
+  let params = [titulo, descripcion, fecha_envio];
+  
+  // Solo actualizar el archivo si se proporciona uno nuevo
+  if (archivo !== undefined) {
+    query += `, archivo = ?`;
+    params.push(archivo);
+    
+    // También actualizar el nombre original si se proporciona y la columna existe
+    if (nombre_archivo_original !== undefined) {
+      try {
+        // Verificar si la columna existe
+        const [columns] = await pool.execute(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+           WHERE TABLE_SCHEMA = 'actitubb' AND TABLE_NAME = 'propuestas' 
+           AND COLUMN_NAME = 'nombre_archivo_original'`
+        );
+        
+        if (columns.length > 0) {
+          query += `, nombre_archivo_original = ?`;
+          params.push(nombre_archivo_original);
+        } else {
+          console.warn('⚠️  Columna nombre_archivo_original no existe aún. Ejecutar migración.');
+        }
+      } catch (error) {
+        console.warn('⚠️  Error verificando columna nombre_archivo_original:', error.message);
+      }
+    }
+  }
+  
+  query += ` WHERE id = ?`;
+  params.push(id);
+  
+  const [result] = await pool.execute(query, params);
   return result.affectedRows > 0;
+};
+
+// Nuevo método: obtener propuestas de un estudiante específico
+export const getPropuestasByEstudiante = async (estudiante_rut) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT 
+        p.*,
+        ep.nombre as estado_nombre,
+        u.nombre as estudiante_nombre,
+        u.nombre as nombre_estudiante,
+        ap.profesor_rut,
+        prof.nombre as profesor_nombre,
+        prof.nombre as nombre_profesor,
+        prof.email as profesor_email
+      FROM propuestas p
+      LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
+      LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+      LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
+      LEFT JOIN usuarios prof ON ap.profesor_rut = prof.rut
+      WHERE p.estudiante_rut = ?
+      ORDER BY p.fecha_envio DESC
+    `, [estudiante_rut]);
+    
+    return rows;
+  } catch (error) {
+    console.error('Error en getPropuestasByEstudiante model:', error);
+    throw error;
+  }
 };
 
 export const asignarProfesor = async (propuesta_id, profesor_rut) => {
