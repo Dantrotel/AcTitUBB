@@ -17,8 +17,23 @@ export const verifySession = async (req, res, next) => {
 
   try {
     const { rut, rol_id } = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Mapear rol_id a nombre de rol
+    const roleMap = {
+      1: 'estudiante',
+      2: 'profesor', 
+      3: 'admin'
+    };
+    
     req.rut = rut; 
     req.rol_id = rol_id;
+    
+    // Crear objeto user para compatibilidad con controladores
+    req.user = {
+      rut: rut,
+      rol: roleMap[rol_id] || 'unknown'
+    };
+    
     next();
   } catch (error) {
     console.log(error);

@@ -138,7 +138,7 @@ export const eliminarFecha = async (fecha_id) => {
 export const obtenerFechasProximas = async (estudiante_rut, limite = 5) => {
     // Obtener el profesor asignado
     const [asignacionRows] = await pool.execute(`
-        SELECT DISTINCT ap.profesor_rut
+        SELECT ap.profesor_rut, ap.fecha_asignacion
         FROM asignaciones_propuestas ap
         INNER JOIN propuestas p ON ap.propuesta_id = p.id
         WHERE p.estudiante_rut = ?

@@ -198,13 +198,13 @@ CREATE TABLE IF NOT EXISTS participantes_reuniones (
 -- Insertar datos iniciales
 
 -- Roles de usuarios
-INSERT INTO roles (nombre, descripcion) VALUES
+INSERT IGNORE INTO roles (nombre, descripcion) VALUES
 ('estudiante', 'Estudiante que desarrolla el proyecto de título'),
 ('profesor', 'Profesor que guía o revisa proyectos de título'),
 ('admin', 'Administrador del sistema');
 
 -- Estados de propuestas
-INSERT INTO estados_propuestas (nombre, descripcion) VALUES
+INSERT IGNORE INTO estados_propuestas (nombre, descripcion) VALUES
 ('pendiente', 'Propuesta enviada, esperando asignación de profesor'),
 ('en_revision', 'Propuesta siendo revisada por profesor'),
 ('correcciones', 'Propuesta requiere correcciones del estudiante'),
@@ -212,7 +212,7 @@ INSERT INTO estados_propuestas (nombre, descripcion) VALUES
 ('rechazada', 'Propuesta rechazada');
 
 -- Estados de proyectos
-INSERT INTO estados_proyectos (nombre, descripcion) VALUES
+INSERT IGNORE INTO estados_proyectos (nombre, descripcion) VALUES
 ('en_desarrollo', 'Proyecto en fase de desarrollo'),
 ('avance_enviado', 'Avance enviado para revisión'),
 ('avance_en_revision', 'Avance siendo revisado'),
@@ -231,13 +231,21 @@ INSERT INTO estados_proyectos (nombre, descripcion) VALUES
 -- ('Fin Semestre', 'Fin del semestre académico', '2025-07-15', 'academica', TRUE, '11111111-1');
 
 -- Roles de profesores en proyectos
-INSERT INTO roles_profesores (nombre, descripcion) VALUES
+INSERT IGNORE INTO roles_profesores (nombre, descripcion) VALUES
 ('profesor_guia', 'Profesor que guía el desarrollo del proyecto'),
 ('profesor_informante', 'Profesor que informa sobre el proyecto'),
 ('profesor_sala', 'Profesor de sala para la defensa'),
 ('profesor_corrector', 'Profesor que corrige y evalúa avances');
 
+-- Usuarios de prueba (contraseña: 1234)
+-- Hash generado con bcrypt, salt rounds = 10
+INSERT IGNORE INTO usuarios (rut, nombre, email, password, rol_id, confirmado) VALUES
+('12345678-9', 'Ana Estudiante', 'ana.estudiante@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
+('98765432-1', 'Carlos Profesor', 'carlos.profesor@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
+('11111111-1', 'María Administradora', 'maria.admin@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 3, 1);
+
 -- Crear índices para mejorar rendimiento
+-- Nota: Los errores de índices duplicados serán ignorados por el sistema de conexión
 CREATE INDEX idx_propuestas_estudiante ON propuestas(estudiante_rut);
 CREATE INDEX idx_propuestas_estado ON propuestas(estado_id);
 CREATE INDEX idx_propuestas_fecha_envio ON propuestas(fecha_envio);
