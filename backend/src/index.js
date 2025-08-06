@@ -13,7 +13,13 @@ import cors from 'cors';
 const app = express();
 
 app.use(cors({
-  origin: 'http://146.83.198.35:1715', // IP del servidor frontend (puerto 80)
+  origin: [
+    'http://localhost:4200', 
+    'http://localhost', 
+    'http://localhost:80',
+    'http://146.83.194.188:8090',
+    'https://146.83.194.188:8453'
+  ], // Múltiples orígenes permitidos incluyendo el servidor
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true // si usas cookies o auth con credenciales
 }));
