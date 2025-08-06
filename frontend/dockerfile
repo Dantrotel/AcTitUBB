@@ -10,13 +10,18 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependencias (incluyendo dev para build)
-RUN npm ci
+RUN npm ci --force --legacy-peer-deps
 
 # Copiar código fuente
 COPY . .
 
+# Limpiar caché de npm y reinstalar esbuild específicamente
+RUN npm cache clean --force && \
+    npm rebuild @esbuild/linux-x64 && \
+    npm install @esbuild/linux-x64 --force
+
 # Construir el frontend para producción
-RUN npm run build --prod
+RUN npm run build --configuration=production
 
 # Etapa de producción con nginx
 FROM nginx:alpine
@@ -40,7 +45,7 @@ RUN touch /var/run/nginx.pid && chown -R nginx:nginx /var/run/nginx.pid
 # Cambiar al usuario nginx para seguridad
 USER nginx
 
-EXPOSE 80
+EXPOSE 443
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
