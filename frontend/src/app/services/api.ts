@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -15,22 +16,57 @@ export class ApiService {
     });
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
+
+  // ===== MÉTODOS DE AUTENTICACIÓN =====
+  
+  isTokenExpired(token?: string): boolean {
+    const tokenToCheck = token || localStorage.getItem('token');
+    if (!tokenToCheck) return true;
+    
+    try {
+      const payload = JSON.parse(atob(tokenToCheck.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp < currentTime;
+    } catch (error) {
+      console.error('Error al verificar expiración del token:', error);
+      return true;
+    }
+  }
+
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('token');
+    return token ? !this.isTokenExpired(token) : false;
+  }
+
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    this.router.navigate(['/login']);
+  }
+
+  checkTokenAndRedirect(): boolean {
+    if (!this.isAuthenticated()) {
+      this.logout();
+      return false;
+    }
+    return true;
+  }
 
   // ===== MÉTODOS PARA EL CALENDARIO =====
 
-  // Estudiante: obtener sus fechas (globales + específicas del profesor)
+  // Obtener fechas globales (visibles para todos los roles)
   getMisFechasCalendario() {
-    return this.http.get(`${this.baseUrl}/calendario/estudiante/mis-fechas`, {
+    return this.http.get(`${this.baseUrl}/calendario/globales`, {
       headers: this.getHeaders()
     });
   }
 
-  // Estudiante: obtener fechas próximas
+  // Obtener fechas próximas (para todos los roles)
   getFechasProximas(limite?: number) {
     const url = limite ? 
-      `${this.baseUrl}/calendario/estudiante/proximas?limite=${limite}` : 
-      `${this.baseUrl}/calendario/estudiante/proximas`;
+      `${this.baseUrl}/calendario/proximas?limite=${limite}` : 
+      `${this.baseUrl}/calendario/proximas`;
     return this.http.get(url, {
       headers: this.getHeaders()
     });
@@ -109,6 +145,16 @@ export class ApiService {
     });
   }
 
+  // Nuevo método: obtener solo las propuestas del estudiante autenticado
+  getMisPropuestas() {
+    const token = localStorage.getItem('token');
+    return this.http.get(`${this.baseUrl}/propuestas/estudiante/mis-propuestas`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
   getPropuestaById(id: string) {
     const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/get/${id}`, {
@@ -133,6 +179,16 @@ export class ApiService {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
+  updatePropuestaWithFile(id: string, formData: FormData) {
+    const token = localStorage.getItem('token');
+    return this.http.put(`${this.baseUrl}/propuestas/${id}`, formData, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+        // No incluir Content-Type para que el navegador establezca el boundary automáticamente
       })
     });
   }
@@ -209,6 +265,13 @@ export class ApiService {
 
   actualizarUsuario(rut: string, data: any) {
     return this.http.put(`${this.baseUrl}/admin/usuarios/${rut}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Método específico para actualizar el perfil propio del usuario autenticado
+  actualizarPerfil(data: any) {
+    return this.http.put(`${this.baseUrl}/users/perfil`, data, {
       headers: this.getHeaders()
     });
   }

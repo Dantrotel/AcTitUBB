@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ApiService } from '../../../services/api';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ApiService } from '../../../services/api';
 
 @Component({
   standalone: true,
@@ -128,7 +128,9 @@ export class VerPropuestaComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = nombreArchivo;
+        // Usar el nombre original si está disponible, sino usar el nombre del archivo
+        const nombreDescarga = this.propuesta.nombre_archivo_original || nombreArchivo;
+        link.download = nombreDescarga;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

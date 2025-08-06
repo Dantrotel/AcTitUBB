@@ -142,9 +142,49 @@ const findUserByRut = async (req, res) => {
   }
 };
 
+const actualizarPerfil = async (req, res) => {
+  try {
+    const { rut } = req; // Viene del middleware verifySession
+    const { nombre, email, telefono, carrera, matricula } = req.body;
+    
+    console.log('Actualizando perfil para RUT:', rut);
+    console.log('Datos recibidos:', req.body);
+    
+    // Validar que el usuario existe
+    const user = await UserModel.findPersonByRut(rut);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    // Actualizar solo los campos permitidos
+    const datosActualizados = {};
+    if (nombre) datosActualizados.nombre = nombre;
+    if (email) datosActualizados.email = email;
+    if (telefono) datosActualizados.telefono = telefono;
+    if (carrera) datosActualizados.carrera = carrera;
+    if (matricula) datosActualizados.matricula = matricula;
+    
+    const actualizado = await UserModel.actualizarUsuario(rut, datosActualizados);
+    
+    if (actualizado) {
+      console.log('Perfil actualizado exitosamente para:', rut);
+      res.json({ 
+        message: 'Perfil actualizado correctamente',
+        datos: datosActualizados 
+      });
+    } else {
+      res.status(404).json({ message: 'No se pudo actualizar el perfil' });
+    }
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
 export const loginController = {
     register,
     login,
     logout,
-    findUserByRut
+    findUserByRut,
+    actualizarPerfil
 };

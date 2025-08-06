@@ -45,6 +45,21 @@ export const actualizarPropuesta = async (id, data) => {
 };
 
 
+// Nuevo método: obtener propuestas de un estudiante específico
+export const getPropuestasByEstudiante = async (estudiante_rut) => {
+  try {
+    if (!rutValido(estudiante_rut)) {
+      throw new Error('El RUT del estudiante no es válido');
+    }
+
+    const propuestas = await PropuestasModel.getPropuestasByEstudiante(estudiante_rut);
+    return propuestas || [];
+  } catch (error) {
+    console.error('Error en getPropuestasByEstudiante service:', error);
+    throw error;
+  }
+};
+
 export const asignarProfesor = async (id, profesor_rut) => {
   try {
     if (isNaN(id)) throw new Error('ID de propuesta inválido');

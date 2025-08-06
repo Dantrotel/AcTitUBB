@@ -164,11 +164,16 @@ export const obtenerFechasParaEstudianteController = async (req, res) => {
     }
 };
 
-// Obtener fechas próximas para un estudiante
-export const obtenerFechasProximasController = async (req, res) => {
+// Obtener fechas próximas para un estudiante (específico para estudiantes)
+export const obtenerFechasProximasEstudianteController = async (req, res) => {
     try {
         const estudiante_rut = req.user?.rut;
         const limite = parseInt(req.query.limite) || 5;
+
+        console.log('🎯 Controller obtenerFechasProximasEstudianteController:');
+        console.log('  - req.user:', req.user);
+        console.log('  - estudiante_rut:', estudiante_rut);
+        console.log('  - limite:', limite);
 
         if (req.user?.rol !== 'estudiante') {
             return res.status(403).json({ 
@@ -176,7 +181,42 @@ export const obtenerFechasProximasController = async (req, res) => {
             });
         }
 
+        if (!estudiante_rut) {
+            return res.status(400).json({ 
+                message: 'RUT del estudiante es requerido' 
+            });
+        }
+
         const fechas = await obtenerFechasProximas(estudiante_rut, limite);
+        console.log('  - Fechas obtenidas:', fechas.length);
+        res.json(fechas);
+    } catch (error) {
+        console.error('Error al obtener fechas próximas:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
+// Obtener fechas próximas (GENERAL - para todos los roles)
+export const obtenerFechasProximasController = async (req, res) => {
+    try {
+        const usuario_rut = req.user?.rut;
+        const limite = parseInt(req.query.limite) || 5;
+
+        console.log('🎯 Controller obtenerFechasProximasController (GENERAL):');
+        console.log('  - req.user:', req.user);
+        console.log('  - usuario_rut:', usuario_rut);
+        console.log('  - limite:', limite);
+        console.log('  - rol:', req.user?.rol);
+
+        if (!usuario_rut) {
+            return res.status(400).json({ 
+                message: 'RUT del usuario es requerido' 
+            });
+        }
+
+        // Este endpoint es accesible por todos los roles
+        const fechas = await obtenerFechasProximas(usuario_rut, limite);
+        console.log('  - Fechas globales obtenidas:', fechas.length);
         res.json(fechas);
     } catch (error) {
         console.error('Error al obtener fechas próximas:', error);

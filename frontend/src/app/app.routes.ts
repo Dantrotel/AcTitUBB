@@ -18,6 +18,7 @@ import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion
 import { GestionProfesoresComponent } from './pages/admin/gestion-profesores/gestion-profesores';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
+import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -28,6 +29,7 @@ export const routes: Routes = [
 
   // Rutas protegidas con AuthGuard
   { path: 'estudiante', component: EstudianteHomeComponent, canActivate: [AuthGuard] },
+  { path: 'perfil', component: PerfilEstudianteComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/crear', component: CrearPropuestaComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/listar-propuesta', component: ListarPropuestasComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/editar-propuesta/:id', component: ActualizarPropuestaComponent, canActivate: [AuthGuard] },

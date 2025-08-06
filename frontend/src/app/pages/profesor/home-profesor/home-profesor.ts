@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api';
+import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 
 @Component({
   selector: 'app-home-profesor',
@@ -15,7 +16,8 @@ import { ApiService } from '../../../services/api';
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatTooltipModule
+    MatTooltipModule,
+    CalendarModalComponent
   ],
   templateUrl: './home-profesor.html',
   styleUrls: ['./home-profesor.scss']
@@ -29,6 +31,9 @@ export class HomeProfesor implements OnInit {
     revisadas: 0
   };
   ultimaActividad: string = '';
+  showCalendarModal = false;
+  fechasCalendario: any[] = [];
+  proximasFechas: any[] = [];
 
   constructor(private ApiService: ApiService, private router: Router) {}
 
@@ -58,6 +63,7 @@ export class HomeProfesor implements OnInit {
     }
 
     this.cargarEstadisticas();
+    this.cargarFechasCalendario();
   }
 
   buscarUserByRut(rut: string) {
@@ -106,9 +112,55 @@ export class HomeProfesor implements OnInit {
 
   cerrarSesion() {
     this.showUserMenu = false;
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-    this.router.navigate(['/login']);
+    this.ApiService.logout();
+  }
+
+  abrirCalendario() {
+    console.log('Abriendo calendario de profesor');
+    this.cargarFechasCalendario();
+    this.showCalendarModal = true;
+  }
+
+  cerrarCalendario() {
+    this.showCalendarModal = false;
+  }
+
+  cargarFechasCalendario() {
+    this.ApiService.getMisFechasProfesor().subscribe({
+      next: (response: any) => {
+        console.log('Fechas del profesor cargadas:', response);
+        this.fechasCalendario = response;
+        this.cargarProximasFechas();
+      },
+      error: (error) => {
+        console.error('Error al cargar fechas del calendario:', error);
+      }
+    });
+  }
+
+  cargarProximasFechas() {
+    const fechaActual = new Date();
+    this.proximasFechas = this.fechasCalendario
+      .filter(fecha => new Date(fecha.fecha) >= fechaActual)
+      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+      .slice(0, 3)
+      .map(fecha => ({
+        titulo: fecha.titulo,
+        fecha: new Date(fecha.fecha),
+        icono: this.getIconoTipoFecha(fecha.tipo_fecha)
+      }));
+  }
+
+  getIconoTipoFecha(tipo: string): string {
+    const iconos: { [key: string]: string } = {
+      'entrega': 'fas fa-upload',
+      'reunion': 'fas fa-users',
+      'evaluacion': 'fas fa-clipboard-check',
+      'presentacion': 'fas fa-presentation',
+      'deadline': 'fas fa-clock',
+      'revision': 'fas fa-search'
+    };
+    return iconos[tipo] || 'fas fa-calendar-day';
   }
 
   fechaActual(): Date {

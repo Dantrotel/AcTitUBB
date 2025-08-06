@@ -1,5 +1,6 @@
 import * as PropuestasService from '../services/propuesta.service.js';
 import path from 'path';
+import fs from 'fs';
 
 export const crearPropuestaController = async (req, res) => {
    console.log('BODY:', req.body);
@@ -15,6 +16,7 @@ export const crearPropuestaController = async (req, res) => {
 
     // Nombre del archivo (si se subió)
     const archivo = req.file ? req.file.filename : null;
+    const nombre_archivo_original = req.file ? req.file.originalname : null;
 
     const nuevaPropuestaId = await PropuestasService.crearPropuesta({
       titulo,
@@ -23,11 +25,32 @@ export const crearPropuestaController = async (req, res) => {
       fecha_envio,
       estado: estado || 'pendiente',
       archivo,
+      nombre_archivo_original,
     });
 
     return res.status(201).json({ message: 'Propuesta creada', id: nuevaPropuestaId });
   } catch (error) {
     console.error(error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+// Nuevo método: obtener propuestas de un estudiante específico
+export const getPropuestasEstudiante = async (req, res) => {
+  try {
+    const estudiante_rut = req.rut; // El RUT viene del middleware de autenticación
+
+    console.log('🔍 Debug - Obteniendo propuestas para estudiante:', estudiante_rut);
+
+    const propuestas = await PropuestasService.getPropuestasByEstudiante(estudiante_rut);
+    
+    if (!propuestas || propuestas.length === 0) {
+      return res.json([]);
+    }
+
+    return res.json(propuestas);
+  } catch (error) {
+    console.error('Error al obtener propuestas del estudiante:', error);
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -172,9 +195,25 @@ export const ActualizarPropuesta = async (req, res) => {
       return res.status(403).json({ message: 'No tienes permisos para editar esta propuesta' });
     }
 
-    let archivoPath = null;
+    let archivoPath = undefined; // undefined significa que no se actualiza el archivo
+    let nombreArchivoOriginal = undefined;
+    
     if (req.file) {
-      archivoPath = path.join('uploads/propuestas', req.file.filename);
+      archivoPath = req.file.filename; // Nombre del archivo generado por el servidor
+      nombreArchivoOriginal = req.file.originalname; // Nombre original del archivo
+      
+      // Eliminar archivo anterior si existe
+      if (propuesta.archivo) {
+        const archivoAnterior = path.join('uploads/propuestas', propuesta.archivo);
+        if (fs.existsSync(archivoAnterior)) {
+          try {
+            fs.unlinkSync(archivoAnterior);
+            console.log(`Archivo anterior eliminado: ${propuesta.archivo}`);
+          } catch (error) {
+            console.error(`Error al eliminar archivo anterior: ${error.message}`);
+          }
+        }
+      }
     }
 
     const success = await PropuestasService.actualizarPropuesta(id, {
@@ -183,6 +222,7 @@ export const ActualizarPropuesta = async (req, res) => {
       estudiante_rut,
       fecha_envio: fechaEnvioFinal,
       archivo: archivoPath,
+      nombre_archivo_original: nombreArchivoOriginal,
     });
 
     if (!success) return res.status(404).json({ message: 'Propuesta no encontrada' });

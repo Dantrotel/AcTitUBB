@@ -44,15 +44,15 @@ export class ListarPropuestasComponent implements OnInit {
   }
 
   get propuestasPendientes(): number {
-    return this.propuestas.filter(p => p.estado === 'pendiente').length;
+    return this.propuestas.filter(p => p.estado_id === 1).length;
   }
 
   get propuestasAprobadas(): number {
-    return this.propuestas.filter(p => p.estado === 'aprobada').length;
+    return this.propuestas.filter(p => p.estado_id === 4).length;
   }
 
   get propuestasEnCorrecciones(): number {
-    return this.propuestas.filter(p => p.estado === 'correcciones').length;
+    return this.propuestas.filter(p => p.estado_id === 3).length;
   }
 
   constructor(
@@ -104,8 +104,23 @@ export class ListarPropuestasComponent implements OnInit {
       next: (userData: any) => {
         console.log('Datos del usuario obtenidos:', userData);
         
-        // Luego obtener todas las propuestas y filtrar según el rol
-        this.api.getPropuestas().subscribe({
+        // Usar el endpoint específico para estudiantes
+        if (this.esEstudiante) {
+          this.api.getMisPropuestas().subscribe({
+            next: (propuestasData: any) => {
+              console.log('✅ Propuestas del estudiante (endpoint específico):', propuestasData);
+              this.propuestas = Array.isArray(propuestasData) ? propuestasData : [];
+              this.procesarPropuestasCargadas();
+            },
+            error: (error: any) => {
+              console.error('❌ Error al cargar propuestas del estudiante:', error);
+              // Fallback al método anterior
+              this.cargarPropuestasFallback();
+            }
+          });
+        } else {
+          // Para profesores y admins, usar el endpoint general
+          this.api.getPropuestas().subscribe({
           next: (propuestasData: any) => {
             console.log('🔍 Backend response completo:', propuestasData);
             console.log('🔍 Tipo de respuesta:', typeof propuestasData);
@@ -160,33 +175,55 @@ export class ListarPropuestasComponent implements OnInit {
               this.propuestas = todasLasPropuestas;
             }
             
-            // Agregar permisos a cada propuesta
-            this.propuestas = this.propuestas.map(propuesta => {
-              return {
-                ...propuesta,
-                puedeEditar: this.puedeEditarPropuesta(propuesta, this.userRut, this.userRole),
-                puedeEliminar: this.puedeEliminarPropuesta(propuesta, this.userRut, this.userRole),
-                puedeVer: this.puedeVerPropuesta(propuesta, this.userRut, this.userRole)
-              };
-            });
-            
             console.log('Propuestas filtradas:', this.propuestas);
             console.log('RUT del usuario:', this.userRut);
             console.log('Rol del usuario:', this.userRole);
             
-            this.aplicarFiltros();
-            this.loading = false;
+            this.procesarPropuestasCargadas();
           },
-          error: (err) => {
+          error: (err: any) => {
             console.error('Error al cargar propuestas:', err);
             this.error = 'No se pudieron cargar las propuestas';
             this.loading = false;
           }
         });
+        }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al buscar usuario por RUT:', err);
         this.error = 'No se pudo verificar el usuario';
+        this.loading = false;
+      }
+    });
+  }
+
+  private procesarPropuestasCargadas() {
+    // Agregar permisos a cada propuesta
+    this.propuestas = this.propuestas.map(propuesta => {
+      return {
+        ...propuesta,
+        puedeEditar: this.puedeEditarPropuesta(propuesta, this.userRut, this.userRole),
+        puedeEliminar: this.puedeEliminarPropuesta(propuesta, this.userRut, this.userRole),
+        puedeVer: this.puedeVerPropuesta(propuesta, this.userRut, this.userRole)
+      };
+    });
+    
+    console.log('✅ Propuestas procesadas:', this.propuestas);
+    this.aplicarFiltros();
+    this.loading = false;
+  }
+
+  private cargarPropuestasFallback() {
+    console.warn('⚠️ Usando método fallback para cargar propuestas');
+    this.api.getPropuestas().subscribe({
+      next: (propuestasData: any) => {
+        const todasLasPropuestas = Array.isArray(propuestasData) ? propuestasData : [];
+        this.propuestas = todasLasPropuestas.filter(p => p.estudiante_rut === this.userRut);
+        this.procesarPropuestasCargadas();
+      },
+      error: (error: any) => {
+        console.error('❌ Error en método fallback:', error);
+        this.error = 'Error al cargar las propuestas';
         this.loading = false;
       }
     });
