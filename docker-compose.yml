@@ -4,12 +4,12 @@ services:
     container_name: mysql_actitubb
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
+      MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: actitubb
       MYSQL_USER: actitubb_user
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-actitubb123}
+      MYSQL_PASSWORD: actitubb123
     ports:
-      - "146.83.194.188:3306:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/src/db/database.sql:/docker-entrypoint-initdb.d/database.sql
@@ -27,7 +27,7 @@ services:
     container_name: backend_actitubb
     restart: always
     ports:
-      - "146.83.194.188:2242:3000"
+      - "2242:3000"
     depends_on:
       mysql:
         condition: service_healthy
@@ -35,11 +35,11 @@ services:
       - ./backend/.env
     environment:
       - NODE_ENV=production
-      - DB_HOST=mysqltrans.face.ubiobio.c
+      - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_NAME=daguayo_bd
-      - DB_USER=daguayo
-      - DB_PASSWORD=daguayo2025
+      - DB_NAME=actitubb
+      - DB_USER=actitubb_user
+      - DB_PASSWORD=actitubb123
     volumes:
       - ./backend/uploads:/app/uploads
     networks:
@@ -57,7 +57,7 @@ services:
     container_name: frontend_actitubb
     restart: always
     ports:
-      - "146.83.194.188:8090:80"
+      - "8090:80"
     depends_on:
       backend:
         condition: service_healthy
