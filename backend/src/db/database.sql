@@ -1,8 +1,12 @@
-CREATE USER IF NOT EXISTS 'AcTitUBB'@'%' IDENTIFIED BY '1234';
-GRANT ALL PRIVILEGES ON actitubb.* TO 'AcTitUBB'@'%';
-FLUSH PRIVILEGES;
-
+-- Crear la base de datos primero
 CREATE DATABASE IF NOT EXISTS actitubb;
+
+-- Crear usuario y otorgar permisos (comentado para evitar problemas de privilegios)
+-- CREATE USER IF NOT EXISTS 'AcTitUBB'@'%' IDENTIFIED BY '1234';
+-- GRANT ALL PRIVILEGES ON actitubb.* TO 'AcTitUBB'@'%';
+-- FLUSH PRIVILEGES;
+
+-- Seleccionar la base de datos
 USE actitubb;
 
 -- Tabla de Roles de Usuarios
