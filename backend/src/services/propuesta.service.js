@@ -1,4 +1,5 @@
 import * as PropuestasModel from '../models/propuesta.model.js';
+import { ProjectService } from './project.service.js';
 
 // Utilidad para validar RUT chileno simple
 const rutValido = (rut) => /^\d{7,8}-[\dkK]$/.test(rut);
@@ -89,7 +90,61 @@ export const revisarPropuesta = async (id, data) => {
       throw new Error('Estado inválido');
     }
 
-    return await PropuestasModel.revisarPropuesta(id, { comentarios_profesor: comentario, estado });
+    // Obtener los datos de la propuesta antes de la actualización
+    const propuesta = await PropuestasModel.obtenerPropuestaPorId(id);
+    if (!propuesta) {
+      throw new Error('Propuesta no encontrada');
+    }
+
+    // Actualizar la propuesta
+    const actualizada = await PropuestasModel.revisarPropuesta(id, { comentarios_profesor: comentario, estado });
+    
+    if (!actualizada) {
+      throw new Error('Error al actualizar la propuesta');
+    }
+
+    // Si el estado es "aprobada", crear automáticamente el proyecto
+    if (estado === 'aprobada') {
+      try {
+        console.log(`🚀 Propuesta ${id} aprobada. Creando proyecto automáticamente...`);
+        
+        // Crear el proyecto desde la propuesta aprobada
+        const proyectoId = await ProjectService.crearProyectoDesdeAprobacion(propuesta);
+        
+        // Actualizar la propuesta con el ID del proyecto creado
+        await PropuestasModel.aprobarPropuesta(id, proyectoId);
+        
+        // Transferir asignaciones de profesores de la propuesta al proyecto
+        await ProjectService.transferirAsignacionesProfesores(id, proyectoId);
+        
+        console.log(`✅ Proyecto ${proyectoId} creado exitosamente para propuesta ${id}`);
+        
+        // Crear fechas importantes por defecto para el proyecto
+        try {
+          await ProjectService.crearFechasImportantesProyecto(proyectoId);
+          console.log(`✅ Fechas importantes creadas para proyecto ${proyectoId}`);
+        } catch (fechasError) {
+          console.error('⚠️ Error al crear fechas importantes:', fechasError);
+          // No falla el proceso, solo registra el error
+        }
+        
+        return {
+          success: true,
+          proyecto_id: proyectoId,
+          message: 'Propuesta aprobada y proyecto creado automáticamente con fechas importantes'
+        };
+      } catch (projectError) {
+        console.error('❌ Error al crear proyecto automáticamente:', projectError);
+        // La propuesta ya fue actualizada, pero no se pudo crear el proyecto
+        throw new Error(`Propuesta aprobada pero error al crear proyecto: ${projectError.message}`);
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Propuesta revisada correctamente'
+    };
+    
   } catch (error) {
     throw error;
   }

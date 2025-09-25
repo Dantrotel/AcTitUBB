@@ -20,16 +20,31 @@ export const crearFechaGlobalController = async (req, res) => {
         const { titulo, descripcion, fecha, tipo_fecha } = req.body;
         const creado_por_rut = req.user?.rut;
 
+        // Validar campos requeridos
         if (!titulo || !fecha || !tipo_fecha) {
             return res.status(400).json({ 
                 message: 'Faltan campos requeridos: titulo, fecha, tipo_fecha' 
             });
         }
 
+        // Validar que el usuario esté autenticado
+        if (!req.user || !creado_por_rut) {
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado' 
+            });
+        }
+
         // Verificar que el usuario sea admin
-        if (req.user?.rol !== 'admin') {
+        if (req.user.rol !== 'admin') {
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden crear fechas globales' 
+            });
+        }
+
+        // Validar formato de fecha
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            return res.status(400).json({ 
+                message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
             });
         }
 
@@ -66,7 +81,14 @@ export const obtenerFechasGlobalesController = async (req, res) => {
 // Obtener estadísticas de fechas (solo admin)
 export const obtenerEstadisticasFechasController = async (req, res) => {
     try {
-        if (req.user?.rol !== 'admin') {
+        // Validar autenticación
+        if (!req.user) {
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado' 
+            });
+        }
+
+        if (req.user.rol !== 'admin') {
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden ver las estadísticas' 
             });
@@ -88,16 +110,38 @@ export const crearFechaEspecificaController = async (req, res) => {
         const { titulo, descripcion, fecha, tipo_fecha, estudiante_rut } = req.body;
         const profesor_rut = req.user?.rut;
 
+        // Validar campos requeridos
         if (!titulo || !fecha || !tipo_fecha || !estudiante_rut) {
             return res.status(400).json({ 
                 message: 'Faltan campos requeridos: titulo, fecha, tipo_fecha, estudiante_rut' 
             });
         }
 
+        // Validar autenticación
+        if (!req.user || !profesor_rut) {
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado' 
+            });
+        }
+
         // Verificar que el usuario sea profesor
-        if (req.user?.rol !== 'profesor') {
+        if (req.user.rol !== 'profesor') {
             return res.status(403).json({ 
                 message: 'Solo los profesores pueden crear fechas específicas' 
+            });
+        }
+
+        // Validar formato de fecha
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            return res.status(400).json({ 
+                message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
+            });
+        }
+
+        // Validar formato de RUT del estudiante
+        if (!/^\d{7,8}-[\dkK]$/.test(estudiante_rut)) {
+            return res.status(400).json({ 
+                message: 'Formato de RUT del estudiante inválido' 
             });
         }
 
@@ -150,7 +194,14 @@ export const obtenerFechasParaEstudianteController = async (req, res) => {
     try {
         const estudiante_rut = req.user?.rut;
 
-        if (req.user?.rol !== 'estudiante') {
+        // Validar autenticación
+        if (!req.user || !estudiante_rut) {
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado' 
+            });
+        }
+
+        if (req.user.rol !== 'estudiante') {
             return res.status(403).json({ 
                 message: 'Solo los estudiantes pueden ver sus fechas' 
             });
@@ -208,13 +259,21 @@ export const obtenerFechasProximasController = async (req, res) => {
         console.log('  - limite:', limite);
         console.log('  - rol:', req.user?.rol);
 
-        if (!usuario_rut) {
-            return res.status(400).json({ 
-                message: 'RUT del usuario es requerido' 
+        // Validar autenticación
+        if (!req.user || !usuario_rut) {
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado' 
             });
         }
 
-        // Este endpoint es accesible por todos los roles
+        // Validar límite
+        if (limite < 1 || limite > 50) {
+            return res.status(400).json({ 
+                message: 'Límite debe estar entre 1 y 50' 
+            });
+        }
+
+        // Este endpoint es accesible por todos los roles autenticados
         const fechas = await obtenerFechasProximas(usuario_rut, limite);
         console.log('  - Fechas globales obtenidas:', fechas.length);
         res.json(fechas);
@@ -272,9 +331,31 @@ export const actualizarFechaController = async (req, res) => {
         const usuario_rut = req.user?.rut;
         const rol_usuario = req.user?.rol;
 
+        // Validar autenticación
+        if (!req.user || !usuario_rut) {
+            return res.status(401).json({ 
+                message: 'Usuario no autenticado' 
+            });
+        }
+
+        // Validar ID de la fecha
+        if (!id || isNaN(parseInt(id))) {
+            return res.status(400).json({ 
+                message: 'ID de fecha inválido' 
+            });
+        }
+
+        // Validar campos requeridos
         if (!titulo || !fecha || !tipo_fecha) {
             return res.status(400).json({ 
                 message: 'Faltan campos requeridos: titulo, fecha, tipo_fecha' 
+            });
+        }
+
+        // Validar formato de fecha
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            return res.status(400).json({ 
+                message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
             });
         }
 

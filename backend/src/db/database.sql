@@ -1,4 +1,5 @@
-USE daguayo_bd;
+Create database actitubb;
+USE actitubb;
 
 -- Tabla de Roles de Usuarios
 CREATE TABLE IF NOT EXISTS roles (
@@ -148,6 +149,41 @@ CREATE TABLE IF NOT EXISTS fechas_calendario (
     FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut)
 );
 
+-- Tabla de Fechas Importantes específicas de cada proyecto
+CREATE TABLE IF NOT EXISTS fechas_importantes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo_fecha ENUM('entrega_avance', 'entrega_final', 'defensa', 'reunion', 'revision', 'otro') DEFAULT 'otro',
+    titulo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    fecha_limite DATE NOT NULL,
+    completada BOOLEAN DEFAULT FALSE,
+    fecha_realizada DATE NULL,
+    notas TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+);
+
+-- Tabla de Asignaciones de Profesores (nueva estructura)
+CREATE TABLE IF NOT EXISTS asignaciones_profesores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    rol_profesor ENUM('profesor_guia', 'profesor_co_guia', 'profesor_informante', 'profesor_sala', 'profesor_corrector') NOT NULL,
+    fecha_asignacion DATE NOT NULL,
+    fecha_desasignacion DATE NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    notas TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    INDEX idx_proyecto_activo (proyecto_id, activo),
+    INDEX idx_profesor_activo (profesor_rut, activo),
+    INDEX idx_rol_activo (rol_profesor, activo)
+);
+
 -- Tabla de Fechas Importantes (mantener la original para compatibilidad con proyectos)
 CREATE TABLE IF NOT EXISTS fechas_importantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -229,6 +265,7 @@ INSERT IGNORE INTO estados_proyectos (nombre, descripcion) VALUES
 -- Roles de profesores en proyectos
 INSERT IGNORE INTO roles_profesores (nombre, descripcion) VALUES
 ('profesor_guia', 'Profesor que guía el desarrollo del proyecto'),
+('profesor_co_guia', 'Profesor co-guía que apoya en el desarrollo del proyecto'),
 ('profesor_informante', 'Profesor que informa sobre el proyecto'),
 ('profesor_sala', 'Profesor de sala para la defensa'),
 ('profesor_corrector', 'Profesor que corrige y evalúa avances');

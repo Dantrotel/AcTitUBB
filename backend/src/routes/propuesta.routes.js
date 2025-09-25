@@ -5,6 +5,10 @@ import { uploadPropuesta } from '../middlewares/uploader.js'
 
 const routerProp = Router()
 
+// Endpoint temporal de debug - Agregar ANTES de las demás rutas para que no sea interceptado
+routerProp.post('/debug', verifySession, uploadPropuesta, PropuestaController.debugPropuestaController)
+routerProp.put('/:id/debug-revisar', verifySession, PropuestaController.debugRevisarPropuesta)
+
 // Estudiantes
 routerProp.post('/', verifySession, checkRole('1'), uploadPropuesta ,PropuestaController.crearPropuestaController)
 routerProp.put('/:id', verifySession, checkRole('1'), uploadPropuesta, PropuestaController.ActualizarPropuesta)
