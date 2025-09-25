@@ -2,16 +2,122 @@ import * as PropuestasService from '../services/propuesta.service.js';
 import path from 'path';
 import fs from 'fs';
 
+// Endpoint temporal de debug para identificar el problema
+export const debugPropuestaController = async (req, res) => {
+  try {
+    console.log('=== DEBUG PROPUESTA ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Headers Content-Type:', req.headers['content-type']);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('File:', req.file);
+    console.log('User from token:', {
+      rut: req.rut,
+      rol: req.rol,
+      rol_id: req.rol_id,
+      role_id: req.role_id
+    });
+
+    // Validar qué campos están llegando
+    const camposRequeridos = ['titulo', 'descripcion', 'fecha_envio'];
+    const camposFaltantes = [];
+
+    camposRequeridos.forEach(campo => {
+      if (!req.body[campo] || req.body[campo].trim() === '') {
+        camposFaltantes.push(campo);
+      }
+    });
+
+    console.log('Campos faltantes:', camposFaltantes);
+
+    // Validar fecha si existe
+    if (req.body.fecha_envio) {
+      const fecha = new Date(req.body.fecha_envio);
+      console.log('Fecha original:', req.body.fecha_envio);
+      console.log('Fecha parseada:', fecha);
+      console.log('Fecha válida:', !isNaN(fecha));
+    }
+
+    res.json({
+      success: true,
+      debug: {
+        method: req.method,
+        body: req.body,
+        file: req.file ? {
+          fieldname: req.file.fieldname,
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          filename: req.file.filename
+        } : null,
+        user: {
+          rut: req.rut,
+          rol: req.rol_id
+        },
+        camposFaltantes,
+        sugerencias: camposFaltantes.length > 0 ? [
+          `Faltan estos campos: ${camposFaltantes.join(', ')}`,
+          'Verifica que el frontend esté enviando todos los campos requeridos',
+          'Asegúrate de que fecha_envio tenga formato YYYY-MM-DD'
+        ] : ['Todos los campos requeridos están presentes']
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en debug:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
 export const crearPropuestaController = async (req, res) => {
-   console.log('BODY:', req.body);
+  console.log('=== CREAR PROPUESTA ===');
+  console.log('BODY:', req.body);
   console.log('FILE:', req.file);
 
   try {
     const { titulo, descripcion, fecha_envio, estado } = req.body;
     const estudiante_rut = req.rut;
 
-    if (!titulo || !descripcion || !fecha_envio) {
-      return res.status(400).json({ message: 'Faltan datos obligatorios' });
+    console.log('Datos extraídos:', {
+      titulo: titulo || 'FALTA',
+      descripcion: descripcion || 'FALTA', 
+      fecha_envio: fecha_envio || 'FALTA',
+      estado: estado || 'pendiente (por defecto)',
+      estudiante_rut: estudiante_rut || 'FALTA'
+    });
+
+    // Validación más específica
+    const errores = [];
+    if (!titulo || titulo.trim() === '') errores.push('titulo es requerido');
+    if (!descripcion || descripcion.trim() === '') errores.push('descripcion es requerida');
+    if (!fecha_envio) errores.push('fecha_envio es requerida');
+    if (!estudiante_rut) errores.push('estudiante_rut falta (problema de autenticación)');
+
+    if (errores.length > 0) {
+      console.log('❌ Errores de validación:', errores);
+      return res.status(400).json({ 
+        message: 'Faltan datos obligatorios',
+        errores: errores,
+        datosRecibidos: {
+          titulo: !!titulo,
+          descripcion: !!descripcion,
+          fecha_envio: !!fecha_envio,
+          estudiante_rut: !!estudiante_rut
+        }
+      });
+    }
+
+    // Validar fecha
+    const fechaDate = new Date(fecha_envio);
+    if (isNaN(fechaDate)) {
+      console.log('❌ Fecha inválida:', fecha_envio);
+      return res.status(400).json({ 
+        message: 'La fecha_envio no es válida. Formato esperado: YYYY-MM-DD',
+        fecha_recibida: fecha_envio
+      });
     }
 
     // Nombre del archivo (si se subió)
@@ -32,6 +138,81 @@ export const crearPropuestaController = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+// Endpoint temporal de debug para revisar propuestas
+export const debugRevisarPropuesta = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('=== DEBUG REVISAR PROPUESTA ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Params ID:', id);
+    console.log('Headers Content-Type:', req.headers['content-type']);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('User from token:', {
+      rut: req.rut,
+      rol: req.rol,
+      role_id: req.role_id
+    });
+
+    // Verificar que la propuesta existe
+    const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
+    console.log('Propuesta existe:', !!propuesta);
+    if (propuesta) {
+      console.log('Propuesta info:', {
+        id: propuesta.id,
+        titulo: propuesta.titulo,
+        estado_actual: propuesta.estado,
+        estudiante_rut: propuesta.estudiante_rut
+      });
+    }
+
+    const { comentarios_profesor, estado } = req.body;
+    
+    res.json({
+      success: true,
+      debug: {
+        params: { id },
+        body: req.body,
+        user: { rut: req.rut, role_id: req.role_id },
+        propuestaExiste: !!propuesta,
+        propuestaInfo: propuesta ? {
+          id: propuesta.id,
+          titulo: propuesta.titulo,
+          estado_actual: propuesta.estado
+        } : null,
+        validacion: {
+          comentarios_profesor: {
+            recibido: !!comentarios_profesor,
+            valor: comentarios_profesor || null,
+            valido: !!(comentarios_profesor && comentarios_profesor.trim())
+          },
+          estado: {
+            recibido: !!estado,
+            valor: estado || null,
+            valido: ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'].includes(estado)
+          }
+        },
+        formatoEsperado: {
+          comentarios_profesor: "string no vacío - Comentarios del profesor sobre la propuesta",
+          estado: "string - Uno de: pendiente, en_revision, correcciones, aprobada, rechazada"
+        },
+        ejemploBody: {
+          comentarios_profesor: "La propuesta está bien estructurada y cumple con los requisitos.",
+          estado: "aprobada"
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en debug revisar propuesta:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
@@ -79,25 +260,72 @@ export const revisarPropuesta = async (req, res) => {
     const { id } = req.params;
     const { comentarios_profesor, estado } = req.body;
 
-    if (!comentarios_profesor || !estado) {
-      return res.status(400).json({ message: 'Faltan comentarios o estado.' });
+    console.log('=== DEBUG REVISAR PROPUESTA ===');
+    console.log('ID propuesta:', id);
+    console.log('Body completo:', JSON.stringify(req.body, null, 2));
+    console.log('comentarios_profesor:', comentarios_profesor || 'FALTA');
+    console.log('estado:', estado || 'FALTA');
+    console.log('User info:', { rut: req.rut, role: req.role_id });
+
+    // Validación mejorada con más información
+    const errores = [];
+    if (!comentarios_profesor || comentarios_profesor.trim() === '') {
+      errores.push('comentarios_profesor es requerido y no puede estar vacío');
+    }
+    if (!estado || estado.trim() === '') {
+      errores.push('estado es requerido y no puede estar vacío');
+    }
+
+    if (errores.length > 0) {
+      console.log('❌ Errores de validación:', errores);
+      return res.status(400).json({ 
+        message: 'Faltan comentarios o estado.',
+        errores: errores,
+        datosRecibidos: {
+          comentarios_profesor: !!comentarios_profesor,
+          estado: !!estado,
+          bodyCompleto: req.body
+        },
+        formatoEsperado: {
+          comentarios_profesor: "string no vacío",
+          estado: "uno de: pendiente, en_revision, correcciones, aprobada, rechazada"
+        }
+      });
     }
 
     const estadosValidos = ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'];
     if (!estadosValidos.includes(estado)) {
-      return res.status(400).json({ message: 'Estado inválido.' });
+      console.log('❌ Estado inválido:', estado);
+      return res.status(400).json({ 
+        message: 'Estado inválido.',
+        estadoRecibido: estado,
+        estadosValidos: estadosValidos
+      });
     }
 
+    console.log('✅ Validación exitosa - procesando...');
     console.log('Estado recibido:', estado);
     console.log('Estados válidos:', estadosValidos);
 
-    const success = await PropuestasService.revisarPropuesta(id, { comentarios_profesor, estado });
-    if (!success) return res.status(404).json({ message: 'Propuesta no encontrada' });
+    const resultado = await PropuestasService.revisarPropuesta(id, { comentarios_profesor, estado });
+    
+    if (!resultado || !resultado.success) {
+      return res.status(404).json({ message: 'Error al procesar la propuesta' });
+    }
 
-    return res.json({ message: 'Propuesta revisada correctamente' });
+    // Si se creó un proyecto automáticamente, incluir esa información en la respuesta
+    if (resultado.proyecto_id) {
+      return res.json({ 
+        message: resultado.message,
+        proyecto_id: resultado.proyecto_id,
+        proyecto_creado: true
+      });
+    }
+
+    return res.json({ message: resultado.message });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error interno del servidor' });
+    return res.status(500).json({ message: error.message || 'Error interno del servidor' });
   }
 };
 

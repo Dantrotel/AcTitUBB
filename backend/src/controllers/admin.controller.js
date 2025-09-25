@@ -4,7 +4,7 @@ import {
   asignarProfesor,
   desasignarProfesor
 } from '../models/propuesta.model.js';
-import { pool } from '../db/connectionDB.js';
+import * as AdminModel from '../models/admin.model.js';
 
 // ===== GESTIÓN DE USUARIOS =====
 export const obtenerTodosLosUsuarios = async (req, res) => {
@@ -74,30 +74,10 @@ export const obtenerPropuestasAsignadasAProfesor = async (req, res) => {
   }
 };
 
-// ===== GESTIÓN DE ASIGNACIONES =====
 export const obtenerTodasLasAsignaciones = async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
-      SELECT 
-        ap.id as asignacion_id,
-        ap.propuesta_id,
-        ap.profesor_rut,
-        ap.fecha_asignacion,
-        p.titulo as titulo_propuesta,
-        ep.nombre as estado_propuesta,
-        ue.nombre as nombre_estudiante,
-        ue.rut as estudiante_rut,
-        up.nombre as nombre_profesor,
-        up.email as email_profesor
-      FROM asignaciones_propuestas ap
-      INNER JOIN propuestas p ON ap.propuesta_id = p.id
-      INNER JOIN estados_propuestas ep ON p.estado_id = ep.id
-      INNER JOIN usuarios ue ON p.estudiante_rut = ue.rut
-      INNER JOIN usuarios up ON ap.profesor_rut = up.rut
-      ORDER BY ap.fecha_asignacion DESC
-    `);
-    
-    res.json(rows);
+    const asignaciones = await AdminModel.obtenerTodasLasAsignaciones();
+    res.json(asignaciones);
   } catch (error) {
     console.error('Error al obtener asignaciones:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
@@ -109,32 +89,20 @@ export const crearAsignacion = async (req, res) => {
     const { propuesta_id, profesor_rut } = req.body;
     
     // Verificar que la propuesta existe
-    const [propuesta] = await pool.execute(
-      'SELECT id FROM propuestas WHERE id = ?',
-      [propuesta_id]
-    );
-    
-    if (propuesta.length === 0) {
+    const propuestaExiste = await AdminModel.verificarPropuestaExiste(propuesta_id);
+    if (!propuestaExiste) {
       return res.status(404).json({ message: 'Propuesta no encontrada' });
     }
     
     // Verificar que el profesor existe
-    const [profesor] = await pool.execute(
-      'SELECT rut FROM usuarios WHERE rut = ? AND rol_id = (SELECT id FROM roles WHERE nombre = "profesor")',
-      [profesor_rut]
-    );
-    
-    if (profesor.length === 0) {
+    const profesorExiste = await AdminModel.verificarProfesorExiste(profesor_rut);
+    if (!profesorExiste) {
       return res.status(404).json({ message: 'Profesor no encontrado' });
     }
     
     // Verificar que no existe ya una asignación
-    const [asignacionExistente] = await pool.execute(
-      'SELECT id FROM asignaciones_propuestas WHERE propuesta_id = ? AND profesor_rut = ?',
-      [propuesta_id, profesor_rut]
-    );
-    
-    if (asignacionExistente.length > 0) {
+    const asignacionExiste = await AdminModel.verificarAsignacionExiste(propuesta_id, profesor_rut);
+    if (asignacionExiste) {
       return res.status(409).json({ message: 'La asignación ya existe' });
     }
     
@@ -153,19 +121,16 @@ export const eliminarAsignacion = async (req, res) => {
     const { id } = req.params;
     
     // Obtener información de la asignación antes de eliminarla
-    const [asignacion] = await pool.execute(
-      'SELECT propuesta_id, profesor_rut FROM asignaciones_propuestas WHERE id = ?',
-      [id]
-    );
+    const asignacion = await AdminModel.obtenerAsignacionPorId(id);
     
-    if (asignacion.length === 0) {
+    if (!asignacion) {
       return res.status(404).json({ message: 'Asignación no encontrada' });
     }
     
     // Eliminar la asignación
     await desasignarProfesor(
-      asignacion[0].propuesta_id, 
-      asignacion[0].profesor_rut
+      asignacion.propuesta_id, 
+      asignacion.profesor_rut
     );
     
     res.json({ message: 'Asignación eliminada correctamente' });
@@ -178,37 +143,7 @@ export const eliminarAsignacion = async (req, res) => {
 // ===== ESTADÍSTICAS =====
 export const obtenerEstadisticas = async (req, res) => {
   try {
-    // Estadísticas de propuestas
-    const [propuestasStats] = await pool.execute(`
-      SELECT 
-        COUNT(*) as total_propuestas,
-        SUM(CASE WHEN estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'Pendiente') THEN 1 ELSE 0 END) as propuestas_pendientes,
-        SUM(CASE WHEN estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'En Revisión') THEN 1 ELSE 0 END) as propuestas_en_revision,
-        SUM(CASE WHEN estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'Aprobada') THEN 1 ELSE 0 END) as propuestas_aprobadas
-      FROM propuestas
-    `);
-    
-    // Estadísticas de usuarios
-    const [usuariosStats] = await pool.execute(`
-      SELECT 
-        COUNT(*) as total_usuarios,
-        SUM(CASE WHEN rol_id = (SELECT id FROM roles WHERE nombre = 'estudiante') THEN 1 ELSE 0 END) as total_estudiantes,
-        SUM(CASE WHEN rol_id = (SELECT id FROM roles WHERE nombre = 'profesor') THEN 1 ELSE 0 END) as total_profesores
-      FROM usuarios
-    `);
-    
-    // Estadísticas de asignaciones
-    const [asignacionesStats] = await pool.execute(`
-      SELECT COUNT(*) as total_asignaciones
-      FROM asignaciones_propuestas
-    `);
-    
-    const estadisticas = {
-      propuestas: propuestasStats[0],
-      usuarios: usuariosStats[0],
-      asignaciones: asignacionesStats[0]
-    };
-    
+    const estadisticas = await AdminModel.obtenerEstadisticasCompletas();
     res.json(estadisticas);
   } catch (error) {
     console.error('Error al obtener estadísticas:', error);

@@ -156,6 +156,213 @@ const getProjectStats = async () => {
     return rows[0];
 };
 
+// Crear proyecto completo desde propuesta aprobada
+const crearProyectoCompleto = async (proyectoData) => {
+    const { titulo, descripcion, propuesta_id, estudiante_rut, estado_id, fecha_inicio, fecha_entrega_estimada, fecha_entrega_real, fecha_defensa } = proyectoData;
+    
+    const query = `
+        INSERT INTO proyectos (titulo, descripcion, propuesta_id, estudiante_rut, estado_id, fecha_inicio, fecha_entrega_estimada, fecha_entrega_real, fecha_defensa)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await pool.execute(query, [
+        titulo, 
+        descripcion, 
+        propuesta_id, 
+        estudiante_rut, 
+        estado_id, 
+        fecha_inicio, 
+        fecha_entrega_estimada, 
+        fecha_entrega_real, 
+        fecha_defensa
+    ]);
+    
+    return result.insertId;
+};
+
+// Obtener profesores asignados a una propuesta
+const obtenerProfesoresAsignadosPropuesta = async (propuesta_id) => {
+    const query = `
+        SELECT ap.profesor_rut, u.nombre, u.email
+        FROM asignaciones_propuestas ap
+        INNER JOIN usuarios u ON ap.profesor_rut = u.rut
+        WHERE ap.propuesta_id = ?
+    `;
+    const [rows] = await pool.execute(query, [propuesta_id]);
+    return rows;
+};
+
+// Asignar profesor a proyecto con rol específico
+const asignarProfesorProyecto = async ({ proyecto_id, profesor_rut, rol_profesor_id }) => {
+    const query = `
+        INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, activo)
+        VALUES (?, ?, ?, TRUE)
+        ON DUPLICATE KEY UPDATE activo = TRUE, fecha_asignacion = CURRENT_TIMESTAMP
+    `;
+    const [result] = await pool.execute(query, [proyecto_id, profesor_rut, rol_profesor_id]);
+    return result.affectedRows > 0;
+};
+
+// Verificar si un usuario puede ver un proyecto específico
+const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
+    // Los administradores pueden ver todos los proyectos
+    if (rol_usuario === 'admin' || rol_usuario === 3) {
+        return true;
+    }
+
+    const query = `
+        SELECT 
+            p.id,
+            p.estudiante_rut,
+            ap.profesor_rut
+        FROM proyectos p
+        LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+        WHERE p.id = ?
+        AND (
+            p.estudiante_rut = ?  -- Es el estudiante dueño del proyecto
+            OR ap.profesor_rut = ? -- Es un profesor asignado al proyecto
+        )
+        LIMIT 1
+    `;
+    
+    const [rows] = await pool.execute(query, [proyecto_id, usuario_rut, usuario_rut]);
+    return rows.length > 0;
+};
+
+// Obtener proyectos filtrados por permisos de usuario
+const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
+    let query;
+    let params;
+
+    if (rol_usuario === 'admin' || rol_usuario === 3) {
+        // Los administradores ven todos los proyectos
+        query = `
+            SELECT p.*, 
+                   u.nombre AS nombre_estudiante,
+                   u.email AS email_estudiante,
+                   prop.titulo AS titulo_propuesta,
+                   ep.nombre AS estado_proyecto,
+                   GROUP_CONCAT(DISTINCT CONCAT(up.nombre, ' (', rp.nombre, ')')) AS profesores_asignados
+            FROM proyectos p
+            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+            LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+            LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
+            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+            LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
+            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            GROUP BY p.id
+            ORDER BY p.fecha_inicio DESC
+        `;
+        params = [];
+    } else if (rol_usuario === 'estudiante' || rol_usuario === 1) {
+        // Los estudiantes solo ven sus propios proyectos
+        query = `
+            SELECT p.*, 
+                   u.nombre AS nombre_estudiante,
+                   u.email AS email_estudiante,
+                   prop.titulo AS titulo_propuesta,
+                   ep.nombre AS estado_proyecto,
+                   GROUP_CONCAT(DISTINCT CONCAT(up.nombre, ' (', rp.nombre, ')')) AS profesores_asignados
+            FROM proyectos p
+            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+            LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+            LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
+            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+            LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
+            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            WHERE p.estudiante_rut = ?
+            GROUP BY p.id
+            ORDER BY p.fecha_inicio DESC
+        `;
+        params = [usuario_rut];
+    } else if (rol_usuario === 'profesor' || rol_usuario === 2) {
+        // Los profesores ven proyectos donde están asignados
+        query = `
+            SELECT p.*, 
+                   u.nombre AS nombre_estudiante,
+                   u.email AS email_estudiante,
+                   prop.titulo AS titulo_propuesta,
+                   ep.nombre AS estado_proyecto,
+                   GROUP_CONCAT(DISTINCT CONCAT(up.nombre, ' (', rp.nombre, ')')) AS profesores_asignados,
+                   rp_actual.nombre AS mi_rol
+            FROM proyectos p
+            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+            LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+            LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
+            INNER JOIN asignaciones_proyectos ap_usuario ON p.id = ap_usuario.proyecto_id 
+                AND ap_usuario.profesor_rut = ? AND ap_usuario.activo = TRUE
+            LEFT JOIN roles_profesores rp_actual ON ap_usuario.rol_profesor_id = rp_actual.id
+            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+            LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
+            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            GROUP BY p.id
+            ORDER BY p.fecha_inicio DESC
+        `;
+        params = [usuario_rut];
+    } else {
+        // Rol no reconocido, sin acceso
+        return [];
+    }
+
+    const [rows] = await pool.execute(query, params);
+    return rows;
+};
+
+// Obtener detalles de proyecto con verificación de permisos
+const obtenerProyectoPorIdConPermisos = async (proyecto_id, usuario_rut, rol_usuario) => {
+    // Verificar primero si tiene permisos
+    const tienePermiso = await puedeVerProyecto(proyecto_id, usuario_rut, rol_usuario);
+    if (!tienePermiso) {
+        return null;
+    }
+
+    const query = `
+        SELECT p.*, 
+               u.nombre AS nombre_estudiante,
+               u.email AS email_estudiante,
+               u.rut AS estudiante_rut,
+               prop.titulo AS titulo_propuesta,
+               prop.descripcion AS descripcion_propuesta,
+               prop.fecha_envio AS fecha_envio_propuesta,
+               ep.nombre AS estado_proyecto,
+               ep.descripcion AS descripcion_estado
+        FROM proyectos p
+        LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+        LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+        LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
+        WHERE p.id = ?
+    `;
+    
+    const [rows] = await pool.execute(query, [proyecto_id]);
+    
+    if (rows.length === 0) {
+        return null;
+    }
+
+    const proyecto = rows[0];
+
+    // Obtener profesores asignados al proyecto
+    const queryProfesores = `
+        SELECT ap.profesor_rut,
+               u.nombre AS nombre_profesor,
+               u.email AS email_profesor,
+               rp.nombre AS rol_profesor,
+               rp.descripcion AS descripcion_rol,
+               ap.fecha_asignacion
+        FROM asignaciones_proyectos ap
+        INNER JOIN usuarios u ON ap.profesor_rut = u.rut
+        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE ap.proyecto_id = ? AND ap.activo = TRUE
+        ORDER BY rp.nombre
+    `;
+    
+    const [profesores] = await pool.execute(queryProfesores, [proyecto_id]);
+    
+    proyecto.profesores_asignados = profesores;
+    
+    return proyecto;
+};
+
 export const ProjectModel = {
     createProject,
     getProjects,
@@ -167,5 +374,11 @@ export const ProjectModel = {
     getProjectProfessors,
     unassignProfessorFromProject,
     deleteProject,
-    getProjectStats
+    getProjectStats,
+    crearProyectoCompleto,
+    obtenerProfesoresAsignadosPropuesta,
+    asignarProfesorProyecto,
+    puedeVerProyecto,
+    obtenerProyectosPorPermisos,
+    obtenerProyectoPorIdConPermisos
 };

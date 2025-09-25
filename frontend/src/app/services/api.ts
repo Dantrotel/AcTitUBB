@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = '/api/v1';  // Usa el proxy de Nginx para conectar al backend
+  private baseUrl = 'http://localhost:3000/api/v1';  // Usa el proxy de Nginx para conectar al backend
    private getHeaders() {
     const token = localStorage.getItem('token');
     return new HttpHeaders({

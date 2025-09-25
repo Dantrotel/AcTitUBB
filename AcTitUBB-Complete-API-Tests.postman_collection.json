@@ -1,0 +1,919 @@
+{
+	"info": {
+		"name": "AcTitUBB - Sistema de Gestión de Proyectos de Título",
+		"description": "API completa para gestión de proyectos de título con fechas importantes y asignaciones de profesores",
+		"version": "2.0.0",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api/v1"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "proyecto_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "profesor_rut",
+			"value": "12.345.678-9",
+			"type": "string"
+		},
+		{
+			"key": "estudiante_rut",
+			"value": "21.234.567-8",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "🔐 Autenticación",
+			"item": [
+				{
+					"name": "Login Estudiante",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"21.234.567-8\",\n    \"password\": \"estudiante123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["users", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login Profesor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"12.345.678-9\",\n    \"password\": \"profesor123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["users", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login Administrador",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"11.111.111-1\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["users", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📋 Proyectos",
+			"item": [
+				{
+					"name": "Obtener Todos los Proyectos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/projects/projects",
+							"host": ["{{base_url}}"],
+							"path": ["projects", "projects"]
+						}
+					}
+				},
+				{
+					"name": "Obtener Proyecto por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/projects/projects/{{proyecto_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["projects", "projects", "{{proyecto_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Obtener Proyecto Completo (con fechas y profesores)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/projects/projects/{{proyecto_id}}/completo",
+							"host": ["{{base_url}}"],
+							"path": ["projects", "projects", "{{proyecto_id}}", "completo"]
+						}
+					}
+				},
+				{
+					"name": "Crear Proyecto (Solo Estudiantes)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Sistema de Gestión Académica\",\n    \"descripcion\": \"Desarrollo de un sistema web para la gestión académica de estudiantes, incluyendo registro de notas, horarios y comunicación con profesores.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/projects/projects",
+							"host": ["{{base_url}}"],
+							"path": ["projects", "projects"]
+						}
+					}
+				},
+				{
+					"name": "Mis Proyectos (Estudiante)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/projects/estudiante/mis-proyectos",
+							"host": ["{{base_url}}"],
+							"path": ["projects", "estudiante", "mis-proyectos"]
+						}
+					}
+				},
+				{
+					"name": "Proyectos Asignados (Profesor)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/projects/profesor/proyectos-asignados",
+							"host": ["{{base_url}}"],
+							"path": ["projects", "profesor", "proyectos-asignados"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📅 Fechas Importantes",
+			"item": [
+				{
+					"name": "Obtener Fechas de Proyecto",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/fechas-importantes/proyecto/{{proyecto_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["fechas-importantes", "proyecto", "{{proyecto_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Crear Fecha Importante",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"proyecto_id\": {{proyecto_id}},\n    \"tipo_fecha\": \"entrega_avance\",\n    \"titulo\": \"Entrega Primer Avance\",\n    \"descripcion\": \"Primera entrega de avance del proyecto de título\",\n    \"fecha_limite\": \"2024-02-15\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/fechas-importantes",
+							"host": ["{{base_url}}"],
+							"path": ["fechas-importantes"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Fecha Importante",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Entrega Primer Avance - Actualizado\",\n    \"descripcion\": \"Primera entrega de avance del proyecto - fecha actualizada\",\n    \"fecha_limite\": \"2024-02-20\",\n    \"tipo_fecha\": \"entrega_avance\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/fechas-importantes/1",
+							"host": ["{{base_url}}"],
+							"path": ["fechas-importantes", "1"]
+						}
+					}
+				},
+				{
+					"name": "Marcar Fecha como Completada",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fecha_realizada\": \"2024-02-18\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/fechas-importantes/1/completar",
+							"host": ["{{base_url}}"],
+							"path": ["fechas-importantes", "1", "completar"]
+						}
+					}
+				},
+				{
+					"name": "Obtener Fecha por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/fechas-importantes/1",
+							"host": ["{{base_url}}"],
+							"path": ["fechas-importantes", "1"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Fecha Importante (Solo Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/fechas-importantes/1",
+							"host": ["{{base_url}}"],
+							"path": ["fechas-importantes", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👨‍🏫 Asignaciones de Profesores",
+			"item": [
+				{
+					"name": "Obtener Profesores de Proyecto",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/proyecto/{{proyecto_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "proyecto", "{{proyecto_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Obtener Proyectos de Profesor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/profesor/{{profesor_rut}}",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "profesor", "{{profesor_rut}}"]
+						}
+					}
+				},
+				{
+					"name": "Filtrar por Rol de Profesor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/profesor/{{profesor_rut}}?rol_profesor=profesor_guia",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "profesor", "{{profesor_rut}}"],
+							"query": [
+								{
+									"key": "rol_profesor",
+									"value": "profesor_guia"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Asignar Profesor a Proyecto",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"proyecto_id\": {{proyecto_id}},\n    \"profesor_rut\": \"{{profesor_rut}}\",\n    \"rol_profesor\": \"profesor_guia\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Múltiples Profesores",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"proyecto_id\": {{proyecto_id}},\n    \"asignaciones\": [\n        {\n            \"profesor_rut\": \"12.345.678-9\",\n            \"rol_profesor\": \"profesor_guia\"\n        },\n        {\n            \"profesor_rut\": \"13.456.789-0\",\n            \"rol_profesor\": \"profesor_co_guia\"\n        },\n        {\n            \"profesor_rut\": \"14.567.890-1\",\n            \"rol_profesor\": \"profesor_informante\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/multiples",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "multiples"]
+						}
+					}
+				},
+				{
+					"name": "Cambiar Profesor Asignado",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nuevo_profesor_rut\": \"15.678.901-2\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/proyecto/{{proyecto_id}}/rol/profesor_guia",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "proyecto", "{{proyecto_id}}", "rol", "profesor_guia"]
+						}
+					}
+				},
+				{
+					"name": "Remover Profesor de Proyecto",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/proyecto/{{proyecto_id}}/rol/profesor_informante",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "proyecto", "{{proyecto_id}}", "rol", "profesor_informante"]
+						}
+					}
+				},
+				{
+					"name": "Obtener Profesores Disponibles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/disponibles/profesor_guia",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "disponibles", "profesor_guia"]
+						}
+					}
+				},
+				{
+					"name": "Estadísticas de Asignaciones",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/estadisticas",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "estadisticas"]
+						}
+					}
+				},
+				{
+					"name": "Estadísticas de Profesor Específico",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/asignaciones-profesores/estadisticas?profesor_rut={{profesor_rut}}",
+							"host": ["{{base_url}}"],
+							"path": ["asignaciones-profesores", "estadisticas"],
+							"query": [
+								{
+									"key": "profesor_rut",
+									"value": "{{profesor_rut}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📝 Propuestas",
+			"item": [
+				{
+					"name": "Obtener Todas las Propuestas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/propuestas",
+							"host": ["{{base_url}}"],
+							"path": ["propuestas"]
+						}
+					}
+				},
+				{
+					"name": "Crear Propuesta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "titulo",
+									"value": "Sistema de Gestión de Biblioteca Digital",
+									"type": "text"
+								},
+								{
+									"key": "descripcion",
+									"value": "Desarrollo de una plataforma web para la gestión de biblioteca digital universitaria, incluyendo sistema de préstamos, reservas y catálogo en línea.",
+									"type": "text"
+								},
+								{
+									"key": "fecha_envio",
+									"value": "2024-01-15",
+									"type": "text"
+								},
+								{
+									"key": "modalidad",
+									"value": "individual",
+									"type": "text"
+								},
+								{
+									"key": "archivo",
+									"type": "file",
+									"src": "/ruta/al/archivo.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/propuestas",
+							"host": ["{{base_url}}"],
+							"path": ["propuestas"]
+						}
+					}
+				},
+				{
+					"name": "Debug Revisar Propuesta",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estado\": \"aprobada\",\n    \"comentarios_profesor\": \"Test de debug para revisar propuesta\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/propuestas/1/debug-revisar",
+							"host": ["{{base_url}}"],
+							"path": ["propuestas", "1", "debug-revisar"]
+						}
+					}
+				},
+				{
+					"name": "Revisar Propuesta (Aprobar)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estado\": \"aprobada\",\n    \"comentarios_profesor\": \"Propuesta aprobada. Excelente planteamiento del problema y metodología propuesta.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/propuestas/1/revisar",
+							"host": ["{{base_url}}"],
+							"path": ["propuestas", "1", "revisar"]
+						}
+					}
+				},
+				{
+					"name": "Revisar Propuesta (Rechazar)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estado\": \"rechazada\",\n    \"comentarios_profesor\": \"La propuesta necesita mayor especificación de objetivos y metodología. Por favor, revise y vuelva a enviar.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/propuestas/1/revisar",
+							"host": ["{{base_url}}"],
+							"path": ["propuestas", "1", "revisar"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📆 Calendario",
+			"item": [
+				{
+					"name": "Obtener Fechas del Calendario",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario/fechas",
+							"host": ["{{base_url}}"],
+							"path": ["calendario", "fechas"]
+						}
+					}
+				},
+				{
+					"name": "Crear Fecha Global (Solo Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Fecha Límite Entrega Propuestas\",\n    \"descripcion\": \"Fecha límite para la entrega de propuestas de título\",\n    \"fecha\": \"2024-03-15\",\n    \"tipo_fecha\": \"entrega\",\n    \"es_global\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario/fechas",
+							"host": ["{{base_url}}"],
+							"path": ["calendario", "fechas"]
+						}
+					}
+				},
+				{
+					"name": "Crear Fecha Específica de Profesor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Reunión con Estudiante\",\n    \"descripcion\": \"Reunión de seguimiento del proyecto de título\",\n    \"fecha\": \"2024-02-10\",\n    \"tipo_fecha\": \"reunion\",\n    \"es_global\": false,\n    \"estudiante_rut\": \"{{estudiante_rut}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario/fechas",
+							"host": ["{{base_url}}"],
+							"path": ["calendario", "fechas"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👤 Usuarios y Roles",
+			"item": [
+				{
+					"name": "Obtener Todos los Roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/roles",
+							"host": ["{{base_url}}"],
+							"path": ["roles"]
+						}
+					}
+				},
+				{
+					"name": "Registrar Usuario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"22.345.678-0\",\n    \"nombre\": \"María González\",\n    \"email\": \"maria.gonzalez@ubb.cl\",\n    \"password\": \"estudiante123\",\n    \"role_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/register",
+							"host": ["{{base_url}}"],
+							"path": ["users", "register"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔧 Administración",
+			"item": [
+				{
+					"name": "Dashboard Admin",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "dashboard"]
+						}
+					}
+				},
+				{
+					"name": "Obtener Todos los Usuarios",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/usuarios",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Estadísticas del Sistema",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/estadisticas",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "estadisticas"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script que se ejecuta antes de cada petición",
+					"console.log('Ejecutando petición a:', pm.request.url);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script que se ejecuta después de cada petición",
+					"pm.test('Status code es exitoso', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+					"});",
+					"",
+					"// Guardar token automáticamente si es una respuesta de login",
+					"if (pm.request.url.href.includes('/users/login')) {",
+					"    const responseJson = pm.response.json();",
+					"    if (responseJson.token) {",
+					"        pm.collectionVariables.set('auth_token', responseJson.token);",
+					"        console.log('Token guardado automáticamente');",
+					"    }",
+					"}"
+				]
+			}
+		}
+	]
+}
