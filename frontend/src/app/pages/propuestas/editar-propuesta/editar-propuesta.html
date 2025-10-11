@@ -87,7 +87,7 @@
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
-          Detalles de la Propuesta
+          Información Básica
         </h3>
         
         <div class="form-group">
@@ -103,6 +103,7 @@
             class="form-input"
             placeholder="Ingresa el título de tu propuesta"
             required
+            maxlength="255"
             [class.invalid]="editForm.submitted && !propuesta.titulo?.trim()"
           />
           <div *ngIf="editForm.submitted && !propuesta.titulo?.trim()" class="error-field">
@@ -112,7 +113,7 @@
 
         <div class="form-group">
           <label for="descripcion" class="form-label">
-            Descripción
+            Descripción General
             <span class="required">*</span>
           </label>
           <textarea 
@@ -120,17 +121,265 @@
             [(ngModel)]="propuesta.descripcion" 
             name="descripcion" 
             class="form-textarea"
-            placeholder="Describe detalladamente tu propuesta..."
+            placeholder="Describe brevemente tu propuesta..."
             required
-            rows="6"
+            rows="4"
+            maxlength="1000"
             [class.invalid]="editForm.submitted && !propuesta.descripcion?.trim()"
           ></textarea>
           <div *ngIf="editForm.submitted && !propuesta.descripcion?.trim()" class="error-field">
             La descripción es obligatoria
           </div>
           <div class="char-counter">
-            {{ propuesta.descripcion?.length || 0 }} caracteres
+            {{ propuesta.descripcion?.length || 0 }}/1000 caracteres
           </div>
+        </div>
+      </div>
+
+      <!-- Configuración del Proyecto -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          Configuración del Proyecto
+        </h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modalidad" class="form-label">
+              Modalidad
+              <span class="required">*</span>
+            </label>
+            <select
+              id="modalidad"
+              [(ngModel)]="propuesta.modalidad"
+              name="modalidad"
+              required
+              class="form-select"
+              [class.invalid]="editForm.submitted && !propuesta.modalidad">
+              <option value="">Selecciona modalidad</option>
+              <option value="desarrollo_software">Desarrollo de Software</option>
+              <option value="investigacion">Investigación</option>
+            </select>
+            <div *ngIf="editForm.submitted && !propuesta.modalidad" class="error-field">
+              La modalidad es obligatoria
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="numero_estudiantes" class="form-label">
+              Número de Estudiantes
+              <span class="required">*</span>
+            </label>
+            <select
+              id="numero_estudiantes"
+              [(ngModel)]="propuesta.numero_estudiantes"
+              name="numero_estudiantes"
+              required
+              class="form-select"
+              (change)="onEstudiantesChange()"
+              [class.invalid]="editForm.submitted && !propuesta.numero_estudiantes">
+              <option value="">Selecciona cantidad</option>
+              <option value="1">1 Estudiante</option>
+              <option value="2">2 Estudiantes</option>
+            </select>
+            <div *ngIf="editForm.submitted && !propuesta.numero_estudiantes" class="error-field">
+              El número de estudiantes es obligatorio
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="complejidad_estimada" class="form-label">
+              Complejidad Estimada
+              <span class="required">*</span>
+            </label>
+            <select
+              id="complejidad_estimada"
+              [(ngModel)]="propuesta.complejidad_estimada"
+              name="complejidad_estimada"
+              required
+              class="form-select"
+              (change)="onComplejidadChange()"
+              [class.invalid]="editForm.submitted && !propuesta.complejidad_estimada">
+              <option value="">Selecciona complejidad</option>
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+            <div *ngIf="editForm.submitted && !propuesta.complejidad_estimada" class="error-field">
+              La complejidad estimada es obligatoria
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="duracion_estimada_semestres" class="form-label">
+              Duración Estimada
+              <span class="required">*</span>
+            </label>
+            <select
+              id="duracion_estimada_semestres"
+              [(ngModel)]="propuesta.duracion_estimada_semestres"
+              name="duracion_estimada_semestres"
+              required
+              class="form-select"
+              [class.invalid]="editForm.submitted && !propuesta.duracion_estimada_semestres">
+              <option value="">Selecciona duración</option>
+              <option value="1">1 Semestre</option>
+              <option value="2">2 Semestres</option>
+            </select>
+            <div *ngIf="editForm.submitted && !propuesta.duracion_estimada_semestres" class="error-field">
+              La duración estimada es obligatoria
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="mostrarJustificacionComplejidad">
+          <label for="justificacion_complejidad" class="form-label">
+            Justificación de Complejidad
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="justificacion_complejidad"
+            [(ngModel)]="propuesta.justificacion_complejidad"
+            name="justificacion_complejidad"
+            placeholder="Justifica por qué este proyecto requiere 2 estudiantes siendo de complejidad baja..."
+            [required]="mostrarJustificacionComplejidad"
+            class="form-textarea"
+            rows="3"
+            [class.invalid]="editForm.submitted && mostrarJustificacionComplejidad && !propuesta.justificacion_complejidad?.trim()"></textarea>
+          <div *ngIf="editForm.submitted && mostrarJustificacionComplejidad && !propuesta.justificacion_complejidad?.trim()" class="error-field">
+            La justificación de complejidad es obligatoria
+          </div>
+          <small class="form-hint">
+            Se requiere justificación para proyectos de 2 estudiantes con complejidad baja
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="area_tematica" class="form-label">
+            Área Temática
+            <span class="required">*</span>
+          </label>
+          <input
+            id="area_tematica"
+            type="text"
+            [(ngModel)]="propuesta.area_tematica"
+            name="area_tematica"
+            placeholder="Ej: Inteligencia Artificial, Desarrollo Web, Bases de Datos..."
+            required
+            class="form-input"
+            maxlength="100"
+            [class.invalid]="editForm.submitted && !propuesta.area_tematica?.trim()">
+          <div *ngIf="editForm.submitted && !propuesta.area_tematica?.trim()" class="error-field">
+            El área temática es obligatoria
+          </div>
+        </div>
+      </div>
+
+      <!-- Objetivos del Proyecto -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          Objetivos del Proyecto
+        </h3>
+        
+        <div class="form-group">
+          <label for="objetivos_generales" class="form-label">
+            Objetivos Generales
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="objetivos_generales"
+            [(ngModel)]="propuesta.objetivos_generales"
+            name="objetivos_generales"
+            placeholder="Define los objetivos generales que busca alcanzar tu proyecto..."
+            required
+            class="form-textarea"
+            rows="4"
+            [class.invalid]="editForm.submitted && !propuesta.objetivos_generales?.trim()"></textarea>
+          <div *ngIf="editForm.submitted && !propuesta.objetivos_generales?.trim()" class="error-field">
+            Los objetivos generales son obligatorios
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="objetivos_especificos" class="form-label">
+            Objetivos Específicos
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="objetivos_especificos"
+            [(ngModel)]="propuesta.objetivos_especificos"
+            name="objetivos_especificos"
+            placeholder="Lista los objetivos específicos y medibles del proyecto..."
+            required
+            class="form-textarea"
+            rows="5"
+            [class.invalid]="editForm.submitted && !propuesta.objetivos_especificos?.trim()"></textarea>
+          <div *ngIf="editForm.submitted && !propuesta.objetivos_especificos?.trim()" class="error-field">
+            Los objetivos específicos son obligatorios
+          </div>
+        </div>
+      </div>
+
+      <!-- Metodología y Recursos -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11H1v3h8v3l3-3-3-3v3z"/>
+            <path d="M22 2L13.5 10.5 15 12l8.5-8.5L22 2z"/>
+          </svg>
+          Metodología y Recursos
+        </h3>
+        
+        <div class="form-group">
+          <label for="metodologia_propuesta" class="form-label">
+            Metodología Propuesta
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="metodologia_propuesta"
+            [(ngModel)]="propuesta.metodologia_propuesta"
+            name="metodologia_propuesta"
+            placeholder="Describe la metodología que utilizarás para desarrollar el proyecto..."
+            required
+            class="form-textarea"
+            rows="5"
+            [class.invalid]="editForm.submitted && !propuesta.metodologia_propuesta?.trim()"></textarea>
+          <div *ngIf="editForm.submitted && !propuesta.metodologia_propuesta?.trim()" class="error-field">
+            La metodología propuesta es obligatoria
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="recursos_necesarios" class="form-label">
+            Recursos Necesarios
+          </label>
+          <textarea
+            id="recursos_necesarios"
+            [(ngModel)]="propuesta.recursos_necesarios"
+            name="recursos_necesarios"
+            placeholder="Lista los recursos técnicos, software, hardware o bibliográficos necesarios..."
+            class="form-textarea"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="bibliografia" class="form-label">
+            Bibliografía
+          </label>
+          <textarea
+            id="bibliografia"
+            [(ngModel)]="propuesta.bibliografia"
+            name="bibliografia"
+            placeholder="Referencias bibliográficas relevantes para el proyecto..."
+            class="form-textarea"
+            rows="4"></textarea>
         </div>
       </div>
 

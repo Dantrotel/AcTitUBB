@@ -120,6 +120,128 @@
     </div>
   </div>
 
+  <!-- Sección de Gestión de Proyectos -->
+  <div class="projects-section">
+    <div class="section-header">
+      <h2>
+        <i class="fas fa-project-diagram"></i>
+        Gestión de Proyectos
+      </h2>
+      <button class="btn-secondary" (click)="navegarAProyectos()">
+        <i class="fas fa-eye"></i>
+        Ver Todos
+      </button>
+    </div>
+
+    <!-- Dashboard de Proyectos -->
+    <div class="projects-dashboard">
+      <div class="project-stats-grid">
+        <div class="stat-card total">
+          <div class="stat-icon">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticasProyectos.totalProyectos }}</h3>
+            <p>Proyectos Asignados</p>
+          </div>
+        </div>
+
+        <div class="stat-card development">
+          <div class="stat-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticasProyectos.enDesarrollo }}</h3>
+            <p>En Desarrollo</p>
+          </div>
+        </div>
+
+        <div class="stat-card milestones">
+          <div class="stat-icon">
+            <i class="fas fa-flag"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticasProyectos.proximosHitos }}</h3>
+            <p>Próximos Hitos</p>
+          </div>
+        </div>
+
+        <div class="stat-card evaluations">
+          <div class="stat-icon">
+            <i class="fas fa-clipboard-check"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticasProyectos.evaluacionesPendientes }}</h3>
+            <p>Evaluaciones Pendientes</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Proyectos Recientes -->
+      <div class="recent-projects">
+        <h3>
+          <i class="fas fa-clock"></i>
+          Proyectos Recientes
+        </h3>
+        
+        <div class="projects-list" *ngIf="proyectosRecientes.length > 0">
+          <div class="project-item" *ngFor="let proyecto of proyectosRecientes" (click)="navegarAProyecto(proyecto.id)">
+            <div class="project-info">
+              <h4>{{ proyecto.titulo }}</h4>
+              <p class="project-student">
+                <i class="fas fa-user-graduate"></i>
+                {{ proyecto.estudiante }}
+              </p>
+              <div class="project-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="proyecto.porcentaje_avance"></div>
+                </div>
+                <span class="progress-text">{{ formatearPorcentaje(proyecto.porcentaje_avance) }}</span>
+              </div>
+            </div>
+            <div class="project-status">
+              <span class="status-badge" [class]="getEstadoClase(proyecto.estado)">
+                {{ proyecto.estado }}
+              </span>
+              <small class="last-update">
+                <i class="fas fa-clock"></i>
+                {{ proyecto.fecha_actualizacion | date:'dd/MM/yyyy' }}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="proyectosRecientes.length === 0">
+          <i class="fas fa-inbox"></i>
+          <p>No tienes proyectos asignados actualmente</p>
+        </div>
+      </div>
+
+      <!-- Acciones de Proyecto -->
+      <div class="project-actions">
+        <div class="action-card" (click)="navegarAHitos()">
+          <div class="action-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="action-content">
+            <h4>Gestionar Hitos</h4>
+            <p>Revisar y evaluar hitos de proyectos</p>
+          </div>
+        </div>
+
+        <div class="action-card" (click)="navegarAEvaluaciones()">
+          <div class="action-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="action-content">
+            <h4>Crear Evaluaciones</h4>
+            <p>Evaluar avances y entregas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Sección de acciones rápidas -->
   <div class="quick-actions-section">
     <h2>Acciones Rápidas</h2>

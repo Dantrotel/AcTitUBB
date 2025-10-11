@@ -313,8 +313,14 @@ body {
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1rem;
+
+    .header-badges {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
 
     .estado-badge {
       padding: 0.25rem 0.75rem;
@@ -347,10 +353,23 @@ body {
         background: rgba($ubb-warning, 0.1);
         color: $ubb-warning;
       }
+    }
 
-      &.estado-sin-estado {
-        background: rgba($ubb-gray, 0.1);
-        color: $ubb-dark-gray;
+    .proyecto-badge {
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      text-transform: none;
+      box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+      
+      i {
+        font-size: 0.6rem;
       }
     }
 
