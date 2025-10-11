@@ -254,6 +254,13 @@ $dark-gray: #343a40;
             flex: 1;
           }
 
+          .estado-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+          }
+
           .estado-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
@@ -285,6 +292,24 @@ $dark-gray: #343a40;
             &.estado-correcciones {
               background: rgba($warning-color, 0.1);
               color: $warning-color;
+            }
+          }
+
+          .proyecto-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            text-transform: none;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+            
+            i {
+              font-size: 0.7rem;
             }
           }
         }

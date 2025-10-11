@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // Variables de colores institucionales
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
@@ -149,7 +151,7 @@ $text-muted: #6c757d;
         gap: 6px;
 
         &:hover {
-          background: darken($primary-color, 10%);
+          background: color.adjust($primary-color, $lightness: -10%);
           transform: translateY(-2px);
         }
       }
@@ -234,7 +236,7 @@ $text-muted: #6c757d;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, $success-color 0%, darken($success-color, 10%) 100%);
+      background: linear-gradient(135deg, $success-color 0%, color.adjust($success-color, $lightness: -10%) 100%);
       color: white;
 
       &:hover:not(:disabled) {
@@ -244,7 +246,7 @@ $text-muted: #6c757d;
     }
 
     .btn-secondary {
-      background: linear-gradient(135deg, $text-muted 0%, darken($text-muted, 10%) 100%);
+      background: linear-gradient(135deg, $text-muted 0%, color.adjust($text-muted, $lightness: -10%) 100%);
       color: white;
 
       &:hover:not(:disabled) {
@@ -475,7 +477,7 @@ $text-muted: #6c757d;
     justify-content: flex-start;
 
     .btn-volver {
-      background: linear-gradient(135deg, $text-muted 0%, darken($text-muted, 10%) 100%);
+      background: linear-gradient(135deg, $text-muted 0%, color.adjust($text-muted, $lightness: -10%) 100%);
       color: white;
       border: none;
       padding: 12px 20px;
@@ -617,7 +619,7 @@ $text-muted: #6c757d;
         color: white;
 
         &:hover:not(:disabled) {
-          background: darken($danger-color, 10%);
+          background: color.adjust($danger-color, $lightness: -10%);
         }
       }
 
@@ -626,7 +628,7 @@ $text-muted: #6c757d;
         color: $dark-gray;
 
         &:hover:not(:disabled) {
-          background: darken($border-color, 10%);
+          background: color.adjust($border-color, $lightness: -10%);
         }
       }
     }
@@ -636,19 +638,19 @@ $text-muted: #6c757d;
 // Tipos de fecha
 .fecha-card {
   &.tipo-academica .fecha-icon {
-    background: linear-gradient(135deg, $info-color 0%, darken($info-color, 10%) 100%);
+    background: linear-gradient(135deg, $info-color 0%, color.adjust($info-color, $lightness: -10%) 100%);
   }
   
   &.tipo-entrega .fecha-icon {
-    background: linear-gradient(135deg, $warning-color 0%, darken($warning-color, 10%) 100%);
+    background: linear-gradient(135deg, $warning-color 0%, color.adjust($warning-color, $lightness: -10%) 100%);
   }
   
   &.tipo-defensa .fecha-icon {
-    background: linear-gradient(135deg, $danger-color 0%, darken($danger-color, 10%) 100%);
+    background: linear-gradient(135deg, $danger-color 0%, color.adjust($danger-color, $lightness: -10%) 100%);
   }
   
   &.tipo-reunion .fecha-icon {
-    background: linear-gradient(135deg, $success-color 0%, darken($success-color, 10%) 100%);
+    background: linear-gradient(135deg, $success-color 0%, color.adjust($success-color, $lightness: -10%) 100%);
   }
 }
 

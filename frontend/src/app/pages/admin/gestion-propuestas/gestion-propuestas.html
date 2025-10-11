@@ -115,8 +115,15 @@
         <div class="card-header">
           <div class="propuesta-title">
             <h3>{{ propuesta.titulo }}</h3>
-            <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
-              {{ obtenerEstadoDisplay(propuesta.estado) }}
+            <div class="estado-badges">
+              <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
+                {{ obtenerEstadoDisplay(propuesta.estado) }}
+              </div>
+              <!-- Indicador de proyecto creado -->
+              <div *ngIf="propuesta.proyecto_id" class="proyecto-badge">
+                <i class="fas fa-rocket"></i>
+                Proyecto ID: {{ propuesta.proyecto_id }}
+              </div>
             </div>
           </div>
         </div>

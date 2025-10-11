@@ -30,10 +30,20 @@ export class HomeProfesor implements OnInit {
     pendientes: 0,
     revisadas: 0
   };
+  // Nuevas estadísticas de proyectos
+  estadisticasProyectos: any = {
+    totalProyectos: 0,
+    enDesarrollo: 0,
+    proximosHitos: 0,
+    evaluacionesPendientes: 0
+  };
   ultimaActividad: string = '';
   showCalendarModal = false;
   fechasCalendario: any[] = [];
   proximasFechas: any[] = [];
+  // Nuevos datos de proyectos
+  proyectosRecientes: any[] = [];
+  proximosHitos: any[] = [];
 
   constructor(private ApiService: ApiService, private router: Router) {}
 
@@ -63,6 +73,8 @@ export class HomeProfesor implements OnInit {
     }
 
     this.cargarEstadisticas();
+    this.cargarEstadisticasProyectos();
+    this.cargarProyectosRecientes();
     this.cargarFechasCalendario();
   }
 
@@ -90,6 +102,43 @@ export class HomeProfesor implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar estadísticas:', err);
+      }
+    });
+  }
+
+  cargarEstadisticasProyectos() {
+    // Cargar estadísticas de proyectos asignados al profesor
+    this.ApiService.getProyectosAsignados().subscribe({
+      next: (data: any) => {
+        this.estadisticasProyectos.totalProyectos = data.projects?.length || 0;
+        this.estadisticasProyectos.enDesarrollo = data.projects?.filter((p: any) => 
+          p.estado_proyecto?.includes('desarrollo')).length || 0;
+        
+        // Simular próximos hitos y evaluaciones pendientes
+        this.estadisticasProyectos.proximosHitos = Math.floor(Math.random() * 5) + 1;
+        this.estadisticasProyectos.evaluacionesPendientes = Math.floor(Math.random() * 3) + 1;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar estadísticas de proyectos:', err);
+      }
+    });
+  }
+
+  cargarProyectosRecientes() {
+    // Cargar proyectos recientes del profesor
+    this.ApiService.getProyectosAsignados().subscribe({
+      next: (data: any) => {
+        this.proyectosRecientes = (data.projects || []).slice(0, 3).map((proyecto: any) => ({
+          id: proyecto.id,
+          titulo: proyecto.titulo,
+          estudiante: proyecto.nombre_estudiante,
+          estado: proyecto.estado_proyecto,
+          porcentaje_avance: proyecto.porcentaje_avance || 0,
+          fecha_actualizacion: proyecto.updated_at
+        }));
+      },
+      error: (err: any) => {
+        console.error('Error al cargar proyectos recientes:', err);
       }
     });
   }
@@ -165,5 +214,36 @@ export class HomeProfesor implements OnInit {
 
   fechaActual(): Date {
     return new Date();
+  }
+
+  // Nuevos métodos para gestión de proyectos
+  navegarAProyectos() {
+    this.router.navigate(['/profesor/proyectos']);
+  }
+
+  navegarAProyecto(proyectoId: number) {
+    this.router.navigate(['/proyectos', proyectoId]);
+  }
+
+  navegarAHitos() {
+    this.router.navigate(['/profesor/hitos']);
+  }
+
+  navegarAEvaluaciones() {
+    this.router.navigate(['/profesor/evaluaciones']);
+  }
+
+  getEstadoClase(estado: string): string {
+    const estados: { [key: string]: string } = {
+      'en_desarrollo': 'estado-desarrollo',
+      'avance_enviado': 'estado-avance',
+      'completado': 'estado-completado',
+      'pausado': 'estado-pausado'
+    };
+    return estados[estado] || 'estado-default';
+  }
+
+  formatearPorcentaje(porcentaje: number): string {
+    return Math.round(porcentaje || 0) + '%';
   }
 }

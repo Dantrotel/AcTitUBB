@@ -113,8 +113,15 @@
         (click)="verDetalle(propuesta.id)"
       >
         <div class="card-header">
-          <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
-            {{ obtenerEstadoDisplay(propuesta.estado) }}
+          <div class="header-badges">
+            <div class="estado-badge" [class]="obtenerClaseEstado(propuesta.estado)">
+              {{ obtenerEstadoDisplay(propuesta.estado) }}
+            </div>
+            <!-- Indicador de proyecto creado -->
+            <div *ngIf="propuesta.proyecto_id" class="proyecto-badge">
+              <i class="fas fa-rocket"></i>
+              Proyecto creado
+            </div>
           </div>
           <div class="fecha">
             <i class="fas fa-calendar-alt"></i>

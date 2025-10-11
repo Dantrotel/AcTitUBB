@@ -13,7 +13,21 @@ import { ApiService } from '../../../services/api';
 })
 export class ActualizarPropuestaComponent implements OnInit {
   propuestaId!: string;
-  propuesta: any = { titulo: '', descripcion: '' };
+  propuesta: any = { 
+    titulo: '', 
+    descripcion: '',
+    modalidad: '',
+    numero_estudiantes: '',
+    complejidad_estimada: '',
+    duracion_estimada_semestres: '',
+    justificacion_complejidad: '',
+    area_tematica: '',
+    objetivos_generales: '',
+    objetivos_especificos: '',
+    metodologia_propuesta: '',
+    recursos_necesarios: '',
+    bibliografia: ''
+  };
   userRut = '';
   error = '';
   loading = true;
@@ -28,6 +42,9 @@ export class ActualizarPropuestaComponent implements OnInit {
   nuevoArchivo: File | null = null;
   isDragOver = false;
   archivoError = '';
+
+  // Variables de control para validaciones
+  mostrarJustificacionComplejidad = false;
 
   constructor(
     private apiService: ApiService,
@@ -104,6 +121,8 @@ export class ActualizarPropuestaComponent implements OnInit {
         }
         
         this.propuesta = data;
+        // Validar justificación de complejidad al cargar
+        this.validarJustificacionComplejidad();
         this.loading = false;
       },
       error: (err: any) => {
@@ -112,6 +131,51 @@ export class ActualizarPropuestaComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  onEstudiantesChange() {
+    this.validarJustificacionComplejidad();
+  }
+
+  onComplejidadChange() {
+    this.validarJustificacionComplejidad();
+  }
+
+  private validarJustificacionComplejidad() {
+    // Mostrar justificación si hay 2 estudiantes y complejidad baja
+    this.mostrarJustificacionComplejidad = 
+      this.propuesta.numero_estudiantes === '2' && this.propuesta.complejidad_estimada === 'baja';
+    
+    // Limpiar justificación si no es necesaria
+    if (!this.mostrarJustificacionComplejidad) {
+      this.propuesta.justificacion_complejidad = '';
+    }
+  }
+
+  private validarFormulario(): string | null {
+    // Validaciones básicas
+    if (!this.propuesta.titulo?.trim()) return 'El título es obligatorio';
+    if (!this.propuesta.descripcion?.trim()) return 'La descripción es obligatoria';
+    if (!this.propuesta.modalidad) return 'Debes seleccionar una modalidad';
+    if (!this.propuesta.numero_estudiantes) return 'Debes especificar el número de estudiantes';
+    if (!this.propuesta.complejidad_estimada) return 'Debes seleccionar la complejidad estimada';
+    if (!this.propuesta.duracion_estimada_semestres) return 'Debes especificar la duración estimada';
+    if (!this.propuesta.area_tematica?.trim()) return 'El área temática es obligatoria';
+    if (!this.propuesta.objetivos_generales?.trim()) return 'Los objetivos generales son obligatorios';
+    if (!this.propuesta.objetivos_especificos?.trim()) return 'Los objetivos específicos son obligatorios';
+    if (!this.propuesta.metodologia_propuesta?.trim()) return 'La metodología propuesta es obligatoria';
+
+    // Validación específica de justificación
+    if (this.mostrarJustificacionComplejidad && !this.propuesta.justificacion_complejidad?.trim()) {
+      return 'Debes justificar por qué este proyecto requiere 2 estudiantes siendo de complejidad baja';
+    }
+
+    // Validaciones de longitud
+    if (this.propuesta.titulo.length > 255) return 'El título no puede exceder 255 caracteres';
+    if (this.propuesta.descripcion.length > 1000) return 'La descripción no puede exceder 1000 caracteres';
+    if (this.propuesta.area_tematica.length > 100) return 'El área temática no puede exceder 100 caracteres';
+
+    return null;
   }
 
   private puedeEditarPropuesta(propuesta: any): boolean {
@@ -228,8 +292,10 @@ export class ActualizarPropuestaComponent implements OnInit {
   actualizar() {
     console.log('Propuesta a actualizar:', this.propuesta);
     
-    if (!this.propuesta.titulo?.trim() || !this.propuesta.descripcion?.trim()) {
-      this.mostrarToast('Completa todos los campos obligatorios', 'error');
+    // Validar formulario antes de enviar
+    const errorValidacion = this.validarFormulario();
+    if (errorValidacion) {
+      this.mostrarToast(errorValidacion, 'error');
       return;
     }
 
@@ -249,9 +315,28 @@ export class ActualizarPropuestaComponent implements OnInit {
   private actualizarPropuestaConArchivo() {
     const formData = new FormData();
     
-    // Agregar los datos de la propuesta
+    // Agregar todos los datos de la propuesta
     formData.append('titulo', this.propuesta.titulo);
     formData.append('descripcion', this.propuesta.descripcion);
+    formData.append('modalidad', this.propuesta.modalidad);
+    formData.append('numero_estudiantes', this.propuesta.numero_estudiantes);
+    formData.append('complejidad_estimada', this.propuesta.complejidad_estimada);
+    formData.append('duracion_estimada_semestres', this.propuesta.duracion_estimada_semestres);
+    formData.append('area_tematica', this.propuesta.area_tematica);
+    formData.append('objetivos_generales', this.propuesta.objetivos_generales);
+    formData.append('objetivos_especificos', this.propuesta.objetivos_especificos);
+    formData.append('metodologia_propuesta', this.propuesta.metodologia_propuesta);
+
+    // Campos opcionales (solo si tienen contenido)
+    if (this.propuesta.justificacion_complejidad) {
+      formData.append('justificacion_complejidad', this.propuesta.justificacion_complejidad);
+    }
+    if (this.propuesta.recursos_necesarios) {
+      formData.append('recursos_necesarios', this.propuesta.recursos_necesarios);
+    }
+    if (this.propuesta.bibliografia) {
+      formData.append('bibliografia', this.propuesta.bibliografia);
+    }
     
     // Agregar el archivo
     if (this.nuevoArchivo) {
@@ -282,10 +367,21 @@ export class ActualizarPropuestaComponent implements OnInit {
   }
 
   private actualizarPropuestaSinArchivo() {
-    // Enviar solo los datos sin archivo
+    // Enviar todos los datos sin archivo
     const datosActualizacion = {
       titulo: this.propuesta.titulo,
-      descripcion: this.propuesta.descripcion
+      descripcion: this.propuesta.descripcion,
+      modalidad: this.propuesta.modalidad,
+      numero_estudiantes: this.propuesta.numero_estudiantes,
+      complejidad_estimada: this.propuesta.complejidad_estimada,
+      duracion_estimada_semestres: this.propuesta.duracion_estimada_semestres,
+      area_tematica: this.propuesta.area_tematica,
+      objetivos_generales: this.propuesta.objetivos_generales,
+      objetivos_especificos: this.propuesta.objetivos_especificos,
+      metodologia_propuesta: this.propuesta.metodologia_propuesta,
+      justificacion_complejidad: this.propuesta.justificacion_complejidad || '',
+      recursos_necesarios: this.propuesta.recursos_necesarios || '',
+      bibliografia: this.propuesta.bibliografia || ''
     };
 
     this.apiService.updatePropuesta(this.propuestaId, datosActualizacion).subscribe({

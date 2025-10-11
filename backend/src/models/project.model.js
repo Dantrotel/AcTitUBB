@@ -1,13 +1,19 @@
 import { pool } from '../db/connectionDB.js';
 
 // Crear un nuevo proyecto desde una propuesta aprobada
-const createProject = async ({ titulo, descripcion, propuesta_id, estudiante_rut, fecha_inicio, fecha_entrega_estimada }) => {
+const createProject = async ({ titulo, descripcion, propuesta_id, estudiante_rut, fecha_inicio, fecha_entrega_estimada, objetivo_general, objetivos_especificos, metodologia, modalidad, complejidad, duracion_semestres }) => {
     const query = `
-        INSERT INTO proyectos (titulo, descripcion, propuesta_id, estudiante_rut, fecha_inicio, fecha_entrega_estimada)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO proyectos (
+            titulo, descripcion, propuesta_id, estudiante_rut, fecha_inicio, fecha_entrega_estimada,
+            objetivo_general, objetivos_especificos, metodologia, modalidad, complejidad, duracion_semestres
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const [result] = await pool.execute(query, [titulo, descripcion, propuesta_id, estudiante_rut, fecha_inicio, fecha_entrega_estimada]);
+    const [result] = await pool.execute(query, [
+        titulo, descripcion, propuesta_id, estudiante_rut, fecha_inicio, fecha_entrega_estimada,
+        objetivo_general, objetivos_especificos, metodologia, modalidad, complejidad, duracion_semestres
+    ]);
     
     // Actualizar la propuesta con el proyecto_id
     await pool.execute(
@@ -24,12 +30,15 @@ const getProjects = async () => {
         SELECT p.*, 
                u.nombre AS nombre_estudiante,
                prop.titulo AS titulo_propuesta,
+               ep.nombre AS estado_proyecto,
                GROUP_CONCAT(DISTINCT rp.nombre) AS roles_profesores
         FROM proyectos p
         LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
         LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+        LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
         LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
         LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE p.activo = TRUE
         GROUP BY p.id
         ORDER BY p.fecha_inicio DESC
     `;
@@ -91,13 +100,19 @@ const getProjectsByProfessor = async (profesor_rut) => {
 };
 
 // Actualizar proyecto
-const updateProject = async (projectId, { titulo, descripcion, estado, fecha_entrega_estimada, fecha_defensa }) => {
+const updateProject = async (projectId, { titulo, descripcion, estado_id, fecha_entrega_estimada, fecha_defensa, estado_detallado, porcentaje_avance, prioridad, riesgo_nivel, observaciones_profesor, observaciones_estudiante }) => {
     const query = `
         UPDATE proyectos 
-        SET titulo = ?, descripcion = ?, estado = ?, fecha_entrega_estimada = ?, fecha_defensa = ?, updated_at = NOW()
+        SET titulo = ?, descripcion = ?, estado_id = ?, fecha_entrega_estimada = ?, fecha_defensa = ?, 
+            estado_detallado = ?, porcentaje_avance = ?, prioridad = ?, riesgo_nivel = ?,
+            observaciones_profesor = ?, observaciones_estudiante = ?, updated_at = NOW()
         WHERE id = ?
     `;
-    const [result] = await pool.execute(query, [titulo, descripcion, estado, fecha_entrega_estimada, fecha_defensa, projectId]);
+    const [result] = await pool.execute(query, [
+        titulo, descripcion, estado_id, fecha_entrega_estimada, fecha_defensa,
+        estado_detallado, porcentaje_avance, prioridad, riesgo_nivel,
+        observaciones_profesor, observaciones_estudiante, projectId
+    ]);
     return result.affectedRows > 0;
 };
 
@@ -363,6 +378,234 @@ const obtenerProyectoPorIdConPermisos = async (proyecto_id, usuario_rut, rol_usu
     return proyecto;
 };
 
+// ========== GESTIÓN DE HITOS ==========
+
+// Crear hito de proyecto
+const crearHitoProyecto = async (hitoData) => {
+    const { proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut } = hitoData;
+    
+    const query = `
+        INSERT INTO hitos_proyecto (
+            proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, 
+            peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const [result] = await pool.execute(query, [
+        proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo,
+        peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut
+    ]);
+    
+    return result.insertId;
+};
+
+// Obtener hitos de un proyecto
+const obtenerHitosProyecto = async (proyecto_id) => {
+    const query = `
+        SELECT h.*, 
+               hp.nombre AS hito_predecesor_nombre,
+               uc.nombre AS creado_por_nombre,
+               ua.nombre AS actualizado_por_nombre
+        FROM hitos_proyecto h
+        LEFT JOIN hitos_proyecto hp ON h.hito_predecesor_id = hp.id
+        LEFT JOIN usuarios uc ON h.creado_por_rut = uc.rut
+        LEFT JOIN usuarios ua ON h.actualizado_por_rut = ua.rut
+        WHERE h.proyecto_id = ?
+        ORDER BY h.fecha_objetivo ASC, h.tipo_hito ASC
+    `;
+    
+    const [rows] = await pool.execute(query, [proyecto_id]);
+    return rows;
+};
+
+// Actualizar hito de proyecto
+const actualizarHitoProyecto = async (hito_id, hitoData, actualizado_por_rut) => {
+    const { nombre, descripcion, fecha_objetivo, estado, porcentaje_completado, fecha_completado, comentarios_estudiante, comentarios_profesor, calificacion } = hitoData;
+    
+    const query = `
+        UPDATE hitos_proyecto 
+        SET nombre = ?, descripcion = ?, fecha_objetivo = ?, estado = ?, 
+            porcentaje_completado = ?, fecha_completado = ?, 
+            comentarios_estudiante = ?, comentarios_profesor = ?, calificacion = ?,
+            actualizado_por_rut = ?, updated_at = NOW()
+        WHERE id = ?
+    `;
+    
+    const [result] = await pool.execute(query, [
+        nombre, descripcion, fecha_objetivo, estado, 
+        porcentaje_completado, fecha_completado,
+        comentarios_estudiante, comentarios_profesor, calificacion,
+        actualizado_por_rut, hito_id
+    ]);
+    
+    return result.affectedRows > 0;
+};
+
+// Completar hito
+const completarHito = async (hito_id, datos_completado, actualizado_por_rut) => {
+    const { archivo_entregable, comentarios_estudiante } = datos_completado;
+    
+    const query = `
+        UPDATE hitos_proyecto 
+        SET estado = 'completado', 
+            porcentaje_completado = 100, 
+            fecha_completado = CURDATE(),
+            archivo_entregable = ?,
+            comentarios_estudiante = ?,
+            actualizado_por_rut = ?,
+            updated_at = NOW()
+        WHERE id = ?
+    `;
+    
+    const [result] = await pool.execute(query, [
+        archivo_entregable, comentarios_estudiante, actualizado_por_rut, hito_id
+    ]);
+    
+    return result.affectedRows > 0;
+};
+
+// Obtener estadísticas de hitos de un proyecto
+const obtenerEstadisticasHitos = async (proyecto_id) => {
+    const query = `
+        SELECT 
+            COUNT(*) as total_hitos,
+            SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completados,
+            SUM(CASE WHEN estado = 'en_progreso' THEN 1 ELSE 0 END) as en_progreso,
+            SUM(CASE WHEN estado = 'retrasado' THEN 1 ELSE 0 END) as retrasados,
+            AVG(porcentaje_completado) as avance_promedio,
+            SUM(CASE WHEN es_critico = TRUE THEN 1 ELSE 0 END) as criticos
+        FROM hitos_proyecto
+        WHERE proyecto_id = ?
+    `;
+    
+    const [rows] = await pool.execute(query, [proyecto_id]);
+    return rows[0];
+};
+
+// ========== GESTIÓN DE EVALUACIONES ==========
+
+// Crear evaluación de proyecto
+const crearEvaluacionProyecto = async (evaluacionData) => {
+    const { 
+        proyecto_id, hito_id, tipo_evaluacion, titulo, descripcion,
+        nota_aspecto_tecnico, nota_metodologia, nota_documentacion, nota_presentacion, nota_global,
+        fortalezas, debilidades, recomendaciones, comentarios_generales,
+        fecha_evaluacion, fecha_limite, profesor_evaluador_rut
+    } = evaluacionData;
+    
+    const query = `
+        INSERT INTO evaluaciones_proyecto (
+            proyecto_id, hito_id, tipo_evaluacion, titulo, descripcion,
+            nota_aspecto_tecnico, nota_metodologia, nota_documentacion, nota_presentacion, nota_global,
+            fortalezas, debilidades, recomendaciones, comentarios_generales,
+            fecha_evaluacion, fecha_limite, profesor_evaluador_rut
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const [result] = await pool.execute(query, [
+        proyecto_id, hito_id, tipo_evaluacion, titulo, descripcion,
+        nota_aspecto_tecnico, nota_metodologia, nota_documentacion, nota_presentacion, nota_global,
+        fortalezas, debilidades, recomendaciones, comentarios_generales,
+        fecha_evaluacion, fecha_limite, profesor_evaluador_rut
+    ]);
+    
+    return result.insertId;
+};
+
+// Obtener evaluaciones de un proyecto
+const obtenerEvaluacionesProyecto = async (proyecto_id) => {
+    const query = `
+        SELECT e.*, 
+               h.nombre AS hito_nombre,
+               u.nombre AS evaluador_nombre
+        FROM evaluaciones_proyecto e
+        LEFT JOIN hitos_proyecto h ON e.hito_id = h.id
+        LEFT JOIN usuarios u ON e.profesor_evaluador_rut = u.rut
+        WHERE e.proyecto_id = ?
+        ORDER BY e.fecha_evaluacion DESC
+    `;
+    
+    const [rows] = await pool.execute(query, [proyecto_id]);
+    return rows;
+};
+
+// Actualizar progreso del proyecto basado en hitos
+const actualizarProgresoProyecto = async (proyecto_id) => {
+    // Calcular el progreso basado en los hitos completados
+    const queryProgreso = `
+        UPDATE proyectos p
+        SET porcentaje_avance = (
+            SELECT COALESCE(
+                SUM(CASE WHEN h.estado = 'completado' THEN h.peso_en_proyecto ELSE 0 END), 0
+            )
+            FROM hitos_proyecto h
+            WHERE h.proyecto_id = p.id
+        ),
+        ultimo_avance_fecha = (
+            SELECT MAX(h.fecha_completado)
+            FROM hitos_proyecto h
+            WHERE h.proyecto_id = p.id AND h.estado = 'completado'
+        ),
+        proximo_hito_fecha = (
+            SELECT MIN(h.fecha_objetivo)
+            FROM hitos_proyecto h
+            WHERE h.proyecto_id = p.id AND h.estado IN ('pendiente', 'en_progreso')
+        ),
+        ultima_actividad = NOW()
+        WHERE p.id = ?
+    `;
+    
+    const [result] = await pool.execute(queryProgreso, [proyecto_id]);
+    return result.affectedRows > 0;
+};
+
+// Obtener dashboard completo del proyecto
+const obtenerDashboardProyecto = async (proyecto_id) => {
+    // Información básica del proyecto
+    const proyecto = await obtenerProyectoPorIdConPermisos(proyecto_id, null, 'admin');
+    if (!proyecto) return null;
+    
+    // Estadísticas de hitos
+    const estadisticasHitos = await obtenerEstadisticasHitos(proyecto_id);
+    
+    // Hitos recientes
+    const hitosRecientes = await pool.execute(`
+        SELECT * FROM hitos_proyecto 
+        WHERE proyecto_id = ? 
+        ORDER BY updated_at DESC 
+        LIMIT 5
+    `, [proyecto_id]);
+    
+    // Evaluaciones recientes
+    const evaluacionesRecientes = await pool.execute(`
+        SELECT e.*, u.nombre AS evaluador_nombre
+        FROM evaluaciones_proyecto e
+        LEFT JOIN usuarios u ON e.profesor_evaluador_rut = u.rut
+        WHERE e.proyecto_id = ? 
+        ORDER BY e.fecha_evaluacion DESC 
+        LIMIT 3
+    `, [proyecto_id]);
+    
+    // Próximos hitos
+    const proximosHitos = await pool.execute(`
+        SELECT * FROM hitos_proyecto 
+        WHERE proyecto_id = ? AND estado IN ('pendiente', 'en_progreso')
+        AND fecha_objetivo >= CURDATE()
+        ORDER BY fecha_objetivo ASC 
+        LIMIT 5
+    `, [proyecto_id]);
+    
+    return {
+        proyecto,
+        estadisticas_hitos: estadisticasHitos,
+        hitos_recientes: hitosRecientes[0],
+        evaluaciones_recientes: evaluacionesRecientes[0],
+        proximos_hitos: proximosHitos[0]
+    };
+};
+
 export const ProjectModel = {
     createProject,
     getProjects,
@@ -380,5 +623,69 @@ export const ProjectModel = {
     asignarProfesorProyecto,
     puedeVerProyecto,
     obtenerProyectosPorPermisos,
-    obtenerProyectoPorIdConPermisos
+    obtenerProyectoPorIdConPermisos,
+    
+    // Gestión de hitos
+    crearHitoProyecto,
+    obtenerHitosProyecto,
+    actualizarHitoProyecto,
+    completarHito,
+    obtenerEstadisticasHitos,
+    
+    // Gestión de evaluaciones
+    crearEvaluacionProyecto,
+    obtenerEvaluacionesProyecto,
+    
+    // Gestión de progreso
+    actualizarProgresoProyecto,
+    obtenerDashboardProyecto
 };
+
+// ============= FUNCIONES PARA FLUJO AUTOMÁTICO PROPUESTA → PROYECTO =============
+
+/**
+ * Actualizar el estado de un proyecto
+ * @param {number} proyecto_id - ID del proyecto
+ * @param {number} estado_id - ID del nuevo estado
+ * @returns {Promise<boolean>} - True si se actualizó correctamente
+ */
+const actualizarEstadoProyecto = async (proyecto_id, estado_id) => {
+    try {
+        const [result] = await pool.execute(
+            `UPDATE proyectos SET estado_id = ?, updated_at = NOW() WHERE id = ?`,
+            [estado_id, proyecto_id]
+        );
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al actualizar estado del proyecto:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener profesores asignados a un proyecto con sus roles
+ * @param {number} proyecto_id - ID del proyecto
+ * @returns {Promise<Array>} - Lista de profesores con sus roles
+ */
+const obtenerProfesoresProyecto = async (proyecto_id) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                ap.profesor_rut,
+                ap.rol_profesor_id,
+                u.nombre as nombre_profesor,
+                rp.nombre as nombre_rol
+            FROM asignaciones_proyectos ap
+            JOIN usuarios u ON ap.profesor_rut = u.rut
+            JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            WHERE ap.proyecto_id = ?
+        `, [proyecto_id]);
+        return rows;
+    } catch (error) {
+        console.error('Error al obtener profesores del proyecto:', error);
+        throw error;
+    }
+};
+
+// Exportar también las nuevas funciones
+export { actualizarEstadoProyecto, obtenerProfesoresProyecto };
