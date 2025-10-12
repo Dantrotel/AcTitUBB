@@ -53,8 +53,17 @@ export class RevisarPropuestaComponent implements OnInit {
       comentarios_profesor: this.comentarios.trim(),
       estado: this.estado
     }).subscribe({
-      next: () => {
-        alert('Revisión guardada correctamente');
+      next: (response: any) => {
+        if (this.estado === 'aprobada') {
+          // Propuesta aprobada - mostrar mensaje sobre proyecto creado
+          if (response.proyecto_creado && response.proyecto_id) {
+            alert(`✅ Propuesta aprobada exitosamente!\n\n🚀 Se ha creado automáticamente el proyecto con ID: ${response.proyecto_id}\n\n⚠️ El proyecto está en estado "Esperando Asignación de Profesores". Los administradores deben asignar los 3 roles (Profesor Guía, Revisor e Informante) para activarlo.`);
+          } else {
+            alert('✅ Propuesta aprobada exitosamente!\n\n🚀 Se ha iniciado el proceso de creación automática del proyecto.');
+          }
+        } else {
+          alert('Revisión guardada correctamente');
+        }
         this.router.navigate(['/profesor/propuestas/asignadas']);
       },
       error: () => alert('No se pudo guardar la revisión')

@@ -1,0 +1,437 @@
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB - Cronogramas</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <button class="btn-secondary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1><i class="fas fa-calendar-alt"></i> Gestión de Cronogramas</h1>
+      <p>Administra cronogramas y hitos de entrega para tus proyectos asignados</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando información...</p>
+  </div>
+
+  <!-- Error/Success Messages -->
+  <div *ngIf="error" class="alert alert-error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span>{{ error }}</span>
+    <button (click)="limpiarMensajes()" class="btn-close">×</button>
+  </div>
+
+  <div *ngIf="success" class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ success }}</span>
+    <button (click)="limpiarMensajes()" class="btn-close">×</button>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!loading" class="content-grid">
+    <!-- Panel izquierdo - Lista de proyectos -->
+    <div class="projects-panel">
+      <div class="panel-header">
+        <h2><i class="fas fa-project-diagram"></i> Proyectos Asignados</h2>
+      </div>
+
+      <div *ngIf="proyectosAsignados.length === 0" class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <p>No tienes proyectos asignados</p>
+      </div>
+
+      <div class="projects-list">
+        <div 
+          *ngFor="let proyecto of proyectosAsignados" 
+          class="project-card"
+          [class.selected]="proyectoSeleccionado?.id === proyecto.id"
+          (click)="seleccionarProyecto(proyecto)"
+        >
+          <div class="project-info">
+            <h3>{{ proyecto.titulo }}</h3>
+            <p class="estudiante">
+              <i class="fas fa-user-graduate"></i>
+              {{ proyecto.estudiante_nombre }}
+            </p>
+            <span class="estado" [class]="'estado-' + proyecto.estado">
+              {{ proyecto.estado }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel derecho - Cronograma y hitos -->
+    <div class="chronogram-panel">
+      <!-- Sin proyecto seleccionado -->
+      <div *ngIf="!proyectoSeleccionado" class="no-selection">
+        <i class="fas fa-calendar-plus"></i>
+        <h3>Selecciona un proyecto</h3>
+        <p>Elige un proyecto de la lista para gestionar su cronograma</p>
+      </div>
+
+      <!-- Proyecto seleccionado -->
+      <div *ngIf="proyectoSeleccionado" class="project-details">
+        <!-- Header del proyecto -->
+        <div class="project-header">
+          <div class="project-title">
+            <h2>{{ proyectoSeleccionado.titulo }}</h2>
+            <p>{{ proyectoSeleccionado.descripcion }}</p>
+          </div>
+          
+          <div class="project-actions" *ngIf="!cronogramaActivo">
+            <button class="btn-primary" (click)="abrirModalCronograma()">
+              <i class="fas fa-plus"></i>
+              Crear Cronograma
+            </button>
+          </div>
+        </div>
+
+        <!-- Sin cronograma -->
+        <div *ngIf="!cronogramaActivo" class="no-chronogram">
+          <i class="fas fa-calendar-times"></i>
+          <h3>Sin cronograma activo</h3>
+          <p>Este proyecto no tiene un cronograma definido. Crea uno para comenzar a gestionar entregas.</p>
+        </div>
+
+        <!-- Con cronograma -->
+        <div *ngIf="cronogramaActivo" class="chronogram-content">
+          <!-- Info del cronograma -->
+          <div class="chronogram-info">
+            <div class="info-header">
+              <h3>{{ cronogramaActivo.nombre_cronograma }}</h3>
+              <div class="chronogram-status">
+                <span class="badge" [class]="cronogramaActivo.aprobado_por_estudiante ? 'badge-success' : 'badge-warning'">
+                  {{ cronogramaActivo.aprobado_por_estudiante ? 'Aprobado por estudiante' : 'Pendiente de aprobación' }}
+                </span>
+              </div>
+            </div>
+            
+            <p class="description">{{ cronogramaActivo.descripcion }}</p>
+            
+            <div class="chronogram-dates">
+              <div class="date-item">
+                <i class="fas fa-play"></i>
+                <span><strong>Inicio:</strong> {{ formatearFecha(cronogramaActivo.fecha_inicio) }}</span>
+              </div>
+              <div class="date-item">
+                <i class="fas fa-flag-checkered"></i>
+                <span><strong>Fin estimado:</strong> {{ formatearFecha(cronogramaActivo.fecha_fin_estimada) }}</span>
+              </div>
+            </div>
+
+            <button class="btn-primary" (click)="abrirModalHito()">
+              <i class="fas fa-plus"></i>
+              Agregar Hito
+            </button>
+          </div>
+
+          <!-- Lista de hitos -->
+          <div class="milestones-section">
+            <h4><i class="fas fa-flag"></i> Hitos de Entrega ({{ hitosCronograma.length }})</h4>
+
+            <div *ngIf="hitosCronograma.length === 0" class="empty-milestones">
+              <i class="fas fa-clipboard-list"></i>
+              <p>No hay hitos definidos aún</p>
+            </div>
+
+            <div class="milestones-grid">
+              <div 
+                *ngFor="let hito of hitosCronograma" 
+                class="milestone-card"
+                [class]="'milestone-' + hito.estado"
+              >
+                <div class="milestone-header">
+                  <div class="milestone-icon">
+                    <i [class]="obtenerIconoTipoHito(hito.tipo_hito)"></i>
+                  </div>
+                  <div class="milestone-info">
+                    <h5>{{ hito.nombre_hito }}</h5>
+                    <p class="tipo">{{ hito.tipo_hito }}</p>
+                  </div>
+                  <div class="milestone-status">
+                    <span class="badge" [class]="obtenerClaseEstado(hito.estado)">
+                      {{ hito.estado }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="milestone-content">
+                  <p class="description">{{ hito.descripcion }}</p>
+                  
+                  <div class="milestone-meta">
+                    <div class="meta-item">
+                      <i class="fas fa-calendar"></i>
+                      <span>Fecha límite: {{ formatearFecha(hito.fecha_limite) }}</span>
+                    </div>
+                    
+                    <div *ngIf="hito.fecha_entrega" class="meta-item">
+                      <i class="fas fa-upload"></i>
+                      <span>Entregado: {{ formatearFecha(hito.fecha_entrega) }}</span>
+                    </div>
+                  </div>
+
+                  <div *ngIf="hito.archivo_entrega" class="milestone-attachment">
+                    <button class="btn-link" (click)="descargarArchivo(hito.archivo_entrega!)">
+                      <i class="fas fa-download"></i>
+                      Descargar entrega
+                    </button>
+                  </div>
+
+                  <div class="milestone-actions">
+                    <button 
+                      *ngIf="hito.estado === 'entregado'"
+                      class="btn-primary"
+                      (click)="abrirModalRevision(hito)"
+                    >
+                      <i class="fas fa-edit"></i>
+                      Revisar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Crear Cronograma -->
+<div *ngIf="mostrarModalCronograma" class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-calendar-plus"></i> Crear Cronograma</h3>
+      <button class="btn-close" (click)="cerrarModal()">×</button>
+    </div>
+
+    <form (ngSubmit)="crearCronograma()" class="modal-form">
+      <div class="form-group">
+        <label for="nombreCronograma">Nombre del cronograma *</label>
+        <input 
+          type="text" 
+          id="nombreCronograma"
+          [(ngModel)]="nuevoCronograma.nombre_cronograma"
+          name="nombreCronograma"
+          required
+          placeholder="Ej: Cronograma Semestre 2024-2"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="descripcionCronograma">Descripción</label>
+        <textarea 
+          id="descripcionCronograma"
+          [(ngModel)]="nuevoCronograma.descripcion"
+          name="descripcionCronograma"
+          rows="3"
+          placeholder="Describe el cronograma y sus objetivos"
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaInicio">Fecha de inicio *</label>
+          <input 
+            type="date" 
+            id="fechaInicio"
+            [(ngModel)]="nuevoCronograma.fecha_inicio"
+            name="fechaInicio"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="fechaFin">Fecha fin estimada *</label>
+          <input 
+            type="date" 
+            id="fechaFin"
+            [(ngModel)]="nuevoCronograma.fecha_fin_estimada"
+            name="fechaFin"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="diasAlerta">Días de alerta previa</label>
+        <input 
+          type="number" 
+          id="diasAlerta"
+          [(ngModel)]="nuevoCronograma.dias_alerta_previa"
+          name="diasAlerta"
+          min="1"
+          max="30"
+          value="3"
+        >
+        <small>Días antes de vencimiento para enviar alertas</small>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarModal()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          <i class="fas fa-save"></i>
+          {{ loading ? 'Creando...' : 'Crear Cronograma' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Crear Hito -->
+<div *ngIf="mostrarModalHito" class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-flag"></i> Crear Hito</h3>
+      <button class="btn-close" (click)="cerrarModal()">×</button>
+    </div>
+
+    <form (ngSubmit)="crearHito()" class="modal-form">
+      <div class="form-group">
+        <label for="nombreHito">Nombre del hito *</label>
+        <input 
+          type="text" 
+          id="nombreHito"
+          [(ngModel)]="nuevoHito.nombre_hito"
+          name="nombreHito"
+          required
+          placeholder="Ej: Primera entrega - Análisis"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="descripcionHito">Descripción</label>
+        <textarea 
+          id="descripcionHito"
+          [(ngModel)]="nuevoHito.descripcion"
+          name="descripcionHito"
+          rows="3"
+          placeholder="Describe qué debe entregar el estudiante"
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tipoHito">Tipo de hito *</label>
+          <select 
+            id="tipoHito"
+            [(ngModel)]="nuevoHito.tipo_hito"
+            name="tipoHito"
+            required
+          >
+            <option value="entrega">Entrega</option>
+            <option value="revision">Revisión</option>
+            <option value="presentacion">Presentación</option>
+            <option value="evaluacion">Evaluación</option>
+            <option value="reunion">Reunión</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="fechaLimite">Fecha límite *</label>
+          <input 
+            type="date" 
+            id="fechaLimite"
+            [(ngModel)]="nuevoHito.fecha_limite"
+            name="fechaLimite"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarModal()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          <i class="fas fa-save"></i>
+          {{ loading ? 'Creando...' : 'Crear Hito' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Revisar Hito -->
+<div *ngIf="mostrarModalRevision" class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-edit"></i> Revisar Hito</h3>
+      <button class="btn-close" (click)="cerrarModal()">×</button>
+    </div>
+
+    <form (ngSubmit)="revisarHito()" class="modal-form">
+      <div class="form-group">
+        <label for="comentariosProfesor">Comentarios de revisión *</label>
+        <textarea 
+          id="comentariosProfesor"
+          [(ngModel)]="revisionHito.comentarios_profesor"
+          name="comentariosProfesor"
+          rows="4"
+          required
+          placeholder="Escribe tus comentarios sobre la entrega..."
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="calificacion">Calificación</label>
+          <input 
+            type="number" 
+            id="calificacion"
+            [(ngModel)]="revisionHito.calificacion"
+            name="calificacion"
+            min="1"
+            max="7"
+            step="0.1"
+            placeholder="1.0 - 7.0"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="estadoRevision">Estado *</label>
+          <select 
+            id="estadoRevision"
+            [(ngModel)]="revisionHito.estado"
+            name="estadoRevision"
+            required
+          >
+            <option value="aprobado">Aprobado</option>
+            <option value="rechazado">Rechazado</option>
+            <option value="correcciones">Requiere correcciones</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarModal()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          <i class="fas fa-save"></i>
+          {{ loading ? 'Guardando...' : 'Guardar Revisión' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

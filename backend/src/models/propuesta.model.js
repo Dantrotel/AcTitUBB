@@ -1,72 +1,85 @@
 import { pool } from "../db/connectionDB.js";
 
-export const crearPropuesta = async ({ titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original }) => {
+export const crearPropuesta = async ({ 
+  titulo, 
+  descripcion, 
+  estudiante_rut, 
+  fecha_envio, 
+  archivo, 
+  nombre_archivo_original,
+  modalidad,
+  numero_estudiantes,
+  complejidad_estimada,
+  justificacion_complejidad,
+  duracion_estimada_semestres,
+  area_tematica,
+  objetivos_generales,
+  objetivos_especificos,
+  metodologia_propuesta,
+  recursos_necesarios,
+  bibliografia
+}) => {
   try {
-    // Verificar si la columna nombre_archivo_original existe
-    const [columns] = await pool.execute(
-      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-       WHERE TABLE_SCHEMA = 'actitubb' AND TABLE_NAME = 'propuestas' 
-       AND COLUMN_NAME = 'nombre_archivo_original'`
-    );
-    
-    if (columns.length > 0) {
-      // La columna existe, incluirla en la query
-      const [result] = await pool.execute(
-        `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original]
-      );
-      return result.insertId;
-    } else {
-      // La columna no existe, usar query sin ella
-      console.warn('⚠️  Columna nombre_archivo_original no existe aún. Ejecutar migración.');
-      const [result] = await pool.execute(
-        `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo)
-         VALUES (?, ?, ?, ?, ?)`,
-        [titulo, descripcion, estudiante_rut, fecha_envio, archivo]
-      );
-      return result.insertId;
-    }
-  } catch (error) {
-    console.error('Error en crearPropuesta:', error.message);
-    // Fallback: intentar sin la columna nombre_archivo_original
     const [result] = await pool.execute(
-      `INSERT INTO propuestas (titulo, descripcion, estudiante_rut, fecha_envio, archivo)
-       VALUES (?, ?, ?, ?, ?)`,
-      [titulo, descripcion, estudiante_rut, fecha_envio, archivo]
+      `INSERT INTO propuestas (
+        titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original,
+        modalidad, numero_estudiantes, complejidad_estimada, justificacion_complejidad,
+        duracion_estimada_semestres, area_tematica, objetivos_generales, objetivos_especificos,
+        metodologia_propuesta, recursos_necesarios, bibliografia
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original,
+        modalidad, numero_estudiantes, complejidad_estimada, justificacion_complejidad,
+        duracion_estimada_semestres, area_tematica, objetivos_generales, objetivos_especificos,
+        metodologia_propuesta, recursos_necesarios, bibliografia
+      ]
     );
     return result.insertId;
+  } catch (error) {
+    console.error('Error en crearPropuesta:', error.message);
+    throw error;
   }
 };
 
-export const actualizarPropuesta = async (id, { titulo, descripcion, fecha_envio, archivo, nombre_archivo_original }) => {
-  let query = `UPDATE propuestas SET titulo = ?, descripcion = ?, fecha_envio = ?`;
-  let params = [titulo, descripcion, fecha_envio];
+export const actualizarPropuesta = async (id, { 
+  titulo, 
+  descripcion, 
+  fecha_envio, 
+  archivo, 
+  nombre_archivo_original,
+  modalidad,
+  numero_estudiantes,
+  complejidad_estimada,
+  justificacion_complejidad,
+  duracion_estimada_semestres,
+  area_tematica,
+  objetivos_generales,
+  objetivos_especificos,
+  metodologia_propuesta,
+  recursos_necesarios,
+  bibliografia
+}) => {
+  let query = `UPDATE propuestas SET 
+    titulo = ?, descripcion = ?, fecha_envio = ?,
+    modalidad = ?, numero_estudiantes = ?, complejidad_estimada = ?, justificacion_complejidad = ?,
+    duracion_estimada_semestres = ?, area_tematica = ?, objetivos_generales = ?, objetivos_especificos = ?,
+    metodologia_propuesta = ?, recursos_necesarios = ?, bibliografia = ?`;
+    
+  let params = [
+    titulo, descripcion, fecha_envio,
+    modalidad, numero_estudiantes, complejidad_estimada, justificacion_complejidad,
+    duracion_estimada_semestres, area_tematica, objetivos_generales, objetivos_especificos,
+    metodologia_propuesta, recursos_necesarios, bibliografia
+  ];
   
   // Solo actualizar el archivo si se proporciona uno nuevo
   if (archivo !== undefined) {
     query += `, archivo = ?`;
     params.push(archivo);
     
-    // También actualizar el nombre original si se proporciona y la columna existe
     if (nombre_archivo_original !== undefined) {
-      try {
-        // Verificar si la columna existe
-        const [columns] = await pool.execute(
-          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-           WHERE TABLE_SCHEMA = 'actitubb' AND TABLE_NAME = 'propuestas' 
-           AND COLUMN_NAME = 'nombre_archivo_original'`
-        );
-        
-        if (columns.length > 0) {
-          query += `, nombre_archivo_original = ?`;
-          params.push(nombre_archivo_original);
-        } else {
-          console.warn('⚠️  Columna nombre_archivo_original no existe aún. Ejecutar migración.');
-        }
-      } catch (error) {
-        console.warn('⚠️  Error verificando columna nombre_archivo_original:', error.message);
-      }
+      query += `, nombre_archivo_original = ?`;
+      params.push(nombre_archivo_original);
     }
   }
   
@@ -242,4 +255,62 @@ export const desasignarProfesor = async (propuesta_id, profesor_rut) => {
     [propuesta_id, profesor_rut]
   );
   return result.affectedRows > 0;
+};
+
+/**
+ * Obtener usuarios por rol
+ * @param {number} rol_id - ID del rol (1=estudiante, 2=profesor, 3=admin)
+ * @returns {Promise<Array>} - Lista de usuarios con ese rol
+ */
+export const obtenerUsuariosPorRol = async (rol_id) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT rut, nombre, email FROM usuarios WHERE rol_id = ?`,
+      [rol_id]
+    );
+    return rows;
+  } catch (error) {
+    console.error('Error al obtener usuarios por rol:', error);
+    throw error;
+  }
+};
+
+/**
+ * Crear notificación para un usuario
+ * @param {Object} notificacionData - Datos de la notificación
+ * @returns {Promise<number>} - ID de la notificación creada
+ */
+export const crearNotificacion = async (notificacionData) => {
+  try {
+    const { usuario_rut, tipo, titulo, mensaje, proyecto_id, leida = false } = notificacionData;
+    
+    // Determinar el rol del destinatario basado en su rol_id
+    const [usuario] = await pool.execute(
+      `SELECT rol_id FROM usuarios WHERE rut = ?`,
+      [usuario_rut]
+    );
+    
+    if (!usuario || usuario.length === 0) {
+      throw new Error(`Usuario ${usuario_rut} no encontrado`);
+    }
+    
+    const rolMapping = {
+      1: 'estudiante',
+      2: 'profesor_guia', // Por defecto los profesores se marcan como guía
+      3: 'admin'
+    };
+    
+    const rol_destinatario = rolMapping[usuario[0].rol_id] || 'admin';
+    
+    const [result] = await pool.execute(
+      `INSERT INTO notificaciones_proyecto (proyecto_id, tipo_notificacion, destinatario_rut, rol_destinatario, titulo, mensaje, leida, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [proyecto_id, tipo, usuario_rut, rol_destinatario, titulo, mensaje, leida]
+    );
+    
+    return result.insertId;
+  } catch (error) {
+    console.error('Error al crear notificación:', error);
+    throw error;
+  }
 };

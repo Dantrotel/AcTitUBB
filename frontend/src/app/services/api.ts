@@ -321,6 +321,208 @@ export class ApiService {
     });
   }
 
+  // ===== MÉTODOS DE PROYECTOS =====
+
+  // Obtener proyectos asignados al profesor autenticado
+  getProyectosAsignados() {
+    return this.http.get(`${this.baseUrl}/projects/asignados`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener dashboard de proyecto específico
+  getDashboardProyecto(id: string) {
+    return this.http.get(`${this.baseUrl}/projects/${id}/dashboard`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Gestión de hitos
+  getHitosProyecto(id: string) {
+    return this.http.get(`${this.baseUrl}/projects/${id}/hitos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearHitoProyecto(id: string, data: any) {
+    return this.http.post(`${this.baseUrl}/projects/${id}/hitos`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  actualizarHitoProyecto(id: string, hitoId: string, data: any) {
+    return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  completarHito(id: string, hitoId: string) {
+    return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}/completar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Gestión de evaluaciones
+  getEvaluacionesProyecto(id: string) {
+    return this.http.get(`${this.baseUrl}/projects/${id}/evaluaciones`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearEvaluacionProyecto(id: string, data: any) {
+    return this.http.post(`${this.baseUrl}/projects/${id}/evaluaciones`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== MÉTODOS DE ROLES DE PROFESORES =====
+
+  // Obtener roles de profesores disponibles
+  getRolesProfesores() {
+    return this.http.get(`${this.baseUrl}/roles/profesores`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Asignar profesor a proyecto con rol específico
+  asignarProfesorAProyecto(data: any) {
+    return this.http.post(`${this.baseUrl}/roles/asignaciones`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Desasignar profesor de proyecto
+  desasignarProfesorDeProyecto(asignacionId: string, observaciones?: string) {
+    return this.http.delete(`${this.baseUrl}/roles/asignaciones/${asignacionId}`, {
+      headers: this.getHeaders(),
+      body: { observaciones }
+    });
+  }
+
+  // Obtener asignaciones de un proyecto
+  getAsignacionesProyecto(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/roles/asignaciones/proyecto/${proyectoId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener estadísticas de asignaciones
+  getEstadisticasAsignaciones() {
+    return this.http.get(`${this.baseUrl}/roles/asignaciones/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener historial de asignaciones
+  getHistorialAsignaciones(proyectoId?: string, profesorRut?: string, limite?: number) {
+    let params = new URLSearchParams();
+    if (proyectoId) params.append('proyecto_id', proyectoId);
+    if (profesorRut) params.append('profesor_rut', profesorRut);
+    if (limite) params.append('limite', limite.toString());
+
+    const queryString = params.toString();
+    const url = queryString ? 
+      `${this.baseUrl}/roles/asignaciones/historial?${queryString}` : 
+      `${this.baseUrl}/roles/asignaciones/historial`;
+
+    return this.http.get(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== MÉTODOS PARA SISTEMA DE CRONOGRAMAS Y ENTREGAS =====
+
+  // Crear cronograma para un proyecto
+  crearCronograma(projectId: string, cronogramaData: any) {
+    return this.http.post(`${this.baseUrl}/projects/${projectId}/cronograma`, cronogramaData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener cronograma activo de un proyecto
+  obtenerCronograma(projectId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${projectId}/cronograma`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Aprobar cronograma (desde perspectiva del estudiante)
+  aprobarCronograma(cronogramaId: string) {
+    return this.http.patch(`${this.baseUrl}/cronogramas/${cronogramaId}/aprobar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Crear hito en cronograma
+  crearHitoCronograma(cronogramaId: string, hitoData: any) {
+    return this.http.post(`${this.baseUrl}/cronogramas/${cronogramaId}/hitos`, hitoData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener hitos de un cronograma
+  obtenerHitosCronograma(cronogramaId: string) {
+    return this.http.get(`${this.baseUrl}/cronogramas/${cronogramaId}/hitos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Entregar hito (subir archivo)
+  entregarHito(hitoId: string, formData: FormData) {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      // No incluir Content-Type para FormData
+    });
+
+    return this.http.post(`${this.baseUrl}/hitos/${hitoId}/entregar`, formData, {
+      headers: headers
+    });
+  }
+
+  // Revisar hito entregado
+  revisarHito(hitoId: string, revisionData: any) {
+    return this.http.patch(`${this.baseUrl}/hitos/${hitoId}/revisar`, revisionData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener notificaciones del usuario
+  obtenerNotificaciones(soloNoLeidas: boolean = false) {
+    const params = soloNoLeidas ? '?solo_no_leidas=true' : '';
+    return this.http.get(`${this.baseUrl}/notificaciones${params}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Marcar notificación como leída
+  marcarNotificacionLeida(notificacionId: string) {
+    return this.http.patch(`${this.baseUrl}/notificaciones/${notificacionId}/leer`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Configurar alertas de proyecto
+  configurarAlertas(projectId: string, configData: any) {
+    return this.http.post(`${this.baseUrl}/projects/${projectId}/alertas`, configData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener estadísticas de cumplimiento
+  obtenerEstadisticasCumplimiento(projectId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${projectId}/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Descargar archivo de entrega
+  descargarArchivoEntrega(nombreArchivo: string) {
+    return this.http.get(`${this.baseUrl}/uploads/propuestas/${nombreArchivo}`, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
+    });
+  }
+
   // ===== MÉTODOS DE CALENDARIO MATCHING =====
   
   // Disponibilidades
