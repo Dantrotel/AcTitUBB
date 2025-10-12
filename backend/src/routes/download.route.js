@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import express from 'express';
-export {verifySession} from '../middlewares/verifySession.js'
+import { verifySession } from '../middlewares/verifySession.js';
 const router = express.Router();
 
 router.get('/descargar/:filename', (req, res) => {

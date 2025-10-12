@@ -10,6 +10,7 @@ import adminRouter from './routes/admin.route.js';
 import calendarioRouter from './routes/calendario.route.js';
 import fechasImportantesRouter from './routes/fechas-importantes.route.js';
 import asignacionesProfesoresRouter from './routes/asignaciones-profesores.route.js';
+import calendarioMatchingRouter from './routes/calendario-matching.route.js';
 import cors from 'cors';
 
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/calendario', calendarioRouter);
 app.use('/api/v1/fechas-importantes', fechasImportantesRouter);
 app.use('/api/v1/asignaciones-profesores', asignacionesProfesoresRouter);
+app.use('/api/v1/calendario-matching', calendarioMatchingRouter);
 
 
 

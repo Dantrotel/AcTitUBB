@@ -26,6 +26,7 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
 export class EstudianteHomeComponent implements OnInit, OnDestroy {
   estudiante: any = {};
   showUserMenu = false;
+  showCalendarioMenu = false;
   propuestas: any[] = [];
   ultimaPropuesta: any = null;
   progresoProyecto = 0;
@@ -361,10 +362,19 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
+    // Cerrar otros menús
+    this.showCalendarioMenu = false;
+  }
+
+  toggleCalendarioMenu() {
+    this.showCalendarioMenu = !this.showCalendarioMenu;
+    // Cerrar otros menús
+    this.showUserMenu = false;
   }
 
   navegar(ruta: string) {
     this.showUserMenu = false; // Cerrar menú al navegar
+    this.showCalendarioMenu = false; // Cerrar menú de calendario
     this.router.navigate([ruta]);
   }
 

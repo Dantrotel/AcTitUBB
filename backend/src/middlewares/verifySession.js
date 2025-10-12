@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { isBlacklisted } from './blacklist.js'; // ajusta la ruta según tu proyecto
 
-export const verifySession = async (req, res, next) => {
+const verifySession = async (req, res, next) => {
   let token = req.headers.authorization;
 
   if (!token) {
@@ -31,7 +31,9 @@ export const verifySession = async (req, res, next) => {
     // Crear objeto user para compatibilidad con controladores
     req.user = {
       rut: rut,
-      rol: roleMap[rol_id] || 'unknown'
+      role_id: rol_id,
+      rol: roleMap[rol_id] || 'unknown',
+      nombre: 'Usuario' // Placeholder, podrías obtener el nombre real de la BD
     };
     
     next();
@@ -65,3 +67,6 @@ export const checkRole = (...rolesPermitidos) => {
     return res.status(403).json({ message: mensaje });
   };
 };
+
+export default verifySession;
+export { verifySession };

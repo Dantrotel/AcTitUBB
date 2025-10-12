@@ -1,0 +1,825 @@
+{
+	"info": {
+		"_postman_id": "calendario-matching-examples",
+		"name": "Calendario Matching - Sistema de Reuniones",
+		"description": "Ejemplos completos del sistema de matching de calendario para reuniones profesor-estudiante",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "🔐 Autenticación",
+			"item": [
+				{
+					"name": "Login Profesor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.globals.set('auth_token', response.token);",
+									"    pm.globals.set('profesor_rut', response.user.rut);",
+									"    pm.collectionVariables.set('auth_token', response.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"profesor@test.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["users", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login Estudiante",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.globals.set('estudiante_token', response.token);",
+									"    pm.globals.set('estudiante_rut', response.user.rut);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"estudiante@test.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/login",
+							"host": ["{{base_url}}"],
+							"path": ["users", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📅 Gestión de Disponibilidades",
+			"item": [
+				{
+					"name": "Ver Mis Disponibilidades",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/disponibilidades",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				},
+				{
+					"name": "Crear Disponibilidad - Lunes Mañana",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dia_semana\": \"lunes\",\n    \"hora_inicio\": \"09:00\",\n    \"hora_fin\": \"12:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/disponibilidades",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				},
+				{
+					"name": "Crear Disponibilidad - Martes Tarde",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dia_semana\": \"martes\",\n    \"hora_inicio\": \"14:00\",\n    \"hora_fin\": \"17:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/disponibilidades",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				},
+				{
+					"name": "Crear Disponibilidad - Miércoles",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dia_semana\": \"miercoles\",\n    \"hora_inicio\": \"10:00\",\n    \"hora_fin\": \"13:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/disponibilidades",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Disponibilidad",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/disponibilidades/1",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "disponibilidades", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔍 Búsqueda y Matching",
+			"item": [
+				{
+					"name": "Buscar Horarios para Reunión de Seguimiento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data.solicitud_creada) {",
+									"        pm.globals.set('solicitud_id', response.data.solicitud_id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"proyecto_id\": 1,\n    \"tipo_reunion\": \"seguimiento\",\n    \"descripcion\": \"Revisión de avances del proyecto de título\",\n    \"duracion_minutos\": 60\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/buscar-reunion",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "buscar-reunion"]
+						}
+					}
+				},
+				{
+					"name": "Buscar Horarios para Defensa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"proyecto_id\": 1,\n    \"tipo_reunion\": \"defensa\",\n    \"descripcion\": \"Defensa final del proyecto de título\",\n    \"duracion_minutos\": 90\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/buscar-reunion",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "buscar-reunion"]
+						}
+					}
+				},
+				{
+					"name": "Verificar Relación Profesor-Estudiante",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/verificar-relacion/1",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "verificar-relacion", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📝 Gestión de Solicitudes",
+			"item": [
+				{
+					"name": "Ver Todas las Solicitudes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/solicitudes",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "solicitudes"]
+						}
+					}
+				},
+				{
+					"name": "Ver Solicitudes Pendientes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/solicitudes?estado=pendiente",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "solicitudes"],
+							"query": [
+								{
+									"key": "estado",
+									"value": "pendiente"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Aceptar Solicitud de Reunión",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"respuesta\": \"aceptar\",\n    \"comentarios\": \"Perfecto, nos vemos el martes\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/solicitudes/{{solicitud_id}}/responder",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "solicitudes", "{{solicitud_id}}", "responder"]
+						}
+					}
+				},
+				{
+					"name": "Rechazar Solicitud de Reunión",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"respuesta\": \"rechazar\",\n    \"comentarios\": \"No puedo en ese horario, propongamos otro\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/solicitudes/1/responder",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "solicitudes", "1", "responder"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🤝 Gestión de Reuniones",
+			"item": [
+				{
+					"name": "Ver Todas las Reuniones",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/reuniones",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "reuniones"]
+						}
+					}
+				},
+				{
+					"name": "Ver Reuniones Programadas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/reuniones?estado=programada",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "reuniones"],
+							"query": [
+								{
+									"key": "estado",
+									"value": "programada"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reprogramar Reunión",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nueva_fecha\": \"2025-01-25\",\n    \"nueva_hora\": \"10:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/reuniones/1/reprogramar",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "reuniones", "1", "reprogramar"]
+						}
+					}
+				},
+				{
+					"name": "Cancelar Reunión",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"motivo\": \"Conflicto de horario con otra reunión importante\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/reuniones/1/cancelar",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "reuniones", "1", "cancelar"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Dashboard y Estadísticas",
+			"item": [
+				{
+					"name": "Dashboard Principal",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "dashboard"]
+						}
+					}
+				},
+				{
+					"name": "Estadísticas Generales (Solo Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/calendario-matching/estadisticas",
+							"host": ["{{base_url}}"],
+							"path": ["calendario-matching", "estadisticas"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🧪 Ejemplos de Flujo Completo",
+			"item": [
+				{
+					"name": "FLUJO 1: Configurar Disponibilidad Profesor",
+					"item": [
+						{
+							"name": "1.1 Login como Profesor",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Login exitoso', function () {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.success).to.be.true;",
+											"    pm.collectionVariables.set('profesor_token', response.token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"profesor@test.com\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/users/login",
+									"host": ["{{base_url}}"],
+									"path": ["users", "login"]
+								}
+							}
+						},
+						{
+							"name": "1.2 Crear Disponibilidades Semanales",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Disponibilidad creada', function () {",
+											"    pm.response.to.have.status(201);",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.success).to.be.true;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{profesor_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"dia_semana\": \"lunes\",\n    \"hora_inicio\": \"09:00\",\n    \"hora_fin\": \"12:00\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/calendario-matching/disponibilidades",
+									"host": ["{{base_url}}"],
+									"path": ["calendario-matching", "disponibilidades"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "FLUJO 2: Estudiante Busca Reunión",
+					"item": [
+						{
+							"name": "2.1 Login como Estudiante",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Login exitoso', function () {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.success).to.be.true;",
+											"    pm.collectionVariables.set('estudiante_token', response.token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"estudiante@test.com\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/users/login",
+									"host": ["{{base_url}}"],
+									"path": ["users", "login"]
+								}
+							}
+						},
+						{
+							"name": "2.2 Buscar Horarios Disponibles",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Búsqueda exitosa', function () {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.success).to.be.true;",
+											"    if (response.data.solicitud_creada) {",
+											"        pm.collectionVariables.set('nueva_solicitud_id', response.data.solicitud_id);",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{estudiante_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"proyecto_id\": 1,\n    \"tipo_reunion\": \"seguimiento\",\n    \"descripcion\": \"Necesito revisar mis avances y recibir feedback\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/calendario-matching/buscar-reunion",
+									"host": ["{{base_url}}"],
+									"path": ["calendario-matching", "buscar-reunion"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "FLUJO 3: Confirmar Reunión",
+					"item": [
+						{
+							"name": "3.1 Profesor Ve Solicitudes",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{profesor_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/calendario-matching/solicitudes?estado=pendiente",
+									"host": ["{{base_url}}"],
+									"path": ["calendario-matching", "solicitudes"],
+									"query": [
+										{
+											"key": "estado",
+											"value": "pendiente"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "3.2 Profesor Acepta Solicitud",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Solicitud aceptada', function () {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.success).to.be.true;",
+											"    if (response.data.reunion_confirmada) {",
+											"        pm.collectionVariables.set('reunion_confirmada_id', response.data.reunion_id);",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{profesor_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"respuesta\": \"aceptar\",\n    \"comentarios\": \"Perfecto, nos vemos en mi oficina\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/calendario-matching/solicitudes/{{nueva_solicitud_id}}/responder",
+									"host": ["{{base_url}}"],
+									"path": ["calendario-matching", "solicitudes", "{{nueva_solicitud_id}}", "responder"]
+								}
+							}
+						},
+						{
+							"name": "3.3 Verificar Reunión Confirmada",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Reunión encontrada', function () {",
+											"    pm.response.to.have.status(200);",
+											"    const response = pm.response.json();",
+											"    pm.expect(response.success).to.be.true;",
+											"    pm.expect(response.data.length).to.be.above(0);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{estudiante_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/calendario-matching/reuniones?estado=programada",
+									"host": ["{{base_url}}"],
+									"path": ["calendario-matching", "reuniones"],
+									"query": [
+										{
+											"key": "estado",
+											"value": "programada"
+										}
+									]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Configuración global",
+					"pm.collectionVariables.set('base_url', 'http://localhost:3000/api/v1');"
+				]
+			}
+		}
+	]
+}

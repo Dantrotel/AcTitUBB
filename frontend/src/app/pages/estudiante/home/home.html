@@ -15,6 +15,32 @@
       <i class="fas fa-list-alt"></i>
       <span>Mis Propuestas</span>
     </div>
+
+    <!-- Menú de Calendario Matching -->
+    <div class="action-item calendario-menu" (click)="toggleCalendarioMenu()">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Calendario</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showCalendarioMenu">
+        <div class="dropdown-item" (click)="navegar('estudiante/calendario/dashboard')">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </div>
+        <div class="dropdown-item" (click)="navegar('estudiante/calendario/disponibilidades')">
+          <i class="fas fa-clock"></i>
+          <span>Mis Horarios</span>
+        </div>
+        <div class="dropdown-item" (click)="navegar('estudiante/calendario/solicitudes')">
+          <i class="fas fa-handshake"></i>
+          <span>Solicitar Reunión</span>
+        </div>
+        <div class="dropdown-item" (click)="navegar('estudiante/calendario/gestion')">
+          <i class="fas fa-calendar-check"></i>
+          <span>Mis Reuniones</span>
+        </div>
+      </div>
+    </div>
     
     <div class="action-item user-menu" (click)="toggleUserMenu()" >
       <i class="fas fa-user-circle"></i>

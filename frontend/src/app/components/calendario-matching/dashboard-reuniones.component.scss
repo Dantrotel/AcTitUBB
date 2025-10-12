@@ -1,0 +1,574 @@
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.header-content h2 {
+  color: #2c3e50;
+  margin: 0 0 5px 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.header-content p {
+  color: #7f8c8d;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.header-content i {
+  margin-right: 10px;
+  color: #3498db;
+}
+
+/* Messages */
+.messages {
+  margin-bottom: 20px;
+}
+
+.alert {
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.alert i {
+  margin-right: 10px;
+  font-size: 1.1rem;
+}
+
+.alert-error {
+  background-color: #fee;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
+
+.alert-success {
+  background-color: #f0fff4;
+  color: #38a169;
+  border: 1px solid #c6f6d5;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  color: #718096;
+  font-size: 1.2rem;
+}
+
+.loading i {
+  margin-right: 15px;
+  font-size: 1.5rem;
+}
+
+/* Dashboard Content */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Section Headers */
+.dashboard-content h3 {
+  color: #2d3748;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-content h3 i {
+  margin-right: 12px;
+  color: #4299e1;
+}
+
+/* Estadísticas Section */
+.estadisticas-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  margin-right: 15px;
+  background: #4299e1;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.stat-icon.success {
+  background: #48bb78;
+}
+
+.stat-icon.warning {
+  background: #ed8936;
+}
+
+.stat-icon.info {
+  background: #805ad5;
+}
+
+.stat-content h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.stat-content p {
+  margin: 0;
+  color: #718096;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Progreso Card */
+.progreso-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 25px;
+  color: white;
+}
+
+.progreso-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.progreso-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.progreso-porcentaje {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.progreso-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.progreso-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #48bb78, #38a169);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progreso-descripcion {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Sections */
+.reuniones-hoy-section,
+.reuniones-proximas-section,
+.solicitudes-section,
+.confirmacion-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+/* Grids */
+.reuniones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.reuniones-grid.urgente {
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.solicitudes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* Cards */
+.reunion-card,
+.solicitud-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.reunion-card:hover,
+.solicitud-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.reunion-card.hoy {
+  border-left: 5px solid #f39c12;
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+}
+
+.reunion-card.pendiente {
+  border-left: 5px solid #e74c3c;
+  background: linear-gradient(135deg, #ffeaea 0%, #ffffff 100%);
+}
+
+/* Card Headers */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reunion-info h4,
+.solicitud-info h4 {
+  margin: 0 0 5px 0;
+  color: #2d3748;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.tiempo-restante,
+.fecha,
+.fecha-solicitud {
+  font-size: 0.85rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.tiempo-restante {
+  background: #e6f7ff;
+  color: #0050b3;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* Status Badges */
+.estado-badge,
+.urgencia-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estado-badge.status-programada {
+  background: #feebc8;
+  color: #c05621;
+}
+
+.estado-badge.status-confirmada {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.estado-badge.status-completada {
+  background: #bee3f8;
+  color: #2a69ac;
+}
+
+.estado-badge.status-cancelada {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.estado-badge.status-pendiente {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.urgencia-badge.urgencia-alta {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.urgencia-badge.urgencia-media {
+  background: #feebc8;
+  color: #c05621;
+}
+
+.urgencia-badge.urgencia-baja {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+/* Card Content */
+.card-content {
+  margin-bottom: 15px;
+}
+
+.card-content > div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #4a5568;
+}
+
+.card-content i {
+  margin-right: 10px;
+  width: 16px;
+  color: #718096;
+}
+
+.horario {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.motivo {
+  font-size: 0.95rem;
+}
+
+/* Confirmation Status */
+.confirmation-status {
+  display: flex;
+  gap: 10px;
+}
+
+.confirmacion {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.confirmacion.confirmada {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.confirmacion i {
+  margin-right: 4px;
+  font-size: 0.7rem;
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.btn i {
+  margin-right: 6px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.btn-success {
+  background: #48bb78;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #38a169;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: #f56565;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #e53e3e;
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.empty-dashboard {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  color: #718096;
+}
+
+.empty-dashboard i {
+  font-size: 5rem;
+  margin-bottom: 25px;
+  color: #cbd5e0;
+}
+
+.empty-dashboard h3 {
+  margin-bottom: 15px;
+  color: #4a5568;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.empty-dashboard p {
+  font-size: 1.1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 15px;
+  }
+
+  .stat-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .reuniones-grid,
+  .reuniones-grid.urgente,
+  .solicitudes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .card-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .progreso-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}

@@ -1,0 +1,286 @@
+<div class="gestion-reuniones-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <h2><i class="fas fa-calendar-check"></i> Gestión de Reuniones</h2>
+      <p>Administra todas tus reuniones programadas</p>
+    </div>
+    <button class="btn btn-primary" (click)="cargarReuniones()" [disabled]="isLoading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="errorMessage || successMessage">
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-triangle"></i>
+      {{ errorMessage }}
+    </div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-section">
+    <h3><i class="fas fa-filter"></i> Filtros</h3>
+    <div class="filtros-grid">
+      <div class="filtro-group">
+        <label for="filtro-estado">Estado</label>
+        <select 
+          id="filtro-estado" 
+          [(ngModel)]="filtroEstado" 
+          (change)="aplicarFiltros()"
+          class="form-control">
+          <option *ngFor="let estado of estadosDisponibles" [value]="estado.value">
+            {{ estado.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label for="filtro-fecha">Fecha</label>
+        <input 
+          type="date" 
+          id="filtro-fecha" 
+          [(ngModel)]="filtroFecha" 
+          (change)="aplicarFiltros()"
+          class="form-control">
+      </div>
+
+      <div class="filtro-group">
+        <label for="busqueda">Buscar</label>
+        <input 
+          type="text" 
+          id="busqueda" 
+          [(ngModel)]="busquedaTexto" 
+          (input)="aplicarFiltros()"
+          placeholder="Nombre o motivo..."
+          class="form-control">
+      </div>
+
+      <div class="filtro-actions">
+        <button class="btn btn-secondary" (click)="limpiarFiltros()">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading && reuniones.length === 0">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Cargando reuniones...</span>
+  </div>
+
+  <!-- Reuniones List -->
+  <div class="reuniones-section" *ngIf="!isLoading || reuniones.length > 0">
+    <div class="section-header">
+      <h3><i class="fas fa-list"></i> Reuniones ({{ reunionesFiltradas.length }})</h3>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="reunionesFiltradas.length === 0 && !isLoading">
+      <i class="fas fa-calendar-times"></i>
+      <h4>No se encontraron reuniones</h4>
+      <p *ngIf="filtroEstado !== 'todas' || filtroFecha || busquedaTexto">
+        Intenta ajustar los filtros para ver más resultados
+      </p>
+      <p *ngIf="filtroEstado === 'todas' && !filtroFecha && !busquedaTexto">
+        No tienes reuniones programadas en este momento
+      </p>
+    </div>
+
+    <!-- Reuniones Grid -->
+    <div class="reuniones-grid" *ngIf="reunionesFiltradas.length > 0">
+      <div 
+        class="reunion-card" 
+        *ngFor="let reunion of reunionesFiltradas"
+        [class]="getEstadoClass(reunion.estado)"
+        [class.proxima]="esReunionProxima(reunion.fecha, reunion.hora_inicio)"
+        [class.pasada]="esReunionPasada(reunion.fecha, reunion.hora_fin)">
+        
+        <!-- Card Header -->
+        <div class="card-header">
+          <div class="reunion-info">
+            <h4 *ngIf="userRole === 'estudiante'">{{ reunion.profesor_nombre }}</h4>
+            <h4 *ngIf="userRole === 'profesor'">{{ reunion.estudiante_nombre }}</h4>
+            <span class="fecha">{{ formatearFecha(reunion.fecha) }}</span>
+          </div>
+          
+          <div class="status-section">
+            <div class="estado-badge" [class]="getEstadoClass(reunion.estado)">
+              {{ getEstadoLabel(reunion.estado) }}
+            </div>
+            <div class="alertas" *ngIf="esReunionProxima(reunion.fecha, reunion.hora_inicio)">
+              <span class="alerta-proxima">¡Próxima!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Content -->
+        <div class="card-content">
+          <div class="horario">
+            <i class="fas fa-clock"></i>
+            <span>{{ formatearHora(reunion.hora_inicio) }} - {{ formatearHora(reunion.hora_fin) }}</span>
+          </div>
+          
+          <div class="motivo">
+            <i class="fas fa-comment"></i>
+            <span>{{ reunion.motivo }}</span>
+          </div>
+
+          <div class="confirmaciones" *ngIf="reunion.estado === 'programada' || reunion.estado === 'confirmada'">
+            <div class="confirmacion-item">
+              <span class="confirmacion" 
+                    [class.confirmada]="reunion.confirmacion_estudiante"
+                    title="Confirmación del estudiante">
+                <i class="fas fa-user-graduate"></i>
+                Estudiante {{ reunion.confirmacion_estudiante ? '✓' : '?' }}
+              </span>
+            </div>
+            <div class="confirmacion-item">
+              <span class="confirmacion" 
+                    [class.confirmada]="reunion.confirmacion_profesor"
+                    title="Confirmación del profesor">
+                <i class="fas fa-chalkboard-teacher"></i>
+                Profesor {{ reunion.confirmacion_profesor ? '✓' : '?' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="comentarios" *ngIf="reunion.comentarios">
+            <i class="fas fa-note-sticky"></i>
+            <span>{{ reunion.comentarios }}</span>
+          </div>
+        </div>
+
+        <!-- Card Actions -->
+        <div class="card-actions">
+          <!-- Botón de Confirmar -->
+          <button 
+            class="btn btn-sm btn-success"
+            *ngIf="puedeConfirmar(reunion)"
+            (click)="confirmarReunion(reunion)"
+            [disabled]="isLoading">
+            <i class="fas fa-check"></i>
+            Confirmar
+          </button>
+
+          <!-- Botón de Reprogramar -->
+          <button 
+            class="btn btn-sm btn-warning"
+            *ngIf="puedeReprogramar(reunion)"
+            (click)="abrirModalReprogramacion(reunion)"
+            [disabled]="isLoading">
+            <i class="fas fa-calendar-alt"></i>
+            Reprogramar
+          </button>
+
+          <!-- Botón de Cancelar -->
+          <button 
+            class="btn btn-sm btn-danger"
+            *ngIf="puedeCancelar(reunion)"
+            (click)="cancelarReunion(reunion)"
+            [disabled]="isLoading">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+
+          <!-- Botón de Exportar -->
+          <button 
+            class="btn btn-sm btn-secondary"
+            *ngIf="reunion.estado === 'confirmada'"
+            (click)="exportarCalendario(reunion)"
+            title="Exportar a calendario">
+            <i class="fas fa-download"></i>
+            Exportar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Reprogramación -->
+<div class="modal-overlay" *ngIf="showReprogramModal" (click)="cerrarModalReprogramacion()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-calendar-alt"></i> Reprogramar Reunión</h3>
+      <button class="btn-close" (click)="cerrarModalReprogramacion()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="reunion-actual" *ngIf="reunionSeleccionada">
+        <h4>Reunión Actual</h4>
+        <div class="info-actual">
+          <div class="info-item">
+            <i class="fas fa-calendar"></i>
+            <span>{{ formatearFecha(reunionSeleccionada.fecha) }}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span>{{ formatearHora(reunionSeleccionada.hora_inicio) }} - {{ formatearHora(reunionSeleccionada.hora_fin) }}</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-comment"></i>
+            <span>{{ reunionSeleccionada.motivo }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opciones-reprogramacion">
+        <h4>Nuevas Opciones Disponibles</h4>
+        
+        <div class="loading-opciones" *ngIf="isReprogramando">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Buscando opciones disponibles...</span>
+        </div>
+
+        <div class="opciones-grid" *ngIf="!isReprogramando && opcionesReprogramacion.length > 0">
+          <div 
+            class="opcion-card" 
+            *ngFor="let opcion of opcionesReprogramacion"
+            (click)="reprogramarReunion(opcion)"
+            [class.disabled]="isLoading">
+            
+            <div class="opcion-fecha">
+              <i class="fas fa-calendar"></i>
+              {{ formatearFecha(opcion.fecha) }}
+            </div>
+            
+            <div class="opcion-hora">
+              <i class="fas fa-clock"></i>
+              {{ formatearHora(opcion.hora_inicio) }} - {{ formatearHora(opcion.hora_fin) }}
+            </div>
+
+            <div class="opcion-accion">
+              <button class="btn btn-sm btn-primary" [disabled]="isLoading">
+                <i class="fas fa-check"></i>
+                Seleccionar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-opciones" *ngIf="!isReprogramando && opcionesReprogramacion.length === 0">
+          <i class="fas fa-calendar-times"></i>
+          <h4>No hay opciones disponibles</h4>
+          <p>No se encontraron horarios disponibles para reprogramar esta reunión.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalReprogramacion()">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
