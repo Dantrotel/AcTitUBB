@@ -209,9 +209,147 @@
               </div>
             </div>
           </div>
+
+          <!-- Sección de fechas importantes -->
+          <div class="fechas-importantes-section">
+            <div class="section-header">
+              <h4><i class="fas fa-calendar-exclamation"></i> Fechas Importantes</h4>
+              <button class="btn-primary btn-sm" (click)="abrirModalFecha()">
+                <i class="fas fa-plus"></i>
+                Añadir Fecha
+              </button>
+            </div>
+
+            <div *ngIf="loadingFechas" class="loading-fechas">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Cargando fechas importantes...</span>
+            </div>
+
+            <div *ngIf="!loadingFechas && fechasImportantes.length === 0" class="empty-fechas">
+              <i class="fas fa-calendar-plus"></i>
+              <p>No hay fechas importantes definidas</p>
+              <small>Añade fechas importantes para ayudar a los estudiantes a mantenerse organizados</small>
+            </div>
+
+            <div class="fechas-grid" *ngIf="!loadingFechas && fechasImportantes.length > 0">
+              <div 
+                *ngFor="let fecha of fechasImportantes" 
+                class="fecha-card"
+                [class]="getFechaClaseEstado(fecha)"
+              >
+                <div class="fecha-header">
+                  <div class="fecha-tipo">
+                    <span class="tipo-badge">{{ formatearTipoFecha(fecha.tipo_fecha) }}</span>
+                  </div>
+                  <div class="fecha-estado">
+                    <span class="estado-badge" [class]="'estado-' + getFechaEstado(fecha)">
+                      {{ getFechaEstado(fecha) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="fecha-body">
+                  <h5>{{ fecha.titulo }}</h5>
+                  <p *ngIf="fecha.descripcion" class="fecha-descripcion">{{ fecha.descripcion }}</p>
+                  
+                  <div class="fecha-meta">
+                    <div class="fecha-fecha">
+                      <i class="fas fa-calendar"></i>
+                      <span>{{ formatearFecha(fecha.fecha_limite) }}</span>
+                    </div>
+                    <div class="fecha-completada" *ngIf="fecha.completada">
+                      <i class="fas fa-check-circle"></i>
+                      <span>Completada el {{ formatearFecha(fecha.fecha_realizada) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="fecha-actions">
+                  <button 
+                    class="btn-danger btn-sm" 
+                    (click)="eliminarFechaImportante(fecha.id)"
+                    title="Eliminar fecha importante"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Crear Fecha Importante -->
+<div *ngIf="mostrarModalFecha" class="modal-overlay" (click)="cerrarModalFecha()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fas fa-calendar-plus"></i> Crear Fecha Importante</h3>
+      <button class="btn-close" (click)="cerrarModalFecha()">×</button>
+    </div>
+
+    <form (ngSubmit)="crearFechaImportante()" class="modal-form">
+      <div class="form-group">
+        <label for="tituloFecha">Título *</label>
+        <input 
+          type="text" 
+          id="tituloFecha"
+          [(ngModel)]="nuevaFecha.titulo"
+          name="tituloFecha"
+          required
+          placeholder="Ej: Entrega del primer avance"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="tipoFecha">Tipo de fecha *</label>
+        <select 
+          id="tipoFecha"
+          [(ngModel)]="nuevaFecha.tipo_fecha"
+          name="tipoFecha"
+          required
+        >
+          <option *ngFor="let tipo of tiposFecha" [value]="tipo.value">
+            {{ tipo.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fechaLimite">Fecha límite *</label>
+        <input 
+          type="date" 
+          id="fechaLimite"
+          [(ngModel)]="nuevaFecha.fecha_limite"
+          name="fechaLimite"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="descripcionFecha">Descripción</label>
+        <textarea 
+          id="descripcionFecha"
+          [(ngModel)]="nuevaFecha.descripcion"
+          name="descripcionFecha"
+          rows="3"
+          placeholder="Describe los detalles de esta fecha importante"
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarModalFecha()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="loading">
+          <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+          <i class="fas fa-save" *ngIf="!loading"></i>
+          {{ loading ? 'Guardando...' : 'Crear Fecha' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 

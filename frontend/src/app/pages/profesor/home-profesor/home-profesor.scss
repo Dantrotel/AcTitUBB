@@ -591,3 +591,596 @@ body {
     }
   }
 }
+
+// Estilos para el dashboard mejorado de proyectos
+
+// Proyecto individual mejorado
+.project-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+  padding: 1.5rem;
+  
+  .project-main-info {
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      
+      h4 {
+        margin: 0;
+        color: $ubb-blue-dark;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      
+      .rol-badge {
+        background: $ubb-info-gradient;
+        color: white;
+        padding: 0.2rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+      }
+    }
+    
+    .project-description {
+      color: $ubb-dark-gray;
+      font-size: 0.9rem;
+      margin: 0.5rem 0;
+      line-height: 1.4;
+    }
+  }
+  
+  .project-metrics {
+    .project-progress {
+      margin-bottom: 1rem;
+      
+      label {
+        display: block;
+        font-size: 0.8rem;
+        color: $ubb-dark-gray;
+        margin-bottom: 0.3rem;
+        font-weight: 500;
+      }
+    }
+    
+    .project-dates {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      
+      .date-info {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        color: $ubb-dark-gray;
+        
+        i {
+          margin-right: 0.5rem;
+          width: 12px;
+          
+          &.fa-calendar-start {
+            color: $ubb-success;
+          }
+          
+          &.fa-calendar-check {
+            color: $ubb-warning;
+          }
+        }
+      }
+    }
+  }
+  
+  .project-status {
+    text-align: right;
+    
+    .quick-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      
+      .btn-icon {
+        background: none;
+        border: 1px solid $ubb-gray;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: $ubb-dark-gray;
+        
+        &:hover {
+          background: $ubb-blue;
+          color: white;
+          border-color: $ubb-blue;
+          transform: translateY(-1px);
+        }
+        
+        i {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+
+// Badges de acción con notificaciones
+.action-badge {
+  background: $ubb-red;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  animation: pulse 2s infinite;
+}
+
+// Mejoras en las tarjetas de acción
+.action-card {
+  position: relative;
+  
+  &:hover .action-badge {
+    animation: none;
+    transform: scale(1.1);
+  }
+}
+
+// Grid responsivo mejorado para proyectos
+.project-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+// Responsive para el grid de proyectos
+@media (max-width: 1024px) {
+  .project-item {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    
+    .project-status {
+      text-align: left;
+      
+      .quick-actions {
+        justify-content: flex-start;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .project-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .project-item {
+    .project-main-info .project-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .quick-actions {
+      flex-wrap: wrap;
+    }
+  }
+}
+
+// ===== ESTILOS PARA GESTIÓN DE HITOS =====
+
+// Modal de gestión de hitos
+.modal-hitos {
+  background: white;
+  border-radius: 16px;
+  width: 95%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+// Selector de proyecto
+.proyecto-selector {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: $ubb-light-gray;
+  border-radius: 8px;
+  
+  label {
+    font-weight: 600;
+    color: $ubb-blue-dark;
+    min-width: 80px;
+  }
+  
+  select {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid $ubb-gray;
+    border-radius: 6px;
+    font-size: 1rem;
+    
+    &:focus {
+      outline: none;
+      border-color: $ubb-blue;
+      box-shadow: 0 0 0 2px rgba($ubb-blue, 0.2);
+    }
+  }
+  
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+// Grid de hitos
+.hitos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+// Tarjeta de hito
+.hito-card {
+  background: white;
+  border: 2px solid $ubb-gray;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: $ubb-blue;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  &.proximo {
+    border-color: $ubb-warning;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+    
+    &:before {
+      background: $ubb-warning;
+    }
+  }
+  
+  &.retrasado {
+    border-color: $ubb-red;
+    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+    
+    &:before {
+      background: $ubb-red;
+    }
+  }
+  
+  &.estado-completado {
+    border-color: $ubb-success;
+    background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);
+    
+    &:before {
+      background: $ubb-success;
+    }
+  }
+}
+
+// Header del hito
+.hito-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  
+  .hito-tipo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    background: $ubb-blue-gradient;
+    color: white;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    
+    i {
+      font-size: 0.9rem;
+    }
+  }
+  
+  .hito-actions {
+    display: flex;
+    gap: 0.5rem;
+    
+    .btn-icon {
+      background: none;
+      border: 1px solid $ubb-gray;
+      padding: 0.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: $ubb-dark-gray;
+      
+      &:hover {
+        background: $ubb-blue;
+        color: white;
+        border-color: $ubb-blue;
+      }
+    }
+  }
+}
+
+// Contenido del hito
+.hito-content {
+  margin-bottom: 1rem;
+  
+  h4 {
+    margin: 0 0 0.5rem 0;
+    color: $ubb-blue-dark;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  
+  .hito-proyecto {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $ubb-dark-gray;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    
+    i {
+      color: $ubb-blue;
+    }
+    
+    .estudiante {
+      color: $ubb-blue;
+      font-weight: 500;
+    }
+  }
+  
+  .hito-descripcion {
+    color: $ubb-dark-gray;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+}
+
+// Footer del hito
+.hito-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  
+  .hito-fecha {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $ubb-dark-gray;
+    font-size: 0.9rem;
+    
+    i {
+      color: $ubb-blue;
+    }
+    
+    .dias-restantes {
+      color: $ubb-warning;
+      font-weight: 500;
+    }
+    
+    .dias-retraso {
+      color: $ubb-red;
+      font-weight: 600;
+    }
+  }
+  
+  .hito-metadatos {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    
+    .peso {
+      background: $ubb-light-gray;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: $ubb-blue-dark;
+    }
+    
+    .critico {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: $ubb-red;
+      font-size: 0.8rem;
+      font-weight: 600;
+      
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+// Progreso del hito
+.hito-progreso {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: $ubb-light-gray;
+    border-radius: 3px;
+    overflow: hidden;
+    
+    .progress-fill {
+      height: 100%;
+      background: $ubb-success-gradient;
+      transition: width 0.3s ease;
+    }
+  }
+  
+  .progress-text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $ubb-success;
+  }
+}
+
+// Estado vacío
+.empty-hitos {
+  text-align: center;
+  padding: 3rem;
+  color: $ubb-dark-gray;
+  
+  i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: $ubb-gray;
+  }
+  
+  h3 {
+    margin-bottom: 0.5rem;
+    color: $ubb-blue-dark;
+  }
+  
+  p {
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+  }
+}
+
+// Modal formulario de hito
+.modal-form {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+// Formulario de hito
+.hito-form {
+  padding: 1.5rem;
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: $ubb-blue-dark;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid $ubb-gray;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: $ubb-blue;
+        box-shadow: 0 0 0 3px rgba($ubb-blue, 0.1);
+      }
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      
+      input[type="checkbox"] {
+        margin-right: 0.5rem;
+        width: auto;
+      }
+    }
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid $ubb-gray;
+  }
+}
+
+// Responsive para hitos
+@media (max-width: 768px) {
+  .modal-hitos {
+    width: 98%;
+    margin: 1%;
+  }
+  
+  .hitos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .proyecto-selector {
+    flex-direction: column;
+    align-items: stretch;
+    
+    label {
+      min-width: auto;
+    }
+  }
+  
+  .hito-form .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .hito-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

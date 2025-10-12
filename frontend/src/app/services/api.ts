@@ -128,6 +128,51 @@ export class ApiService {
     });
   }
 
+  // ===== MÉTODOS PARA FECHAS IMPORTANTES =====
+
+  // Obtener fechas importantes de un proyecto
+  getFechasImportantesProyecto(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/fechas-importantes/proyecto/${proyectoId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Crear fecha importante
+  crearFechaImportante(data: any) {
+    return this.http.post(`${this.baseUrl}/fechas-importantes`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener fecha importante por ID
+  getFechaImportantePorId(fechaId: string) {
+    return this.http.get(`${this.baseUrl}/fechas-importantes/${fechaId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Actualizar fecha importante
+  actualizarFechaImportante(fechaId: string, data: any) {
+    return this.http.put(`${this.baseUrl}/fechas-importantes/${fechaId}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Marcar fecha importante como completada
+  completarFechaImportante(fechaId: string, fechaRealizada?: string) {
+    const data = fechaRealizada ? { fecha_realizada: fechaRealizada } : {};
+    return this.http.put(`${this.baseUrl}/fechas-importantes/${fechaId}/completar`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Eliminar fecha importante (solo admin)
+  eliminarFechaImportante(fechaId: string) {
+    return this.http.delete(`${this.baseUrl}/fechas-importantes/${fechaId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   login(data: any) {
     return this.http.post(`${this.baseUrl}/users/login`, data);
   }
@@ -323,9 +368,23 @@ export class ApiService {
 
   // ===== MÉTODOS DE PROYECTOS =====
 
+  // Obtener todos los proyectos (admin)
+  getAllProyectos() {
+    return this.http.get(`${this.baseUrl}/projects`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // Obtener proyectos asignados al profesor autenticado
   getProyectosAsignados() {
-    return this.http.get(`${this.baseUrl}/projects/asignados`, {
+    return this.http.get(`${this.baseUrl}/profesor/proyectos-asignados`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener proyectos del estudiante autenticado
+  getMisProyectos() {
+    return this.http.get(`${this.baseUrl}/estudiante/mis-proyectos`, {
       headers: this.getHeaders()
     });
   }
@@ -358,6 +417,13 @@ export class ApiService {
 
   completarHito(id: string, hitoId: string) {
     return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}/completar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener detalles específicos de un hito
+  getDetalleHito(proyectoId: string, hitoId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/hitos/${hitoId}`, {
       headers: this.getHeaders()
     });
   }

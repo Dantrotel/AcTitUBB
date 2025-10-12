@@ -60,6 +60,26 @@ export class CronogramasComponent implements OnInit {
   error: string = '';
   success: string = '';
   
+  // Fechas importantes
+  fechasImportantes: any[] = [];
+  mostrarModalFecha: boolean = false;
+  loadingFechas: boolean = false;
+  nuevaFecha: any = {
+    titulo: '',
+    descripcion: '',
+    tipo_fecha: 'entrega',
+    fecha_limite: null
+  };
+  
+  tiposFecha = [
+    { value: 'entrega', label: 'Entrega' },
+    { value: 'reunion', label: 'Reunión' },
+    { value: 'evaluacion', label: 'Evaluación' },
+    { value: 'hito', label: 'Hito' },
+    { value: 'deadline', label: 'Fecha límite' },
+    { value: 'presentacion', label: 'Presentación' }
+  ];
+  
   // Formularios
   nuevoCronograma: any = {
     nombre: '',
@@ -117,6 +137,7 @@ export class CronogramasComponent implements OnInit {
   async seleccionarProyecto(proyecto: any) {
     this.proyectoSeleccionado = proyecto;
     await this.cargarCronogramas();
+    await this.cargarFechasImportantes();
   }
 
   async cargarCronogramas() {
@@ -518,5 +539,139 @@ export class CronogramasComponent implements OnInit {
       'correcciones': 'badge-warning'
     };
     return clases[estado] || 'badge-secondary';
+  }
+
+  // ===== MÉTODOS PARA FECHAS IMPORTANTES =====
+
+  async cargarFechasImportantes() {
+    if (!this.proyectoSeleccionado?.id) return;
+    
+    try {
+      this.loadingFechas = true;
+      const response = await this.apiService.getFechasImportantesProyecto(this.proyectoSeleccionado.id).toPromise();
+      
+      if (response && (response as any).success) {
+        this.fechasImportantes = (response as any).data.fechas_importantes || [];
+      } else {
+        this.fechasImportantes = [];
+      }
+    } catch (error: any) {
+      console.error('Error al cargar fechas importantes:', error);
+      this.error = 'Error al cargar fechas importantes';
+      this.fechasImportantes = [];
+    } finally {
+      this.loadingFechas = false;
+    }
+  }
+
+  abrirModalFecha() {
+    this.mostrarModalFecha = true;
+    this.nuevaFecha = {
+      titulo: '',
+      descripcion: '',
+      tipo_fecha: 'entrega',
+      fecha_limite: null
+    };
+  }
+
+  cerrarModalFecha() {
+    this.mostrarModalFecha = false;
+    this.nuevaFecha = {
+      titulo: '',
+      descripcion: '',
+      tipo_fecha: 'entrega',
+      fecha_limite: null
+    };
+  }
+
+  async crearFechaImportante() {
+    if (!this.proyectoSeleccionado?.id) {
+      this.error = 'No hay proyecto seleccionado';
+      return;
+    }
+
+    if (!this.nuevaFecha.titulo?.trim()) {
+      this.error = 'El título es requerido';
+      return;
+    }
+
+    if (!this.nuevaFecha.fecha_limite) {
+      this.error = 'La fecha límite es requerida';
+      return;
+    }
+
+    try {
+      this.loading = true;
+      this.error = '';
+
+      const fechaData = {
+        proyecto_id: this.proyectoSeleccionado.id,
+        titulo: this.nuevaFecha.titulo.trim(),
+        descripcion: this.nuevaFecha.descripcion?.trim() || '',
+        tipo_fecha: this.nuevaFecha.tipo_fecha,
+        fecha_limite: this.nuevaFecha.fecha_limite
+      };
+
+      await this.apiService.crearFechaImportante(fechaData).toPromise();
+      
+      this.success = 'Fecha importante creada exitosamente';
+      await this.cargarFechasImportantes();
+      this.cerrarModalFecha();
+    } catch (error: any) {
+      console.error('Error al crear fecha importante:', error);
+      this.error = 'Error al crear fecha importante: ' + (error.error?.message || error.message);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async eliminarFechaImportante(fechaId: string) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta fecha importante?')) {
+      return;
+    }
+
+    try {
+      this.loading = true;
+      await this.apiService.eliminarFechaImportante(fechaId).toPromise();
+      
+      this.success = 'Fecha importante eliminada exitosamente';
+      await this.cargarFechasImportantes();
+    } catch (error: any) {
+      console.error('Error al eliminar fecha importante:', error);
+      this.error = 'Error al eliminar fecha importante: ' + (error.error?.message || error.message);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getFechaEstado(fecha: any): string {
+    if (fecha.completada) return 'completada';
+    
+    const hoy = new Date();
+    const fechaLimite = new Date(fecha.fecha_limite);
+    
+    hoy.setHours(0, 0, 0, 0);
+    fechaLimite.setHours(0, 0, 0, 0);
+    
+    if (fechaLimite < hoy) return 'vencida';
+    if (fechaLimite.getTime() === hoy.getTime()) return 'hoy';
+    return 'pendiente';
+  }
+
+  getFechaClaseEstado(fecha: any): string {
+    const estado = this.getFechaEstado(fecha);
+    return `fecha-${estado}`;
+  }
+
+  formatearTipoFecha(tipo: string): string {
+    const tipos: { [key: string]: string } = {
+      'entrega': 'Entrega',
+      'reunion': 'Reunión',
+      'evaluacion': 'Evaluación',
+      'hito': 'Hito',
+      'deadline': 'Fecha límite',
+      'presentacion': 'Presentación'
+    };
+    return tipos[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
   }
 }

@@ -208,27 +208,68 @@
         
         <div class="projects-list" *ngIf="proyectosRecientes.length > 0">
           <div class="project-item" *ngFor="let proyecto of proyectosRecientes" (click)="navegarAProyecto(proyecto.id)">
-            <div class="project-info">
-              <h4>{{ proyecto.titulo }}</h4>
+            <div class="project-main-info">
+              <div class="project-header">
+                <h4>{{ proyecto.titulo }}</h4>
+                <span class="rol-badge">{{ proyecto.rol_profesor }}</span>
+              </div>
               <p class="project-student">
                 <i class="fas fa-user-graduate"></i>
                 {{ proyecto.estudiante }}
               </p>
+              <p class="project-description" *ngIf="proyecto.descripcion">
+                {{ proyecto.descripcion | slice:0:100 }}{{ proyecto.descripcion?.length > 100 ? '...' : '' }}
+              </p>
+            </div>
+            
+            <div class="project-metrics">
               <div class="project-progress">
+                <label>Progreso</label>
                 <div class="progress-bar">
                   <div class="progress-fill" [style.width.%]="proyecto.porcentaje_avance"></div>
                 </div>
                 <span class="progress-text">{{ formatearPorcentaje(proyecto.porcentaje_avance) }}</span>
               </div>
+              
+              <div class="project-dates" *ngIf="proyecto.fecha_inicio">
+                <small class="date-info">
+                  <i class="fas fa-calendar-start"></i>
+                  Inicio: {{ proyecto.fecha_inicio | date:'dd/MM/yyyy' }}
+                </small>
+                <small class="date-info" *ngIf="proyecto.fecha_estimada_fin">
+                  <i class="fas fa-calendar-check"></i>
+                  Est. Fin: {{ proyecto.fecha_estimada_fin | date:'dd/MM/yyyy' }}
+                </small>
+              </div>
             </div>
+            
             <div class="project-status">
               <span class="status-badge" [class]="getEstadoClase(proyecto.estado)">
                 {{ proyecto.estado }}
               </span>
               <small class="last-update">
                 <i class="fas fa-clock"></i>
-                {{ proyecto.fecha_actualizacion | date:'dd/MM/yyyy' }}
+                {{ proyecto.fecha_actualizacion | date:'dd/MM/yyyy HH:mm' }}
               </small>
+              
+              <!-- Acciones rápidas -->
+              <div class="quick-actions">
+                <button class="btn-icon" 
+                        (click)="$event.stopPropagation(); verDashboardProyecto(proyecto.id)"
+                        matTooltip="Ver Dashboard">
+                  <i class="fas fa-tachometer-alt"></i>
+                </button>
+                <button class="btn-icon" 
+                        (click)="$event.stopPropagation(); navegarAHitos()"
+                        matTooltip="Ver Hitos">
+                  <i class="fas fa-tasks"></i>
+                </button>
+                <button class="btn-icon" 
+                        (click)="$event.stopPropagation(); navegarAEvaluaciones()"
+                        matTooltip="Crear Evaluación">
+                  <i class="fas fa-star"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -248,6 +289,9 @@
           <div class="action-content">
             <h4>Gestionar Hitos</h4>
             <p>Revisar y evaluar hitos de proyectos</p>
+            <span class="action-badge" *ngIf="estadisticasProyectos.proximosHitos > 0">
+              {{ estadisticasProyectos.proximosHitos }} pendientes
+            </span>
           </div>
         </div>
 
@@ -258,6 +302,29 @@
           <div class="action-content">
             <h4>Crear Evaluaciones</h4>
             <p>Evaluar avances y entregas</p>
+            <span class="action-badge" *ngIf="estadisticasProyectos.evaluacionesPendientes > 0">
+              {{ estadisticasProyectos.evaluacionesPendientes }} pendientes
+            </span>
+          </div>
+        </div>
+
+        <div class="action-card" (click)="navegar('profesor/cronogramas')">
+          <div class="action-icon">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <div class="action-content">
+            <h4>Gestionar Cronogramas</h4>
+            <p>Crear y revisar cronogramas de proyectos</p>
+          </div>
+        </div>
+
+        <div class="action-card" (click)="navegarAProyectos()">
+          <div class="action-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="action-content">
+            <h4>Ver Reportes</h4>
+            <p>Estadísticas y métricas de proyectos</p>
           </div>
         </div>
       </div>
@@ -304,3 +371,198 @@
   [propuestas]="[]"
   (close)="cerrarCalendario()">
 </app-calendar-modal>
+
+<!-- Modal de Gestión de Hitos -->
+<div class="modal-overlay" *ngIf="mostrarGestionHitos" (click)="cerrarGestionHitos()">
+  <div class="modal-hitos" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-tasks"></i>
+        Gestión de Hitos
+      </h2>
+      <button class="btn-close" (click)="cerrarGestionHitos()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Selector de Proyecto -->
+      <div class="proyecto-selector">
+        <label>Proyecto:</label>
+        <select [(ngModel)]="proyectoSeleccionado" (change)="seleccionarProyecto(proyectoSeleccionado)">
+          <option value="">Todos los proyectos</option>
+          <option *ngFor="let proyecto of proyectosRecientes" [ngValue]="proyecto">
+            {{ proyecto.titulo }} - {{ proyecto.estudiante }}
+          </option>
+        </select>
+        <button class="btn-primary btn-sm" (click)="abrirModalCrearHito(proyectoSeleccionado)">
+          <i class="fas fa-plus"></i>
+          Nuevo Hito
+        </button>
+      </div>
+
+      <!-- Lista de Hitos -->
+      <div class="hitos-container">
+        <div class="loading" *ngIf="cargandoHitos">
+          <i class="fas fa-spinner fa-spin"></i>
+          Cargando hitos...
+        </div>
+
+        <div class="hitos-grid" *ngIf="!cargandoHitos && hitosActivos.length > 0">
+          <div class="hito-card" *ngFor="let hito of hitosActivos" 
+               [class]="getEstadoHitoClass(hito.estado)"
+               [class.proximo]="esHitoProximo(hito.fecha_objetivo)"
+               [class.retrasado]="esHitoRetrasado(hito.fecha_objetivo, hito.estado)">
+            
+            <div class="hito-header">
+              <div class="hito-tipo">
+                <i [class]="getTipoHitoIcon(hito.tipo_hito)"></i>
+                <span>{{ hito.tipo_hito }}</span>
+              </div>
+              <div class="hito-actions">
+                <button class="btn-icon" (click)="abrirModalEditarHito(hito)" matTooltip="Editar">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon" *ngIf="hito.estado !== 'completado'" 
+                        (click)="completarHito(hito)" matTooltip="Completar">
+                  <i class="fas fa-check"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="hito-content">
+              <h4>{{ hito.nombre }}</h4>
+              <p class="hito-proyecto" *ngIf="hito.proyecto_titulo">
+                <i class="fas fa-folder"></i>
+                {{ hito.proyecto_titulo }}
+                <span class="estudiante">- {{ hito.estudiante_nombre }}</span>
+              </p>
+              <p class="hito-descripcion" *ngIf="hito.descripcion">
+                {{ hito.descripcion }}
+              </p>
+            </div>
+
+            <div class="hito-footer">
+              <div class="hito-fecha">
+                <i class="fas fa-calendar-day"></i>
+                {{ formatearFecha(hito.fecha_objetivo) }}
+                <span class="dias-restantes" *ngIf="!esHitoRetrasado(hito.fecha_objetivo, hito.estado) && hito.estado !== 'completado'">
+                  ({{ diasHastaVencimiento(hito.fecha_objetivo) }} días)
+                </span>
+                <span class="dias-retraso" *ngIf="esHitoRetrasado(hito.fecha_objetivo, hito.estado)">
+                  ({{ Math.abs(diasHastaVencimiento(hito.fecha_objetivo)) }} días de retraso)
+                </span>
+              </div>
+              
+              <div class="hito-metadatos">
+                <span class="peso">{{ hito.peso_en_proyecto }}%</span>
+                <span class="critico" *ngIf="hito.es_critico">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  Crítico
+                </span>
+              </div>
+            </div>
+
+            <div class="hito-progreso" *ngIf="hito.porcentaje_completado !== undefined">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="hito.porcentaje_completado"></div>
+              </div>
+              <span class="progress-text">{{ hito.porcentaje_completado }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-hitos" *ngIf="!cargandoHitos && hitosActivos.length === 0">
+          <i class="fas fa-clipboard-list"></i>
+          <h3>No hay hitos disponibles</h3>
+          <p>{{ proyectoSeleccionado ? 'Este proyecto no tiene hitos creados' : 'No tienes proyectos con hitos' }}</p>
+          <button class="btn-primary" (click)="abrirModalCrearHito(proyectoSeleccionado)" 
+                  *ngIf="proyectoSeleccionado">
+            <i class="fas fa-plus"></i>
+            Crear Primer Hito
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear/Editar Hito -->
+<div class="modal-overlay" *ngIf="mostrarModalHito" (click)="cerrarModalHito()">
+  <div class="modal-form" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-plus-circle"></i>
+        {{ hitoEditando ? 'Editar Hito' : 'Crear Nuevo Hito' }}
+      </h3>
+      <button class="btn-close" (click)="cerrarModalHito()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form class="hito-form" (ngSubmit)="guardarHito()">
+      <div class="form-group">
+        <label for="nombre">Nombre del Hito *</label>
+        <input type="text" id="nombre" [(ngModel)]="nuevoHito.nombre" 
+               name="nombre" required placeholder="Ej: Análisis de Requerimientos">
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" [(ngModel)]="nuevoHito.descripcion" 
+                  name="descripcion" rows="3" 
+                  placeholder="Describe los objetivos y entregables del hito..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tipo_hito">Tipo de Hito *</label>
+          <select id="tipo_hito" [(ngModel)]="nuevoHito.tipo_hito" name="tipo_hito" required>
+            <option value="inicio">Inicio</option>
+            <option value="planificacion">Planificación</option>
+            <option value="desarrollo">Desarrollo</option>
+            <option value="entrega_parcial">Entrega Parcial</option>
+            <option value="revision">Revisión</option>
+            <option value="testing">Testing</option>
+            <option value="documentacion">Documentación</option>
+            <option value="entrega_final">Entrega Final</option>
+            <option value="defensa">Defensa</option>
+            <option value="cierre">Cierre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="fecha_objetivo">Fecha Objetivo *</label>
+          <input type="date" id="fecha_objetivo" [(ngModel)]="nuevoHito.fecha_objetivo" 
+                 name="fecha_objetivo" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="peso">Peso en Proyecto (%)</label>
+          <input type="number" id="peso" [(ngModel)]="nuevoHito.peso_en_proyecto" 
+                 name="peso" min="0" max="100" step="1">
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="nuevoHito.es_critico" name="es_critico">
+            <span class="checkmark"></span>
+            Es un hito crítico
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarModalHito()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-save"></i>
+          {{ hitoEditando ? 'Actualizar' : 'Crear' }} Hito
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

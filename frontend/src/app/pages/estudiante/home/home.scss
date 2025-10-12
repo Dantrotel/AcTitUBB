@@ -12,7 +12,16 @@ $ubb-gray: #e9ecef;
 $ubb-dark-gray: #6c757d;
 $ubb-black: #212529;
 $ubb-success: #28a745;
+$ubb-success-dark: #1e7e34;
+$ubb-success-darker: #1c7430;
 $ubb-warning: #ffc107;
+$ubb-yellow: #ffc107;
+$ubb-green: #28a745;
+$ubb-green-dark: #1e7e34;
+$ubb-green-darker: #1c7430;
+$ubb-blue-darker: #155a8a;
+$ubb-blue-darkest: #0d4372;
+$ubb-light-gray-dark: #dee2e6;
 $ubb-info: #17a2b8;
 
 // Gradientes
@@ -569,10 +578,91 @@ body {
       }
     }
   }
+
+  &.info-card {
+    .card-icon {
+      background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
+    }
+
+    .hitos-summary {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+
+      .hito-stat {
+        text-align: center;
+        
+        .hito-number {
+          display: block;
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #6f42c1;
+          line-height: 1;
+        }
+        
+        .hito-label {
+          font-size: 0.85rem;
+          color: $ubb-dark-gray;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+    }
+
+    .hitos-progress {
+      margin: 1rem 0;
+      
+      .hitos-bar {
+        width: 100%;
+        height: 8px;
+        background: $ubb-gray;
+        border-radius: 4px;
+        overflow: hidden;
+        
+        .hitos-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #6f42c1 0%, #9c27b0 100%);
+          transition: width 0.5s ease;
+          border-radius: 4px;
+        }
+      }
+    }
+  }
+
+  &.evaluation-card {
+    .card-icon {
+      background: linear-gradient(135deg, $ubb-warning 0%, #fd7e14 100%);
+    }
+
+    .evaluaciones-summary {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+
+      .eval-stat {
+        text-align: center;
+        
+        .eval-number {
+          display: block;
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: $ubb-warning;
+          line-height: 1;
+        }
+        
+        .eval-label {
+          font-size: 0.85rem;
+          color: $ubb-dark-gray;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+    }
+  }
 }
 
 // Botones
-.btn-primary, .btn-secondary {
+.btn-primary, .btn-secondary, .btn-info, .btn-warning {
   display: inline-flex;
   align-items: center;
   padding: 0.75rem 1.5rem;
@@ -611,6 +701,26 @@ body {
   &:hover {
     background: $ubb-blue;
     color: $ubb-white;
+  }
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
+  color: $ubb-white;
+  box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+  }
+}
+
+.btn-warning {
+  background: $ubb-warning-gradient;
+  color: $ubb-white;
+  box-shadow: 0 4px 15px rgba($ubb-warning, 0.3);
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba($ubb-warning, 0.4);
   }
 }
 
@@ -797,6 +907,129 @@ body {
   }
 }
 
+// Información extendida del proyecto
+.proyecto-extendido {
+  margin: 2rem 0;
+
+  .proyecto-card {
+    background: $ubb-white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
+      color: $ubb-white;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      i {
+        font-size: 1.3rem;
+      }
+
+      h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+      }
+    }
+
+    .card-content {
+      padding: 2rem;
+
+      .proyecto-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+
+        .info-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          padding: 1rem;
+          background: $ubb-light-gray;
+          border-radius: 12px;
+          transition: background 0.3s ease;
+
+          &:hover {
+            background: $ubb-gray;
+          }
+
+          .info-icon {
+            background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
+            color: $ubb-white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+          }
+
+          .info-details {
+            flex: 1;
+
+            h4 {
+              margin: 0 0 0.5rem 0;
+              font-size: 1rem;
+              font-weight: 600;
+              color: $ubb-black;
+            }
+
+            p {
+              margin: 0;
+              color: $ubb-dark-gray;
+              font-size: 0.95rem;
+              line-height: 1.4;
+            }
+
+            .progreso-detallado {
+              .progreso-bar-extended {
+                width: 100%;
+                height: 10px;
+                background: $ubb-gray;
+                border-radius: 5px;
+                overflow: hidden;
+                margin-bottom: 0.5rem;
+
+                .progreso-fill-extended {
+                  height: 100%;
+                  background: linear-gradient(90deg, #6f42c1 0%, #9c27b0 100%);
+                  transition: width 0.5s ease;
+                  border-radius: 5px;
+                }
+              }
+
+              .progreso-text-extended {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #6f42c1;
+              }
+            }
+          }
+        }
+      }
+
+      .proyecto-acciones {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+    }
+  }
+}
+
 // Footer
 .main-footer {
   margin-top: 3rem;
@@ -872,5 +1105,1319 @@ body {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+// ===== MODAL DE HITOS =====
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.hitos-modal {
+  background: $ubb-white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease;
+
+  .modal-header {
+    background: $ubb-blue-gradient;
+    color: $ubb-white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+
+      i {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+
+      .proyecto-nombre {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.3rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        margin-left: 1rem;
+      }
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: $ubb-white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: background 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    max-height: calc(90vh - 200px);
+
+    .loading-hitos {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid $ubb-gray;
+        border-top: 4px solid $ubb-blue;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        color: $ubb-dark-gray;
+        font-size: 1rem;
+      }
+    }
+
+    .hitos-stats {
+      display: flex;
+      justify-content: space-around;
+      background: $ubb-light-gray;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+
+      .stat-item {
+        text-align: center;
+
+        .stat-number {
+          display: block;
+          font-size: 2rem;
+          font-weight: 700;
+          color: $ubb-blue;
+          line-height: 1;
+        }
+
+        .stat-label {
+          font-size: 0.9rem;
+          color: $ubb-dark-gray;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      }
+    }
+
+    .hito-item {
+      background: $ubb-white;
+      border: 2px solid $ubb-gray;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      &.hito-completado {
+        border-color: $ubb-success;
+        background: linear-gradient(135deg, rgba($ubb-success, 0.1) 0%, rgba($ubb-success, 0.05) 100%);
+      }
+
+      &.hito-retrasado {
+        border-color: $ubb-red;
+        background: linear-gradient(135deg, rgba($ubb-red, 0.1) 0%, rgba($ubb-red, 0.05) 100%);
+      }
+
+      &.hito-proximo {
+        border-color: $ubb-warning;
+        background: linear-gradient(135deg, rgba($ubb-warning, 0.1) 0%, rgba($ubb-warning, 0.05) 100%);
+      }
+
+      .hito-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+
+        .hito-info {
+          flex: 1;
+
+          h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: $ubb-black;
+          }
+
+          .hito-descripcion {
+            margin: 0;
+            color: $ubb-dark-gray;
+            font-size: 0.95rem;
+            line-height: 1.4;
+          }
+        }
+
+        .estado-badge {
+          padding: 0.4rem 0.8rem;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+
+          &.hito-completado {
+            background: $ubb-success;
+            color: $ubb-white;
+          }
+
+          &.hito-retrasado {
+            background: $ubb-red;
+            color: $ubb-white;
+          }
+
+          &.hito-proximo {
+            background: $ubb-warning;
+            color: $ubb-black;
+          }
+
+          &.hito-pendiente {
+            background: $ubb-info;
+            color: $ubb-white;
+          }
+        }
+      }
+
+      .hito-detalles {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        color: $ubb-dark-gray;
+
+        .hito-fecha, .hito-tipo {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          i {
+            width: 16px;
+            text-align: center;
+          }
+        }
+      }
+
+      .hito-acciones {
+        display: flex;
+        gap: 1rem;
+
+        .btn-completar {
+          background: $ubb-success-gradient;
+          color: $ubb-white;
+          border: none;
+          padding: 0.75rem 1.5rem;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba($ubb-success, 0.4);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
+      }
+
+      .hito-completado {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: $ubb-success;
+        font-weight: 600;
+
+        i {
+          font-size: 1.2rem;
+        }
+      }
+    }
+
+    .no-hitos {
+      text-align: center;
+      padding: 3rem;
+      color: $ubb-dark-gray;
+
+      .no-hitos-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+      }
+
+      h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  .modal-footer {
+    border-top: 1px solid $ubb-gray;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Estilos para fechas importantes
+.fechas-importantes-section {
+  margin: 2rem 0;
+  animation: fadeInUp 0.6s ease-out;
+
+  .fechas-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid $ubb-gray;
+
+    .card-header {
+      background: $ubb-blue-gradient;
+      color: white;
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      i {
+        margin-right: 0.75rem;
+        font-size: 1.5rem;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+      }
+
+      .loading-indicator {
+        i {
+          margin: 0;
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+
+    .card-content {
+      padding: 2rem;
+
+      h4 {
+        margin: 0 0 1.5rem 0;
+        color: $ubb-blue-dark;
+        font-size: 1.2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+
+        i {
+          margin-right: 0.5rem;
+          color: $ubb-warning;
+        }
+      }
+    }
+  }
+
+  // Fechas próximas (alertas)
+  .fechas-proximas {
+    margin-bottom: 2rem;
+
+    .fechas-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .fecha-item {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 5px solid;
+        transition: all 0.3s ease;
+
+        &.fecha-vencida {
+          background: #ffebee;
+          border-left-color: $ubb-red;
+          
+          .fecha-icon i {
+            color: $ubb-red;
+          }
+        }
+
+        &.fecha-hoy {
+          background: #fff3e0;
+          border-left-color: $ubb-warning;
+          
+          .fecha-icon i {
+            color: $ubb-warning;
+          }
+        }
+
+        &.fecha-pendiente {
+          background: #e3f2fd;
+          border-left-color: $ubb-info;
+          
+          .fecha-icon i {
+            color: $ubb-info;
+          }
+        }
+
+        &.fecha-completada {
+          background: #e8f5e8;
+          border-left-color: $ubb-success;
+          opacity: 0.7;
+          
+          .fecha-icon i {
+            color: $ubb-success;
+          }
+        }
+
+        .fecha-icon {
+          margin-right: 1rem;
+          font-size: 1.5rem;
+        }
+
+        .fecha-info {
+          flex: 1;
+
+          .fecha-titulo {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: $ubb-black;
+            margin-bottom: 0.25rem;
+          }
+
+          .fecha-tipo {
+            font-size: 0.9rem;
+            color: $ubb-dark-gray;
+            margin-bottom: 0.25rem;
+          }
+
+          .fecha-tiempo {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+          }
+
+          .fecha-fecha {
+            font-size: 0.85rem;
+            color: $ubb-dark-gray;
+          }
+        }
+
+        .fecha-acciones {
+          .btn-completar {
+            background: $ubb-success;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+
+            &:hover {
+              background: $ubb-success-dark;
+              transform: translateY(-2px);
+            }
+
+            i {
+              margin-right: 0.25rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Todas las fechas importantes
+  .fechas-todas {
+    .fechas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+
+      .fecha-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid $ubb-gray;
+        overflow: hidden;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        &.fecha-vencida {
+          border-left: 4px solid $ubb-red;
+          
+          .fecha-estado {
+            background: $ubb-red;
+          }
+        }
+
+        &.fecha-hoy {
+          border-left: 4px solid $ubb-warning;
+          
+          .fecha-estado {
+            background: $ubb-warning;
+          }
+        }
+
+        &.fecha-pendiente {
+          border-left: 4px solid $ubb-info;
+          
+          .fecha-estado {
+            background: $ubb-info;
+          }
+        }
+
+        &.fecha-completada {
+          border-left: 4px solid $ubb-success;
+          opacity: 0.8;
+          
+          .fecha-estado {
+            background: $ubb-success;
+          }
+        }
+
+        .fecha-header {
+          padding: 1rem;
+          background: $ubb-light-gray;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .fecha-tipo-badge {
+            background: $ubb-blue;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+
+          .fecha-estado {
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+          }
+        }
+
+        .fecha-body {
+          padding: 1.5rem;
+
+          h5 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: $ubb-black;
+          }
+
+          p {
+            margin: 0 0 1rem 0;
+            color: $ubb-dark-gray;
+            font-size: 0.9rem;
+            line-height: 1.5;
+          }
+
+          .fecha-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+
+            .fecha-limite,
+            .fecha-tiempo-restante {
+              display: flex;
+              align-items: center;
+              font-size: 0.9rem;
+              color: $ubb-dark-gray;
+
+              i {
+                margin-right: 0.5rem;
+                width: 16px;
+              }
+            }
+          }
+        }
+
+        .fecha-footer {
+          padding: 1rem 1.5rem;
+          border-top: 1px solid $ubb-gray;
+          display: flex;
+          justify-content: flex-end;
+
+          .btn-completar-small {
+            background: $ubb-success;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+
+            &:hover {
+              background: $ubb-success-dark;
+            }
+
+            i {
+              margin-right: 0.5rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Mensaje cuando no hay fechas
+  .no-fechas {
+    text-align: center;
+    padding: 3rem;
+    color: $ubb-dark-gray;
+
+    .no-fechas-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.5;
+    }
+
+    h4 {
+      margin: 0 0 1rem 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+  }
+}
+
+// ============================================
+// SISTEMA DE HITOS AVANZADO
+// ============================================
+
+// Hitos principales
+.hitos-list {
+  .hito-item {
+    background: $ubb-white;
+    border: 2px solid $ubb-light-gray;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    // Estados del hito
+    &.pendiente {
+      border-color: $ubb-dark-gray;
+      background: linear-gradient(135deg, $ubb-white 0%, rgba(108, 117, 125, 0.05) 100%);
+    }
+
+    &.en-progreso {
+      border-color: $ubb-yellow;
+      background: linear-gradient(135deg, $ubb-white 0%, rgba(255, 193, 7, 0.1) 100%);
+    }
+
+    &.entregado {
+      border-color: $ubb-blue;
+      background: linear-gradient(135deg, $ubb-white 0%, rgba(13, 110, 253, 0.1) 100%);
+    }
+
+    &.revisado {
+      border-color: $ubb-green;
+      background: linear-gradient(135deg, $ubb-white 0%, rgba(25, 135, 84, 0.1) 100%);
+    }
+
+    &.vencido {
+      border-color: $ubb-red;
+      background: linear-gradient(135deg, $ubb-white 0%, rgba(220, 53, 69, 0.1) 100%);
+    }
+
+    // Header del hito
+    .hito-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+
+      .hito-info {
+        flex: 1;
+
+        h4 {
+          margin: 0 0 0.5rem 0;
+          color: $ubb-black;
+          font-size: 1.4rem;
+          font-weight: 600;
+          line-height: 1.3;
+        }
+
+        .hito-descripcion {
+          margin: 0;
+          color: $ubb-dark-gray;
+          font-size: 0.95rem;
+          line-height: 1.5;
+        }
+      }
+
+      .hito-estado {
+        margin-left: 1rem;
+
+        .estado-badge {
+          display: inline-block;
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+
+          &.pendiente {
+            background: $ubb-dark-gray;
+            color: $ubb-white;
+          }
+
+          &.en-progreso {
+            background: $ubb-yellow;
+            color: $ubb-black;
+          }
+
+          &.entregado {
+            background: $ubb-blue;
+            color: $ubb-white;
+          }
+
+          &.revisado {
+            background: $ubb-green;
+            color: $ubb-white;
+          }
+
+          &.vencido {
+            background: $ubb-red;
+            color: $ubb-white;
+          }
+        }
+      }
+    }
+
+    // Detalles del hito
+    .hito-detalles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: rgba(248, 249, 250, 0.8);
+      border-radius: 8px;
+
+      .hito-fecha,
+      .hito-tiempo,
+      .hito-tipo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+
+        i {
+          color: $ubb-blue;
+          width: 16px;
+        }
+
+        span {
+          color: $ubb-dark-gray;
+        }
+      }
+
+      .hito-tiempo {
+        &.tiempo-vencido {
+          i, span {
+            color: $ubb-red;
+            font-weight: 600;
+          }
+        }
+
+        &.tiempo-normal {
+          i, span {
+            color: $ubb-green;
+          }
+        }
+      }
+    }
+
+    // Información de entrega
+    .hito-entrega-info {
+      background: rgba(13, 110, 253, 0.1);
+      border: 1px solid rgba(13, 110, 253, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+
+      .entrega-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+
+        i {
+          color: $ubb-blue;
+          font-size: 1.1rem;
+        }
+
+        strong {
+          color: $ubb-blue;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+      }
+
+      .entrega-detalles {
+        .entrega-item {
+          margin-bottom: 0.5rem;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          span {
+            color: $ubb-dark-gray;
+            font-size: 0.9rem;
+            line-height: 1.4;
+          }
+
+          strong {
+            color: $ubb-black;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    // Información de revisión
+    .hito-revision-info {
+      background: rgba(25, 135, 84, 0.1);
+      border: 1px solid rgba(25, 135, 84, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+
+      .revision-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+
+        i {
+          color: $ubb-green;
+          font-size: 1.1rem;
+        }
+
+        strong {
+          color: $ubb-green;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+      }
+
+      .revision-detalles {
+        .revision-item {
+          margin-bottom: 0.5rem;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          span {
+            color: $ubb-dark-gray;
+            font-size: 0.9rem;
+            line-height: 1.4;
+          }
+
+          strong {
+            color: $ubb-black;
+            font-weight: 600;
+          }
+
+          .comentarios-profesor {
+            background: rgba(25, 135, 84, 0.05);
+            border-left: 4px solid $ubb-green;
+            padding: 0.75rem;
+            margin: 0.5rem 0 0 0;
+            border-radius: 0 4px 4px 0;
+            font-style: italic;
+            color: $ubb-dark-gray;
+            line-height: 1.5;
+          }
+        }
+      }
+    }
+
+    // Acciones del hito
+    .hito-acciones {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1rem;
+
+      .btn-entregar {
+        background: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-darker 100%);
+        
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, $ubb-blue-dark 0%, $ubb-blue-darkest 100%);
+          transform: translateY(-1px);
+        }
+      }
+
+      .btn-completar {
+        background: linear-gradient(135deg, $ubb-green 0%, $ubb-green-dark 100%);
+        color: $ubb-white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, $ubb-green-dark 0%, $ubb-green-darker 100%);
+          transform: translateY(-1px);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+
+      .hito-estado-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: $ubb-dark-gray;
+        font-size: 0.9rem;
+        font-style: italic;
+
+        i {
+          color: $ubb-blue;
+        }
+      }
+    }
+  }
+
+  // Mensaje cuando no hay hitos
+  .no-hitos {
+    text-align: center;
+    padding: 3rem;
+    color: $ubb-dark-gray;
+
+    .no-hitos-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.5;
+    }
+
+    h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+  }
+}
+
+// Modal para entregar hitos
+.modal-hito {
+  max-width: 600px;
+  width: 90%;
+
+  .modal-header {
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: $ubb-blue;
+
+      i {
+        font-size: 1.2rem;
+      }
+    }
+  }
+
+  .hito-info-entrega {
+    background: rgba(13, 110, 253, 0.05);
+    border: 1px solid rgba(13, 110, 253, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+
+    h3 {
+      margin: 0 0 0.75rem 0;
+      color: $ubb-black;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .descripcion {
+      margin: 0 0 1rem 0;
+      color: $ubb-dark-gray;
+      line-height: 1.5;
+    }
+
+    .fecha-limite {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      i {
+        color: $ubb-blue;
+      }
+
+      span {
+        color: $ubb-dark-gray;
+        font-weight: 600;
+      }
+
+      .tiempo-restante {
+        font-weight: 500;
+        font-style: italic;
+
+        &.tiempo-vencido {
+          color: $ubb-red;
+        }
+
+        &.tiempo-normal {
+          color: $ubb-green;
+        }
+      }
+    }
+  }
+
+  .form-entrega-hito {
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: $ubb-black;
+        font-weight: 600;
+        font-size: 0.95rem;
+
+        i {
+          color: $ubb-blue;
+        }
+      }
+
+      .archivo-upload {
+        position: relative;
+
+        input[type="file"] {
+          width: 100%;
+          padding: 0.75rem;
+          border: 2px dashed $ubb-light-gray;
+          border-radius: 8px;
+          background: $ubb-white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: $ubb-blue;
+            background: rgba(13, 110, 253, 0.05);
+          }
+
+          &:focus {
+            outline: none;
+            border-color: $ubb-blue;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+          }
+        }
+
+        .archivo-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+          padding: 0.5rem;
+          background: rgba(25, 135, 84, 0.1);
+          border: 1px solid rgba(25, 135, 84, 0.2);
+          border-radius: 6px;
+
+          i {
+            color: $ubb-green;
+          }
+
+          span {
+            color: $ubb-dark-gray;
+            font-weight: 600;
+          }
+
+          small {
+            color: $ubb-dark-gray;
+            opacity: 0.8;
+          }
+        }
+      }
+
+      textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid $ubb-light-gray;
+        border-radius: 8px;
+        background: $ubb-white;
+        color: $ubb-black;
+        font-family: inherit;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 100px;
+        transition: all 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: $ubb-blue;
+          box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+
+        &::placeholder {
+          color: $ubb-dark-gray;
+          opacity: 0.7;
+        }
+      }
+
+      .help-text {
+        display: block;
+        margin-top: 0.5rem;
+        color: $ubb-dark-gray;
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+
+      .char-count {
+        display: block;
+        text-align: right;
+        margin-top: 0.5rem;
+        color: $ubb-dark-gray;
+        font-size: 0.8rem;
+      }
+    }
+
+    .validaciones-entrega {
+      background: rgba(220, 53, 69, 0.1);
+      border: 1px solid rgba(220, 53, 69, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+
+      .error-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: $ubb-red;
+        font-size: 0.9rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        i {
+          color: $ubb-red;
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid $ubb-light-gray;
+
+      .btn-secondary,
+      .btn-primary {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+
+      .btn-secondary {
+        background: $ubb-light-gray;
+        color: $ubb-dark-gray;
+
+        &:hover:not(:disabled) {
+          background: $ubb-light-gray-dark;
+        }
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-darker 100%);
+        color: $ubb-white;
+
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, $ubb-blue-dark 0%, $ubb-blue-darkest 100%);
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+}
+
+// Responsive para hitos
+@media (max-width: 768px) {
+  .hitos-list {
+    .hito-item {
+      padding: 1rem;
+
+      .hito-header {
+        flex-direction: column;
+        gap: 1rem;
+
+        .hito-estado {
+          margin-left: 0;
+          align-self: flex-start;
+        }
+      }
+
+      .hito-detalles {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .hito-acciones {
+        flex-direction: column;
+        align-items: stretch;
+
+        .hito-estado-info {
+          order: -1;
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .modal-hito {
+    max-width: 95%;
+    margin: 1rem;
+
+    .form-entrega-hito {
+      .form-actions {
+        flex-direction: column;
+
+        .btn-secondary,
+        .btn-primary {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
   }
 }
