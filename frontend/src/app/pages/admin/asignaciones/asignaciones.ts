@@ -26,6 +26,11 @@ export class AsignacionesComponent implements OnInit {
   filtroEstado = '';
   filtroRol = '';
   
+  // Estados de carga específicos
+  loadingEstadisticas = false;
+  loadingHistorial = false;
+  loadingAsignacion = false;
+  
   // Formulario para nueva asignación
   mostrarFormulario = false;
   nuevaAsignacion = {
@@ -35,8 +40,18 @@ export class AsignacionesComponent implements OnInit {
     observaciones: ''
   };
 
+  // Modal de vista de asignaciones por proyecto
+  mostrarModalProyecto = false;
+  proyectoSeleccionado: any = null;
+  asignacionesProyecto: any[] = [];
+
+  // Propiedades para filtros de proyectos
+  proyectosFiltrados: any[] = [];
+  filtroProyectos: string = '';
+  filtroEstadoProyecto: string = '';
+
   // Tabs
-  tabActiva = 'asignaciones'; // 'asignaciones', 'estadisticas', 'historial'
+  tabActiva = 'asignaciones'; // 'asignaciones', 'proyectos', 'estadisticas', 'historial'
 
   constructor(
     private router: Router,
@@ -78,35 +93,68 @@ export class AsignacionesComponent implements OnInit {
   }
 
   cargarProyectos() {
-    // Usando el endpoint de propuestas como proxy para obtener proyectos
+    // Usar el endpoint correcto de proyectos para admin
+    this.apiService.getAllProyectos().subscribe({
+      next: (response: any) => {
+        console.log('✅ Proyectos cargados:', response);
+        if (response && response.projects) {
+          this.proyectos = response.projects;
+        } else {
+          this.proyectos = Array.isArray(response) ? response : [];
+        }
+        this.proyectosFiltrados = [...this.proyectos];
+      },
+      error: (err: any) => {
+        console.error('❌ Error cargando proyectos:', err);
+        // Fallback a propuestas si no hay proyectos
+        this.cargarProyectosFallback();
+      }
+    });
+  }
+
+  cargarProyectosFallback() {
     this.apiService.getPropuestas().subscribe({
       next: (data: any) => {
-        this.proyectos = (data || []).filter((p: any) => p.proyecto_id); // Solo propuestas convertidas en proyectos
+        this.proyectos = (data || []).filter((p: any) => p.estado === 'aprobada');
+        console.log('⚠️ Usando propuestas como fallback para proyectos:', this.proyectos.length);
       },
-      error: (err) => {
-        console.error('Error cargando proyectos:', err);
+      error: (err: any) => {
+        console.error('❌ Error cargando propuestas fallback:', err);
+        this.proyectos = [];
       }
     });
   }
 
   cargarEstadisticas() {
+    this.loadingEstadisticas = true;
+    console.log('🔄 Cargando estadísticas de asignaciones...');
+    
     this.apiService.getEstadisticasAsignaciones().subscribe({
       next: (data: any) => {
+        console.log('✅ Estadísticas cargadas:', data);
         this.estadisticasAsignaciones = data.estadisticas || null;
+        this.loadingEstadisticas = false;
       },
-      error: (err) => {
-        console.error('Error cargando estadísticas:', err);
+      error: (err: any) => {
+        console.error('❌ Error cargando estadísticas:', err);
+        this.loadingEstadisticas = false;
       }
     });
   }
 
   cargarHistorial() {
+    this.loadingHistorial = true;
+    console.log('🔄 Cargando historial de asignaciones...');
+    
     this.apiService.getHistorialAsignaciones().subscribe({
       next: (data: any) => {
+        console.log('✅ Historial cargado:', data);
         this.historialAsignaciones = data.historial || [];
+        this.loadingHistorial = false;
       },
-      error: (err) => {
-        console.error('Error cargando historial:', err);
+      error: (err: any) => {
+        console.error('❌ Error cargando historial:', err);
+        this.loadingHistorial = false;
       }
     });
   }
@@ -222,16 +270,22 @@ export class AsignacionesComponent implements OnInit {
       return;
     }
 
+    this.loadingAsignacion = true;
+    console.log('🔄 Creando asignación:', this.nuevaAsignacion);
+
     this.apiService.asignarProfesorAProyecto(this.nuevaAsignacion).subscribe({
       next: (data: any) => {
+        console.log('✅ Asignación creada:', data);
         alert('Profesor asignado exitosamente');
         this.ocultarFormularioAsignacion();
         this.cargarAsignaciones();
         this.cargarEstadisticas();
+        this.loadingAsignacion = false;
       },
-      error: (err) => {
-        console.error('Error al crear asignación:', err);
+      error: (err: any) => {
+        console.error('❌ Error al crear asignación:', err);
         alert(err.error?.message || 'Error al asignar profesor');
+        this.loadingAsignacion = false;
       }
     });
   }
@@ -240,18 +294,50 @@ export class AsignacionesComponent implements OnInit {
     const observaciones = prompt('Observaciones sobre la desasignación (opcional):');
     
     if (confirm(`¿Está seguro de desasignar a ${asignacion.profesor_nombre} del rol ${asignacion.rol_nombre}?`)) {
+      console.log('🔄 Desasignando profesor:', asignacion);
+      
       this.apiService.desasignarProfesorDeProyecto(asignacion.id, observaciones || undefined).subscribe({
         next: () => {
+          console.log('✅ Profesor desasignado exitosamente');
           alert('Profesor desasignado exitosamente');
           this.cargarAsignaciones();
           this.cargarEstadisticas();
         },
-        error: (err) => {
-          console.error('Error al desasignar profesor:', err);
+        error: (err: any) => {
+          console.error('❌ Error al desasignar profesor:', err);
           alert(err.error?.message || 'Error al desasignar profesor');
         }
       });
     }
+  }
+
+  // ============= MÉTODOS PARA VISTA POR PROYECTO =============
+
+  verAsignacionesProyecto(proyecto: any) {
+    this.proyectoSeleccionado = proyecto;
+    this.mostrarModalProyecto = true;
+    this.cargarAsignacionesProyecto(proyecto.id);
+  }
+
+  cargarAsignacionesProyecto(proyectoId: string) {
+    console.log('🔄 Cargando asignaciones del proyecto:', proyectoId);
+    
+    this.apiService.getAsignacionesProyecto(proyectoId).subscribe({
+      next: (response: any) => {
+        console.log('✅ Asignaciones del proyecto cargadas:', response);
+        this.asignacionesProyecto = response.asignaciones || [];
+      },
+      error: (err: any) => {
+        console.error('❌ Error cargando asignaciones del proyecto:', err);
+        this.asignacionesProyecto = [];
+      }
+    });
+  }
+
+  cerrarModalProyecto() {
+    this.mostrarModalProyecto = false;
+    this.proyectoSeleccionado = null;
+    this.asignacionesProyecto = [];
   }
 
   // ============= MÉTODOS DE UTILIDAD =============
@@ -310,6 +396,50 @@ export class AsignacionesComponent implements OnInit {
 
   getCurrentYear(): number {
     return new Date().getFullYear();
+  }
+
+  // Métodos para proyectos
+  aplicarFiltroProyectos() {
+    this.proyectosFiltrados = this.proyectos.filter(proyecto => {
+      const cumpleFiltroTexto = !this.filtroProyectos || 
+        proyecto.titulo?.toLowerCase().includes(this.filtroProyectos.toLowerCase()) ||
+        proyecto.descripcion?.toLowerCase().includes(this.filtroProyectos.toLowerCase()) ||
+        proyecto.estudiante_nombre?.toLowerCase().includes(this.filtroProyectos.toLowerCase());
+      
+      const cumpleFiltroEstado = !this.filtroEstadoProyecto || 
+        proyecto.estado === this.filtroEstadoProyecto;
+      
+      return cumpleFiltroTexto && cumpleFiltroEstado;
+    });
+  }
+
+  getEstadoDisplay(estado: string): string {
+    const estados: { [key: string]: string } = {
+      'propuesta': 'Propuesta',
+      'en_desarrollo': 'En Desarrollo',
+      'en_revision': 'En Revisión',
+      'finalizado': 'Finalizado'
+    };
+    return estados[estado] || estado;
+  }
+
+  contarAsignacionesProyecto(proyectoId: number): number {
+    return this.asignaciones.filter(a => a.proyecto_id === proyectoId).length;
+  }
+
+  getAsignacionesProyecto(proyectoId: number): any[] {
+    return this.asignaciones.filter(a => a.proyecto_id === proyectoId);
+  }
+
+  asignarProfesorAProyecto(proyecto: any) {
+    this.nuevaAsignacion.proyecto_id = proyecto.id;
+    this.mostrarFormularioAsignacion();
+  }
+
+  formatRolName(rolName: string): string {
+    return rolName.replace('profesor_', '').replace('_', ' ').split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   volver() {

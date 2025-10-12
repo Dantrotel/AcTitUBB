@@ -26,6 +26,9 @@ import { SolicitudesReunionComponent } from './components/calendario-matching/so
 import { DashboardReunionesComponent } from './components/calendario-matching/dashboard-reuniones.component';
 import { GestionReunionesComponent } from './components/calendario-matching/gestion-reuniones.component';
 
+// Cronogramas Component
+import { CronogramasComponent } from './pages/profesor/cronogramas/cronogramas';
+
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
@@ -78,6 +81,12 @@ export const routes: Routes = [
       {
         path: 'propuestas/revisar/:id',
         component: RevisarPropuestaComponent,
+        canActivate: [AuthGuard]
+      },
+      // Rutas de gestión de proyectos
+      {
+        path: 'cronogramas',
+        component: CronogramasComponent,
         canActivate: [AuthGuard]
       },
       // Rutas de Calendario Matching para Profesores
