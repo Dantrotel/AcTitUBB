@@ -29,6 +29,8 @@
   <!-- Formulario -->
   <div class="form-container">
     <form class="propuesta-form" (ngSubmit)="crear()">
+      
+      <!-- SECCIÓN: INFORMACIÓN BÁSICA -->
       <div class="form-section">
         <div class="section-header">
           <i class="fas fa-info-circle"></i>
@@ -38,7 +40,7 @@
         <div class="form-group">
           <label for="titulo">
             <i class="fas fa-heading"></i>
-            Título del Proyecto
+            Título del Proyecto *
           </label>
           <input
             id="titulo"
@@ -48,42 +50,244 @@
             placeholder="Ingresa el título de tu propuesta..."
             required
             class="form-input"
-          />
-          <div class="input-icon">
-            <i class="fas fa-edit"></i>
-          </div>
+            maxlength="255">
         </div>
 
         <div class="form-group">
           <label for="descripcion">
             <i class="fas fa-align-left"></i>
-            Descripción del Proyecto
+            Descripción General *
           </label>
           <textarea
             id="descripcion"
             [(ngModel)]="descripcion"
             name="descripcion"
-            placeholder="Describe detalladamente tu propuesta de proyecto..."
+            placeholder="Describe brevemente tu propuesta..."
             required
             class="form-textarea"
-            rows="6"
-          ></textarea>
-          <div class="textarea-icon">
-            <i class="fas fa-file-text"></i>
-          </div>
+            rows="4"
+            maxlength="1000"></textarea>
         </div>
       </div>
 
+      <!-- SECCIÓN: CONFIGURACIÓN DEL PROYECTO -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-cogs"></i>
+          <h3>Configuración del Proyecto</h3>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="modalidad">
+              <i class="fas fa-layer-group"></i>
+              Modalidad *
+            </label>
+            <select
+              id="modalidad"
+              [(ngModel)]="modalidad"
+              name="modalidad"
+              required
+              class="form-select">
+              <option value="">Selecciona modalidad</option>
+              <option value="desarrollo_software">Desarrollo de Software</option>
+              <option value="investigacion">Investigación</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="numero_estudiantes">
+              <i class="fas fa-users"></i>
+              Número de Estudiantes *
+            </label>
+            <select
+              id="numero_estudiantes"
+              [(ngModel)]="numero_estudiantes"
+              name="numero_estudiantes"
+              required
+              class="form-select"
+              (change)="onEstudiantesChange()">
+              <option value="">Selecciona cantidad</option>
+              <option value="1">1 Estudiante</option>
+              <option value="2">2 Estudiantes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="complejidad_estimada">
+              <i class="fas fa-chart-line"></i>
+              Complejidad Estimada *
+            </label>
+            <select
+              id="complejidad_estimada"
+              [(ngModel)]="complejidad_estimada"
+              name="complejidad_estimada"
+              required
+              class="form-select"
+              (change)="onComplejidadChange()">
+              <option value="">Selecciona complejidad</option>
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="duracion_estimada_semestres">
+              <i class="fas fa-calendar-alt"></i>
+              Duración Estimada *
+            </label>
+            <select
+              id="duracion_estimada_semestres"
+              [(ngModel)]="duracion_estimada_semestres"
+              name="duracion_estimada_semestres"
+              required
+              class="form-select">
+              <option value="">Selecciona duración</option>
+              <option value="1">1 Semestre</option>
+              <option value="2">2 Semestres</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="mostrarJustificacionComplejidad">
+          <label for="justificacion_complejidad">
+            <i class="fas fa-question-circle"></i>
+            Justificación de Complejidad *
+          </label>
+          <textarea
+            id="justificacion_complejidad"
+            [(ngModel)]="justificacion_complejidad"
+            name="justificacion_complejidad"
+            placeholder="Justifica por qué este proyecto requiere 2 estudiantes siendo de complejidad baja..."
+            [required]="mostrarJustificacionComplejidad"
+            class="form-textarea"
+            rows="3"></textarea>
+          <small class="form-hint">
+            <i class="fas fa-info-circle"></i>
+            Se requiere justificación para proyectos de 2 estudiantes con complejidad baja
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="area_tematica">
+            <i class="fas fa-tags"></i>
+            Área Temática *
+          </label>
+          <input
+            id="area_tematica"
+            type="text"
+            [(ngModel)]="area_tematica"
+            name="area_tematica"
+            placeholder="Ej: Inteligencia Artificial, Desarrollo Web, Bases de Datos..."
+            required
+            class="form-input"
+            maxlength="100">
+        </div>
+      </div>
+
+      <!-- SECCIÓN: OBJETIVOS -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-bullseye"></i>
+          <h3>Objetivos del Proyecto</h3>
+        </div>
+        
+        <div class="form-group">
+          <label for="objetivos_generales">
+            <i class="fas fa-target"></i>
+            Objetivos Generales *
+          </label>
+          <textarea
+            id="objetivos_generales"
+            [(ngModel)]="objetivos_generales"
+            name="objetivos_generales"
+            placeholder="Define los objetivos generales que busca alcanzar tu proyecto..."
+            required
+            class="form-textarea"
+            rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="objetivos_especificos">
+            <i class="fas fa-list-ol"></i>
+            Objetivos Específicos *
+          </label>
+          <textarea
+            id="objetivos_especificos"
+            [(ngModel)]="objetivos_especificos"
+            name="objetivos_especificos"
+            placeholder="Lista los objetivos específicos y medibles del proyecto..."
+            required
+            class="form-textarea"
+            rows="5"></textarea>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: METODOLOGÍA -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-project-diagram"></i>
+          <h3>Metodología y Recursos</h3>
+        </div>
+        
+        <div class="form-group">
+          <label for="metodologia_propuesta">
+            <i class="fas fa-route"></i>
+            Metodología Propuesta *
+          </label>
+          <textarea
+            id="metodologia_propuesta"
+            [(ngModel)]="metodologia_propuesta"
+            name="metodologia_propuesta"
+            placeholder="Describe la metodología que utilizarás para desarrollar el proyecto..."
+            required
+            class="form-textarea"
+            rows="5"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="recursos_necesarios">
+            <i class="fas fa-toolbox"></i>
+            Recursos Necesarios
+          </label>
+          <textarea
+            id="recursos_necesarios"
+            [(ngModel)]="recursos_necesarios"
+            name="recursos_necesarios"
+            placeholder="Lista los recursos técnicos, software, hardware o bibliográficos necesarios..."
+            class="form-textarea"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="bibliografia">
+            <i class="fas fa-book"></i>
+            Bibliografía
+          </label>
+          <textarea
+            id="bibliografia"
+            [(ngModel)]="bibliografia"
+            name="bibliografia"
+            placeholder="Referencias bibliográficas relevantes para el proyecto..."
+            class="form-textarea"
+            rows="4"></textarea>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: ARCHIVO Y ENVÍO -->
       <div class="form-section">
         <div class="section-header">
           <i class="fas fa-paperclip"></i>
-          <h3>Documento Adjunto</h3>
+          <h3>Documentación</h3>
         </div>
         
         <div class="form-group">
           <label for="archivo">
             <i class="fas fa-upload"></i>
-            Archivo de Propuesta
+            Archivo de Propuesta *
           </label>
           <div class="file-upload-container">
             <input
@@ -113,6 +317,10 @@
               </button>
             </div>
           </div>
+          <small class="form-hint">
+            <i class="fas fa-info-circle"></i>
+            Adjunta el documento completo de tu propuesta de proyecto
+          </small>
         </div>
       </div>
 
@@ -129,8 +337,20 @@
             <span class="summary-value">{{ titulo || 'No especificado' }}</span>
           </div>
           <div class="summary-item">
-            <span class="summary-label">Descripción:</span>
-            <span class="summary-value">{{ descripcion || 'No especificada' }}</span>
+            <span class="summary-label">Modalidad:</span>
+            <span class="summary-value">{{ modalidad || 'No especificada' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Estudiantes:</span>
+            <span class="summary-value">{{ numero_estudiantes || 'No especificado' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Complejidad:</span>
+            <span class="summary-value">{{ complejidad_estimada || 'No especificada' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Duración:</span>
+            <span class="summary-value">{{ duracion_estimada_semestres ? duracion_estimada_semestres + ' semestre(s)' : 'No especificada' }}</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">Archivo:</span>
@@ -153,7 +373,7 @@
         <button 
           type="submit" 
           class="btn-primary" 
-          [disabled]="!titulo || !descripcion || !archivo"
+          [disabled]="isSubmitting"
           [class.loading]="isSubmitting"
         >
           <i class="fas fa-paper-plane" *ngIf="!isSubmitting"></i>

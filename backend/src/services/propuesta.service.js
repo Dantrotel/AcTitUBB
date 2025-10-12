@@ -8,8 +8,49 @@ export const estadosValidos = ['pendiente', 'en_revision', 'correcciones', 'apro
 
 export const crearPropuesta = async (data) => {
   try {
+    // Validaciones básicas obligatorias
     if (!data.titulo?.trim() || !data.descripcion?.trim() || !data.estudiante_rut || !data.fecha_envio) {
       throw new Error('Faltan datos obligatorios para crear la propuesta');
+    }
+
+    // Validaciones nuevos campos obligatorios
+    if (!data.modalidad || !['desarrollo_software', 'investigacion'].includes(data.modalidad)) {
+      throw new Error('Modalidad debe ser "desarrollo_software" o "investigacion"');
+    }
+
+    if (!data.numero_estudiantes || ![1, 2].includes(data.numero_estudiantes)) {
+      throw new Error('Número de estudiantes debe ser 1 o 2');
+    }
+
+    if (!data.complejidad_estimada || !['baja', 'media', 'alta'].includes(data.complejidad_estimada)) {
+      throw new Error('Complejidad estimada debe ser "baja", "media" o "alta"');
+    }
+
+    if (!data.duracion_estimada_semestres || ![1, 2].includes(data.duracion_estimada_semestres)) {
+      throw new Error('Duración estimada debe ser 1 o 2 semestres');
+    }
+
+    if (!data.area_tematica?.trim()) {
+      throw new Error('Área temática es obligatoria');
+    }
+
+    if (!data.objetivos_generales?.trim()) {
+      throw new Error('Objetivos generales son obligatorios');
+    }
+
+    if (!data.objetivos_especificos?.trim()) {
+      throw new Error('Objetivos específicos son obligatorios');
+    }
+
+    if (!data.metodologia_propuesta?.trim()) {
+      throw new Error('Metodología propuesta es obligatoria');
+    }
+
+    // Validación condicional: justificación para 2 estudiantes con complejidad baja
+    if (data.numero_estudiantes === 2 && data.complejidad_estimada === 'baja') {
+      if (!data.justificacion_complejidad?.trim()) {
+        throw new Error('Justificación de complejidad es requerida para 2 estudiantes con complejidad baja');
+      }
     }
 
     if (!rutValido(data.estudiante_rut)) {
@@ -119,6 +160,15 @@ export const revisarPropuesta = async (id, data) => {
         
         console.log(`✅ Proyecto ${proyectoId} creado exitosamente para propuesta ${id}`);
         
+        // Crear notificación para administradores sobre el nuevo proyecto
+        try {
+          await crearNotificacionAdminProyectoCreado(proyectoId, propuesta.titulo);
+          console.log(`✅ Notificación enviada a administradores para proyecto ${proyectoId}`);
+        } catch (notifError) {
+          console.error('⚠️ Error al crear notificación para admins:', notifError);
+          // No falla el proceso, solo registra el error
+        }
+        
         // Crear fechas importantes por defecto para el proyecto
         try {
           await ProjectService.crearFechasImportantesProyecto(proyectoId);
@@ -200,4 +250,40 @@ export const verificarPermisosVisualizacion = async (propuesta, userRut, userRol
 export const verificarPermisosEdicion = async (propuesta, userRut) => {
   // Solo el creador puede editar su propuesta
   return propuesta.estudiante_rut === userRut;
+};
+
+/**
+ * Crear notificación para administradores cuando se crea un proyecto
+ * @param {number} proyecto_id - ID del proyecto creado
+ * @param {string} titulo_proyecto - Título del proyecto
+ */
+const crearNotificacionAdminProyectoCreado = async (proyecto_id, titulo_proyecto) => {
+  try {
+    // Obtener todos los administradores (rol_id = 3)
+    const administradores = await PropuestasModel.obtenerUsuariosPorRol(3);
+    
+    if (!administradores || administradores.length === 0) {
+      console.log('⚠️ No hay administradores para notificar');
+      return;
+    }
+
+    const mensaje = `Nuevo proyecto creado automáticamente: "${titulo_proyecto}". Requiere asignación de los 3 roles de profesores para activarse.`;
+    
+    // Crear notificación para cada administrador
+    for (const admin of administradores) {
+      await PropuestasModel.crearNotificacion({
+        usuario_rut: admin.rut,
+        tipo: 'proyecto_creado',
+        titulo: 'Nuevo Proyecto Creado',
+        mensaje: mensaje,
+        proyecto_id: proyecto_id,
+        leida: false
+      });
+    }
+
+    console.log(`✅ Notificación enviada a ${administradores.length} administradores sobre proyecto ${proyecto_id}`);
+  } catch (error) {
+    console.error('Error al crear notificación para administradores:', error);
+    throw error;
+  }
 };

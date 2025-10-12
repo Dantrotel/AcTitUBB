@@ -78,35 +78,70 @@ export const crearPropuestaController = async (req, res) => {
   console.log('FILE:', req.file);
 
   try {
-    const { titulo, descripcion, fecha_envio, estado } = req.body;
+    const { 
+      titulo, 
+      descripcion, 
+      fecha_envio, 
+      estado,
+      modalidad,
+      numero_estudiantes,
+      complejidad_estimada,
+      justificacion_complejidad,
+      duracion_estimada_semestres,
+      area_tematica,
+      objetivos_generales,
+      objetivos_especificos,
+      metodologia_propuesta,
+      recursos_necesarios,
+      bibliografia
+    } = req.body;
     const estudiante_rut = req.rut;
 
     console.log('Datos extraídos:', {
       titulo: titulo || 'FALTA',
       descripcion: descripcion || 'FALTA', 
       fecha_envio: fecha_envio || 'FALTA',
-      estado: estado || 'pendiente (por defecto)',
+      modalidad: modalidad || 'FALTA',
+      numero_estudiantes: numero_estudiantes || 'FALTA',
+      area_tematica: area_tematica || 'FALTA',
       estudiante_rut: estudiante_rut || 'FALTA'
     });
 
-    // Validación más específica
+    // Validación estricta de campos obligatorios
     const errores = [];
     if (!titulo || titulo.trim() === '') errores.push('titulo es requerido');
     if (!descripcion || descripcion.trim() === '') errores.push('descripcion es requerida');
     if (!fecha_envio) errores.push('fecha_envio es requerida');
+    if (!modalidad || !['desarrollo_software', 'investigacion'].includes(modalidad)) {
+      errores.push('modalidad debe ser "desarrollo_software" o "investigacion"');
+    }
+    if (!numero_estudiantes || ![1, 2].includes(parseInt(numero_estudiantes))) {
+      errores.push('numero_estudiantes debe ser 1 o 2');
+    }
+    if (!complejidad_estimada || !['baja', 'media', 'alta'].includes(complejidad_estimada)) {
+      errores.push('complejidad_estimada debe ser "baja", "media" o "alta"');
+    }
+    if (!duracion_estimada_semestres || ![1, 2].includes(parseInt(duracion_estimada_semestres))) {
+      errores.push('duracion_estimada_semestres debe ser 1 o 2');
+    }
+    if (!area_tematica || area_tematica.trim() === '') errores.push('area_tematica es requerida');
+    if (!objetivos_generales || objetivos_generales.trim() === '') errores.push('objetivos_generales es requerido');
+    if (!objetivos_especificos || objetivos_especificos.trim() === '') errores.push('objetivos_especificos es requerido');
+    if (!metodologia_propuesta || metodologia_propuesta.trim() === '') errores.push('metodologia_propuesta es requerida');
     if (!estudiante_rut) errores.push('estudiante_rut falta (problema de autenticación)');
+
+    // Validación condicional: si son 2 estudiantes y complejidad baja, requiere justificación
+    if (parseInt(numero_estudiantes) === 2 && complejidad_estimada === 'baja') {
+      if (!justificacion_complejidad || justificacion_complejidad.trim() === '') {
+        errores.push('justificacion_complejidad es requerida para 2 estudiantes con complejidad baja');
+      }
+    }
 
     if (errores.length > 0) {
       console.log('❌ Errores de validación:', errores);
       return res.status(400).json({ 
-        message: 'Faltan datos obligatorios',
-        errores: errores,
-        datosRecibidos: {
-          titulo: !!titulo,
-          descripcion: !!descripcion,
-          fecha_envio: !!fecha_envio,
-          estudiante_rut: !!estudiante_rut
-        }
+        message: 'Faltan datos obligatorios o son inválidos',
+        errores: errores
       });
     }
 
@@ -132,12 +167,23 @@ export const crearPropuestaController = async (req, res) => {
       estado: estado || 'pendiente',
       archivo,
       nombre_archivo_original,
+      modalidad,
+      numero_estudiantes: parseInt(numero_estudiantes),
+      complejidad_estimada,
+      justificacion_complejidad,
+      duracion_estimada_semestres: parseInt(duracion_estimada_semestres),
+      area_tematica,
+      objetivos_generales,
+      objetivos_especificos,
+      metodologia_propuesta,
+      recursos_necesarios,
+      bibliografia
     });
 
-    return res.status(201).json({ message: 'Propuesta creada', id: nuevaPropuestaId });
+    return res.status(201).json({ message: 'Propuesta creada exitosamente', id: nuevaPropuestaId });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('Error al crear propuesta:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', details: error.message });
   }
 };
 
