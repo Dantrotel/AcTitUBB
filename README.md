@@ -1,11 +1,11 @@
-# 🎓 AcTitUBB - Sistema Integral de Gestión Académica
+# 🎓 AcTitUBB - Sistema para las actividades de titulación en la Universidad del Bío-Bío
 ## Universidad del Bío-Bío
 
 <div align="center">
 
 ![Universidad del Bío-Bío](frontend/public/Escudo_Universidad_del_Bío-Bío.png)
 
-**Plataforma completa para la gestión de propuestas de tesis, proyectos de título y seguimiento académico**
+**Plataforma de apoyo completa para la gestión de propuestas de tesis, proyectos de título y seguimiento académico**
 
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
 [![Angular](https://img.shields.io/badge/Angular-18+-red?logo=angular)](https://angular.io/)
@@ -19,7 +19,7 @@
 
 ## 📖 Descripción
 
-**AcTitUBB** es una aplicación web avanzada diseñada para digitalizar y optimizar la gestión académica completa en la Universidad del Bío-Bío. El sistema abarca desde la creación de propuestas de tesis hasta el seguimiento de hitos, calendario académico, y gestión de archivos, proporcionando una experiencia integral para estudiantes, profesores y administradores.
+**AcTitUBB** es una aplicación web avanzada diseñada para el apoyo de la gestión académica en la Universidad del Bío-Bío. El sistema abarca desde la creación de propuestas de tesis hasta el seguimiento de hitos, calendario académico, y gestión de archivos, proporcionando una experiencia integral para estudiantes, profesores y administradores.
 
 ### ✨ Características Principales
 
@@ -736,19 +736,14 @@ EXPLAIN SELECT * FROM propuestas;  # Query analysis
 #### Autenticación y Autorización
 - ✅ **JWT con blacklist**: Tokens seguros con invalidación
 - ✅ **Bcrypt**: Hash de contraseñas con salt rounds configurable
-- ✅ **Rate limiting**: Prevención de ataques de fuerza bruta
 - ✅ **CORS configurado**: Origen específico para producción
 
 #### Validación de Datos
 - ✅ **Sanitización**: Input sanitization en backend
 - ✅ **Validación de RUT**: Algoritmo específico para RUT chileno
-- ✅ **Validación de archivos**: Tipo, tamaño y contenido
+- ✅ **Validación de archivos**: Tipo y tamaño
 - ✅ **SQL Injection**: Prepared statements en todas las queries
 
-#### Seguridad de Archivos
-- ✅ **Upload security**: Validación de MIME type y extensión
-- ✅ **Path traversal protection**: Nombres de archivo seguros
-- ✅ **Virus scanning**: Integración opcional con ClamAV
 
 ### Configuración de Seguridad
 
@@ -1008,41 +1003,6 @@ const FeatureController = {
 };
 ```
 
-### Roadmap de Desarrollo
-
-#### 🎯 **Próximas Funcionalidades (v2.0)**
-- [ ] **Sistema de Notificaciones Push**
-  - Service Worker integration
-  - Firebase Cloud Messaging
-  - Notificaciones en tiempo real
-
-- [ ] **Chat en Tiempo Real**
-  - WebSocket integration
-  - Mensajería directa profesor-estudiante
-  - Salas de chat por proyecto
-
-- [ ] **Sistema de Videoconferencias**
-  - Integración con WebRTC
-  - Calendario de reuniones
-  - Grabación de sesiones
-
-- [ ] **Mobile App (PWA)**
-  - Progressive Web App
-  - Funcionalidad offline
-  - Sincronización automática
-
-#### 🔮 **Funcionalidades Futuras (v3.0)**
-- [ ] **Inteligencia Artificial**
-  - Sugerencias automáticas de profesores
-  - Análisis de sentimientos en comentarios
-  - Predicción de riesgo académico
-
-- [ ] **Blockchain Integration**
-  - Certificados digitales inmutables
-  - Verificación de documentos
-  - Trazabilidad académica
-
----
 
 ## 📄 Licencia y Términos de Uso
 
@@ -1054,15 +1014,6 @@ Este proyecto está desarrollado para uso académico en la **Universidad del Bí
 - ✅ **Modificación**: Permitida para propósitos educativos
 - ✅ **Distribución**: Con atribución apropiada
 - ❌ **Uso comercial**: Requiere autorización expresa
-
-### Política de Privacidad
-
-El sistema maneja información académica sensible bajo las siguientes políticas:
-
-- 🔒 **Datos personales**: Protegidos según ley chilena de datos personales
-- 🔒 **Información académica**: Acceso restringido según rol
-- 🔒 **Archivos**: Almacenamiento seguro con backup automático
-- 🔒 **Trazabilidad**: Logs de acceso para auditoría
 
 ---
 
@@ -1084,19 +1035,11 @@ El sistema maneja información académica sensible bajo las siguientes política
 
 </div>
 
-### 📈 **Estadísticas del Proyecto**
-
-- 📊 **Líneas de código**: ~50,000+
-- 🧪 **Test coverage**: >85%
-- 📁 **Archivos**: 200+
-- ⏱️ **Tiempo de desarrollo**: 6 meses
-- 🐛 **Issues resueltas**: 150+
-- ✨ **Features implementadas**: 25+
 
 ### 🙏 **Agradecimientos**
 
 - **Universidad del Bío-Bío** - Por el soporte académico
-- **Facultad de Ingeniería** - Por los recursos y guidance
+- **Facultad de Ciencias empresariales** - Por los recursos y guidance
 - **Profesores guía** - Por la mentoría técnica
 - **Comunidad Open Source** - Por las herramientas utilizadas
 
@@ -1109,16 +1052,7 @@ El sistema maneja información académica sensible bajo las siguientes política
 ¿Encontraste un bug o tienes una pregunta técnica?
 
 1. **📋 Revisa Issues existentes**: [GitHub Issues](https://github.com/Dantrotel/AcTitUBB/issues)
-2. **🐛 Reporta bugs**: Usa el template de bug report
-3. **💡 Sugiere features**: Usa el template de feature request
-4. **📧 Contacto directo**: [daniel.aguayo2001@alumnos.ubiobio.cl](mailto:daniel.aguayo2001@alumnos.ubiobio.cl)
-
-### 📖 **Documentación Adicional**
-
-- **📚 Wiki del proyecto**: [GitHub Wiki](https://github.com/Dantrotel/AcTitUBB/wiki)
-- **🔧 Guías técnicas**: Disponibles en `/docs/`
-- **📹 Videos tutoriales**: Enlaces en la wiki
-- **❓ FAQ**: Preguntas frecuentes documentadas
+2. **📧 Contacto directo**: [daniel.aguayo2001@alumnos.ubiobio.cl](mailto:daniel.aguayo2001@alumnos.ubiobio.cl)
 
 ---
 
@@ -1136,6 +1070,5 @@ El sistema maneja información académica sensible bajo las siguientes política
 
 ---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Dantrotel/AcTitUBB&type=Date)](https://star-history.com/#Dantrotel/AcTitUBB&Date)
 
 </div>
