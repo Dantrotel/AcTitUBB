@@ -1080,7 +1080,7 @@ El sistema maneja información académica sensible bajo las siguientes política
 
 🏫 **Universidad del Bío-Bío**  
 📅 **2025**  
-🎓 **Ingeniería Civil en Informática**
+🎓 **Ingeniería de ejecución en computación e Informática**
 
 </div>
 
