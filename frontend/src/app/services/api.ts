@@ -320,4 +320,107 @@ export class ApiService {
       headers: this.getHeaders()
     });
   }
+
+  // ===== MÉTODOS DE CALENDARIO MATCHING =====
+  
+  // Disponibilidades
+  createDisponibilidad(data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/disponibilidades`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getDisponibilidades() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/disponibilidades`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  updateDisponibilidad(id: string, data: any) {
+    return this.http.put(`${this.baseUrl}/calendario-matching/disponibilidades/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteDisponibilidad(id: string) {
+    return this.http.delete(`${this.baseUrl}/calendario-matching/disponibilidades/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Solicitudes de reunión
+  buscarReunion(data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/buscar-reunion`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearSolicitudReunion(data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/solicitudes`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getSolicitudesReunion() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/solicitudes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  responderSolicitudReunion(id: string, data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/solicitudes/${id}/responder`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Reuniones
+  getReunionesProgramadas() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/reuniones`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  confirmarReunion(id: string, data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/reuniones/${id}/confirmar`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  reprogramarReunion(id: string, data: any) {
+    return this.http.put(`${this.baseUrl}/calendario-matching/reuniones/${id}/reprogramar`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  cancelarReunion(id: string, data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/reuniones/${id}/cancelar`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Dashboard
+  getDashboardReuniones() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/dashboard`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Bloqueos de horarios
+  crearBloqueoHorario(data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/bloqueos`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getBloqueos() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/bloqueos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  eliminarBloqueo(id: string) {
+    return this.http.delete(`${this.baseUrl}/calendario-matching/bloqueos/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
 }

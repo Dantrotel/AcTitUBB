@@ -1,0 +1,252 @@
+<div class="solicitudes-reunion-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <h2><i class="fas fa-handshake"></i> Solicitudes de Reunión</h2>
+      <p>Solicita reuniones automáticas con tus profesores basadas en disponibilidad</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="errorMessage || successMessage">
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-triangle"></i>
+      {{ errorMessage }}
+    </div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <!-- Formulario de Nueva Solicitud -->
+  <div class="form-section">
+    <h3><i class="fas fa-plus-circle"></i> Nueva Solicitud de Reunión</h3>
+    
+    <div class="nueva-solicitud-form">
+      <!-- Paso 1: Datos básicos -->
+      <div class="form-step" [class.completed]="profesorSeleccionado">
+        <h4><span class="step-number">1</span> Información de la Reunión</h4>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="profesor">Profesor</label>
+            <select 
+              id="profesor" 
+              [(ngModel)]="nuevaSolicitud.profesor_rut" 
+              (change)="onProfesorChange()"
+              class="form-control"
+              [disabled]="isBuscandoOpciones">
+              <option value="">Seleccionar profesor</option>
+              <option *ngFor="let profesor of profesores" [value]="profesor.rut">
+                {{ profesor.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="duracion">Duración</label>
+            <select 
+              id="duracion" 
+              [(ngModel)]="nuevaSolicitud.duracion_minutos" 
+              class="form-control"
+              [disabled]="isBuscandoOpciones">
+              <option *ngFor="let duracion of duracionesDisponibles" [value]="duracion.value">
+                {{ duracion.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="urgencia">Urgencia</label>
+            <select 
+              id="urgencia" 
+              [(ngModel)]="nuevaSolicitud.urgencia" 
+              class="form-control"
+              [disabled]="isBuscandoOpciones">
+              <option *ngFor="let urgencia of nivelesUrgencia" [value]="urgencia.value">
+                {{ urgencia.label }} - {{ urgencia.description }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="motivo">Motivo de la reunión</label>
+          <select 
+            id="motivo" 
+            [(ngModel)]="nuevaSolicitud.motivo" 
+            class="form-control"
+            [disabled]="isBuscandoOpciones">
+            <option value="">Seleccionar motivo</option>
+            <option *ngFor="let motivo of motivosComunes" [value]="motivo">
+              {{ motivo }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="comentarios">Comentarios adicionales (opcional)</label>
+          <textarea 
+            id="comentarios" 
+            [(ngModel)]="nuevaSolicitud.comentarios_adicionales"
+            class="form-control"
+            rows="3"
+            placeholder="Información adicional sobre la reunión..."
+            [disabled]="isBuscandoOpciones">
+          </textarea>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            (click)="buscarOpcionesReunion()"
+            [disabled]="isBuscandoOpciones">
+            <i class="fas fa-search" [class.fa-spin]="isBuscandoOpciones"></i>
+            {{ isBuscandoOpciones ? 'Buscando opciones...' : 'Buscar Horarios Disponibles' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Paso 2: Opciones de horarios -->
+      <div class="form-step" *ngIf="mostrarOpciones" [class.completed]="false">
+        <h4><span class="step-number">2</span> Seleccionar Horario</h4>
+        
+        <div class="opciones-container" *ngIf="opcionesReunion.length > 0">
+          <p class="opciones-info">
+            <i class="fas fa-info-circle"></i>
+            Se encontraron {{ opcionesReunion.length }} opciones disponibles para reunirse con 
+            <strong>{{ profesorSeleccionado?.nombre }}</strong>
+          </p>
+
+          <div class="opciones-grid">
+            <div 
+              class="opcion-card" 
+              *ngFor="let opcion of opcionesReunion; trackBy: trackByIndex"
+              (click)="seleccionarOpcion(opcion)"
+              [class.disabled]="isLoading">
+              
+              <div class="opcion-header">
+                <div class="fecha">
+                  <i class="fas fa-calendar"></i>
+                  {{ formatearFecha(opcion.fecha) }}
+                </div>
+                <div class="probabilidad" [class]="getProbabilidadClass(opcion.probabilidad_exito)">
+                  {{ opcion.probabilidad_exito }}% match
+                </div>
+              </div>
+
+              <div class="opcion-content">
+                <div class="horario">
+                  <i class="fas fa-clock"></i>
+                  {{ formatearHora(opcion.hora_inicio) }} - {{ formatearHora(opcion.hora_fin) }}
+                </div>
+                <div class="duracion">
+                  <i class="fas fa-hourglass-half"></i>
+                  {{ nuevaSolicitud.duracion_minutos }} minutos
+                </div>
+              </div>
+
+              <div class="opcion-actions">
+                <button class="btn btn-select" [disabled]="isLoading">
+                  <i class="fas fa-check"></i>
+                  Seleccionar este horario
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-opciones" *ngIf="opcionesReunion.length === 0 && mostrarOpciones">
+          <i class="fas fa-calendar-times"></i>
+          <h4>No hay horarios disponibles</h4>
+          <p>Intenta modificar la duración o el nivel de urgencia para encontrar más opciones.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Solicitudes -->
+  <div class="solicitudes-list">
+    <h3><i class="fas fa-list"></i> Mis Solicitudes</h3>
+    
+    <div class="loading" *ngIf="isLoading && solicitudes.length === 0">
+      <i class="fas fa-spinner fa-spin"></i> Cargando solicitudes...
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && solicitudes.length === 0">
+      <i class="fas fa-inbox"></i>
+      <h4>No tienes solicitudes de reunión</h4>
+      <p>Cuando envíes tu primera solicitud, aparecerá aquí con su estado</p>
+    </div>
+
+    <div class="solicitudes-grid" *ngIf="solicitudes.length > 0">
+      <div 
+        class="solicitud-card" 
+        *ngFor="let solicitud of solicitudes"
+        [class]="getEstadoClass(solicitud.estado)">
+        
+        <div class="card-header">
+          <div class="profesor-info">
+            <h4>{{ solicitud.profesor_nombre || 'Profesor' }}</h4>
+            <span class="fecha-solicitud">
+              {{ solicitud.fecha_solicitud | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+          <div class="estado-badge" [class]="getEstadoClass(solicitud.estado)">
+            {{ getEstadoLabel(solicitud.estado) }}
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="motivo">
+            <i class="fas fa-comment"></i>
+            <span>{{ solicitud.motivo }}</span>
+          </div>
+          
+          <div class="detalles">
+            <div class="detalle-item">
+              <i class="fas fa-clock"></i>
+              <span>{{ solicitud.duracion_minutos }} minutos</span>
+            </div>
+            <div class="detalle-item">
+              <i class="fas fa-exclamation"></i>
+              <span [style.color]="getUrgenciaInfo(solicitud.urgencia).color">
+                {{ getUrgenciaInfo(solicitud.urgencia).label }}
+              </span>
+            </div>
+          </div>
+
+          <div class="comentarios" *ngIf="solicitud.comentarios_adicionales">
+            <i class="fas fa-note-sticky"></i>
+            <span>{{ solicitud.comentarios_adicionales }}</span>
+          </div>
+        </div>
+
+        <div class="card-actions" *ngIf="solicitud.estado === 'pendiente'">
+          <button 
+            class="btn btn-sm btn-danger"
+            (click)="cancelarSolicitud(solicitud.id!)"
+            [disabled]="isLoading">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información útil -->
+  <div class="info-section">
+    <div class="info-card">
+      <h4><i class="fas fa-lightbulb"></i> Consejos para mejores resultados</h4>
+      <ul>
+        <li>Los profesores con más disponibilidades tendrán más opciones de horarios</li>
+        <li>Las solicitudes urgentes priorizan horarios en los próximos días</li>
+        <li>Especifica bien el motivo para que el profesor tenga contexto</li>
+        <li>Las reuniones se confirman automáticamente al seleccionar un horario</li>
+      </ul>
+    </div>
+  </div>
+</div>

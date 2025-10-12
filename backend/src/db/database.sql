@@ -294,3 +294,119 @@ CREATE INDEX idx_reuniones_proyecto ON reuniones(proyecto_id);
 CREATE INDEX idx_asignaciones_propuesta ON asignaciones_propuestas(propuesta_id);
 CREATE INDEX idx_asignaciones_proyecto ON asignaciones_proyectos(proyecto_id);
 
+-- ===== SISTEMA DE CALENDARIO CON MATCHING AUTOMÁTICO =====
+
+-- Tabla de Disponibilidades de Usuarios
+CREATE TABLE IF NOT EXISTS disponibilidades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_rut VARCHAR(10) NOT NULL,
+    dia_semana ENUM('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo') NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    INDEX idx_disponibilidad_usuario (usuario_rut, activo),
+    INDEX idx_disponibilidad_dia (dia_semana, activo)
+);
+
+-- Tabla de Solicitudes de Reunión
+CREATE TABLE IF NOT EXISTS solicitudes_reunion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    fecha_propuesta DATE NOT NULL,
+    hora_propuesta TIME NOT NULL,
+    duracion_minutos INT DEFAULT 60,
+    tipo_reunion ENUM('seguimiento', 'revision_avance', 'orientacion', 'defensa_parcial', 'otra') DEFAULT 'seguimiento',
+    descripcion TEXT,
+    estado ENUM('pendiente', 'aceptada_profesor', 'aceptada_estudiante', 'confirmada', 'rechazada', 'cancelada') DEFAULT 'pendiente',
+    creado_por ENUM('profesor', 'estudiante', 'sistema') DEFAULT 'sistema',
+    fecha_respuesta_profesor TIMESTAMP NULL,
+    fecha_respuesta_estudiante TIMESTAMP NULL,
+    comentarios_profesor TEXT,
+    comentarios_estudiante TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
+    INDEX idx_solicitud_proyecto (proyecto_id, estado),
+    INDEX idx_solicitud_profesor (profesor_rut, estado),
+    INDEX idx_solicitud_estudiante (estudiante_rut, estado),
+    INDEX idx_solicitud_fecha (fecha_propuesta, hora_propuesta)
+);
+
+-- Tabla de Reuniones Confirmadas
+CREATE TABLE IF NOT EXISTS reuniones_calendario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    solicitud_reunion_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    fecha DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    tipo_reunion ENUM('seguimiento', 'revision_avance', 'orientacion', 'defensa_parcial', 'otra') DEFAULT 'seguimiento',
+    titulo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    lugar VARCHAR(100),
+    modalidad ENUM('presencial', 'virtual', 'hibrida') DEFAULT 'presencial',
+    link_reunion VARCHAR(500) NULL, -- Para reuniones virtuales
+    estado ENUM('programada', 'en_curso', 'realizada', 'cancelada', 'reprogramada') DEFAULT 'programada',
+    acta_reunion TEXT NULL, -- Resumen de la reunión
+    fecha_realizacion TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (solicitud_reunion_id) REFERENCES solicitudes_reunion(id),
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
+    INDEX idx_reunion_fecha (fecha, hora_inicio),
+    INDEX idx_reunion_profesor (profesor_rut, fecha),
+    INDEX idx_reunion_estudiante (estudiante_rut, fecha),
+    INDEX idx_reunion_proyecto (proyecto_id, estado),
+    UNIQUE KEY unique_profesor_fecha_hora (profesor_rut, fecha, hora_inicio),
+    UNIQUE KEY unique_estudiante_fecha_hora (estudiante_rut, fecha, hora_inicio)
+);
+
+-- Tabla de Bloqueos de Horarios (para vacaciones, feriados, etc.)
+CREATE TABLE IF NOT EXISTS bloqueos_horarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_rut VARCHAR(10) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    hora_inicio TIME NULL, -- NULL significa todo el día
+    hora_fin TIME NULL,
+    motivo VARCHAR(255) NOT NULL,
+    tipo ENUM('vacaciones', 'licencia', 'feriado', 'personal', 'academico') DEFAULT 'personal',
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    INDEX idx_bloqueo_usuario_fecha (usuario_rut, fecha_inicio, fecha_fin)
+);
+
+-- Tabla de Configuración del Sistema de Matching
+CREATE TABLE IF NOT EXISTS configuracion_matching (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(50) NOT NULL UNIQUE,
+    valor VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    tipo ENUM('entero', 'decimal', 'booleano', 'texto') DEFAULT 'texto',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insertar configuraciones por defecto para el sistema de matching
+INSERT IGNORE INTO configuracion_matching (clave, valor, descripcion, tipo) VALUES
+('duracion_reunion_defecto', '60', 'Duración por defecto de las reuniones en minutos', 'entero'),
+('dias_anticipacion_minima', '1', 'Días mínimos de anticipación para agendar reuniones', 'entero'),
+('dias_anticipacion_maxima', '30', 'Días máximos de anticipación para agendar reuniones', 'entero'),
+('horario_inicio_jornada', '08:00', 'Hora de inicio de la jornada laboral', 'texto'),
+('horario_fin_jornada', '18:00', 'Hora de fin de la jornada laboral', 'texto'),
+('matching_automatico_activo', 'true', 'Si el matching automático está activo', 'booleano'),
+('tiempo_respuesta_horas', '48', 'Tiempo máximo en horas para responder solicitudes', 'entero'),
+('permitir_reuniones_sabado', 'false', 'Permitir agendar reuniones los sábados', 'booleano'),
+('permitir_reuniones_domingo', 'false', 'Permitir agendar reuniones los domingos', 'booleano');
+

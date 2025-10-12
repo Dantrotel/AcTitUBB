@@ -2,7 +2,7 @@ import e from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model.js';
 import { loginController } from '../controllers/login.controller.js';
-import { verifySession } from '../middlewares/verifySession.js';
+import verifySession from '../middlewares/verifySession.js';
 
 const router = e.Router();
 

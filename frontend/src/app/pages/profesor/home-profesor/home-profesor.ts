@@ -25,6 +25,7 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
 export class HomeProfesor implements OnInit {
   profesor: any = {};
   showUserMenu = false;
+  showCalendarioMenu = false;
   estadisticas: any = {
     totalPropuestas: 0,
     pendientes: 0,
@@ -103,10 +104,19 @@ export class HomeProfesor implements OnInit {
 
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
+    // Cerrar otros menús
+    this.showCalendarioMenu = false;
+  }
+
+  toggleCalendarioMenu() {
+    this.showCalendarioMenu = !this.showCalendarioMenu;
+    // Cerrar otros menús
+    this.showUserMenu = false;
   }
 
   navegar(ruta: string) {
     this.showUserMenu = false; // Cerrar menú al navegar
+    this.showCalendarioMenu = false; // Cerrar menú de calendario
     this.router.navigate([ruta]);
   }
 
