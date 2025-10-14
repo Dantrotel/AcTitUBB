@@ -1,14 +1,27 @@
 <div class="disponibilidades-container">
-  <!-- Header -->
+  <!-- Header principal -->
   <div class="header">
     <div class="header-content">
-      <h2><i class="fas fa-calendar-alt"></i> Gestión de Disponibilidades</h2>
+      <h1><i class="fas fa-calendar-alt"></i> Gestión de Disponibilidades</h1>
       <p>Define tus horarios disponibles para reuniones automáticas</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
     </div>
   </div>
 
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <h3>Cargando disponibilidades...</h3>
+    <p>Obteniendo información de horarios disponibles</p>
+  </div>
+
   <!-- Messages -->
-  <div class="messages" *ngIf="errorMessage || successMessage">
+  <div class="messages" *ngIf="(errorMessage || successMessage) && !isLoading">
     <div class="alert alert-error" *ngIf="errorMessage">
       <i class="fas fa-exclamation-triangle"></i>
       {{ errorMessage }}
@@ -19,12 +32,16 @@
     </div>
   </div>
 
-  <!-- Formulario -->
-  <div class="form-section">
-    <h3>
-      <i class="fas fa-plus"></i>
-      {{ editandoId ? 'Editar Disponibilidad' : 'Agregar Nueva Disponibilidad' }}
-    </h3>
+  <!-- Contenido principal -->
+  <div *ngIf="!isLoading">
+    <!-- Formulario -->
+    <div class="form-section">
+      <div class="section-header">
+        <h3>
+          <i class="fas fa-plus"></i>
+          {{ editandoId ? 'Editar Disponibilidad' : 'Agregar Nueva Disponibilidad' }}
+        </h3>
+      </div>
     
     <form class="disponibilidad-form" (ngSubmit)="editandoId ? guardarEdicion() : agregarDisponibilidad()">
       <div class="form-row">

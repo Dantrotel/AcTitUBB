@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
 
 interface Reunion {
@@ -70,7 +71,10 @@ export class DashboardReunionesComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  constructor(private apiService: ApiService) {
+  constructor(
+    private apiService: ApiService,
+    private router: Router
+  ) {
     // Obtener rol del usuario desde localStorage
     const userData = localStorage.getItem('userData');
     if (userData) {
@@ -262,5 +266,10 @@ export class DashboardReunionesComponent implements OnInit {
     const total = this.dashboardData.estadisticas.total_reuniones;
     const completadas = this.dashboardData.estadisticas.reuniones_completadas;
     return total > 0 ? Math.round((completadas / total) * 100) : 0;
+  }
+
+  volver() {
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 }

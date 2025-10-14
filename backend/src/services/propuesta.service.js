@@ -169,19 +169,12 @@ export const revisarPropuesta = async (id, data) => {
           // No falla el proceso, solo registra el error
         }
         
-        // Crear fechas importantes por defecto para el proyecto
-        try {
-          await ProjectService.crearFechasImportantesProyecto(proyectoId);
-          console.log(`✅ Fechas importantes creadas para proyecto ${proyectoId}`);
-        } catch (fechasError) {
-          console.error('⚠️ Error al crear fechas importantes:', fechasError);
-          // No falla el proceso, solo registra el error
-        }
+        // Nota: Las fechas importantes se crearán manualmente por los profesores
         
         return {
           success: true,
           proyecto_id: proyectoId,
-          message: 'Propuesta aprobada y proyecto creado automáticamente con fechas importantes'
+          message: 'Propuesta aprobada y proyecto creado automáticamente'
         };
       } catch (projectError) {
         console.error('❌ Error al crear proyecto automáticamente:', projectError);

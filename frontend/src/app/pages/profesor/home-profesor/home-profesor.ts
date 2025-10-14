@@ -100,6 +100,7 @@ export class HomeProfesor implements OnInit {
     this.cargarEstadisticasProyectos();
     this.cargarProyectosRecientes();
     this.cargarFechasCalendario();
+    this.cargarFechasImportantesProyectos();
     
     // Cargar hitos próximos después de cargar proyectos
     setTimeout(() => {
@@ -274,6 +275,53 @@ export class HomeProfesor implements OnInit {
       }));
   }
 
+  cargarFechasImportantesProyectos() {
+    this.ApiService.getProyectosAsignados().subscribe({
+      next: (response: any) => {
+        if (response && response.projects) {
+          const promesasFechas = response.projects.map((proyecto: any) => 
+            this.ApiService.getFechasImportantesProyecto(proyecto.id).toPromise()
+              .then((fechasResponse: any) => {
+                if (fechasResponse && fechasResponse.success) {
+                  return fechasResponse.data.fechas_importantes
+                    .filter((fecha: any) => !fecha.completada)
+                    .map((fecha: any) => ({
+                      ...fecha,
+                      proyecto_titulo: proyecto.titulo,
+                      proyecto_id: proyecto.id
+                    }));
+                }
+                return [];
+              })
+              .catch(() => [])
+          );
+
+          Promise.all(promesasFechas).then(todosFechas => {
+            const fechasCombinadas = todosFechas.flat()
+              .sort((a, b) => new Date(a.fecha_limite).getTime() - new Date(b.fecha_limite).getTime())
+              .slice(0, 5);
+            
+            // Agregar fechas importantes próximas a proximasFechas
+            const fechasImportantes = fechasCombinadas.map(fecha => ({
+              titulo: `${fecha.titulo} - ${fecha.proyecto_titulo}`,
+              fecha: new Date(fecha.fecha_limite),
+              icono: this.getIconoTipoFecha(fecha.tipo_fecha),
+              es_fecha_importante: true,
+              proyecto_id: fecha.proyecto_id
+            }));
+
+            this.proximasFechas = [...this.proximasFechas, ...fechasImportantes]
+              .sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
+              .slice(0, 5);
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar fechas importantes de proyectos:', error);
+      }
+    });
+  }
+
   getIconoTipoFecha(tipo: string): string {
     const iconos: { [key: string]: string } = {
       'entrega': 'fas fa-upload',
@@ -281,7 +329,11 @@ export class HomeProfesor implements OnInit {
       'evaluacion': 'fas fa-clipboard-check',
       'presentacion': 'fas fa-presentation',
       'deadline': 'fas fa-clock',
-      'revision': 'fas fa-search'
+      'revision': 'fas fa-search',
+      'hito': 'fas fa-flag-checkered',
+      'entrega_avance': 'fas fa-file-upload',
+      'entrega_final': 'fas fa-file-archive',
+      'defensa': 'fas fa-microphone'
     };
     return iconos[tipo] || 'fas fa-calendar-day';
   }

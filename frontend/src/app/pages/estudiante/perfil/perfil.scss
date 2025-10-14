@@ -5,7 +5,7 @@ $ubb-blue-lighter: #7db9e8;
 $ubb-blue-dark: #0c3d80;
 $ubb-white: #ffffff;
 $ubb-light-gray: #f8f9fa;
-$ubb-gray: #e9ecef;
+$gray-color: #e9ecef;
 $ubb-dark-gray: #6c757d;
 $ubb-black: #212529;
 $ubb-success: #28a745;
@@ -183,7 +183,7 @@ body {
   .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid $ubb-gray;
+    border: 4px solid $gray-color;
     border-top: 4px solid $ubb-blue;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -260,7 +260,7 @@ body {
 
     .form-control {
       padding: 0.75rem 1rem;
-      border: 2px solid $ubb-gray;
+      border: 2px solid $gray-color;
       border-radius: 8px;
       font-size: 1rem;
       transition: all 0.3s ease;
@@ -334,7 +334,7 @@ body {
     }
 
     &.btn-secondary {
-      background: $ubb-gray;
+      background: $gray-color;
       color: $ubb-dark-gray;
 
       &:hover {
@@ -365,7 +365,7 @@ body {
   background: $ubb-white;
   padding: 2rem;
   text-align: center;
-  border-top: 1px solid $ubb-gray;
+  border-top: 1px solid $gray-color;
   margin-top: 3rem;
 
   .footer-content {

@@ -79,7 +79,8 @@ export class GestionUsuariosComponent implements OnInit {
 
   // Navegaci√≥n
   volver() {
-    this.router.navigate(['/admin']);
+    // Usar history.back() para volver a la p·gina anterior sin activar guards
+    window.history.back();
   }
 
   limpiarFiltros() {

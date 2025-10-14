@@ -5,12 +5,12 @@ $ubb-blue-lighter: #7db9e8;
 $ubb-blue-dark: #0c3d80;
 $ubb-white: #ffffff;
 $ubb-light-gray: #f8f9fa;
-$ubb-gray: #e9ecef;
+$gray-color: #e9ecef;
 $ubb-dark-gray: #6c757d;
 $ubb-black: #212529;
 $ubb-success: #28a745;
 $ubb-warning: #ffc107;
-$ubb-info: #17a2b8;
+$accent-color: #17a2b8;
 $ubb-danger: #dc3545;
 
 // Gradientes
@@ -47,7 +47,7 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid $ubb-gray;
+  border-bottom: 1px solid $gray-color;
   background: $ubb-blue-gradient;
   color: $ubb-white;
   border-radius: 16px 16px 0 0;
@@ -151,7 +151,7 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
   transition: all 0.3s ease;
   position: relative;
   background: $ubb-white;
-  border: 1px solid $ubb-gray;
+  border: 1px solid $gray-color;
 
   &:hover {
     background: $ubb-light-gray;
@@ -159,7 +159,7 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
   }
 
   &.other-month {
-    color: $ubb-gray;
+    color: $gray-color;
     background: $ubb-light-gray;
   }
 
@@ -218,9 +218,9 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
     }
 
     &.tipo-envio {
-      border-left-color: $ubb-info;
+      border-left-color: $accent-color;
       .event-icon {
-        background: $ubb-info;
+        background: $accent-color;
       }
     }
 

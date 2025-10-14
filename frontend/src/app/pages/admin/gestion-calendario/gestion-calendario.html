@@ -151,6 +151,71 @@
       </div>
     </div>
 
+    <!-- Sección de Fechas Importantes de Proyectos -->
+    <div class="fechas-importantes-section">
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-exclamation"></i> Fechas Importantes de Proyectos</h2>
+        <button class="btn-toggle" (click)="toggleFechasImportantes()">
+          <i [class]="mostrarFechasImportantes ? 'fas fa-minus' : 'fas fa-plus'"></i>
+          {{mostrarFechasImportantes ? 'Ocultar' : 'Mostrar'}} Fechas
+        </button>
+      </div>
+
+      <div class="fechas-importantes-container" [class.visible]="mostrarFechasImportantes">
+        <div *ngIf="loadingFechasImportantes" class="loading-fechas">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Cargando fechas importantes...</span>
+        </div>
+
+        <div *ngIf="!loadingFechasImportantes && fechasImportantes.length === 0" class="empty-fechas">
+          <i class="fas fa-calendar-plus"></i>
+          <p>No hay fechas importantes definidas en los proyectos</p>
+        </div>
+
+        <div class="fechas-grid" *ngIf="!loadingFechasImportantes && fechasImportantes.length > 0">
+          <div 
+            *ngFor="let fecha of fechasImportantes" 
+            class="fecha-importante-card"
+            [class]="'fecha-' + fecha.estado"
+          >
+            <div class="fecha-header">
+              <div class="fecha-tipo">
+                <span class="tipo-badge">{{ formatearTipoFecha(fecha.tipo_fecha) }}</span>
+              </div>
+              <div class="fecha-estado">
+                <span class="estado-badge" [class]="'estado-' + fecha.estado">
+                  {{ formatearEstado(fecha.estado) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="fecha-body">
+              <h4>{{ fecha.titulo }}</h4>
+              <p class="proyecto-info">
+                <i class="fas fa-project-diagram"></i>
+                <strong>{{ fecha.titulo_proyecto }}</strong>
+              </p>
+              <p class="estudiante-info">
+                <i class="fas fa-user-graduate"></i>
+                {{ fecha.nombre_estudiante }}
+              </p>
+              
+              <div class="fecha-meta">
+                <div class="fecha-limite">
+                  <i class="fas fa-calendar"></i>
+                  <span>{{ formatearFecha(fecha.fecha_limite) }}</span>
+                </div>
+                <div class="dias-restantes" *ngIf="fecha.dias_restantes !== null">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ obtenerTextoTiempo(fecha.dias_restantes) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Lista de fechas globales -->
     <div class="fechas-section">
       <div class="section-header">

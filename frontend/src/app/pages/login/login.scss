@@ -19,12 +19,12 @@ $ubb-blue-light: #2989d8;
 $ubb-blue-lighter: #7db9e8;
 $ubb-red: #E20613;
 $ubb-light-gray: #BBBBBB;
-$ubb-gray: #F3E4E4;
+$gray-color: #F3E4E4;
 $ubb-dark-gray: #666;
 
 // UBB Gradients
 $ubb-blue-gradient: linear-gradient(135deg, #1e5799, #207cca, #2989d8, #7db9e8);
-$ubb-gray-gradient: linear-gradient(to right, #BBBBBB 0%, #F3E4E4 31.3%, #F8F8F8 45.3%, #F3E4E4 66%, #BBBBBB 100%);
+$gray-color-gradient: linear-gradient(to right, #BBBBBB 0%, #F3E4E4 31.3%, #F8F8F8 45.3%, #F3E4E4 66%, #BBBBBB 100%);
 $ubb-red-gradient: linear-gradient(to right, #E20613 0%, #F39D75 51.6%, #E20613 100%);
 $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
 
@@ -116,7 +116,7 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
 // Header
 .adecca-header {
   padding: 2rem 1.5rem;
-  background: $ubb-gray-gradient;
+  background: $gray-color-gradient;
   border-bottom: 3px solid $ubb-blue;
   position: relative;
 
@@ -443,7 +443,7 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
 // Footer
 .adecca-footer {
   padding: 2rem 1.5rem;
-  background: $ubb-gray-gradient;
+  background: $gray-color-gradient;
   border-top: 3px solid $ubb-blue;
   display: flex;
   flex-direction: column;

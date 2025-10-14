@@ -1,0 +1,263 @@
+// ========================================
+// VARIABLES GLOBALES UBB - DISEÑO UNIFICADO
+// ========================================
+
+// Colores institucionales UBB - OBLIGATORIOS para todo el sistema
+$primary-color: #004b8d;          // Azul UBB principal
+$secondary-color: #0066cc;        // Azul UBB secundario
+$accent-color: #ff6b35;           // Naranja UBB accent
+$success-color: #28a745;          // Verde éxito
+$warning-color: #ffc107;          // Amarillo advertencia
+$danger-color: #dc3545;           // Rojo peligro
+$info-color: #17a2b8;            // Azul información
+$light-gray: #f8f9fa;            // Gris claro
+$dark-gray: #343a40;             // Gris oscuro
+
+// Colores de fondo
+$background-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+$background-white: #ffffff;
+
+// Gradientes institucionales UBB
+$ubb-primary-gradient: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+$ubb-success-gradient: linear-gradient(135deg, $success-color 0%, darken($success-color, 10%) 100%);
+$ubb-warning-gradient: linear-gradient(135deg, $warning-color 0%, darken($warning-color, 10%) 100%);
+$ubb-danger-gradient: linear-gradient(135deg, $danger-color 0%, darken($danger-color, 10%) 100%);
+$accent-gradient: linear-gradient(135deg, $info-color 0%, darken($info-color, 10%) 100%);
+$ubb-accent-gradient: linear-gradient(135deg, $accent-color 0%, darken($accent-color, 10%) 100%);
+
+// Sombras estandarizadas
+$shadow-small: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-medium: 0 4px 15px rgba(0, 0, 0, 0.1);
+$shadow-large: 0 8px 25px rgba(0, 0, 0, 0.15);
+$shadow-primary: 0 4px 20px rgba(0, 75, 141, 0.3);
+$shadow-accent: 0 4px 15px rgba(255, 107, 53, 0.3);
+
+// Border radius estandarizados
+$border-radius-small: 6px;
+$border-radius-medium: 8px;
+$border-radius-large: 12px;
+$border-radius-xl: 15px;
+
+// Transiciones estandarizadas
+$transition-fast: all 0.2s ease;
+$transition-normal: all 0.3s ease;
+$transition-slow: all 0.5s ease;
+
+// Tipografía
+$font-size-small: 0.85rem;
+$font-size-normal: 1rem;
+$font-size-medium: 1.1rem;
+$font-size-large: 1.3rem;
+$font-size-xl: 1.5rem;
+$font-size-xxl: 2rem;
+$font-size-xxxl: 2.5rem;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Espaciado estandarizado
+$spacing-xs: 5px;
+$spacing-sm: 10px;
+$spacing-md: 15px;
+$spacing-lg: 20px;
+$spacing-xl: 25px;
+$spacing-xxl: 30px;
+
+// Breakpoints responsivos
+$mobile: 480px;
+$tablet: 768px;
+$desktop: 1024px;
+$large-desktop: 1200px;
+
+// Z-index layers
+$z-dropdown: 1000;
+$z-modal: 1050;
+$z-popover: 1060;
+$z-tooltip: 1070;
+
+// Animaciones globales
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+// Mixins utilitarios
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin button-primary {
+  background: $ubb-primary-gradient;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: $border-radius-medium;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: $transition-normal;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-primary;
+  }
+}
+
+@mixin button-secondary {
+  background: $dark-gray;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: $border-radius-medium;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: $transition-normal;
+  
+  &:hover {
+    background: darken($dark-gray, 10%);
+    transform: translateY(-2px);
+  }
+}
+
+@mixin card-style {
+  background: $background-white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-medium;
+  overflow: hidden;
+  transition: $transition-normal;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-large;
+  }
+}
+
+@mixin header-style {
+  background: $ubb-primary-gradient;
+  color: white;
+  padding: $spacing-xxl;
+  border-radius: $border-radius-xl;
+  margin-bottom: $spacing-xxl;
+  box-shadow: $shadow-primary;
+  
+  h1 {
+    margin: 0;
+    font-size: $font-size-xxxl;
+    font-weight: $font-weight-bold;
+  }
+  
+  p {
+    margin: $spacing-sm 0 0 0;
+    opacity: 0.9;
+    font-size: $font-size-medium;
+  }
+}
+
+@mixin loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  background: $background-white;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-medium;
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e9ecef;
+    border-top: 4px solid $primary-color;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: $spacing-lg;
+  }
+
+  h3 {
+    color: $primary-color;
+    margin-bottom: $spacing-sm;
+    font-weight: $font-weight-semibold;
+  }
+
+  p {
+    color: $dark-gray;
+    margin: 0;
+  }
+}
+
+@mixin form-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: $border-radius-medium;
+  font-size: $font-size-normal;
+  transition: $transition-normal;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.1);
+  }
+}
+
+// Responsive mixins
+@mixin mobile {
+  @media (max-width: $tablet) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $desktop) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $desktop) {
+    @content;
+  }
+}

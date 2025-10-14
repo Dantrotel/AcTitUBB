@@ -1,0 +1,751 @@
+.gestion-reuniones-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.header-content h2 {
+  color: #2c3e50;
+  margin: 0 0 5px 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.header-content p {
+  color: #7f8c8d;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.header-content i {
+  margin-right: 10px;
+  color: #27ae60;
+}
+
+/* Messages */
+.messages {
+  margin-bottom: 20px;
+}
+
+.alert {
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.alert i {
+  margin-right: 10px;
+  font-size: 1.1rem;
+}
+
+.alert-error {
+  background-color: #fee;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
+
+.alert-success {
+  background-color: #f0fff4;
+  color: #38a169;
+  border: 1px solid #c6f6d5;
+}
+
+/* Filtros Section */
+.filtros-section {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.filtros-section h3 {
+  color: #2d3748;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.filtros-section h3 i {
+  margin-right: 10px;
+  color: #805ad5;
+}
+
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  align-items: end;
+}
+
+.filtro-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filtro-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.form-control {
+  padding: 10px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #805ad5;
+  box-shadow: 0 0 0 3px rgba(128, 90, 213, 0.1);
+}
+
+.filtro-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  color: #718096;
+  font-size: 1.2rem;
+}
+
+.loading i {
+  margin-right: 15px;
+  font-size: 1.5rem;
+}
+
+/* Reuniones Section */
+.reuniones-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.section-header h3 {
+  color: #2d3748;
+  margin-bottom: 25px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.section-header h3 i {
+  margin-right: 10px;
+  color: #27ae60;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #718096;
+}
+
+.empty-state i {
+  font-size: 5rem;
+  margin-bottom: 25px;
+  color: #cbd5e0;
+}
+
+.empty-state h4 {
+  margin-bottom: 15px;
+  color: #4a5568;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Reuniones Grid */
+.reuniones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 25px;
+}
+
+/* Reunion Card */
+.reunion-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.reunion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.reunion-card.status-programada {
+  border-left: 5px solid #ed8936;
+}
+
+.reunion-card.status-confirmada {
+  border-left: 5px solid #48bb78;
+}
+
+.reunion-card.status-completada {
+  border-left: 5px solid #4299e1;
+}
+
+.reunion-card.status-cancelada {
+  border-left: 5px solid #f56565;
+  opacity: 0.8;
+}
+
+.reunion-card.proxima {
+  background: linear-gradient(135deg, #fff5e6 0%, #ffffff 100%);
+  border-color: #f39c12;
+}
+
+.reunion-card.pasada {
+  opacity: 0.7;
+  background: #f8fafc;
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reunion-info h4 {
+  margin: 0 0 5px 0;
+  color: #2d3748;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.fecha {
+  font-size: 0.9rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.status-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.estado-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estado-badge.status-programada {
+  background: #feebc8;
+  color: #c05621;
+}
+
+.estado-badge.status-confirmada {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.estado-badge.status-completada {
+  background: #bee3f8;
+  color: #2a69ac;
+}
+
+.estado-badge.status-cancelada {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.alerta-proxima {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Card Content */
+.card-content {
+  margin-bottom: 20px;
+}
+
+.card-content > div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #4a5568;
+}
+
+.card-content i {
+  margin-right: 10px;
+  width: 16px;
+  color: #718096;
+}
+
+.horario {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.motivo {
+  font-size: 0.95rem;
+}
+
+.comentarios {
+  font-size: 0.9rem;
+  color: #718096;
+  font-style: italic;
+}
+
+/* Confirmaciones */
+.confirmaciones {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.confirmacion-item {
+  flex: 1;
+}
+
+.confirmacion {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #4a5568;
+  width: 100%;
+  justify-content: center;
+}
+
+.confirmacion.confirmada {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.confirmacion i {
+  margin-right: 6px;
+  font-size: 0.8rem;
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.btn i {
+  margin-right: 6px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #805ad5, #6b46c1);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(128, 90, 213, 0.4);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.btn-success {
+  background: #48bb78;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #38a169;
+  transform: translateY(-1px);
+}
+
+.btn-warning {
+  background: #ed8936;
+  color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #dd6b20;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: #f56565;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #e53e3e;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.modal-header h3 i {
+  margin-right: 10px;
+  color: #805ad5;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #718096;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.modal-footer {
+  padding: 20px 30px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+/* Reunion Actual */
+.reunion-actual {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reunion-actual h4 {
+  margin-bottom: 15px;
+  color: #2d3748;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.info-actual {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #4a5568;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item i {
+  margin-right: 10px;
+  width: 16px;
+  color: #718096;
+}
+
+/* Opciones Reprogramación */
+.opciones-reprogramacion h4 {
+  margin-bottom: 20px;
+  color: #2d3748;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.loading-opciones {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+.loading-opciones i {
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.opciones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.opcion-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.opcion-card:hover:not([disabled]) {
+  border-color: #805ad5;
+  background: #f7fafc;
+  transform: translateY(-1px);
+}
+
+.opcion-card[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.opcion-fecha,
+.opcion-hora {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.opcion-fecha i,
+.opcion-hora i {
+  margin-right: 8px;
+  color: #718096;
+}
+
+.opcion-accion {
+  margin-top: 15px;
+}
+
+.opcion-accion .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.no-opciones {
+  text-align: center;
+  padding: 60px 20px;
+  color: #718096;
+}
+
+.no-opciones i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  color: #cbd5e0;
+}
+
+.no-opciones h4 {
+  margin-bottom: 10px;
+  color: #4a5568;
+  font-size: 1.3rem;
+}
+
+.opcion-card[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.opcion-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gestion-reuniones-container {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .filtros-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .reuniones-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .card-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .confirmaciones {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 20px;
+  }
+
+  .opciones-grid {
+    grid-template-columns: 1fr;
+  }
+}

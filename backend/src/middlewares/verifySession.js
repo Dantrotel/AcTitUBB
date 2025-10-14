@@ -36,6 +36,12 @@ const verifySession = async (req, res, next) => {
       nombre: 'Usuario' // Placeholder, podrías obtener el nombre real de la BD
     };
     
+    console.log('🔐 Usuario autenticado:', {
+      rut: req.user.rut,
+      role_id: req.user.role_id,
+      rol: req.user.rol
+    });
+    
     next();
   } catch (error) {
     console.log(error);
