@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
 
 interface Disponibilidad {
@@ -43,7 +44,10 @@ export class DisponibilidadesComponent implements OnInit {
 
   horasDisponibles: string[] = [];
 
-  constructor(private apiService: ApiService) {
+  constructor(
+    private apiService: ApiService,
+    private router: Router
+  ) {
     this.generarHorasDisponibles();
   }
 
@@ -245,5 +249,10 @@ export class DisponibilidadesComponent implements OnInit {
       const minutos = Math.round((horas - horasEnteras) * 60);
       return minutos > 0 ? `${horasEnteras}h ${minutos}min` : `${horasEnteras} horas`;
     }
+  }
+
+  volver() {
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 }

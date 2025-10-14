@@ -185,9 +185,10 @@ const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
 // ===== SERVICIOS DE FECHAS IMPORTANTES =====
 
 /**
- * Crear fechas importantes para un proyecto con fechas personalizadas o por defecto
+ * Crear fechas importantes para un proyecto con fechas personalizadas
+ * NOTA: Las fechas automáticas están deshabilitadas. Solo se crean fechas personalizadas manualmente.
  * @param {number} proyecto_id - ID del proyecto
- * @param {Array} fechasPersonalizadas - Array de fechas personalizadas (opcional)
+ * @param {Array} fechasPersonalizadas - Array de fechas personalizadas (requerido)
  * @returns {Promise<Array>} - IDs de las fechas creadas
  */
 const crearFechasImportantesProyecto = async (proyecto_id, fechasPersonalizadas = null) => {
@@ -202,7 +203,9 @@ const crearFechasImportantesProyecto = async (proyecto_id, fechasPersonalizadas 
         }
         return idsCreados;
     } else {
-        return await fechasImportantesModel.crearFechasPorDefectoProyecto(proyecto_id);
+        // Ya no se crean fechas automáticas por defecto
+        console.log(`⚠️ No se crearon fechas automáticas para proyecto ${proyecto_id}. Las fechas deben ser creadas manualmente por los profesores.`);
+        return [];
     }
 };
 

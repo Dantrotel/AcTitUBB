@@ -11,11 +11,19 @@ import { pool } from '../db/connectionDB.js';
  * @returns {Promise<Object>} - Resultado de la respuesta
  */
 export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respuesta, comentarios = '') => {
-    // Obtener la solicitud
+    // Obtener la solicitud con validación de asignación
     const solicitudQuery = `
-        SELECT sr.*, p.titulo as proyecto_titulo
+        SELECT 
+            sr.*, 
+            p.titulo as proyecto_titulo,
+            ap.id as asignacion_id,
+            rp.nombre as rol_profesor_nombre
         FROM solicitudes_reunion sr
         INNER JOIN proyectos p ON sr.proyecto_id = p.id
+        LEFT JOIN asignaciones_proyectos ap ON ap.proyecto_id = sr.proyecto_id 
+            AND ap.profesor_rut = sr.profesor_rut 
+            AND ap.activo = TRUE
+        LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
         WHERE sr.id = ?
     `;
     
@@ -30,6 +38,11 @@ export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respu
     // Verificar que el usuario es parte de la reunión
     if (usuario_rut !== solicitud.profesor_rut && usuario_rut !== solicitud.estudiante_rut) {
         throw new Error('No tienes permisos para responder a esta solicitud');
+    }
+    
+    // Verificar que el profesor está asignado al proyecto (solo para profesores)
+    if (usuario_rut === solicitud.profesor_rut && !solicitud.asignacion_id) {
+        throw new Error('No tienes asignación activa a este proyecto para responder esta solicitud');
     }
     
     // Verificar estado actual

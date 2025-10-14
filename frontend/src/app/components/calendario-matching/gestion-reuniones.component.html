@@ -1,18 +1,31 @@
 <div class="gestion-reuniones-container">
-  <!-- Header -->
+  <!-- Header principal -->
   <div class="header">
     <div class="header-content">
-      <h2><i class="fas fa-calendar-check"></i> Gestión de Reuniones</h2>
-      <p>Administra todas tus reuniones programadas</p>
+      <h1><i class="fas fa-calendar-check"></i> Gestión de Reuniones</h1>
+      <p>Administra todas tus reuniones programadas y solicitudes</p>
     </div>
-    <button class="btn btn-primary" (click)="cargarReuniones()" [disabled]="isLoading">
-      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
-      Actualizar
-    </button>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+      <button class="btn-actualizar" (click)="cargarReuniones()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading && reuniones.length === 0" class="loading-container">
+    <div class="spinner"></div>
+    <h3>Cargando reuniones...</h3>
+    <p>Obteniendo información de reuniones programadas</p>
   </div>
 
   <!-- Messages -->
-  <div class="messages" *ngIf="errorMessage || successMessage">
+  <div class="messages" *ngIf="(errorMessage || successMessage) && !isLoading">
     <div class="alert alert-error" *ngIf="errorMessage">
       <i class="fas fa-exclamation-triangle"></i>
       {{ errorMessage }}
@@ -23,9 +36,13 @@
     </div>
   </div>
 
-  <!-- Filtros -->
-  <div class="filtros-section">
-    <h3><i class="fas fa-filter"></i> Filtros</h3>
+  <!-- Contenido principal -->
+  <div *ngIf="!isLoading || reuniones.length > 0">
+    <!-- Filtros -->
+    <div class="filtros-section">
+      <div class="section-header">
+        <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+      </div>
     <div class="filtros-grid">
       <div class="filtro-group">
         <label for="filtro-estado">Estado</label>
