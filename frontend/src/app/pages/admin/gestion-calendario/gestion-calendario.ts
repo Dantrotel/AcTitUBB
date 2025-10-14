@@ -17,6 +17,11 @@ export class GestionCalendarioComponent implements OnInit {
   fechasGlobales: any[] = [];
   estadisticas: any = null;
   
+  // Fechas importantes de proyectos
+  fechasImportantes: any[] = [];
+  loadingFechasImportantes = false;
+  mostrarFechasImportantes = false;
+  
   // Formulario
   mostrarFormulario = false;
   guardando = false;
@@ -44,6 +49,7 @@ export class GestionCalendarioComponent implements OnInit {
   cargarDatos() {
     this.cargarFechas();
     this.cargarEstadisticas();
+    this.cargarFechasImportantes();
   }
 
   cargarFechas() {
@@ -74,6 +80,82 @@ export class GestionCalendarioComponent implements OnInit {
         console.error('Error al cargar estadísticas:', error);
       }
     });
+  }
+
+  cargarFechasImportantes() {
+    this.loadingFechasImportantes = true;
+    
+    this.apiService.getFechasImportantesTodosProyectos().subscribe({
+      next: (response: any) => {
+        console.log('Fechas importantes de todos los proyectos:', response);
+        if (response.success && response.data) {
+          this.fechasImportantes = response.data;
+        } else {
+          this.fechasImportantes = [];
+        }
+        this.loadingFechasImportantes = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar fechas importantes:', error);
+        this.fechasImportantes = [];
+        this.loadingFechasImportantes = false;
+      }
+    });
+  }
+
+  toggleFechasImportantes() {
+    this.mostrarFechasImportantes = !this.mostrarFechasImportantes;
+    if (this.mostrarFechasImportantes && this.fechasImportantes.length === 0) {
+      this.cargarFechasImportantes();
+    }
+  }
+
+  formatearTipoFecha(tipo: string): string {
+    const tipos: { [key: string]: string } = {
+      'entrega': 'Entrega',
+      'reunion': 'Reunión',
+      'evaluacion': 'Evaluación',
+      'hito': 'Hito',
+      'deadline': 'Fecha límite',
+      'presentacion': 'Presentación',
+      'entrega_avance': 'Entrega de Avance',
+      'entrega_final': 'Entrega Final',
+      'defensa': 'Defensa'
+    };
+    return tipos[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
+  }
+
+  formatearEstado(estado: string): string {
+    const estados: { [key: string]: string } = {
+      'pendiente': 'Pendiente',
+      'vencida': 'Vencida',
+      'hoy': 'Hoy',
+      'completada': 'Completada'
+    };
+    return estados[estado] || estado.charAt(0).toUpperCase() + estado.slice(1);
+  }
+
+  formatearFecha(fecha: string): string {
+    if (!fecha) return '';
+    const fechaObj = new Date(fecha);
+    return fechaObj.toLocaleDateString('es-ES', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  obtenerTextoTiempo(dias: number): string {
+    if (dias < 0) {
+      return `${Math.abs(dias)} días atrasada`;
+    } else if (dias === 0) {
+      return 'Hoy';
+    } else if (dias === 1) {
+      return 'Mañana';
+    } else {
+      return `en ${dias} días`;
+    }
   }
 
   crearFecha() {
@@ -174,7 +256,8 @@ export class GestionCalendarioComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/admin']);
+    // Usar history.back() para volver a la p�gina anterior sin activar guards
+    window.history.back();
   }
 
   fechaActual() {

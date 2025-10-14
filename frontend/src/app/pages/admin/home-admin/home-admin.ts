@@ -97,6 +97,10 @@ export class HomeAdminComponent implements OnInit {
     this.router.navigate(['/admin/calendario']);
   }
 
+  irACalendarioMatching() {
+    this.router.navigate(['/admin/calendario-matching']);
+  }
+
   cerrarSesion() {
     localStorage.removeItem('token');
     this.router.navigate(['/login']);

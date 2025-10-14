@@ -1,18 +1,31 @@
 <div class="dashboard-container">
-  <!-- Header -->
+  <!-- Header principal -->
   <div class="header">
     <div class="header-content">
-      <h2><i class="fas fa-tachometer-alt"></i> Dashboard de Reuniones</h2>
-      <p>Vista general de tus reuniones y solicitudes</p>
+      <h1><i class="fas fa-tachometer-alt"></i> Dashboard de Reuniones</h1>
+      <p>Vista general de tus reuniones y solicitudes del sistema de matching</p>
     </div>
-    <button class="btn btn-primary" (click)="cargarDashboard()" [disabled]="isLoading">
-      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
-      Actualizar
-    </button>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+      <button class="btn-actualizar" (click)="cargarDashboard()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <h3>Cargando dashboard...</h3>
+    <p>Obteniendo información de reuniones y estadísticas</p>
   </div>
 
   <!-- Messages -->
-  <div class="messages" *ngIf="errorMessage || successMessage">
+  <div class="messages" *ngIf="(errorMessage || successMessage) && !isLoading">
     <div class="alert alert-error" *ngIf="errorMessage">
       <i class="fas fa-exclamation-triangle"></i>
       {{ errorMessage }}
@@ -23,18 +36,14 @@
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div class="loading" *ngIf="isLoading">
-    <i class="fas fa-spinner fa-spin"></i>
-    <span>Cargando información del dashboard...</span>
-  </div>
-
   <!-- Dashboard Content -->
   <div class="dashboard-content" *ngIf="!isLoading">
     
     <!-- Estadísticas -->
     <div class="estadisticas-section">
-      <h3><i class="fas fa-chart-bar"></i> Estadísticas</h3>
+      <div class="section-header">
+        <h3><i class="fas fa-chart-bar"></i> Estadísticas de Reuniones</h3>
+      </div>
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">
@@ -183,9 +192,12 @@
     </div>
 
     <!-- Solicitudes Pendientes (solo para profesores) -->
-    <div class="solicitudes-section" *ngIf="userRole === 'profesor' && dashboardData.solicitudes_pendientes.length > 0">
-      <h3><i class="fas fa-inbox"></i> Solicitudes Pendientes</h3>
-      <div class="solicitudes-grid">
+    <div class="solicitudes-section" *ngIf="userRole === 'profesor'">
+      <div class="section-header">
+        <h3><i class="fas fa-inbox"></i> Solicitudes de Reunión Pendientes</h3>
+      </div>
+      
+      <div *ngIf="dashboardData.solicitudes_pendientes.length > 0" class="solicitudes-grid">
         <div class="solicitud-card" *ngFor="let solicitud of dashboardData.solicitudes_pendientes">
           <div class="card-header">
             <div class="solicitud-info">
@@ -218,6 +230,14 @@
               Rechazar
             </button>
           </div>
+        </div>
+      </div>
+      
+      <div *ngIf="dashboardData.solicitudes_pendientes.length === 0" class="no-data-message">
+        <div class="empty-state">
+          <i class="fas fa-inbox-in"></i>
+          <h4>No hay solicitudes pendientes</h4>
+          <p>No tienes solicitudes de reunión pendientes por revisar en este momento.</p>
         </div>
       </div>
     </div>

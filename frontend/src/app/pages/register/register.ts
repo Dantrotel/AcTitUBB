@@ -68,6 +68,7 @@ export class RegisterComponent implements OnInit {
 }
 
   volver() {
-    this.router.navigate(['/login']); // Cambia a la ruta que uses
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 }

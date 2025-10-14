@@ -1,4 +1,4 @@
-<!-- Contenedor principal -->
+ <!-- Contenedor principal -->
 <div class="asignaciones-container">
   <!-- Header principal -->
   <div class="header">
@@ -53,7 +53,7 @@
           [class.active]="tabActiva === 'proyectos'"
           (click)="cambiarTab('proyectos')">
           <i class="fas fa-project-diagram"></i>
-          Proyectos
+          Vista por Proyectos
         </button>
         <button 
           class="tab-btn" 
@@ -111,6 +111,9 @@
                   {{rol.descripcion}}
                 </option>
               </select>
+              <small *ngIf="rolesProfesores.length === 0" class="text-warning">
+                ⚠️ No se pudieron cargar los roles. Total: {{rolesProfesores.length}}
+              </small>
             </div>
             
             <div class="form-group">
@@ -128,99 +131,12 @@
               <button type="button" class="btn-secondary" (click)="ocultarFormularioAsignacion()">
                 Cancelar
               </button>
-              <button type="submit" class="btn-primary" [disabled]="loadingAsignacion">
-                <i class="fas fa-spinner fa-spin" *ngIf="loadingAsignacion"></i>
-                <i class="fas fa-plus" *ngIf="!loadingAsignacion"></i>
-                {{ loadingAsignacion ? 'Creando...' : 'Crear Asignación' }}
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                Crear Asignación
               </button>
             </div>
           </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal para ver asignaciones por proyecto -->
-    <div *ngIf="mostrarModalProyecto" class="modal-overlay" (click)="cerrarModalProyecto()">
-      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>
-            <i class="fas fa-project-diagram"></i> 
-            Asignaciones del Proyecto: {{ proyectoSeleccionado?.titulo }}
-          </h3>
-          <button class="btn-close" (click)="cerrarModalProyecto()">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="proyecto-info">
-            <div class="proyecto-meta">
-              <div class="meta-item">
-                <strong>Estudiante:</strong> {{ proyectoSeleccionado?.estudiante_nombre || 'No asignado' }}
-              </div>
-              <div class="meta-item">
-                <strong>Estado:</strong> 
-                <span [ngClass]="obtenerClaseEstado(proyectoSeleccionado?.estado)">
-                  {{ proyectoSeleccionado?.estado || 'Sin estado' }}
-                </span>
-              </div>
-              <div class="meta-item">
-                <strong>Progreso:</strong> {{ proyectoSeleccionado?.progreso || 0 }}%
-              </div>
-            </div>
-          </div>
-
-          <div class="asignaciones-proyecto">
-            <h4><i class="fas fa-users-cog"></i> Roles Asignados</h4>
-            
-            <div *ngIf="asignacionesProyecto.length === 0" class="no-asignaciones">
-              <i class="fas fa-user-slash"></i>
-              <p>No hay profesores asignados a este proyecto</p>
-              <button class="btn-primary" (click)="cerrarModalProyecto(); mostrarFormularioAsignacion()">
-                <i class="fas fa-plus"></i>
-                Asignar Primer Profesor
-              </button>
-            </div>
-
-            <div *ngFor="let asignacion of asignacionesProyecto" class="asignacion-proyecto-item">
-              <div class="asignacion-profesor">
-                <div class="profesor-avatar">
-                  <i class="fas fa-user-tie"></i>
-                </div>
-                <div class="profesor-info">
-                  <h5>{{ asignacion.profesor_nombre }}</h5>
-                  <p>{{ asignacion.profesor_email }}</p>
-                </div>
-              </div>
-              
-              <div class="asignacion-rol">
-                <span 
-                  class="rol-badge-large" 
-                  [style.background-color]="getRolColor(asignacion.rol_nombre)">
-                  {{ asignacion.rol_descripcion }}
-                </span>
-              </div>
-              
-              <div class="asignacion-fecha">
-                <small>Asignado el {{ formatearFecha(asignacion.fecha_asignacion) }}</small>
-              </div>
-              
-              <div class="asignacion-acciones">
-                <button 
-                  class="btn-danger-small" 
-                  (click)="desasignarProfesor(asignacion)"
-                  title="Desasignar">
-                  <i class="fas fa-user-minus"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="add-asignacion" *ngIf="asignacionesProyecto.length > 0">
-              <button class="btn-secondary" (click)="cerrarModalProyecto(); mostrarFormularioAsignacion()">
-                <i class="fas fa-plus"></i>
-                Asignar Otro Profesor
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -283,12 +199,6 @@
             </div>
             <div class="asignacion-actions">
               <button 
-                class="btn-info-small" 
-                (click)="verAsignacionesProyecto(asignacion)"
-                title="Ver todas las asignaciones del proyecto">
-                <i class="fas fa-users"></i>
-              </button>
-              <button 
                 class="btn-danger-small" 
                 (click)="desasignarProfesor(asignacion)"
                 title="Desasignar profesor">
@@ -321,96 +231,197 @@
     </div>
 
     <!-- TAB PROYECTOS -->
-    <div *ngIf="tabActiva === 'proyectos'" class="proyectos-section">
-      <div class="proyectos-header">
-        <h2><i class="fas fa-project-diagram"></i> Gestión de Proyectos</h2>
-        <div class="proyectos-filters">
-          <input 
-            type="text" 
-            class="filter-input"
-            placeholder="Buscar proyectos..."
-            [(ngModel)]="filtroProyectos"
-            (input)="aplicarFiltroProyectos()">
-          <select 
-            class="filter-select"
-            [(ngModel)]="filtroEstadoProyecto"
-            (change)="aplicarFiltroProyectos()">
-            <option value="">Todos los estados</option>
-            <option value="propuesta">Propuesta</option>
-            <option value="en_desarrollo">En Desarrollo</option>
-            <option value="en_revision">En Revisión</option>
-            <option value="finalizado">Finalizado</option>
-          </select>
+    <div *ngIf="tabActiva === 'proyectos'">
+      <!-- Filtros para proyectos -->
+      <div class="filtros-section">
+        <h3><i class="fas fa-filter"></i> Filtros de Proyectos</h3>
+        <div class="filtros-grid">
+          <div class="filtro-grupo">
+            <label for="filtroProyectos">Buscar Proyecto:</label>
+            <input 
+              type="text" 
+              id="filtroProyectos" 
+              [(ngModel)]="filtroProyectos" 
+              (ngModelChange)="aplicarFiltroProyectos()"
+              placeholder="Buscar por título, descripción o estudiante"
+            />
+          </div>
+          
+          <div class="filtro-grupo">
+            <label for="filtroEstadoProyecto">Estado:</label>
+            <select id="filtroEstadoProyecto" [(ngModel)]="filtroEstadoProyecto" (ngModelChange)="aplicarFiltroProyectos()">
+              <option value="">Todos los estados</option>
+              <option value="propuesta">Propuesta</option>
+              <option value="en_desarrollo">En Desarrollo</option>
+              <option value="en_revision">En Revisión</option>
+              <option value="finalizado">Finalizado</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div *ngIf="proyectosFiltrados.length === 0" class="no-results">
-        <i class="fas fa-project-diagram"></i>
-        <h3>No hay proyectos disponibles</h3>
-        <p>No se encontraron proyectos que coincidan con los filtros aplicados</p>
-      </div>
-
+      <!-- Lista de proyectos -->
       <div class="proyectos-grid">
+        <div *ngIf="proyectosFiltrados.length === 0" class="no-results">
+          <i class="fas fa-project-diagram"></i>
+          <h3>No se encontraron proyectos</h3>
+          <p>No hay proyectos que coincidan con los filtros seleccionados</p>
+        </div>
+
         <div *ngFor="let proyecto of proyectosFiltrados" class="proyecto-card">
           <div class="proyecto-header">
             <div class="proyecto-info">
-              <h3>{{proyecto.titulo}}</h3>
-              <p class="proyecto-descripcion">{{proyecto.descripcion | slice:0:150}}{{proyecto.descripcion?.length > 150 ? '...' : ''}}</p>
-            </div>
-            <div class="proyecto-estado">
+              <h4>{{proyecto.titulo || 'Sin título'}}</h4>
               <span 
                 class="estado-badge" 
-                [class]="'estado-' + proyecto.estado">
+                [class]="obtenerClaseEstado(proyecto.estado)">
                 {{getEstadoDisplay(proyecto.estado)}}
               </span>
             </div>
+            <div class="proyecto-actions">
+              <button 
+                class="btn-primary-small" 
+                (click)="verAsignacionesProyecto(proyecto)"
+                title="Ver asignaciones del proyecto">
+                <i class="fas fa-eye"></i>
+                Ver Asignaciones
+              </button>
+              <button 
+                class="btn-success-small" 
+                (click)="asignarProfesorAProyecto(proyecto)"
+                title="Asignar profesor al proyecto">
+                <i class="fas fa-user-plus"></i>
+                Asignar
+              </button>
+            </div>
           </div>
-
-          <div class="proyecto-details">
-            <div class="detail-row">
-              <span class="detail-label">Estudiante:</span>
-              <span>{{proyecto.estudiante_nombre || 'No asignado'}}</span>
+          
+          <div class="proyecto-body">
+            <div class="proyecto-details">
+              <div class="detail-item">
+                <strong>Estudiante:</strong> {{proyecto.estudiante_nombre || 'No asignado'}}
+              </div>
+              <div class="detail-item">
+                <strong>Descripción:</strong> 
+                <span class="descripcion-texto">{{proyecto.descripcion || 'Sin descripción'}}</span>
+              </div>
+              <div class="detail-item">
+                <strong>Fecha de creación:</strong> {{formatearFecha(proyecto.fecha_creacion)}}
+              </div>
+              <div class="detail-item">
+                <strong>Profesores asignados:</strong> 
+                <span class="profesores-count">{{contarAsignacionesProyecto(proyecto.id)}} profesor(es)</span>
+              </div>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">Fecha de creación:</span>
-              <span>{{formatearFecha(proyecto.fecha_creacion)}}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Total asignaciones:</span>
-              <span>{{contarAsignacionesProyecto(proyecto.id)}}</span>
+            
+            <!-- Asignaciones resumidas -->
+            <div class="asignaciones-resumen" *ngIf="getAsignacionesProyecto(proyecto.id).length > 0">
+              <h5><i class="fas fa-users"></i> Profesores Asignados:</h5>
+              <div class="profesores-lista">
+                <div 
+                  *ngFor="let asignacion of getAsignacionesProyecto(proyecto.id).slice(0, 3)" 
+                  class="profesor-item">
+                  <span class="profesor-nombre">{{asignacion.profesor_nombre}}</span>
+                  <span 
+                    class="rol-badge-small" 
+                    [style.background-color]="getRolColor(asignacion.rol_nombre)">
+                    {{formatRolName(asignacion.rol_nombre)}}
+                  </span>
+                </div>
+                <div *ngIf="getAsignacionesProyecto(proyecto.id).length > 3" class="mas-profesores">
+                  +{{getAsignacionesProyecto(proyecto.id).length - 3}} más...
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="proyecto-asignaciones">
-            <h4><i class="fas fa-users"></i> Profesores Asignados</h4>
-            <div *ngIf="getAsignacionesProyecto(proyecto.id).length === 0" class="no-asignaciones">
-              <p>No hay profesores asignados a este proyecto</p>
-            </div>
-            <div class="asignaciones-list">
-              <div *ngFor="let asignacion of getAsignacionesProyecto(proyecto.id)" class="asignacion-mini">
-                <span class="profesor-nombre">{{asignacion.profesor_nombre}}</span>
+    <!-- Modal para ver asignaciones por proyecto -->
+    <div *ngIf="mostrarModalProyecto" class="modal-overlay" (click)="cerrarModalProyecto()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-project-diagram"></i> 
+            Asignaciones del Proyecto: {{proyectoSeleccionado?.titulo}}
+          </h3>
+          <button class="btn-close" (click)="cerrarModalProyecto()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="proyecto-info-modal">
+            <div class="info-grid">
+              <div class="info-item">
+                <strong>Estudiante:</strong> {{proyectoSeleccionado?.estudiante_nombre || 'No asignado'}}
+              </div>
+              <div class="info-item">
+                <strong>Estado:</strong>
                 <span 
-                  class="rol-badge mini" 
-                  [style.background-color]="getRolColor(asignacion.rol_nombre)">
-                  {{formatRolName(asignacion.rol_nombre)}}
+                  class="estado-badge" 
+                  [class]="obtenerClaseEstado(proyectoSeleccionado?.estado)">
+                  {{getEstadoDisplay(proyectoSeleccionado?.estado)}}
                 </span>
+              </div>
+              <div class="info-item">
+                <strong>Fecha de creación:</strong> {{formatearFecha(proyectoSeleccionado?.fecha_creacion)}}
               </div>
             </div>
           </div>
 
-          <div class="proyecto-actions">
-            <button 
-              class="btn-action btn-primary"
-              (click)="verAsignacionesProyecto(proyecto)">
-              <i class="fas fa-eye"></i>
-              Ver Asignaciones
-            </button>
-            <button 
-              class="btn-action btn-secondary"
-              (click)="asignarProfesorAProyecto(proyecto)">
-              <i class="fas fa-user-plus"></i>
-              Asignar Profesor
-            </button>
+          <div class="asignaciones-proyecto-lista">
+            <div class="lista-header">
+              <h4><i class="fas fa-users"></i> Profesores Asignados ({{asignacionesProyecto.length}})</h4>
+              <button 
+                class="btn-primary-small" 
+                (click)="asignarProfesorAProyecto(proyectoSeleccionado)">
+                <i class="fas fa-user-plus"></i>
+                Asignar Profesor
+              </button>
+            </div>
+
+            <div *ngIf="asignacionesProyecto.length === 0" class="no-asignaciones">
+              <i class="fas fa-user-slash"></i>
+              <h4>No hay profesores asignados</h4>
+              <p>Este proyecto aún no tiene profesores asignados. Haz clic en "Asignar Profesor" para comenzar.</p>
+            </div>
+
+            <div *ngFor="let asignacion of asignacionesProyecto" class="asignacion-item-modal">
+              <div class="asignacion-info">
+                <div class="profesor-datos">
+                  <h5>{{asignacion.profesor_nombre}}</h5>
+                  <p class="profesor-email">{{asignacion.profesor_email}}</p>
+                </div>
+                <div class="rol-info">
+                  <span 
+                    class="rol-badge" 
+                    [style.background-color]="getRolColor(asignacion.rol_nombre)">
+                    {{formatRolName(asignacion.rol_nombre)}}
+                  </span>
+                </div>
+              </div>
+              <div class="asignacion-meta">
+                <div class="meta-item">
+                  <small><strong>Asignado:</strong> {{formatearFecha(asignacion.fecha_asignacion)}}</small>
+                </div>
+                <div class="meta-item" *ngIf="asignacion.observaciones">
+                  <small><strong>Observaciones:</strong> {{asignacion.observaciones}}</small>
+                </div>
+                <div class="meta-item">
+                  <small><strong>Por:</strong> {{asignacion.asignado_por_nombre || 'Sistema'}}</small>
+                </div>
+              </div>
+              <div class="asignacion-actions">
+                <button 
+                  class="btn-danger-small" 
+                  (click)="desasignarProfesor(asignacion)"
+                  title="Desasignar profesor">
+                  <i class="fas fa-user-minus"></i>
+                  Desasignar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -418,14 +429,7 @@
 
     <!-- TAB ESTADÍSTICAS -->
     <div *ngIf="tabActiva === 'estadisticas'" class="estadisticas-section">
-      <!-- Loading de estadísticas -->
-      <div *ngIf="loadingEstadisticas" class="loading-container">
-        <div class="spinner"></div>
-        <h3>Cargando estadísticas...</h3>
-        <p>Calculando métricas de asignaciones</p>
-      </div>
-
-      <div *ngIf="!loadingEstadisticas && estadisticasAsignaciones" class="stats-grid">
+      <div *ngIf="estadisticasAsignaciones" class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">
             <i class="fas fa-project-diagram"></i>

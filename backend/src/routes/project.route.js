@@ -8,19 +8,19 @@ const routerProject = e.Router();
 // ===== RUTAS GENERALES (Con control de permisos automático) =====
 
 // Obtener todos los proyectos (filtrados por permisos del usuario)
-routerProject.get('/projects', verifySession, ProjectController.getProjects);
+routerProject.get('/', verifySession, ProjectController.getProjects);
 
 // Obtener proyecto específico por ID (con verificación de permisos)
-routerProject.get('/projects/:projectId', verifySession, ProjectController.getDetailProject);
+routerProject.get('/:projectId', verifySession, ProjectController.getDetailProject);
 
 // Obtener proyecto específico con información completa (fechas importantes y profesores)
-routerProject.get('/projects/:projectId/completo', verifySession, ProjectController.getProyectoCompleto);
+routerProject.get('/:projectId/completo', verifySession, ProjectController.getProyectoCompleto);
 
 // Crear nuevo proyecto (solo estudiantes)
-routerProject.post('/projects', verifySession, checkRole('1'), ProjectController.createProject);
+routerProject.post('/', verifySession, checkRole('1'), ProjectController.createProject);
 
 // Eliminar proyecto (solo administradores)
-routerProject.delete('/projects/:projectId', verifySession, checkRole('3'), ProjectController.deleteProject);
+routerProject.delete('/:projectId', verifySession, checkRole('3'), ProjectController.deleteProject);
 
 // ===== RUTAS ESPECÍFICAS POR ROL =====
 
@@ -32,40 +32,40 @@ routerProject.get('/profesor/proyectos-asignados', verifySession, checkRole('2')
 
 // ===== RUTAS DE ADMINISTRADOR =====
 
-// Los administradores pueden usar la ruta general /projects que les mostrará todo
+// Los administradores pueden usar la ruta general / que les mostrará todo
 
 // ===== RUTAS DE HITOS =====
 
 // Crear hito para un proyecto
-routerProject.post('/projects/:projectId/hitos', verifySession, ProjectController.crearHitoProyecto);
+routerProject.post('/:projectId/hitos', verifySession, ProjectController.crearHitoProyecto);
 
 // Obtener hitos de un proyecto
-routerProject.get('/projects/:projectId/hitos', verifySession, ProjectController.obtenerHitosProyecto);
+routerProject.get('/:projectId/hitos', verifySession, ProjectController.obtenerHitosProyecto);
 
 // Actualizar hito específico
-routerProject.put('/projects/:projectId/hitos/:hitoId', verifySession, ProjectController.actualizarHitoProyecto);
+routerProject.put('/:projectId/hitos/:hitoId', verifySession, ProjectController.actualizarHitoProyecto);
 
 // Completar hito (solo estudiantes)
-routerProject.patch('/projects/:projectId/hitos/:hitoId/completar', verifySession, checkRole('1'), ProjectController.completarHito);
+routerProject.patch('/:projectId/hitos/:hitoId/completar', verifySession, checkRole('1'), ProjectController.completarHito);
 
 // ===== RUTAS DE EVALUACIONES =====
 
 // Crear evaluación para un proyecto (solo profesores)
-routerProject.post('/projects/:projectId/evaluaciones', verifySession, checkRole('2'), ProjectController.crearEvaluacionProyecto);
+routerProject.post('/:projectId/evaluaciones', verifySession, checkRole('2'), ProjectController.crearEvaluacionProyecto);
 
 // Obtener evaluaciones de un proyecto
-routerProject.get('/projects/:projectId/evaluaciones', verifySession, ProjectController.obtenerEvaluacionesProyecto);
+routerProject.get('/:projectId/evaluaciones', verifySession, ProjectController.obtenerEvaluacionesProyecto);
 
 // ===== RUTAS DE DASHBOARD =====
 
 // Obtener dashboard completo del proyecto
-routerProject.get('/projects/:projectId/dashboard', verifySession, ProjectController.obtenerDashboardProyecto);
+routerProject.get('/:projectId/dashboard', verifySession, ProjectController.obtenerDashboardProyecto);
 
 // ===== RUTAS DEL SISTEMA DE CRONOGRAMAS Y ENTREGAS =====
 
 // Gestión de cronogramas
-routerProject.post('/projects/:projectId/cronograma', verifySession, checkRole('2'), ProjectController.crearCronograma);
-routerProject.get('/projects/:projectId/cronograma', verifySession, ProjectController.obtenerCronograma);
+routerProject.post('/:projectId/cronograma', verifySession, checkRole('2'), ProjectController.crearCronograma);
+routerProject.get('/:projectId/cronograma', verifySession, ProjectController.obtenerCronograma);
 routerProject.patch('/cronogramas/:cronogramaId/aprobar', verifySession, checkRole('1'), ProjectController.aprobarCronograma);
 
 // Gestión de hitos del cronograma
@@ -81,9 +81,9 @@ routerProject.get('/notificaciones', verifySession, ProjectController.obtenerNot
 routerProject.patch('/notificaciones/:notificacionId/leer', verifySession, ProjectController.marcarNotificacionLeida);
 
 // Configuración de alertas
-routerProject.post('/projects/:projectId/alertas', verifySession, checkRole('2'), ProjectController.configurarAlertas);
+routerProject.post('/:projectId/alertas', verifySession, checkRole('2'), ProjectController.configurarAlertas);
 
 // Estadísticas y reportes
-routerProject.get('/projects/:projectId/estadisticas', verifySession, ProjectController.obtenerEstadisticasCumplimiento);
+routerProject.get('/:projectId/estadisticas', verifySession, ProjectController.obtenerEstadisticasCumplimiento);
 
 export default routerProject;

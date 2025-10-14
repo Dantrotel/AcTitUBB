@@ -175,7 +175,9 @@ export const crearSolicitudReunion = async (solicitudData) => {
         duracion_minutos = 60,
         tipo_reunion = 'seguimiento',
         descripcion = '',
-        creado_por = 'sistema'
+        creado_por = 'sistema',
+        comentarios_estudiante = null,
+        comentarios_profesor = null
     } = solicitudData;
     
     // Verificar que no haya conflictos de horario
@@ -194,14 +196,16 @@ export const crearSolicitudReunion = async (solicitudData) => {
     const query = `
         INSERT INTO solicitudes_reunion (
             proyecto_id, profesor_rut, estudiante_rut, fecha_propuesta, 
-            hora_propuesta, duracion_minutos, tipo_reunion, descripcion, creado_por
+            hora_propuesta, duracion_minutos, tipo_reunion, descripcion, 
+            creado_por, comentarios_estudiante, comentarios_profesor
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
     const [result] = await pool.execute(query, [
         proyecto_id, profesor_rut, estudiante_rut, fecha_propuesta,
-        hora_propuesta, duracion_minutos, tipo_reunion, descripcion, creado_por
+        hora_propuesta, duracion_minutos, tipo_reunion, descripcion, 
+        creado_por, comentarios_estudiante, comentarios_profesor
     ]);
     
     return result.insertId;

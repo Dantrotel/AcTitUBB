@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
 
 interface Profesor {
@@ -9,8 +10,17 @@ interface Profesor {
   email: string;
 }
 
+interface Proyecto {
+  id: number;
+  titulo: string;
+  estudiante_rut: string;
+  profesor_guia_rut?: string;
+  profesor_guia_nombre?: string;
+}
+
 interface SolicitudReunion {
   id?: number;
+  proyecto_id?: number;
   profesor_rut: string;
   motivo: string;
   duracion_minutos: number;
@@ -37,10 +47,12 @@ interface OpcionReunion {
 })
 export class SolicitudesReunionComponent implements OnInit {
   profesores: Profesor[] = [];
+  proyectos: Proyecto[] = [];
   solicitudes: SolicitudReunion[] = [];
   opcionesReunion: OpcionReunion[] = [];
   
   nuevaSolicitud: SolicitudReunion = {
+    proyecto_id: undefined,
     profesor_rut: '',
     motivo: '',
     duracion_minutos: 60,
@@ -78,15 +90,31 @@ export class SolicitudesReunionComponent implements OnInit {
     { value: 'alta', label: 'Alta', color: '#f56565', description: 'Urgente, dentro de 2-3 días' }
   ];
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
+    this.cargarProyectos();
     this.cargarProfesores();
     this.cargarSolicitudes();
   }
 
+  cargarProyectos() {
+    this.apiService.getMisProyectos().subscribe({
+      next: (response: any) => {
+        this.proyectos = response.data || response || [];
+      },
+      error: (error) => {
+        console.error('Error al cargar proyectos:', error);
+        this.errorMessage = 'Error al cargar la lista de proyectos';
+      }
+    });
+  }
+
   cargarProfesores() {
-    this.apiService.getProfesores().subscribe({
+    this.apiService.getProfesoresParaReunion().subscribe({
       next: (response: any) => {
         this.profesores = response.data || response || [];
       },
@@ -123,13 +151,19 @@ export class SolicitudesReunionComponent implements OnInit {
       return;
     }
 
+    if (!this.nuevaSolicitud.proyecto_id) {
+      this.errorMessage = 'Debe seleccionar un proyecto';
+      return;
+    }
+
     this.isBuscandoOpciones = true;
     this.errorMessage = '';
 
     const datosBusqueda = {
-      profesor_rut: this.nuevaSolicitud.profesor_rut,
-      duracion_minutos: this.nuevaSolicitud.duracion_minutos,
-      urgencia: this.nuevaSolicitud.urgencia
+      proyecto_id: this.nuevaSolicitud.proyecto_id,
+      tipo_reunion: 'seguimiento',
+      descripcion: this.nuevaSolicitud.motivo,
+      duracion_minutos: this.nuevaSolicitud.duracion_minutos
     };
 
     this.apiService.buscarReunion(datosBusqueda).subscribe({
@@ -203,6 +237,11 @@ export class SolicitudesReunionComponent implements OnInit {
   }
 
   private validarSolicitud(): boolean {
+    if (!this.nuevaSolicitud.proyecto_id) {
+      this.errorMessage = 'Debe seleccionar un proyecto';
+      return false;
+    }
+
     if (!this.nuevaSolicitud.profesor_rut) {
       this.errorMessage = 'Debe seleccionar un profesor';
       return false;
@@ -223,6 +262,7 @@ export class SolicitudesReunionComponent implements OnInit {
 
   private limpiarFormulario() {
     this.nuevaSolicitud = {
+      proyecto_id: undefined,
       profesor_rut: '',
       motivo: '',
       duracion_minutos: 60,
@@ -280,5 +320,10 @@ export class SolicitudesReunionComponent implements OnInit {
 
   trackByIndex(index: number, item: any): number {
     return index;
+  }
+
+  volver() {
+    // Usar history.back() para volver a la p�gina anterior sin activar guards
+    window.history.back();
   }
 }

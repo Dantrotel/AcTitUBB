@@ -150,6 +150,35 @@ export const obtenerFechaImportantePorId = async (fecha_id) => {
 };
 
 /**
+ * Obtener todas las fechas importantes de todos los proyectos (solo admin)
+ * @returns {Promise<Array>} - Lista completa de fechas importantes
+ */
+export const obtenerTodasFechasImportantes = async () => {
+    const query = `
+        SELECT 
+            fi.*,
+            p.titulo as titulo_proyecto,
+            p.estudiante_rut,
+            u.nombre as nombre_estudiante,
+            u.email as email_estudiante,
+            CASE 
+                WHEN fi.fecha_limite < CURDATE() AND fi.completada = FALSE THEN 'vencida'
+                WHEN fi.fecha_limite = CURDATE() AND fi.completada = FALSE THEN 'hoy'
+                WHEN fi.fecha_limite > CURDATE() AND fi.completada = FALSE THEN 'pendiente'
+                WHEN fi.completada = TRUE THEN 'completada'
+            END as estado,
+            DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes
+        FROM fechas_importantes fi
+        INNER JOIN proyectos p ON fi.proyecto_id = p.id
+        INNER JOIN usuarios u ON p.estudiante_rut = u.rut
+        ORDER BY fi.fecha_limite ASC
+    `;
+    
+    const [rows] = await pool.execute(query);
+    return rows;
+};
+
+/**
  * Crear fechas importantes por defecto para un nuevo proyecto
  * @param {number} proyecto_id - ID del proyecto
  * @returns {Promise<Array>} - IDs de las fechas creadas

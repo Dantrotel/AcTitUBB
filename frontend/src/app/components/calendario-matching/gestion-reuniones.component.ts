@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
 
 interface Reunion {
@@ -66,7 +67,10 @@ export class GestionReunionesComponent implements OnInit {
     { value: 'cancelada', label: 'Canceladas' }
   ];
 
-  constructor(private apiService: ApiService) {
+  constructor(
+    private apiService: ApiService,
+    private router: Router
+  ) {
     // Obtener rol del usuario desde localStorage
     const userData = localStorage.getItem('userData');
     if (userData) {
@@ -361,5 +365,10 @@ export class GestionReunionesComponent implements OnInit {
     link.download = `reunion-${reunion.id}.ics`;
     link.click();
     window.URL.revokeObjectURL(url);
+  }
+
+  volver() {
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 }

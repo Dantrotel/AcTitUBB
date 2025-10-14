@@ -173,6 +173,13 @@ export class ApiService {
     });
   }
 
+  // Admin: obtener todas las fechas importantes de todos los proyectos
+  getFechasImportantesTodosProyectos() {
+    return this.http.get(`${this.baseUrl}/fechas-importantes/admin/todas`, {
+      headers: this.getHeaders()
+    });
+  }
+
   login(data: any) {
     return this.http.post(`${this.baseUrl}/users/login`, data);
   }
@@ -377,14 +384,14 @@ export class ApiService {
 
   // Obtener proyectos asignados al profesor autenticado
   getProyectosAsignados() {
-    return this.http.get(`${this.baseUrl}/profesor/proyectos-asignados`, {
+    return this.http.get(`${this.baseUrl}/projects/profesor/proyectos-asignados`, {
       headers: this.getHeaders()
     });
   }
 
   // Obtener proyectos del estudiante autenticado
   getMisProyectos() {
-    return this.http.get(`${this.baseUrl}/estudiante/mis-proyectos`, {
+    return this.http.get(`${this.baseUrl}/projects/estudiante/mis-proyectos`, {
       headers: this.getHeaders()
     });
   }
@@ -445,7 +452,8 @@ export class ApiService {
 
   // Obtener roles de profesores disponibles
   getRolesProfesores() {
-    return this.http.get(`${this.baseUrl}/roles/profesores`, {
+    console.log('🌐 Llamando a:', `${this.baseUrl}/admin/roles-profesores`);
+    return this.http.get(`${this.baseUrl}/admin/roles-profesores`, {
       headers: this.getHeaders()
     });
   }
@@ -496,6 +504,54 @@ export class ApiService {
     });
   }
 
+  // ===== MÉTODOS ESPECÍFICOS PARA ASIGNACIONES-PROFESORES (CONSOLIDADOS) =====
+
+  // Obtener profesores asignados a un proyecto específico
+  getProfesoresProyecto(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/proyecto/${proyectoId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener proyectos asignados a un profesor específico
+  getProyectosAsignadosProfesor(profesorRut: string, rolProfesorId?: string) {
+    let url = `${this.baseUrl}/asignaciones-profesores/profesor/${profesorRut}`;
+    if (rolProfesorId) {
+      url += `?rol_profesor_id=${rolProfesorId}`;
+    }
+    return this.http.get(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Crear nueva asignación profesor-proyecto
+  crearAsignacionProfesorProyecto(data: any) {
+    return this.http.post(`${this.baseUrl}/asignaciones-profesores`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Eliminar asignación profesor-proyecto
+  eliminarAsignacionProfesorProyecto(asignacionId: string) {
+    return this.http.delete(`${this.baseUrl}/asignaciones-profesores/${asignacionId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener todas las asignaciones de profesores (admin)
+  getAllAsignacionesProfesores() {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/admin/todas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener estadísticas de asignaciones profesores
+  getEstadisticasAsignacionesProfesores() {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/admin/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // ===== MÉTODOS PARA SISTEMA DE CRONOGRAMAS Y ENTREGAS =====
 
   // Crear cronograma para un proyecto
@@ -514,21 +570,21 @@ export class ApiService {
 
   // Aprobar cronograma (desde perspectiva del estudiante)
   aprobarCronograma(cronogramaId: string) {
-    return this.http.patch(`${this.baseUrl}/cronogramas/${cronogramaId}/aprobar`, {}, {
+    return this.http.patch(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/aprobar`, {}, {
       headers: this.getHeaders()
     });
   }
 
   // Crear hito en cronograma
   crearHitoCronograma(cronogramaId: string, hitoData: any) {
-    return this.http.post(`${this.baseUrl}/cronogramas/${cronogramaId}/hitos`, hitoData, {
+    return this.http.post(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos`, hitoData, {
       headers: this.getHeaders()
     });
   }
 
   // Obtener hitos de un cronograma
   obtenerHitosCronograma(cronogramaId: string) {
-    return this.http.get(`${this.baseUrl}/cronogramas/${cronogramaId}/hitos`, {
+    return this.http.get(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos`, {
       headers: this.getHeaders()
     });
   }
@@ -540,14 +596,14 @@ export class ApiService {
       // No incluir Content-Type para FormData
     });
 
-    return this.http.post(`${this.baseUrl}/hitos/${hitoId}/entregar`, formData, {
+    return this.http.post(`${this.baseUrl}/projects/hitos/${hitoId}/entregar`, formData, {
       headers: headers
     });
   }
 
   // Revisar hito entregado
   revisarHito(hitoId: string, revisionData: any) {
-    return this.http.patch(`${this.baseUrl}/hitos/${hitoId}/revisar`, revisionData, {
+    return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, revisionData, {
       headers: this.getHeaders()
     });
   }
@@ -555,14 +611,14 @@ export class ApiService {
   // Obtener notificaciones del usuario
   obtenerNotificaciones(soloNoLeidas: boolean = false) {
     const params = soloNoLeidas ? '?solo_no_leidas=true' : '';
-    return this.http.get(`${this.baseUrl}/notificaciones${params}`, {
+    return this.http.get(`${this.baseUrl}/projects/notificaciones${params}`, {
       headers: this.getHeaders()
     });
   }
 
   // Marcar notificación como leída
   marcarNotificacionLeida(notificacionId: string) {
-    return this.http.patch(`${this.baseUrl}/notificaciones/${notificacionId}/leer`, {}, {
+    return this.http.patch(`${this.baseUrl}/projects/notificaciones/${notificacionId}/leer`, {}, {
       headers: this.getHeaders()
     });
   }
@@ -631,6 +687,12 @@ export class ApiService {
 
   getSolicitudesReunion() {
     return this.http.get(`${this.baseUrl}/calendario-matching/solicitudes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getProfesoresParaReunion() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/profesores`, {
       headers: this.getHeaders()
     });
   }

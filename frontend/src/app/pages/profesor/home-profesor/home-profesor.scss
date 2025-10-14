@@ -1,25 +1,25 @@
-// Variables de colores
-$ubb-blue: #1e5799;
-$ubb-blue-light: #2989d8;
-$ubb-blue-lighter: #7db9e8;
-$ubb-blue-dark: #0c3d80;
-$ubb-red: #b71c1c;
-$ubb-red-light: #e53935;
-$ubb-red-dark: #7f0000;
-$ubb-white: #ffffff;
-$ubb-light-gray: #f8f9fa;
-$ubb-gray: #e9ecef;
-$ubb-dark-gray: #6c757d;
-$ubb-black: #212529;
-$ubb-success: #28a745;
-$ubb-warning: #ffc107;
-$ubb-info: #17a2b8;
+// Variables de colores UBB
+$primary-color: #004b8d;
+$secondary-color: #0066cc;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$accent-color: #00a8ff;
 
 // Gradientes
-$ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
-$ubb-success-gradient: linear-gradient(135deg, $ubb-success 0%, #20c997 100%);
-$ubb-warning-gradient: linear-gradient(135deg, $ubb-warning 0%, #fd7e14 100%);
-$ubb-info-gradient: linear-gradient(135deg, $ubb-info 0%, #6f42c1 100%);
+$primary-gradient: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+$success-gradient: linear-gradient(135deg, $success-color 0%, #20c997 100%);
+$warning-gradient: linear-gradient(135deg, $warning-color 0%, #fd7e14 100%);
+$accent-gradient: linear-gradient(135deg, $accent-color 0%, #6f42c1 100%);
 
 // Animaciones
 @keyframes fadeInUp {
@@ -59,13 +59,13 @@ $ubb-info-gradient: linear-gradient(135deg, $ubb-info 0%, #6f42c1 100%);
 
 body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: $ubb-light-gray;
-  color: $ubb-black;
+  background-color: $light-color;
+  color: $dark-color;
 }
 
 // Navbar
 .navbar {
-  background: $ubb-white;
+  background: $white-color;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 0 2rem;
   position: fixed;
@@ -83,10 +83,10 @@ body {
     align-items: center;
     font-size: 1.5rem;
     font-weight: 700;
-    color: $ubb-blue-dark;
+    color: $secondary-color-dark;
 
     i {
-      color: $ubb-blue;
+      color: $secondary-color;
       margin-right: 0.5rem;
       font-size: 1.8rem;
     }
@@ -104,7 +104,7 @@ body {
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
-      color: $ubb-dark-gray;
+      color: #6c757d;
       font-weight: 500;
 
       i {
@@ -113,21 +113,21 @@ body {
       }
 
       &:hover {
-        background-color: $ubb-light-gray;
-        color: $ubb-blue;
+        background-color: $light-color;
+        color: $secondary-color;
         transform: translateY(-2px);
       }
 
       &.user-menu {
         position: relative;
-        background-color: $ubb-light-gray;
-        border: 1px solid $ubb-gray;
+        background-color: $light-color;
+        border: 1px solid $gray-color;
 
         .dropdown-menu {
           position: absolute;
           top: 100%;
           right: 0;
-          background: $ubb-white;
+          background: $white-color;
           border-radius: 8px;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
           min-width: 200px;
@@ -156,7 +156,7 @@ body {
             }
 
             &:hover {
-              background-color: $ubb-light-gray;
+              background-color: $light-color;
             }
 
             &:first-child {
@@ -165,7 +165,7 @@ body {
 
             &:last-child {
               border-radius: 0 0 8px 8px;
-              color: $ubb-red;
+              color: $danger-color;
             }
           }
         }
@@ -173,14 +173,14 @@ body {
 
       &.calendario-menu {
         position: relative;
-        background-color: $ubb-light-gray;
-        border: 1px solid $ubb-gray;
+        background-color: $light-color;
+        border: 1px solid $gray-color;
 
         .dropdown-menu {
           position: absolute;
           top: 100%;
           right: 0;
-          background: $ubb-white;
+          background: $white-color;
           border-radius: 8px;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
           min-width: 220px;
@@ -206,12 +206,12 @@ body {
             i {
               margin-right: 0.75rem;
               width: 16px;
-              color: $ubb-blue;
+              color: $secondary-color;
             }
 
             &:hover {
-              background-color: $ubb-light-gray;
-              color: $ubb-blue;
+              background-color: $light-color;
+              color: $secondary-color;
             }
 
             &:first-child {
@@ -239,14 +239,14 @@ body {
 
 // Sección de bienvenida
 .welcome-section {
-  background: $ubb-blue-gradient;
+  background: $primary-gradient;
   border-radius: 20px;
   padding: 3rem;
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: $ubb-white;
+  color: $white-color;
   position: relative;
   overflow: hidden;
 
@@ -308,7 +308,7 @@ body {
 
 // Tarjetas del dashboard
 .dashboard-card {
-  background: $ubb-white;
+  background: $white-color;
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -333,7 +333,7 @@ body {
 
     i {
       font-size: 1.5rem;
-      color: $ubb-white;
+      color: $white-color;
     }
   }
 
@@ -342,11 +342,11 @@ body {
       font-size: 1.3rem;
       font-weight: 600;
       margin-bottom: 0.5rem;
-      color: $ubb-black;
+      color: $dark-color;
     }
 
     p {
-      color: $ubb-dark-gray;
+      color: #6c757d;
       margin-bottom: 1rem;
       line-height: 1.5;
     }
@@ -354,19 +354,19 @@ body {
 
   &.primary-card {
     .card-icon {
-      background: $ubb-blue-gradient;
+      background: $primary-gradient;
     }
   }
 
   &.secondary-card {
     .card-icon {
-      background: $ubb-success-gradient;
+      background: $success-gradient;
     }
   }
 
   &.accent-card {
     .card-icon {
-      background: $ubb-warning-gradient;
+      background: $warning-gradient;
     }
 
     .stats-item, .activity-item {
@@ -375,21 +375,49 @@ body {
       margin-bottom: 0.5rem;
 
       i {
-        color: $ubb-warning;
+        color: $warning-color;
         margin-right: 0.5rem;
         width: 16px;
       }
 
       span {
-        color: $ubb-dark-gray;
+        color: #6c757d;
         font-size: 0.95rem;
       }
     }
   }
 
+  &.calendar-matching-card {
+    .card-icon {
+      background: $accent-gradient;
+    }
+
+    .stats-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      i {
+        color: $accent-color;
+        margin-right: 0.5rem;
+        width: 16px;
+      }
+
+      span {
+        color: #6c757d;
+        font-size: 0.95rem;
+      }
+    }
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(23, 162, 184, 0.3);
+    }
+  }
+
   &.action-card {
     .card-icon {
-      background: $ubb-info-gradient;
+      background: $accent-gradient;
     }
 
     .activity-item {
@@ -398,13 +426,13 @@ body {
       margin-bottom: 0.5rem;
 
       i {
-        color: $ubb-info;
+        color: $accent-color;
         margin-right: 0.5rem;
         width: 16px;
       }
 
       span {
-        color: $ubb-dark-gray;
+        color: #6c757d;
         font-size: 0.95rem;
       }
     }
@@ -416,8 +444,8 @@ body {
   display: inline-flex;
   align-items: center;
   padding: 0.75rem 1.5rem;
-  background: $ubb-blue-gradient;
-  color: $ubb-white;
+  background: $primary-gradient;
+  color: $white-color;
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -425,7 +453,7 @@ body {
   transition: all 0.3s ease;
   text-decoration: none;
   font-size: 0.95rem;
-  box-shadow: 0 4px 15px rgba($ubb-blue, 0.3);
+  box-shadow: 0 4px 15px rgba($secondary-color, 0.3);
 
   i {
     margin-right: 0.5rem;
@@ -433,13 +461,13 @@ body {
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba($ubb-blue, 0.4);
+    box-shadow: 0 6px 20px rgba($secondary-color, 0.4);
   }
 }
 
 // Sección de acciones rápidas
 .quick-actions-section {
-  background: $ubb-white;
+  background: $white-color;
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -447,7 +475,7 @@ body {
   h2 {
     font-size: 1.5rem;
     font-weight: 600;
-    color: $ubb-black;
+    color: $dark-color;
     margin-bottom: 1.5rem;
     text-align: center;
   }
@@ -462,28 +490,28 @@ body {
       align-items: center;
       padding: 1.5rem;
       border-radius: 12px;
-      background: $ubb-light-gray;
+      background: $light-color;
       cursor: pointer;
       transition: all 0.3s ease;
 
       &:hover {
         transform: translateY(-3px);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        background: rgba($ubb-blue, 0.05);
+        background: rgba($secondary-color, 0.05);
       }
 
       .action-icon {
         width: 50px;
         height: 50px;
         border-radius: 10px;
-        background: $ubb-blue-gradient;
+        background: $primary-gradient;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 1rem;
 
         i {
-          color: $ubb-white;
+          color: $white-color;
           font-size: 1.2rem;
         }
       }
@@ -494,12 +522,12 @@ body {
         h4 {
           font-size: 1.1rem;
           font-weight: 600;
-          color: $ubb-black;
+          color: $dark-color;
           margin-bottom: 0.25rem;
         }
 
         p {
-          color: $ubb-dark-gray;
+          color: #6c757d;
           font-size: 0.9rem;
           margin: 0;
         }
@@ -513,8 +541,8 @@ body {
   margin-top: 3rem;
   padding: 2rem;
   text-align: center;
-  color: $ubb-dark-gray;
-  border-top: 1px solid $ubb-gray;
+  color: #6c757d;
+  border-top: 1px solid $gray-color;
 
   .footer-content {
     p {
@@ -611,13 +639,13 @@ body {
       
       h4 {
         margin: 0;
-        color: $ubb-blue-dark;
+        color: $secondary-color-dark;
         font-size: 1.1rem;
         font-weight: 600;
       }
       
       .rol-badge {
-        background: $ubb-info-gradient;
+        background: $accent-gradient;
         color: white;
         padding: 0.2rem 0.8rem;
         border-radius: 15px;
@@ -628,7 +656,7 @@ body {
     }
     
     .project-description {
-      color: $ubb-dark-gray;
+      color: #6c757d;
       font-size: 0.9rem;
       margin: 0.5rem 0;
       line-height: 1.4;
@@ -642,7 +670,7 @@ body {
       label {
         display: block;
         font-size: 0.8rem;
-        color: $ubb-dark-gray;
+        color: #6c757d;
         margin-bottom: 0.3rem;
         font-weight: 500;
       }
@@ -657,18 +685,18 @@ body {
         display: flex;
         align-items: center;
         font-size: 0.8rem;
-        color: $ubb-dark-gray;
+        color: #6c757d;
         
         i {
           margin-right: 0.5rem;
           width: 12px;
           
           &.fa-calendar-start {
-            color: $ubb-success;
+            color: $success-color;
           }
           
           &.fa-calendar-check {
-            color: $ubb-warning;
+            color: $warning-color;
           }
         }
       }
@@ -686,17 +714,17 @@ body {
       
       .btn-icon {
         background: none;
-        border: 1px solid $ubb-gray;
+        border: 1px solid $gray-color;
         padding: 0.5rem;
         border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s ease;
-        color: $ubb-dark-gray;
+        color: #6c757d;
         
         &:hover {
-          background: $ubb-blue;
+          background: $secondary-color;
           color: white;
-          border-color: $ubb-blue;
+          border-color: $secondary-color;
           transform: translateY(-1px);
         }
         
@@ -710,7 +738,7 @@ body {
 
 // Badges de acción con notificaciones
 .action-badge {
-  background: $ubb-red;
+  background: $danger-color;
   color: white;
   padding: 0.2rem 0.6rem;
   border-radius: 10px;
@@ -794,26 +822,26 @@ body {
   align-items: center;
   margin-bottom: 2rem;
   padding: 1rem;
-  background: $ubb-light-gray;
+  background: $light-color;
   border-radius: 8px;
   
   label {
     font-weight: 600;
-    color: $ubb-blue-dark;
+    color: $secondary-color-dark;
     min-width: 80px;
   }
   
   select {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid $ubb-gray;
+    border: 1px solid $gray-color;
     border-radius: 6px;
     font-size: 1rem;
     
     &:focus {
       outline: none;
-      border-color: $ubb-blue;
-      box-shadow: 0 0 0 2px rgba($ubb-blue, 0.2);
+      border-color: $secondary-color;
+      box-shadow: 0 0 0 2px rgba($secondary-color, 0.2);
     }
   }
   
@@ -834,7 +862,7 @@ body {
 // Tarjeta de hito
 .hito-card {
   background: white;
-  border: 2px solid $ubb-gray;
+  border: 2px solid $gray-color;
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s ease;
@@ -848,7 +876,7 @@ body {
     left: 0;
     width: 4px;
     height: 100%;
-    background: $ubb-blue;
+    background: $secondary-color;
   }
   
   &:hover {
@@ -857,29 +885,29 @@ body {
   }
   
   &.proximo {
-    border-color: $ubb-warning;
+    border-color: $warning-color;
     background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
     
     &:before {
-      background: $ubb-warning;
+      background: $warning-color;
     }
   }
   
   &.retrasado {
-    border-color: $ubb-red;
+    border-color: $danger-color;
     background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
     
     &:before {
-      background: $ubb-red;
+      background: $danger-color;
     }
   }
   
   &.estado-completado {
-    border-color: $ubb-success;
+    border-color: $success-color;
     background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);
     
     &:before {
-      background: $ubb-success;
+      background: $success-color;
     }
   }
 }
@@ -896,7 +924,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 0.3rem 0.8rem;
-    background: $ubb-blue-gradient;
+    background: $primary-gradient;
     color: white;
     border-radius: 15px;
     font-size: 0.8rem;
@@ -914,17 +942,17 @@ body {
     
     .btn-icon {
       background: none;
-      border: 1px solid $ubb-gray;
+      border: 1px solid $gray-color;
       padding: 0.4rem;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s ease;
-      color: $ubb-dark-gray;
+      color: #6c757d;
       
       &:hover {
-        background: $ubb-blue;
+        background: $secondary-color;
         color: white;
-        border-color: $ubb-blue;
+        border-color: $secondary-color;
       }
     }
   }
@@ -936,7 +964,7 @@ body {
   
   h4 {
     margin: 0 0 0.5rem 0;
-    color: $ubb-blue-dark;
+    color: $secondary-color-dark;
     font-size: 1.1rem;
     font-weight: 600;
     line-height: 1.3;
@@ -946,22 +974,22 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: $ubb-dark-gray;
+    color: #6c757d;
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
     
     i {
-      color: $ubb-blue;
+      color: $secondary-color;
     }
     
     .estudiante {
-      color: $ubb-blue;
+      color: $secondary-color;
       font-weight: 500;
     }
   }
   
   .hito-descripcion {
-    color: $ubb-dark-gray;
+    color: #6c757d;
     font-size: 0.9rem;
     line-height: 1.4;
     margin: 0;
@@ -979,20 +1007,20 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: $ubb-dark-gray;
+    color: #6c757d;
     font-size: 0.9rem;
     
     i {
-      color: $ubb-blue;
+      color: $secondary-color;
     }
     
     .dias-restantes {
-      color: $ubb-warning;
+      color: $warning-color;
       font-weight: 500;
     }
     
     .dias-retraso {
-      color: $ubb-red;
+      color: $danger-color;
       font-weight: 600;
     }
   }
@@ -1003,19 +1031,19 @@ body {
     align-items: center;
     
     .peso {
-      background: $ubb-light-gray;
+      background: $light-color;
       padding: 0.2rem 0.6rem;
       border-radius: 10px;
       font-size: 0.8rem;
       font-weight: 600;
-      color: $ubb-blue-dark;
+      color: $secondary-color-dark;
     }
     
     .critico {
       display: flex;
       align-items: center;
       gap: 0.3rem;
-      color: $ubb-red;
+      color: $danger-color;
       font-size: 0.8rem;
       font-weight: 600;
       
@@ -1035,13 +1063,13 @@ body {
   .progress-bar {
     flex: 1;
     height: 6px;
-    background: $ubb-light-gray;
+    background: $light-color;
     border-radius: 3px;
     overflow: hidden;
     
     .progress-fill {
       height: 100%;
-      background: $ubb-success-gradient;
+      background: $success-gradient;
       transition: width 0.3s ease;
     }
   }
@@ -1049,7 +1077,7 @@ body {
   .progress-text {
     font-size: 0.8rem;
     font-weight: 600;
-    color: $ubb-success;
+    color: $success-color;
   }
 }
 
@@ -1057,17 +1085,17 @@ body {
 .empty-hitos {
   text-align: center;
   padding: 3rem;
-  color: $ubb-dark-gray;
+  color: #6c757d;
   
   i {
     font-size: 4rem;
     margin-bottom: 1rem;
-    color: $ubb-gray;
+    color: $gray-color;
   }
   
   h3 {
     margin-bottom: 0.5rem;
-    color: $ubb-blue-dark;
+    color: $secondary-color-dark;
   }
   
   p {
@@ -1098,21 +1126,21 @@ body {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
-      color: $ubb-blue-dark;
+      color: $secondary-color-dark;
     }
     
     input, select, textarea {
       width: 100%;
       padding: 0.75rem;
-      border: 2px solid $ubb-gray;
+      border: 2px solid $gray-color;
       border-radius: 8px;
       font-size: 1rem;
       transition: all 0.2s ease;
       
       &:focus {
         outline: none;
-        border-color: $ubb-blue;
-        box-shadow: 0 0 0 3px rgba($ubb-blue, 0.1);
+        border-color: $secondary-color;
+        box-shadow: 0 0 0 3px rgba($secondary-color, 0.1);
       }
     }
     
@@ -1150,7 +1178,7 @@ body {
     justify-content: flex-end;
     margin-top: 2rem;
     padding-top: 1rem;
-    border-top: 1px solid $ubb-gray;
+    border-top: 1px solid $gray-color;
   }
 }
 

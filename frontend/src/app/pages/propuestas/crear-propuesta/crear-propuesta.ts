@@ -143,7 +143,8 @@ export class CrearPropuestaComponent {
   }
 
   volver() {
-    this.router.navigate(['/estudiante']);
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 
   fechaActual(): Date {

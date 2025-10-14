@@ -59,6 +59,7 @@ export const routes: Routes = [
   { path: 'admin/profesores', component: GestionProfesoresComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
+  { path: 'admin/calendario-matching', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
 
   {
     path: 'profesor',
@@ -93,6 +94,11 @@ export const routes: Routes = [
       {
         path: 'calendario/disponibilidades',
         component: DisponibilidadesComponent,
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'calendario/solicitudes',
+        component: DashboardReunionesComponent,
         canActivate: [AuthGuard]
       },
       {

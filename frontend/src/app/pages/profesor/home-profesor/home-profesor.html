@@ -31,6 +31,10 @@
           <i class="fas fa-clock"></i>
           <span>Mis Horarios</span>
         </div>
+        <div class="dropdown-item" (click)="navegar('profesor/calendario/solicitudes')">
+          <i class="fas fa-inbox"></i>
+          <span>Solicitudes Recibidas</span>
+        </div>
         <div class="dropdown-item" (click)="navegar('profesor/calendario/gestion')">
           <i class="fas fa-calendar-check"></i>
           <span>Mis Reuniones</span>
@@ -117,6 +121,31 @@
           <i class="fas fa-clock"></i>
           <span>{{ estadisticas.pendientes || 0 }} Pendientes de Revisión</span>
         </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-card calendar-matching-card" (click)="navegar('profesor/calendario/dashboard')">
+      <div class="card-icon">
+        <i class="fas fa-calendar-week"></i>
+      </div>
+      <div class="card-content">
+        <h3>Gestión de Reuniones</h3>
+        <div class="stats-item">
+          <i class="fas fa-clock"></i>
+          <span>Disponibilidades configuradas</span>
+        </div>
+        <div class="stats-item">
+          <i class="fas fa-envelope"></i>
+          <span>Solicitudes pendientes</span>
+        </div>
+        <div class="stats-item">
+          <i class="fas fa-calendar-check"></i>
+          <span>Próximas reuniones</span>
+        </div>
+        <button class="btn-primary">
+          <i class="fas fa-tachometer-alt"></i>
+          Dashboard Reuniones
+        </button>
       </div>
     </div>
     

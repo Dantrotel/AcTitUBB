@@ -6,7 +6,11 @@ CREATE TABLE IF NOT EXISTS roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
     descripcion TEXT,
-    created_at TIMESTAM-- Tabla de Asignaciones de Profesores a Proyectos (con roles específicos)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de Asignaciones de Profesores a Proyectos (UNIFICADA)
 CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -17,11 +21,13 @@ CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     activo BOOLEAN DEFAULT TRUE,
     observaciones TEXT NULL,
     asignado_por VARCHAR(10) NOT NULL, -- RUT del admin que hizo la asignación
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
     FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
-    UNIQUE KEY unique_asignacion_activa (proyecto_id, profesor_rut, rol_profesor_id, activo),
+    UNIQUE KEY unique_asignacion_proyecto_rol (proyecto_id, rol_profesor_id),
     INDEX idx_proyecto_activo (proyecto_id, activo),
     INDEX idx_profesor_activo (profesor_rut, activo),
     INDEX idx_rol_activo (rol_profesor_id, activo)
@@ -46,8 +52,6 @@ CREATE TABLE IF NOT EXISTS historial_asignaciones (
     INDEX idx_proyecto_historial (proyecto_id),
     INDEX idx_profesor_historial (profesor_rut),
     INDEX idx_fecha_historial (fecha_accion)
-);RENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Tabla de Usuarios (Estudiantes y Profesores)
@@ -116,10 +120,18 @@ CREATE TABLE IF NOT EXISTS propuestas (
 -- Tabla de Roles de Profesores en Proyectos
 CREATE TABLE IF NOT EXISTS roles_profesores (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50) NOT NULL UNIQUE,
     nombre VARCHAR(50) NOT NULL UNIQUE,
     descripcion TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Asegurar que la columna codigo existe (por si la tabla ya existía sin esta columna)
+ALTER TABLE roles_profesores 
+ADD COLUMN IF NOT EXISTS codigo VARCHAR(50) AFTER id;
+
+-- Asegurar que la columna codigo sea UNIQUE (solo si no lo es ya)
+-- Nota: Esta línea puede fallar si ya existe el índice, pero es seguro ignorar el error
 
 -- Tabla de Asignaciones de Profesores a Propuestas
 CREATE TABLE IF NOT EXISTS asignaciones_propuestas (
@@ -276,20 +288,6 @@ CREATE TABLE IF NOT EXISTS evaluaciones_proyecto (
     INDEX idx_profesor_fecha (profesor_evaluador_rut, fecha_evaluacion)
 );
 
--- Tabla de Asignaciones de Profesores a Proyectos con Roles
-CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
-    profesor_rut VARCHAR(10) NOT NULL,
-    rol_profesor_id INT NOT NULL,
-    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    activo BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
-    UNIQUE KEY unique_asignacion_proyecto (proyecto_id, profesor_rut, rol_profesor_id)
-);
-
 -- Tabla de Avances del Proyecto
 CREATE TABLE IF NOT EXISTS avances (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -332,7 +330,7 @@ CREATE TABLE IF NOT EXISTS fechas_calendario (
 CREATE TABLE IF NOT EXISTS fechas_importantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    tipo_fecha ENUM('entrega_avance', 'entrega_final', 'defensa', 'reunion', 'revision', 'otro') DEFAULT 'otro',
+    tipo_fecha ENUM('entrega', 'reunion', 'evaluacion', 'hito', 'deadline', 'presentacion', 'entrega_avance', 'entrega_final', 'defensa', 'revision', 'otro') DEFAULT 'otro',
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
     fecha_limite DATE NOT NULL,
@@ -478,26 +476,7 @@ CREATE TABLE IF NOT EXISTS configuracion_alertas (
     UNIQUE KEY unique_config_proyecto (proyecto_id)
 );
 
--- Tabla de Asignaciones de Profesores (nueva estructura)
-CREATE TABLE IF NOT EXISTS asignaciones_profesores (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
-    profesor_rut VARCHAR(10) NOT NULL,
-    rol_profesor ENUM('profesor_guia', 'profesor_co_guia', 'profesor_informante', 'profesor_sala', 'profesor_corrector') NOT NULL,
-    fecha_asignacion DATE NOT NULL,
-    fecha_desasignacion DATE NULL,
-    activo BOOLEAN DEFAULT TRUE,
-    notas TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
-    INDEX idx_proyecto_activo (proyecto_id, activo),
-    INDEX idx_profesor_activo (profesor_rut, activo),
-    INDEX idx_rol_activo (rol_profesor, activo)
-);
-
--- Tabla de Fechas Importantes (mantener la original para compatibilidad con proyectos)
+-- Tabla de Reuniones de Calendario
 CREATE TABLE IF NOT EXISTS fechas_importantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -581,14 +560,14 @@ INSERT IGNORE INTO estados_proyectos (nombre, descripcion) VALUES
 -- ('Fin Semestre', 'Fin del semestre académico', '2025-07-15', 'academica', TRUE, '11111111-1');
 
 -- Roles de profesores en proyectos
-INSERT IGNORE INTO roles_profesores (nombre, descripcion) VALUES
-('profesor_revisor', 'Profesor que evalúa la propuesta inicial y determina su viabilidad'),
-('profesor_guia', 'Profesor principal que guía el desarrollo completo del proyecto'),
-('profesor_co_guia', 'Profesor co-guía que apoya en áreas específicas del proyecto'),
-('profesor_informante', 'Profesor que evalúa el informe final y otorga calificación'),
-('profesor_sala', 'Profesor de sala para la defensa oral del proyecto'),
-('profesor_corrector', 'Profesor que corrige y evalúa avances parciales'),
-('profesor_externo', 'Profesor externo o de otra institución que participa en la evaluación');
+INSERT IGNORE INTO roles_profesores (codigo, nombre, descripcion) VALUES
+('profesor_revisor', 'Profesor Revisor', 'Profesor que evalúa la propuesta inicial y determina su viabilidad'),
+('profesor_guia', 'Profesor Guía', 'Profesor principal que guía el desarrollo completo del proyecto'),
+('profesor_co_guia', 'Profesor Co-Guía', 'Profesor co-guía que apoya en áreas específicas del proyecto'),
+('profesor_informante', 'Profesor Informante', 'Profesor que evalúa el informe final y otorga calificación'),
+('profesor_sala', 'Profesor de Sala', 'Profesor de sala para la defensa oral del proyecto'),
+('profesor_corrector', 'Profesor Corrector', 'Profesor que corrige y evalúa avances parciales'),
+('profesor_externo', 'Profesor Externo', 'Profesor externo o de otra institución que participa en la evaluación');
 
 -- Usuarios de prueba (contraseña: 1234)
 -- Hash generado con bcrypt, salt rounds = 10
@@ -736,4 +715,154 @@ INSERT IGNORE INTO configuracion_matching (clave, valor, descripcion, tipo) VALU
 ('tiempo_respuesta_horas', '48', 'Tiempo máximo en horas para responder solicitudes', 'entero'),
 ('permitir_reuniones_sabado', 'false', 'Permitir agendar reuniones los sábados', 'booleano'),
 ('permitir_reuniones_domingo', 'false', 'Permitir agendar reuniones los domingos', 'booleano');
+
+-- =====================================================
+-- DATOS DE PRUEBA PARA SISTEMA DE CALENDARIO MATCHING
+-- =====================================================
+
+-- 1. Crear propuesta de prueba
+INSERT IGNORE INTO propuestas (
+    id, titulo, descripcion, estudiante_rut, estado_id, 
+    comentarios_profesor, fecha_envio, fecha_aprobacion, proyecto_id
+) VALUES (
+    1, 
+    'Sistema de Gestión de Inventarios',
+    'Desarrollo de un sistema web para gestión de inventarios en tiempo real con tecnologías modernas',
+    '12345678-9', 
+    4, -- Estado: aprobada
+    'Excelente propuesta, muy bien estructurada',
+    '2025-01-15',
+    '2025-01-20',
+    1 -- Se creará el proyecto con este ID
+);
+
+-- 2. Crear proyecto de prueba
+INSERT IGNORE INTO proyectos (
+    id, titulo, descripcion, propuesta_id, estudiante_rut, 
+    estado_id, fecha_inicio, fecha_entrega_estimada
+) VALUES (
+    1,
+    'Sistema de Gestión de Inventarios',
+    'Desarrollo de un sistema web para gestión de inventarios en tiempo real con React y Node.js',
+    1, -- Referencia a la propuesta
+    '12345678-9', -- Ana Estudiante
+    1, -- Estado: en_desarrollo
+    '2025-01-21',
+    '2025-06-30'
+);
+
+-- 3. Asignar profesor guía al proyecto
+INSERT IGNORE INTO asignaciones_proyectos (
+    proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, activo, asignado_por
+) VALUES (
+    1, -- Proyecto: Sistema de Gestión de Inventarios
+    '98765432-1', -- Carlos Profesor
+    2, -- profesor_guia (ID del rol)
+    '2025-01-21',
+    TRUE,
+    '11111111-1' -- Admin que asignó
+);
+
+-- 4. Crear disponibilidades de ejemplo
+
+-- Disponibilidades del Profesor Carlos
+INSERT IGNORE INTO disponibilidades (usuario_rut, dia_semana, hora_inicio, hora_fin) VALUES
+('98765432-1', 'lunes', '09:00', '12:00'),
+('98765432-1', 'lunes', '14:00', '17:00'),
+('98765432-1', 'martes', '10:00', '13:00'),
+('98765432-1', 'miercoles', '09:00', '11:00'),
+('98765432-1', 'miercoles', '15:00', '18:00'),
+('98765432-1', 'jueves', '08:00', '12:00'),
+('98765432-1', 'viernes', '14:00', '16:00');
+
+-- Disponibilidades de la Estudiante Ana
+INSERT IGNORE INTO disponibilidades (usuario_rut, dia_semana, hora_inicio, hora_fin) VALUES
+('12345678-9', 'lunes', '10:00', '11:00'),
+('12345678-9', 'lunes', '15:00', '16:00'),
+('12345678-9', 'martes', '11:00', '12:00'),
+('12345678-9', 'miercoles', '09:30', '10:30'),
+('12345678-9', 'miercoles', '16:00', '17:00'),
+('12345678-9', 'jueves', '09:00', '11:00'),
+('12345678-9', 'viernes', '14:30', '15:30');
+
+-- 5. Crear ejemplo de bloqueo de horarios (profesor en vacaciones)
+INSERT IGNORE INTO bloqueos_horarios (
+    usuario_rut, fecha_inicio, fecha_fin, motivo, tipo
+) VALUES (
+    '98765432-1', 
+    '2025-02-10', 
+    '2025-02-14', 
+    'Vacaciones de verano', 
+    'vacaciones'
+);
+
+-- 6. Crear una solicitud de reunión de ejemplo
+INSERT IGNORE INTO solicitudes_reunion (
+    proyecto_id, profesor_rut, estudiante_rut, fecha_propuesta, 
+    hora_propuesta, tipo_reunion, descripcion, estado, creado_por
+) VALUES (
+    1, -- Sistema de Gestión de Inventarios
+    '98765432-1', -- Carlos Profesor
+    '12345678-9', -- Ana Estudiante
+    '2025-02-03', -- Próximo lunes
+    '10:30', -- Horario donde ambos están disponibles
+    'seguimiento',
+    'Primera reunión de seguimiento para definir alcance del proyecto',
+    'pendiente',
+    'sistema'
+);
+
+-- 7. Crear una segunda propuesta y proyecto para más pruebas
+INSERT IGNORE INTO propuestas (
+    id, titulo, descripcion, estudiante_rut, estado_id, 
+    comentarios_profesor, fecha_envio, fecha_aprobacion, proyecto_id
+) VALUES (
+    2, 
+    'Aplicación Móvil de Transporte',
+    'Desarrollo de una aplicación móvil para gestión de transporte público',
+    '12345678-9', 
+    4, -- Estado: aprobada
+    'Buena propuesta, innovadora',
+    '2025-01-10',
+    '2025-01-18',
+    2
+);
+
+INSERT IGNORE INTO proyectos (
+    id, titulo, descripcion, propuesta_id, estudiante_rut, 
+    estado_id, fecha_inicio, fecha_entrega_estimada
+) VALUES (
+    2,
+    'Aplicación Móvil de Transporte',
+    'App móvil con React Native para gestión de rutas de transporte público',
+    2,
+    '12345678-9',
+    1, -- Estado: en_desarrollo
+    '2025-01-19',
+    '2025-07-15'
+);
+
+-- Asignar mismo profesor a segundo proyecto (diferentes roles)
+INSERT IGNORE INTO asignaciones_proyectos (
+    proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, activo, asignado_por
+) VALUES (
+    2, -- Aplicación Móvil
+    '98765432-1', -- Carlos Profesor
+    4, -- profesor_informante (ID del rol)
+    '2025-01-19',
+    TRUE,
+    '11111111-1' -- Admin que asignó
+);
+
+-- 8. Crear fechas importantes para los proyectos
+INSERT IGNORE INTO fechas_importantes (
+    proyecto_id, tipo_fecha, titulo, descripcion, fecha_limite
+) VALUES 
+(1, 'entrega_avance', 'Primera Entrega', 'Entrega del primer avance del sistema', '2025-03-15'),
+(1, 'defensa', 'Defensa Final', 'Defensa final del proyecto de título', '2025-06-20'),
+(2, 'entrega_avance', 'Prototipo App', 'Entrega del prototipo funcional', '2025-04-10'),
+(2, 'presentacion', 'Presentación Intermedia', 'Presentación de avances a comité', '2025-05-15');
+
+-- ===== VERIFICACIÓN DE DATOS CREADOS =====
+SELECT 'Datos de prueba para Sistema de Calendario con Matching creados exitosamente' as status;
 

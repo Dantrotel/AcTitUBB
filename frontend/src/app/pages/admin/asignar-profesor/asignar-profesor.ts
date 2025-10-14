@@ -114,7 +114,8 @@ export class AsignarProfesorComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/admin/propuestas']);
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 
   obtenerEstadoDisplay(estado: string | undefined): string {

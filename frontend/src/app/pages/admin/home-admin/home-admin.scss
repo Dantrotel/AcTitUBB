@@ -344,4 +344,41 @@ $dark-gray: #343a40;
   .sections-grid {
     grid-template-columns: 1fr;
   }
+}
+
+// Calendario Matching card styles
+.calendar-matching-card {
+  background: linear-gradient(135deg, $info-color 0%, #138496 100%);
+  border: 2px solid rgba(23, 162, 184, 0.3);
+  color: white;
+
+  .card-icon i {
+    color: white;
+  }
+
+  .card-content h3 {
+    color: white;
+  }
+
+  .card-content p {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .card-actions {
+    color: white;
+
+    .action-text {
+      color: white;
+    }
+
+    i {
+      color: white;
+    }
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(23, 162, 184, 0.4);
+    border-color: rgba(23, 162, 184, 0.6);
+  }
 } 

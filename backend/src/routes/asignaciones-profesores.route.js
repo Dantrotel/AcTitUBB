@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
-import { ProjectService } from '../services/project.service.js';
 import { verifySession } from '../middlewares/verifySession.js';
+import { pool } from '../db/connectionDB.js';
 
 const router = Router();
 
@@ -15,16 +14,21 @@ router.get('/proyecto/:proyecto_id', verifySession, async (req, res) => {
     try {
         const { proyecto_id } = req.params;
         
-        // Verificar permisos para ver el proyecto
-        const puedeVer = await ProjectService.puedeVerProyecto(proyecto_id, req.user.rut, req.user.role_id);
-        if (!puedeVer) {
-            return res.status(403).json({
-                success: false,
-                message: 'No tienes permisos para ver las asignaciones de este proyecto'
-            });
-        }
+        const query = `
+            SELECT 
+                ap.*,
+                u.nombre as nombre_profesor,
+                u.email as email_profesor,
+                rp.nombre as nombre_rol,
+                rp.id as rol_id
+            FROM asignaciones_proyectos ap
+            INNER JOIN usuarios u ON ap.profesor_rut = u.rut
+            INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            WHERE ap.proyecto_id = ? AND ap.activo = TRUE
+            ORDER BY rp.nombre
+        `;
         
-        const profesores = await asignacionesProfesoresModel.obtenerProfesoresProyecto(parseInt(proyecto_id));
+        const [profesores] = await pool.execute(query, [proyecto_id]);
         
         res.json({
             success: true,
@@ -77,13 +81,13 @@ router.get('/profesor/:profesor_rut', verifySession, async (req, res) => {
  */
 router.post('/', verifySession, async (req, res) => {
     try {
-        const { proyecto_id, profesor_rut, rol_profesor } = req.body;
+        const { proyecto_id, profesor_rut, rol_profesor_id, observaciones } = req.body;
         
         // Validar datos requeridos
-        if (!proyecto_id || !profesor_rut || !rol_profesor) {
+        if (!proyecto_id || !profesor_rut || !rol_profesor_id) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos obligatorios: proyecto_id, profesor_rut, rol_profesor'
+                message: 'Faltan campos obligatorios: proyecto_id, profesor_rut, rol_profesor_id'
             });
         }
         
@@ -95,18 +99,20 @@ router.post('/', verifySession, async (req, res) => {
             });
         }
         
-        const asignacionId = await asignacionesProfesoresModel.asignarProfesorAProyecto({
+        const asignado_por = req.user.rut;
+        
+        const resultado = await asignacionesProfesoresModel.asignarProfesorAProyecto({
             proyecto_id,
             profesor_rut,
-            rol_profesor
+            rol_profesor_id,
+            asignado_por,
+            observaciones
         });
-        
-        const asignacionCreada = await asignacionesProfesoresModel.obtenerAsignacionPorId(asignacionId);
         
         res.status(201).json({
             success: true,
             message: 'Profesor asignado exitosamente',
-            data: asignacionCreada
+            data: { id: resultado }
         });
     } catch (error) {
         console.error('Error al asignar profesor:', error);
@@ -349,6 +355,157 @@ router.get('/:asignacion_id', verifySession, async (req, res) => {
         });
     } catch (error) {
         console.error('Error al obtener asignación:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
+ * GET /asignaciones-profesores/admin/todas
+ * Obtener todas las asignaciones de profesores (solo admin)
+ */
+router.get('/admin/todas', verifySession, async (req, res) => {
+    try {
+        // Verificar que sea admin (role_id = 3)
+        if (req.user.role_id !== 3) {
+            return res.status(403).json({
+                success: false,
+                message: 'Solo los administradores pueden ver todas las asignaciones'
+            });
+        }
+        
+        // Verificar estructura de la tabla roles_profesores
+        try {
+            console.log('🔍 Verificando estructura de roles_profesores...');
+            const [columns] = await pool.execute('DESCRIBE roles_profesores');
+            console.log('📋 Columnas disponibles:', columns.map(col => col.Field));
+            
+            const [roleCount] = await pool.execute('SELECT COUNT(*) as total FROM roles_profesores');
+            console.log('📊 Total de roles:', roleCount[0].total);
+            
+            // Verificar si la tabla tiene datos
+            const [sampleRoles] = await pool.execute('SELECT * FROM roles_profesores LIMIT 3');
+            console.log('🔍 Muestra de roles:', sampleRoles);
+        } catch (diagError) {
+            console.error('❌ Error en diagnóstico:', diagError);
+        }
+        
+        const query = `
+            SELECT 
+                ap.*,
+                u.nombre as nombre_profesor,
+                u.email as email_profesor,
+                p.titulo as titulo_proyecto,
+                p.estudiante_rut,
+                ue.nombre as nombre_estudiante,
+                rp.nombre as nombre_rol,
+                rp.id as rol_id
+            FROM asignaciones_proyectos ap
+            INNER JOIN usuarios u ON ap.profesor_rut = u.rut
+            INNER JOIN proyectos p ON ap.proyecto_id = p.id
+            INNER JOIN usuarios ue ON p.estudiante_rut = ue.rut
+            INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            WHERE ap.activo = TRUE
+            ORDER BY p.titulo, rp.nombre
+        `;
+        
+        const [asignaciones] = await pool.execute(query);
+        
+        res.json({
+            success: true,
+            data: asignaciones
+        });
+    } catch (error) {
+        console.error('Error al obtener todas las asignaciones:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
+ * GET /asignaciones-profesores/admin/estadisticas
+ * Obtener estadísticas generales de asignaciones (solo admin)
+ */
+router.get('/admin/estadisticas', verifySession, async (req, res) => {
+    try {
+        // Verificar que sea admin
+        if (req.user.role_id !== 3) {
+            return res.status(403).json({
+                success: false,
+                message: 'Solo los administradores pueden ver las estadísticas generales'
+            });
+        }
+        
+        const estadisticas = await asignacionesProfesoresModel.obtenerEstadisticasGenerales();
+        
+        res.json({
+            success: true,
+            data: estadisticas
+        });
+    } catch (error) {
+        console.error('Error al obtener todas las asignaciones:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
+ * POST /asignaciones-profesores
+ * Crear una nueva asignación de profesor a proyecto
+ */
+router.post('/', verifySession, async (req, res) => {
+    try {
+        // Verificar que sea admin (role_id = 3)
+        if (req.user.role_id !== 3) {
+            return res.status(403).json({
+                success: false,
+                message: 'Solo los administradores pueden crear asignaciones'
+            });
+        }
+        
+        const { proyecto_id, profesor_rut, rol_profesor_id } = req.body;
+        
+        if (!proyecto_id || !profesor_rut || !rol_profesor_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Faltan campos obligatorios: proyecto_id, profesor_rut, rol_profesor_id'
+            });
+        }
+        
+        // Verificar que no exista asignación duplicada
+        const verificarQuery = `
+            SELECT id FROM asignaciones_proyectos 
+            WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE
+        `;
+        const [existente] = await pool.execute(verificarQuery, [proyecto_id, rol_profesor_id]);
+        
+        if (existente.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'Ya existe un profesor con este rol asignado al proyecto'
+            });
+        }
+        
+        // Crear asignación
+        const insertQuery = `
+            INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, asignado_por)
+            VALUES (?, ?, ?, ?)
+        `;
+        const [result] = await pool.execute(insertQuery, [proyecto_id, profesor_rut, rol_profesor_id, req.user.rut]);
+        
+        res.status(201).json({
+            success: true,
+            data: { id: result.insertId },
+            message: 'Asignación creada exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al crear asignación:', error);
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'

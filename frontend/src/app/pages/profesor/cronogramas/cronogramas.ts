@@ -384,7 +384,8 @@ export class CronogramasComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/profesor']);
+    // Usar history.back() para volver a la página anterior sin activar guards
+    window.history.back();
   }
 
   // Métodos adicionales requeridos por el template

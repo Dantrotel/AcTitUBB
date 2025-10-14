@@ -8,6 +8,35 @@ const router = Router();
 // ===== RUTAS PARA FECHAS IMPORTANTES =====
 
 /**
+ * GET /fechas-importantes/admin/todas
+ * Obtener todas las fechas importantes de todos los proyectos (solo admin)
+ */
+router.get('/admin/todas', verifySession, async (req, res) => {
+    try {
+        // Verificar que el usuario sea admin
+        if (req.user.role_id !== 3) {
+            return res.status(403).json({
+                success: false,
+                message: 'Solo los administradores pueden ver todas las fechas importantes'
+            });
+        }
+        
+        const todasFechas = await fechasImportantesModel.obtenerTodasFechasImportantes();
+        
+        res.json({
+            success: true,
+            data: todasFechas
+        });
+    } catch (error) {
+        console.error('Error al obtener todas las fechas importantes:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
  * GET /fechas-importantes/proyecto/:proyecto_id
  * Obtener todas las fechas importantes de un proyecto
  */
