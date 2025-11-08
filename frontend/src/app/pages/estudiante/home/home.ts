@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
+import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
 
 
 @Component({
@@ -18,7 +19,8 @@ import { ApiService } from '../../../services/api';
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    FormsModule
+    FormsModule,
+    AlertasFechasComponent
   ],
   templateUrl: './home.html',
   styleUrls: ['./home.scss']
@@ -289,15 +291,18 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const fechaActual = new Date().toISOString().split('T')[0];
+    if (!this.proyectoActivo?.id) {
+      console.error('❌ No hay proyecto activo');
+      return;
+    }
     
-    this.ApiService.completarFechaImportante(fechaId, fechaActual).subscribe({
+    this.ApiService.marcarFechaCompletada(this.proyectoActivo.id, fechaId, true).subscribe({
       next: (response: any) => {
         console.log('✅ Fecha completada:', response);
         // Recargar fechas importantes
         this.cargarFechasImportantes();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('❌ Error al completar fecha:', error);
         this.mostrarError('No se pudo completar la fecha importante');
       }

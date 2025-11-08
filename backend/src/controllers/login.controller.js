@@ -2,7 +2,7 @@ import { UserModel } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validarRUT } from '../services/RutVal.service.js';
-import { addToken } from '../middlewares/blacklist.js'; 
+import { addToken, isBlacklisted } from '../middlewares/blacklist.js'; 
 import { sendConfirmationEmail } from '../services/email.service.js';
 
 const register = async (req, res) => {
@@ -82,10 +82,18 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        const token = jwt.sign(
-            { rut: user.rut, rol_id: user.rol_id },
+        // Access token con tiempo de vida más razonable (4 horas)
+        const accessToken = jwt.sign(
+            { rut: user.rut, rol_id: user.rol_id, type: 'access' },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '4h' }
+        );
+
+        // Refresh token con tiempo de vida largo (7 días)
+        const refreshToken = jwt.sign(
+            { rut: user.rut, rol_id: user.rol_id, type: 'refresh' },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
         );
 
         return res.json({
@@ -95,7 +103,9 @@ const login = async (req, res) => {
             rol_id: user.rol_id,
             rut: user.rut,
             nombre: user.nombre,
-            token: token
+            token: accessToken,
+            refreshToken: refreshToken,
+            expiresIn: '4h'
         });
 
     } catch (error) {
@@ -142,6 +152,57 @@ const findUserByRut = async (req, res) => {
   }
 };
 
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token requerido" });
+    }
+
+    // Verificar si el refresh token está en la blacklist
+    if (isBlacklisted(refreshToken)) {
+      return res.status(401).json({ message: "Refresh token revocado" });
+    }
+
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+      
+      // Verificar que es un refresh token
+      if (decoded.type !== 'refresh') {
+        return res.status(401).json({ message: "Token inválido" });
+      }
+      
+      // Verificar que el usuario aún existe
+      const user = await UserModel.findPersonByRut(decoded.rut);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      // Generar nuevo access token
+      const newAccessToken = jwt.sign(
+        { rut: user.rut, rol_id: user.rol_id, type: 'access' },
+        process.env.JWT_SECRET,
+        { expiresIn: '4h' }
+      );
+
+      return res.json({
+        ok: true,
+        message: "Token renovado exitosamente",
+        token: newAccessToken,
+        expiresIn: '4h'
+      });
+
+    } catch (tokenError) {
+      return res.status(401).json({ message: "Refresh token inválido o expirado" });
+    }
+
+  } catch (error) {
+    console.error('Error al renovar token:', error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
 const actualizarPerfil = async (req, res) => {
   try {
     const { rut } = req; // Viene del middleware verifySession
@@ -185,6 +246,7 @@ export const loginController = {
     register,
     login,
     logout,
+    refreshToken,
     findUserByRut,
     actualizarPerfil
 };

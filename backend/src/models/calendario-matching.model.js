@@ -38,19 +38,47 @@ export const crearDisponibilidad = async (disponibilidadData) => {
 /**
  * Obtener disponibilidades de un usuario
  * @param {string} usuario_rut - RUT del usuario
- * @returns {Promise<Array>} - Lista de disponibilidades
+ * @returns {Promise<Array>} - Lista de disponibilidades activas solamente
  */
 export const obtenerDisponibilidadesUsuario = async (usuario_rut) => {
-    const query = `
-        SELECT * FROM disponibilidades 
-        WHERE usuario_rut = ? AND activo = TRUE
-        ORDER BY 
-            FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
-            hora_inicio
-    `;
-    
-    const [rows] = await pool.execute(query, [usuario_rut]);
-    return rows;
+    try {
+        const query = `
+            SELECT * FROM disponibilidades 
+            WHERE usuario_rut = ? AND activo = TRUE
+            ORDER BY 
+                FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
+                hora_inicio
+        `;
+        
+        const [rows] = await pool.execute(query, [usuario_rut]);
+        return rows;
+    } catch (error) {
+        console.error('Error en obtenerDisponibilidadesUsuario:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener todas las disponibilidades de un usuario (activas e inactivas)
+ * @param {string} usuario_rut - RUT del usuario
+ * @returns {Promise<Array>} - Lista de todas las disponibilidades
+ */
+export const obtenerTodasDisponibilidadesUsuario = async (usuario_rut) => {
+    try {
+        const query = `
+            SELECT * FROM disponibilidades 
+            WHERE usuario_rut = ?
+            ORDER BY 
+                FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
+                hora_inicio
+        `;
+        
+        const [rows] = await pool.execute(query, [usuario_rut]);
+        return rows;
+    } catch (error) {
+        console.error('Error en obtenerTodasDisponibilidadesUsuario:', error);
+        throw error;
+    }
 };
 
 /**
@@ -227,8 +255,9 @@ export const proponerReunionAutomatica = async (proyecto_id, tipo_reunion = 'seg
             p.estudiante_rut,
             ap.profesor_rut
         FROM proyectos p
-        INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
-        WHERE p.id = ? AND ap.rol_profesor = 'profesor_guia' AND ap.activo = TRUE
+        INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
+        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE p.id = ? AND rp.nombre = 'profesor_guia' AND ap.activo = TRUE
     `;
     
     const [proyectoRows] = await pool.execute(proyectoQuery, [proyecto_id]);
@@ -326,7 +355,7 @@ async function verificarHorarioOcupado(profesor_rut, estudiante_rut, fecha, hora
         FROM reuniones_calendario
         WHERE fecha = ? 
         AND (profesor_rut = ? OR estudiante_rut = ?)
-        AND estado IN ('programada', 'en_curso')
+        AND estado = 'programada'
         AND (
             (hora_inicio <= ? AND hora_fin > ?) OR
             (hora_inicio < ? AND hora_fin >= ?) OR
@@ -354,6 +383,60 @@ async function verificarConflictoHorario(profesor_rut, estudiante_rut, fecha, ho
     
     return await verificarHorarioOcupado(profesor_rut, estudiante_rut, fecha, hora_inicio, hora_fin_str);
 }
+
+/**
+ * Actualizar disponibilidad
+ * @param {number} disponibilidad_id - ID de la disponibilidad
+ * @param {string} usuario_rut - RUT del usuario (para verificar permisos)
+ * @param {Object} updateData - Datos a actualizar
+ * @returns {Promise<boolean>} - True si se actualizó exitosamente
+ */
+export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, updateData) => {
+    const { dia_semana, hora_inicio, hora_fin, activo } = updateData;
+    
+    // Construir query dinámicamente según campos a actualizar
+    let campos = [];
+    let valores = [];
+    
+    if (dia_semana !== undefined) {
+        campos.push('dia_semana = ?');
+        valores.push(dia_semana);
+    }
+    
+    if (hora_inicio !== undefined) {
+        campos.push('hora_inicio = ?');
+        valores.push(hora_inicio);
+    }
+    
+    if (hora_fin !== undefined) {
+        campos.push('hora_fin = ?');
+        valores.push(hora_fin);
+    }
+    
+    if (activo !== undefined) {
+        campos.push('activo = ?');
+        valores.push(activo);
+    }
+    
+    if (campos.length === 0) {
+        throw new Error('No hay campos para actualizar');
+    }
+    
+    // Agregar updated_at
+    campos.push('updated_at = CURRENT_TIMESTAMP');
+    
+    // Agregar condiciones WHERE
+    valores.push(disponibilidad_id, usuario_rut);
+    
+    const query = `
+        UPDATE disponibilidades 
+        SET ${campos.join(', ')}
+        WHERE id = ? AND usuario_rut = ?
+    `;
+    
+    const [result] = await pool.execute(query, valores);
+    return result.affectedRows > 0;
+};
 
 /**
  * Eliminar disponibilidad
@@ -384,7 +467,7 @@ export const obtenerSolicitudesUsuario = async (usuario_rut, rol = null) => {
         INNER JOIN usuarios ue ON sr.estudiante_rut = ue.rut
         INNER JOIN usuarios up ON sr.profesor_rut = up.rut
         WHERE (sr.profesor_rut = ? OR sr.estudiante_rut = ?)
-        AND sr.estado NOT IN ('cancelada')
+        AND sr.estado IN ('pendiente', 'aceptada_profesor', 'aceptada_estudiante')
         ORDER BY sr.fecha_propuesta ASC, sr.hora_propuesta ASC
     `;
     

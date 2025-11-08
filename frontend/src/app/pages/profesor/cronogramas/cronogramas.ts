@@ -606,14 +606,13 @@ export class CronogramasComponent implements OnInit {
       this.error = '';
 
       const fechaData = {
-        proyecto_id: this.proyectoSeleccionado.id,
         titulo: this.nuevaFecha.titulo.trim(),
         descripcion: this.nuevaFecha.descripcion?.trim() || '',
         tipo_fecha: this.nuevaFecha.tipo_fecha,
         fecha_limite: this.nuevaFecha.fecha_limite
       };
 
-      await this.apiService.crearFechaImportante(fechaData).toPromise();
+      await this.apiService.crearFechaImportante(this.proyectoSeleccionado.id, fechaData).toPromise();
       
       this.success = 'Fecha importante creada exitosamente';
       await this.cargarFechasImportantes();
@@ -631,9 +630,14 @@ export class CronogramasComponent implements OnInit {
       return;
     }
 
+    if (!this.proyectoSeleccionado?.id) {
+      console.error('❌ No hay proyecto seleccionado');
+      return;
+    }
+
     try {
       this.loading = true;
-      await this.apiService.eliminarFechaImportante(fechaId).toPromise();
+      await this.apiService.eliminarFechaImportante(this.proyectoSeleccionado.id, fechaId).toPromise();
       
       this.success = 'Fecha importante eliminada exitosamente';
       await this.cargarFechasImportantes();

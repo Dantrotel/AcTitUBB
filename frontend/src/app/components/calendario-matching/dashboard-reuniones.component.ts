@@ -6,17 +6,33 @@ import { ApiService } from '../../services/api';
 
 interface Reunion {
   id: number;
+  solicitud_reunion_id: number;
+  proyecto_id: number;
   estudiante_rut: string;
   profesor_rut: string;
   fecha: string;
   hora_inicio: string;
   hora_fin: string;
+  tipo_reunion: string;
+  titulo: string;
+  descripcion?: string;
+  lugar?: string;
+  modalidad?: string;
+  link_reunion?: string;
   estado: string;
-  motivo: string;
-  confirmacion_estudiante: boolean;
-  confirmacion_profesor: boolean;
+  acta_reunion?: string;
+  fecha_realizacion?: string;
   estudiante_nombre?: string;
   profesor_nombre?: string;
+  proyecto_titulo?: string;
+  comentarios_profesor?: string;
+  comentarios_estudiante?: string;
+  created_at?: string;
+  updated_at?: string;
+  // Campos legacy (por compatibilidad)
+  motivo?: string;
+  confirmacion_estudiante?: boolean;
+  confirmacion_profesor?: boolean;
   comentarios?: string;
 }
 
@@ -24,12 +40,17 @@ interface SolicitudPendiente {
   id: number;
   estudiante_rut: string;
   profesor_rut: string;
-  motivo: string;
-  urgencia: string;
+  proyecto_id: number;
+  fecha_propuesta: string;
+  hora_propuesta: string;
+  descripcion: string;
+  tipo_reunion: string;
   estado: string;
-  fecha_solicitud: string;
+  created_at: string;
+  updated_at?: string;
   estudiante_nombre?: string;
   profesor_nombre?: string;
+  proyecto_titulo?: string;
 }
 
 interface DashboardData {
@@ -79,8 +100,13 @@ export class DashboardReunionesComponent implements OnInit {
     const userData = localStorage.getItem('userData');
     if (userData) {
       const user = JSON.parse(userData);
-      this.userRole = user.role_id === 1 ? 'estudiante' : 
-                    user.role_id === 2 ? 'profesor' : 'admin';
+      // El JWT usa 'rol_id', no 'role_id'
+      const roleId = user.rol_id || user.role_id;
+      this.userRole = roleId === 1 ? 'estudiante' : 
+                    roleId === 2 ? 'profesor' : 'admin';
+      console.log('👤 User Role detectado en constructor:', this.userRole, '(rol_id:', roleId, ')');
+    } else {
+      console.warn('⚠️  No hay userData en localStorage');
     }
   }
 
@@ -94,7 +120,72 @@ export class DashboardReunionesComponent implements OnInit {
 
     this.apiService.getDashboardReuniones().subscribe({
       next: (response: any) => {
-        this.dashboardData = response.data || response;
+        const data = response.data || response;
+        console.log('📊 Datos del dashboard recibidos:', data);
+        
+        // Mapear la estructura del backend al frontend
+        // Backend: { solicitudes: { pendientes: [] }, reuniones: { proximas: [] } }
+        // Frontend: { solicitudes_pendientes: [], reuniones_proximas: [] }
+        this.dashboardData = {
+          reuniones_hoy: data.reuniones_hoy || data.reuniones?.hoy || [],
+          reuniones_proximas: data.reuniones_proximas || data.reuniones?.proximas || [],
+          solicitudes_pendientes: data.solicitudes_pendientes || data.solicitudes?.pendientes || [],
+          reuniones_por_confirmar: data.reuniones_por_confirmar || [],
+          estadisticas: data.estadisticas || {
+            total_reuniones: 0,
+            reuniones_completadas: 0,
+            reuniones_canceladas: 0,
+            disponibilidades_activas: 0
+          }
+        };
+        
+        console.log('✅ Dashboard procesado:', {
+          solicitudes: this.dashboardData.solicitudes_pendientes.length,
+          reuniones: this.dashboardData.reuniones_proximas.length
+        });
+        
+        // Debugging de reuniones
+        if (this.dashboardData.reuniones_proximas.length > 0) {
+          console.log('📅 DETALLE DE REUNIONES PRÓXIMAS:');
+          this.dashboardData.reuniones_proximas.forEach((reunion, idx) => {
+            console.log(`  Reunión ${idx + 1}:`, {
+              id: reunion.id,
+              titulo: reunion.titulo,
+              fecha: reunion.fecha,
+              hora: `${reunion.hora_inicio} - ${reunion.hora_fin}`,
+              estado: reunion.estado,
+              profesor: reunion.profesor_nombre,
+              estudiante: reunion.estudiante_nombre
+            });
+          });
+        } else {
+          console.log('⚠️  No hay reuniones próximas en dashboardData.reuniones_proximas');
+          console.log('   Datos backend reuniones:', data.reuniones);
+        }
+        
+        // Debugging adicional para solicitudes
+        if (this.dashboardData.solicitudes_pendientes.length > 0) {
+          console.log('🔍 DETALLE DE SOLICITUDES:');
+          this.dashboardData.solicitudes_pendientes.forEach((sol, idx) => {
+            console.log(`  Solicitud ${idx + 1}:`, {
+              id: sol.id,
+              estudiante: sol.estudiante_nombre,
+              estado: sol.estado,
+              puede_responder: this.puedeResponderSolicitud(sol),
+              campos: {
+                created_at: sol.created_at,
+                fecha_propuesta: sol.fecha_propuesta,
+                hora_propuesta: sol.hora_propuesta,
+                tipo_reunion: sol.tipo_reunion,
+                descripcion: sol.descripcion?.substring(0, 30)
+              }
+            });
+          });
+          console.log('👤 User Role:', this.userRole);
+        } else {
+          console.log('⚠️  No hay solicitudes en dashboardData.solicitudes_pendientes');
+        }
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -139,28 +230,63 @@ export class DashboardReunionesComponent implements OnInit {
     });
   }
 
+  marcarReunionRealizada(reunionId: number) {
+    const acta = prompt('Resumen de la reunión (opcional):') || '';
+    
+    this.apiService.marcarReunionRealizada(reunionId.toString(), {
+      acta_reunion: acta
+    }).subscribe({
+      next: (response: any) => {
+        this.successMessage = 'Reunión marcada como realizada exitosamente';
+        this.cargarDashboard();
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (error) => {
+        console.error('Error al marcar reunión como realizada:', error);
+        this.errorMessage = 'Error al actualizar la reunión';
+        setTimeout(() => this.errorMessage = '', 3000);
+      }
+    });
+  }
+
   responderSolicitud(solicitudId: number, respuesta: 'aceptada' | 'rechazada') {
     let comentarios = '';
     if (respuesta === 'rechazada') {
       comentarios = prompt('Motivo del rechazo:') || '';
       if (!comentarios.trim()) {
         this.errorMessage = 'Debe especificar el motivo del rechazo';
+        setTimeout(() => this.errorMessage = '', 3000);
         return;
       }
     }
 
+    // El backend espera 'aceptar' o 'rechazar', no 'aceptada' o 'rechazada'
+    const respuestaBackend = respuesta === 'aceptada' ? 'aceptar' : 'rechazar';
+    
+    this.isLoading = true;
     this.apiService.responderSolicitudReunion(solicitudId.toString(), {
-      respuesta,
+      respuesta: respuestaBackend,
       comentarios
     }).subscribe({
       next: (response: any) => {
-        this.successMessage = `Solicitud ${respuesta} exitosamente`;
+        this.isLoading = false;
+        const mensaje = response.message || `Solicitud ${respuesta} exitosamente`;
+        this.successMessage = mensaje;
+        
+        // Si la reunión fue confirmada, mostrar mensaje especial
+        if (response.data?.reunion_confirmada) {
+          this.successMessage = '¡Reunión confirmada! Se ha agregado a tu calendario.';
+        }
+        
+        // Recargar inmediatamente para reflejar cambios
         this.cargarDashboard();
-        setTimeout(() => this.successMessage = '', 3000);
+        setTimeout(() => this.successMessage = '', 5000);
       },
       error: (error) => {
+        this.isLoading = false;
         console.error('Error al responder solicitud:', error);
-        this.errorMessage = 'Error al responder la solicitud';
+        this.errorMessage = error.error?.message || 'Error al responder la solicitud';
+        setTimeout(() => this.errorMessage = '', 3000);
       }
     });
   }
@@ -193,6 +319,17 @@ export class DashboardReunionesComponent implements OnInit {
       case 'media': return 'urgencia-media';
       case 'baja': return 'urgencia-baja';
       default: return 'urgencia-media';
+    }
+  }
+
+  getTipoReunionClass(tipo: string): string {
+    // Mapear tipos de reunión a clases de urgencia visuales
+    switch (tipo?.toLowerCase()) {
+      case 'seguimiento': return 'urgencia-media';
+      case 'emergencia': return 'urgencia-alta';
+      case 'revision': return 'urgencia-media';
+      case 'presentacion': return 'urgencia-alta';
+      default: return 'urgencia-baja';
     }
   }
 
@@ -236,8 +373,21 @@ export class DashboardReunionesComponent implements OnInit {
     return false;
   }
 
-  puedeResponderSolicitud(solicitud: SolicitudPendiente): boolean {
-    return this.userRole === 'profesor' && solicitud.estado === 'pendiente';
+  puedeResponderSolicitud(solicitud: any): boolean {
+    if (!solicitud) return false;
+    
+    // El profesor puede responder si está pendiente o esperando su respuesta
+    if (this.userRole === 'profesor') {
+      return solicitud.estado === 'pendiente' || 
+             solicitud.estado === 'aceptada_estudiante';
+    }
+    
+    // El estudiante puede responder si el profesor ya aceptó
+    if (this.userRole === 'estudiante') {
+      return solicitud.estado === 'aceptada_profesor';
+    }
+    
+    return false;
   }
 
   getTiempoRestante(fecha: string, horaInicio: string): string {

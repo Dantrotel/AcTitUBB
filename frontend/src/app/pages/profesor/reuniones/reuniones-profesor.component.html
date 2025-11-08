@@ -1,0 +1,420 @@
+<div class="reuniones-profesor-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-calendar-check"></i>
+      Gestión de Reuniones
+    </h1>
+    <button class="btn btn-primary" (click)="cargarReuniones()" [disabled]="isLoading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Mensajes -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Tabs de navegación -->
+  <div class="tabs-container">
+    <button 
+      class="tab-button"
+      [class.active]="filtroActivo === 'expiradas'"
+      (click)="cambiarFiltro('expiradas')">
+      <i class="fas fa-exclamation-triangle"></i>
+      Requieren Acción
+      <span class="badge badge-warning" *ngIf="getContadorReuniones()['expiradas'] > 0">
+        {{ getContadorReuniones()['expiradas'] }}
+      </span>
+    </button>
+
+    <button 
+      class="tab-button"
+      [class.active]="filtroActivo === 'proximas'"
+      (click)="cambiarFiltro('proximas')">
+      <i class="fas fa-clock"></i>
+      Próximas
+      <span class="badge badge-info" *ngIf="getContadorReuniones()['proximas'] > 0">
+        {{ getContadorReuniones()['proximas'] }}
+      </span>
+    </button>
+
+    <button 
+      class="tab-button"
+      [class.active]="filtroActivo === 'realizadas'"
+      (click)="cambiarFiltro('realizadas')">
+      <i class="fas fa-check-circle"></i>
+      Realizadas
+      <span class="badge badge-success" *ngIf="getContadorReuniones()['realizadas'] > 0">
+        {{ getContadorReuniones()['realizadas'] }}
+      </span>
+    </button>
+
+    <button 
+      class="tab-button"
+      [class.active]="filtroActivo === 'canceladas'"
+      (click)="cambiarFiltro('canceladas')">
+      <i class="fas fa-times-circle"></i>
+      Canceladas
+      <span class="badge badge-secondary" *ngIf="getContadorReuniones()['canceladas'] > 0">
+        {{ getContadorReuniones()['canceladas'] }}
+      </span>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando reuniones...</p>
+  </div>
+
+  <!-- Contenido de tabs -->
+  <div class="tab-content" *ngIf="!isLoading">
+    
+    <!-- TAB: Reuniones Expiradas (Requieren Acción) -->
+    <div *ngIf="filtroActivo === 'expiradas'">
+      <div class="info-banner warning" *ngIf="reunionesExpiradas.length > 0">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+          <strong>Atención:</strong> Las siguientes reuniones ya pasaron y requieren que las marques como realizadas o canceladas.
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="reunionesExpiradas.length === 0">
+        <i class="fas fa-check-circle"></i>
+        <p>No hay reuniones expiradas pendientes de acción</p>
+      </div>
+
+      <div class="reuniones-grid">
+        <div class="reunion-card expirada" *ngFor="let reunion of reunionesExpiradas">
+          <div class="card-header">
+            <div class="titulo-container">
+              <h3>{{ reunion.titulo }}</h3>
+              <span class="badge badge-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Requiere Acción
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <i class="fas fa-user-graduate"></i>
+              <span><strong>Estudiante:</strong> {{ reunion.estudiante_nombre }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-calendar"></i>
+              <span><strong>Fecha:</strong> {{ formatearFecha(reunion.fecha) }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-clock"></i>
+              <span><strong>Hora:</strong> {{ formatearHora(reunion.hora_inicio) }} - {{ formatearHora(reunion.hora_fin) }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-tag"></i>
+              <span><strong>Tipo:</strong> {{ getTipoReunionLabel(reunion.tipo_reunion) }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="reunion.descripcion">
+              <i class="fas fa-align-left"></i>
+              <span><strong>Descripción:</strong> {{ reunion.descripcion }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button 
+              class="btn btn-success"
+              (click)="abrirModalRealizada(reunion)"
+              title="Marcar como realizada">
+              <i class="fas fa-check"></i>
+              Se Realizó
+            </button>
+
+            <button 
+              class="btn btn-danger"
+              (click)="cancelarReunion(reunion)"
+              title="Marcar como no realizada">
+              <i class="fas fa-times"></i>
+              No se Realizó
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Reuniones Próximas -->
+    <div *ngIf="filtroActivo === 'proximas'">
+      <div class="info-banner info" *ngIf="reunionesProximas.length > 0">
+        <i class="fas fa-info-circle"></i>
+        <div>
+          Tienes <strong>{{ reunionesProximas.length }}</strong> reunión(es) programada(s)
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="reunionesProximas.length === 0">
+        <i class="fas fa-calendar-times"></i>
+        <p>No tienes reuniones próximas programadas</p>
+      </div>
+
+      <div class="reuniones-grid">
+        <div class="reunion-card proxima" *ngFor="let reunion of reunionesProximas">
+          <div class="card-header">
+            <div class="titulo-container">
+              <h3>{{ reunion.titulo }}</h3>
+              <span class="badge badge-info">
+                <i class="fas fa-clock"></i>
+                Programada
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <i class="fas fa-user-graduate"></i>
+              <span><strong>Estudiante:</strong> {{ reunion.estudiante_nombre }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-calendar"></i>
+              <span><strong>Fecha:</strong> {{ formatearFecha(reunion.fecha) }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-clock"></i>
+              <span><strong>Hora:</strong> {{ formatearHora(reunion.hora_inicio) }} - {{ formatearHora(reunion.hora_fin) }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-tag"></i>
+              <span><strong>Tipo:</strong> {{ getTipoReunionLabel(reunion.tipo_reunion) }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="reunion.modalidad">
+              <i class="fas" [ngClass]="getModalidadIcon(reunion.modalidad)"></i>
+              <span><strong>Modalidad:</strong> {{ reunion.modalidad }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="reunion.descripcion">
+              <i class="fas fa-align-left"></i>
+              <span>{{ reunion.descripcion }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button 
+              class="btn btn-outline-danger btn-sm"
+              (click)="cancelarReunion(reunion)"
+              title="Cancelar reunión">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Reuniones Realizadas -->
+    <div *ngIf="filtroActivo === 'realizadas'">
+      <div class="empty-state" *ngIf="reunionesRealizadas.length === 0">
+        <i class="fas fa-clipboard-check"></i>
+        <p>No hay reuniones realizadas</p>
+      </div>
+
+      <div class="reuniones-grid">
+        <div class="reunion-card realizada" *ngFor="let reunion of reunionesRealizadas">
+          <div class="card-header">
+            <div class="titulo-container">
+              <h3>{{ reunion.titulo }}</h3>
+              <span class="badge badge-success">
+                <i class="fas fa-check-circle"></i>
+                Realizada
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <i class="fas fa-user-graduate"></i>
+              <span><strong>Estudiante:</strong> {{ reunion.estudiante_nombre }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-calendar"></i>
+              <span><strong>Fecha:</strong> {{ formatearFecha(reunion.fecha) }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-clock"></i>
+              <span><strong>Hora:</strong> {{ formatearHora(reunion.hora_inicio) }} - {{ formatearHora(reunion.hora_fin) }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="reunion.acta_reunion">
+              <i class="fas fa-file-alt"></i>
+              <div class="acta-container">
+                <strong>Acta de Reunión:</strong>
+                <p>{{ reunion.acta_reunion }}</p>
+              </div>
+            </div>
+
+            <div class="info-row" *ngIf="reunion.lugar">
+              <i class="fas fa-map-marker-alt"></i>
+              <span><strong>Lugar:</strong> {{ reunion.lugar }}</span>
+            </div>
+
+            <div class="info-row" *ngIf="reunion.modalidad">
+              <i class="fas" [ngClass]="getModalidadIcon(reunion.modalidad)"></i>
+              <span><strong>Modalidad:</strong> {{ reunion.modalidad }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Reuniones Canceladas -->
+    <div *ngIf="filtroActivo === 'canceladas'">
+      <div class="empty-state" *ngIf="reunionesCanceladas.length === 0">
+        <i class="fas fa-ban"></i>
+        <p>No hay reuniones canceladas</p>
+      </div>
+
+      <div class="reuniones-grid">
+        <div class="reunion-card cancelada" *ngFor="let reunion of reunionesCanceladas">
+          <div class="card-header">
+            <div class="titulo-container">
+              <h3>{{ reunion.titulo }}</h3>
+              <span class="badge badge-secondary">
+                <i class="fas fa-times-circle"></i>
+                Cancelada
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <i class="fas fa-user-graduate"></i>
+              <span><strong>Estudiante:</strong> {{ reunion.estudiante_nombre }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-calendar"></i>
+              <span><strong>Fecha:</strong> {{ formatearFecha(reunion.fecha) }}</span>
+            </div>
+
+            <div class="info-row">
+              <i class="fas fa-clock"></i>
+              <span><strong>Hora:</strong> {{ formatearHora(reunion.hora_inicio) }} - {{ formatearHora(reunion.hora_fin) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Marcar como Realizada -->
+<div class="modal-overlay" *ngIf="mostrarModalRealizada" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-check-circle"></i>
+        Marcar Reunión como Realizada
+      </h2>
+      <button class="btn-close" (click)="cerrarModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="reunionSeleccionada">
+      <div class="reunion-info-modal">
+        <p><strong>Estudiante:</strong> {{ reunionSeleccionada.estudiante_nombre }}</p>
+        <p><strong>Fecha:</strong> {{ formatearFecha(reunionSeleccionada.fecha) }}</p>
+        <p><strong>Hora:</strong> {{ formatearHora(reunionSeleccionada.hora_inicio) }} - {{ formatearHora(reunionSeleccionada.hora_fin) }}</p>
+      </div>
+
+      <form class="modal-form">
+        <div class="form-group">
+          <label for="modalidad">
+            <i class="fas fa-laptop"></i>
+            Modalidad de la Reunión *
+          </label>
+          <select 
+            id="modalidad" 
+            [(ngModel)]="modalidadReunion" 
+            name="modalidad"
+            class="form-control">
+            <option value="presencial">Presencial</option>
+            <option value="virtual">Virtual</option>
+            <option value="hibrida">Híbrida</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="lugar">
+            <i class="fas fa-map-marker-alt"></i>
+            Lugar (opcional)
+          </label>
+          <input 
+            type="text" 
+            id="lugar" 
+            [(ngModel)]="lugarReunion" 
+            name="lugar"
+            class="form-control"
+            placeholder="Ej: Oficina 302, Sala de Reuniones, Google Meet">
+        </div>
+
+        <div class="form-group">
+          <label for="acta">
+            <i class="fas fa-file-alt"></i>
+            Resumen de la Reunión *
+          </label>
+          <textarea 
+            id="acta" 
+            [(ngModel)]="actaReunion" 
+            name="acta"
+            class="form-control"
+            rows="6"
+            placeholder="Escribe un resumen de los temas tratados en la reunión...
+            
+Ejemplo:
+- Se revisó el avance del capítulo 2
+- Se definieron los próximos pasos
+- Fecha próxima reunión: 15/11/2025"
+            required></textarea>
+        </div>
+
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button 
+        class="btn btn-secondary"
+        (click)="cerrarModal()"
+        [disabled]="isLoading">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+
+      <button 
+        class="btn btn-success"
+        (click)="marcarComoRealizada()"
+        [disabled]="isLoading || !actaReunion.trim()">
+        <i class="fas fa-check"></i>
+        Marcar como Realizada
+      </button>
+    </div>
+  </div>
+</div>

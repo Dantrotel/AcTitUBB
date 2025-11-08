@@ -19,6 +19,7 @@ import { GestionProfesoresComponent } from './pages/admin/gestion-profesores/ges
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
 import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
+import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-importantes/fechas-importantes-profesor.component';
 
 // Calendario Matching Components
 import { DisponibilidadesComponent } from './components/calendario-matching/disponibilidades.component';
@@ -28,6 +29,13 @@ import { GestionReunionesComponent } from './components/calendario-matching/gest
 
 // Cronogramas Component
 import { CronogramasComponent } from './pages/profesor/cronogramas/cronogramas';
+import { ProyectoCronogramaComponent } from './pages/proyecto-cronograma/proyecto-cronograma.component';
+
+// Reuniones Profesor Component
+import { ReunionesProfesorComponent } from './pages/profesor/reuniones/reuniones-profesor.component';
+
+// Documentos Component
+import { DocumentosProyectoComponent } from './components/documentos-proyecto/documentos-proyecto.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -45,11 +53,12 @@ export const routes: Routes = [
   { path: 'propuestas/asignadas', component: PropuestasAsignadasComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/todas', component: PropuestasTodas, canActivate: [AuthGuard] },
 
-  // Rutas del Sistema de Calendario Matching
-  { path: 'calendario/disponibilidades', component: DisponibilidadesComponent, canActivate: [AuthGuard] },
-  { path: 'calendario/solicitudes', component: SolicitudesReunionComponent, canActivate: [AuthGuard] },
-  { path: 'calendario/dashboard', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
-  { path: 'calendario/gestion', component: GestionReunionesComponent, canActivate: [AuthGuard] },
+  // Rutas del Sistema de Calendario Matching - Centralizadas
+  { path: 'calendario-matching', redirectTo: '/calendario-matching/dashboard', pathMatch: 'full' },
+  { path: 'calendario-matching/disponibilidades', component: DisponibilidadesComponent, canActivate: [AuthGuard] },
+  { path: 'calendario-matching/solicitudes', component: SolicitudesReunionComponent, canActivate: [AuthGuard] },
+  { path: 'calendario-matching/dashboard', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
+  { path: 'calendario-matching/gestion', component: GestionReunionesComponent, canActivate: [AuthGuard] },
 
   // Rutas del administrador
   { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard] },
@@ -59,6 +68,9 @@ export const routes: Routes = [
   { path: 'admin/profesores', component: GestionProfesoresComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
+
+  // Rutas del profesor
+  { path: 'profesor/fechas-importantes', component: FechasImportantesProfesorComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario-matching', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
 
   {
@@ -90,6 +102,12 @@ export const routes: Routes = [
         component: CronogramasComponent,
         canActivate: [AuthGuard]
       },
+      // Ruta para ver proyecto y cronograma específico
+      {
+        path: 'proyecto/:id',
+        component: ProyectoCronogramaComponent,
+        canActivate: [AuthGuard]
+      },
       // Rutas de Calendario Matching para Profesores
       {
         path: 'calendario/disponibilidades',
@@ -110,6 +128,18 @@ export const routes: Routes = [
         path: 'calendario/gestion',
         component: GestionReunionesComponent,
         canActivate: [AuthGuard]
+      },
+      // Ruta para gestión de reuniones del profesor
+      {
+        path: 'reuniones',
+        component: ReunionesProfesorComponent,
+        canActivate: [AuthGuard]
+      },
+      // Ruta para gestión de documentos del proyecto
+      {
+        path: 'proyecto/:id/documentos',
+        component: DocumentosProyectoComponent,
+        canActivate: [AuthGuard]
       }
     ],
   },
@@ -123,6 +153,12 @@ export const routes: Routes = [
         component: EstudianteHomeComponent,
         canActivate: [AuthGuard],
         pathMatch: 'full'
+      },
+      // Ruta para ver proyecto y cronograma
+      {
+        path: 'proyecto/:id',
+        component: ProyectoCronogramaComponent,
+        canActivate: [AuthGuard]
       },
       // Rutas de Calendario Matching para Estudiantes
       {
@@ -143,6 +179,12 @@ export const routes: Routes = [
       {
         path: 'calendario/gestion',
         component: GestionReunionesComponent,
+        canActivate: [AuthGuard]
+      },
+      // Ruta para gestión de documentos del proyecto
+      {
+        path: 'proyecto/:id/documentos',
+        component: DocumentosProyectoComponent,
         canActivate: [AuthGuard]
       }
     ],

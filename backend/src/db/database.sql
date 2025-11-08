@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
     FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
-    UNIQUE KEY unique_asignacion_proyecto_rol (proyecto_id, rol_profesor_id),
+    UNIQUE KEY unique_asignacion_activa (proyecto_id, rol_profesor_id, activo),
     INDEX idx_proyecto_activo (proyecto_id, activo),
     INDEX idx_profesor_activo (profesor_rut, activo),
     INDEX idx_rol_activo (rol_profesor_id, activo)
@@ -127,8 +127,8 @@ CREATE TABLE IF NOT EXISTS roles_profesores (
 );
 
 -- Asegurar que la columna codigo existe (por si la tabla ya existía sin esta columna)
-ALTER TABLE roles_profesores 
-ADD COLUMN IF NOT EXISTS codigo VARCHAR(50) AFTER id;
+-- Este comando puede fallar si la columna ya existe, pero es seguro ignorar el error
+-- ALTER TABLE roles_profesores ADD COLUMN codigo VARCHAR(50) AFTER id;
 
 -- Asegurar que la columna codigo sea UNIQUE (solo si no lo es ya)
 -- Nota: Esta línea puede fallar si ya existe el índice, pero es seguro ignorar el error
@@ -648,7 +648,7 @@ CREATE TABLE IF NOT EXISTS solicitudes_reunion (
 -- Tabla de Reuniones Confirmadas
 CREATE TABLE IF NOT EXISTS reuniones_calendario (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    solicitud_reunion_id INT NOT NULL,
+    solicitud_reunion_id INT NULL, -- Ahora puede ser NULL para reuniones creadas directamente
     proyecto_id INT NOT NULL,
     profesor_rut VARCHAR(10) NOT NULL,
     estudiante_rut VARCHAR(10) NOT NULL,
@@ -661,7 +661,8 @@ CREATE TABLE IF NOT EXISTS reuniones_calendario (
     lugar VARCHAR(100),
     modalidad ENUM('presencial', 'virtual', 'hibrida') DEFAULT 'presencial',
     link_reunion VARCHAR(500) NULL, -- Para reuniones virtuales
-    estado ENUM('programada', 'en_curso', 'realizada', 'cancelada', 'reprogramada') DEFAULT 'programada',
+    estado ENUM('programada', 'realizada', 'cancelada') DEFAULT 'programada',
+    motivo_cancelacion TEXT NULL,
     acta_reunion TEXT NULL, -- Resumen de la reunión
     fecha_realizacion TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -674,8 +675,34 @@ CREATE TABLE IF NOT EXISTS reuniones_calendario (
     INDEX idx_reunion_profesor (profesor_rut, fecha),
     INDEX idx_reunion_estudiante (estudiante_rut, fecha),
     INDEX idx_reunion_proyecto (proyecto_id, estado),
-    UNIQUE KEY unique_profesor_fecha_hora (profesor_rut, fecha, hora_inicio),
-    UNIQUE KEY unique_estudiante_fecha_hora (estudiante_rut, fecha, hora_inicio)
+    INDEX idx_reunion_estado (estado)
+);
+
+-- Tabla de Historial de Reuniones (para auditoría y dashboard)
+CREATE TABLE IF NOT EXISTS historial_reuniones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reunion_id INT NULL, -- NULL si la solicitud fue rechazada
+    solicitud_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    fecha_propuesta DATE NOT NULL,
+    hora_propuesta TIME NOT NULL,
+    tipo_reunion VARCHAR(50) NOT NULL,
+    accion ENUM('solicitud_creada', 'aceptada_profesor', 'aceptada_estudiante', 'confirmada', 'rechazada', 'cancelada', 'realizada') NOT NULL,
+    realizado_por VARCHAR(10) NOT NULL, -- RUT de quien realizó la acción
+    comentarios TEXT NULL,
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reunion_id) REFERENCES reuniones_calendario(id) ON DELETE SET NULL,
+    FOREIGN KEY (solicitud_id) REFERENCES solicitudes_reunion(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (realizado_por) REFERENCES usuarios(rut),
+    INDEX idx_historial_reunion (reunion_id),
+    INDEX idx_historial_proyecto (proyecto_id),
+    INDEX idx_historial_fecha (fecha_accion),
+    INDEX idx_historial_accion (accion)
 );
 
 -- Tabla de Bloqueos de Horarios (para vacaciones, feriados, etc.)

@@ -45,13 +45,13 @@ export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respu
         throw new Error('No tienes asignación activa a este proyecto para responder esta solicitud');
     }
     
-    // Verificar estado actual
-    if (solicitud.estado === 'confirmada') {
-        throw new Error('La reunión ya está confirmada');
+    // Verificar estado actual (nuevo sistema con 3 estados)
+    if (solicitud.estado === 'aceptada') {
+        throw new Error('La reunión ya está aceptada');
     }
     
-    if (solicitud.estado === 'rechazada' || solicitud.estado === 'cancelada') {
-        throw new Error('La solicitud ya fue rechazada o cancelada');
+    if (solicitud.estado === 'rechazada') {
+        throw new Error('La solicitud ya fue rechazada');
     }
     
     const esProfesor = usuario_rut === solicitud.profesor_rut;
@@ -60,32 +60,23 @@ export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respu
     let updateValues = [];
     
     if (respuesta === 'aceptar') {
+        // NUEVO SISTEMA: Solo estados 'pendiente', 'aceptada', 'rechazada'
+        nuevoEstado = 'aceptada';
         if (esProfesor) {
-            nuevoEstado = 'aceptada_profesor';
             updateFields.push('fecha_respuesta_profesor = NOW()');
             if (comentarios) {
                 updateFields.push('comentarios_profesor = ?');
                 updateValues.push(comentarios);
             }
-            
-            // Si el estudiante ya aceptó, confirmar la reunión
-            if (solicitud.estado === 'aceptada_estudiante') {
-                nuevoEstado = 'confirmada';
-            }
         } else {
-            nuevoEstado = 'aceptada_estudiante';
             updateFields.push('fecha_respuesta_estudiante = NOW()');
             if (comentarios) {
                 updateFields.push('comentarios_estudiante = ?');
                 updateValues.push(comentarios);
             }
-            
-            // Si el profesor ya aceptó, confirmar la reunión
-            if (solicitud.estado === 'aceptada_profesor') {
-                nuevoEstado = 'confirmada';
-            }
         }
     } else {
+        // Rechazar
         nuevoEstado = 'rechazada';
         if (esProfesor) {
             updateFields.push('fecha_respuesta_profesor = NOW()');
@@ -114,40 +105,46 @@ export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respu
     
     await pool.execute(updateQuery, updateValues);
     
-    // Si se confirmó la reunión, crear la reunión en el calendario
+    // Registrar en historial (adaptado al nuevo sistema)
+    const accionHistorial = respuesta === 'aceptar' ? 'aceptada' : 'rechazada';
+    await registrarEnHistorial(solicitud, accionHistorial, usuario_rut, comentarios);
+    
+    // Si se aceptó la reunión, crear la reunión en el calendario
     let reunion_id = null;
-    if (nuevoEstado === 'confirmada') {
-        reunion_id = await crearReunionConfirmada(solicitud_id);
+    if (nuevoEstado === 'aceptada') {
+        reunion_id = await crearReunionAceptada(solicitud_id);
+        // Registrar aceptación en historial
+        await registrarEnHistorial(solicitud, 'aceptada', usuario_rut, 'Reunión aceptada');
     }
     
     return {
         success: true,
         estado_anterior: solicitud.estado,
         estado_nuevo: nuevoEstado,
-        reunion_confirmada: nuevoEstado === 'confirmada',
+        reunion_confirmada: nuevoEstado === 'aceptada',
         reunion_id: reunion_id,
         message: obtenerMensajeEstado(nuevoEstado, esProfesor)
     };
 };
 
 /**
- * Crear reunión confirmada en el calendario
- * @param {number} solicitud_id - ID de la solicitud confirmada
+ * Crear reunión aceptada en el calendario
+ * @param {number} solicitud_id - ID de la solicitud aceptada
  * @returns {Promise<number>} - ID de la reunión creada
  */
-export const crearReunionConfirmada = async (solicitud_id) => {
+export const crearReunionAceptada = async (solicitud_id) => {
     // Obtener datos de la solicitud
     const solicitudQuery = `
         SELECT sr.*, p.titulo as proyecto_titulo
         FROM solicitudes_reunion sr
         INNER JOIN proyectos p ON sr.proyecto_id = p.id
-        WHERE sr.id = ? AND sr.estado = 'confirmada'
+        WHERE sr.id = ? AND sr.estado = 'aceptada'
     `;
     
     const [solicitudRows] = await pool.execute(solicitudQuery, [solicitud_id]);
     
     if (solicitudRows.length === 0) {
-        throw new Error('Solicitud no encontrada o no está confirmada');
+        throw new Error('Solicitud no encontrada o no está aceptada');
     }
     
     const solicitud = solicitudRows[0];
@@ -158,14 +155,15 @@ export const crearReunionConfirmada = async (solicitud_id) => {
     const horaFinStr = horaFin.toTimeString().slice(0, 5);
     
     // Crear título de la reunión
-    const titulo = `${solicitud.tipo_reunion.charAt(0).toUpperCase() + solicitud.tipo_reunion.slice(1)} - ${solicitud.proyecto_titulo}`;
+    const tipoCapitalizado = solicitud.tipo_reunion.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const titulo = `${tipoCapitalizado} - ${solicitud.proyecto_titulo}`;
     
     const insertQuery = `
         INSERT INTO reuniones_calendario (
             solicitud_reunion_id, proyecto_id, profesor_rut, estudiante_rut,
-            fecha, hora_inicio, hora_fin, tipo_reunion, titulo, descripcion
+            fecha, hora_inicio, hora_fin, tipo_reunion, titulo, descripcion, estado
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'programada')
     `;
     
     const [result] = await pool.execute(insertQuery, [
@@ -188,7 +186,7 @@ export const crearReunionConfirmada = async (solicitud_id) => {
  * Obtener reuniones confirmadas de un usuario
  * @param {string} usuario_rut - RUT del usuario
  * @param {string} estado - Estado de las reuniones (opcional)
- * @returns {Promise<Array>} - Lista de reuniones
+ * @returns {Promise<Array>} - Lista de reuniones con indicador de expiración
  */
 export const obtenerReunionesUsuario = async (usuario_rut, estado = null) => {
     let query = `
@@ -198,12 +196,18 @@ export const obtenerReunionesUsuario = async (usuario_rut, estado = null) => {
             ue.nombre as estudiante_nombre,
             up.nombre as profesor_nombre,
             sr.comentarios_profesor,
-            sr.comentarios_estudiante
+            sr.comentarios_estudiante,
+            CASE 
+                WHEN rc.estado = 'programada' 
+                    AND CONCAT(rc.fecha, ' ', rc.hora_fin) < NOW() 
+                THEN TRUE
+                ELSE FALSE
+            END as expirada
         FROM reuniones_calendario rc
         INNER JOIN proyectos p ON rc.proyecto_id = p.id
         INNER JOIN usuarios ue ON rc.estudiante_rut = ue.rut
         INNER JOIN usuarios up ON rc.profesor_rut = up.rut
-        INNER JOIN solicitudes_reunion sr ON rc.solicitud_reunion_id = sr.id
+        LEFT JOIN solicitudes_reunion sr ON rc.solicitud_reunion_id = sr.id
         WHERE (rc.profesor_rut = ? OR rc.estudiante_rut = ?)
     `;
     
@@ -214,11 +218,75 @@ export const obtenerReunionesUsuario = async (usuario_rut, estado = null) => {
         params.push(estado);
     }
     
-    query += ' ORDER BY rc.fecha ASC, rc.hora_inicio ASC';
+    query += ' ORDER BY rc.fecha DESC, rc.hora_inicio DESC';
     
     const [rows] = await pool.execute(query, params);
     return rows;
 };
+
+/**
+ * Registrar acción en historial de reuniones
+ */
+async function registrarEnHistorial(solicitud, accion, realizado_por, comentarios = '') {
+    try {
+        const insertQuery = `
+            INSERT INTO historial_reuniones (
+                solicitud_id, proyecto_id, profesor_rut, estudiante_rut,
+                fecha_propuesta, hora_propuesta, tipo_reunion,
+                accion, realizado_por, comentarios
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        await pool.execute(insertQuery, [
+            solicitud.id,
+            solicitud.proyecto_id,
+            solicitud.profesor_rut,
+            solicitud.estudiante_rut,
+            solicitud.fecha_propuesta,
+            solicitud.hora_propuesta,
+            solicitud.tipo_reunion,
+            accion,
+            realizado_por,
+            comentarios
+        ]);
+    } catch (error) {
+        console.error('Error registrando en historial:', error);
+        // No lanzar error para no interrumpir el flujo principal
+    }
+}
+
+/**
+ * Registrar en historial desde datos de reunión directa
+ */
+async function registrarEnHistorialDirecto(datos, accion, realizado_por, comentarios = '') {
+    try {
+        const insertQuery = `
+            INSERT INTO historial_reuniones (
+                reunion_id, solicitud_id, proyecto_id, profesor_rut, estudiante_rut,
+                fecha_propuesta, hora_propuesta, tipo_reunion,
+                accion, realizado_por, comentarios
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        await pool.execute(insertQuery, [
+            datos.reunion_id || null,
+            datos.solicitud_id || null,
+            datos.proyecto_id,
+            datos.profesor_rut,
+            datos.estudiante_rut,
+            datos.fecha_propuesta,
+            datos.hora_propuesta,
+            datos.tipo_reunion,
+            accion,
+            realizado_por,
+            comentarios
+        ]);
+    } catch (error) {
+        console.error('Error registrando en historial directo:', error);
+    }
+}
 
 /**
  * Actualizar estado de reunión
@@ -231,8 +299,11 @@ export const obtenerReunionesUsuario = async (usuario_rut, estado = null) => {
 export const actualizarEstadoReunion = async (reunion_id, nuevo_estado, usuario_rut, datos_adicionales = {}) => {
     // Verificar permisos
     const verificarQuery = `
-        SELECT * FROM reuniones_calendario 
-        WHERE id = ? AND (profesor_rut = ? OR estudiante_rut = ?)
+        SELECT rc.*, sr.id as solicitud_id, sr.profesor_rut as sr_profesor_rut, sr.estudiante_rut as sr_estudiante_rut,
+               sr.proyecto_id, sr.tipo_reunion, sr.fecha_propuesta, sr.hora_propuesta
+        FROM reuniones_calendario rc
+        LEFT JOIN solicitudes_reunion sr ON rc.solicitud_reunion_id = sr.id
+        WHERE rc.id = ? AND (rc.profesor_rut = ? OR rc.estudiante_rut = ?)
     `;
     
     const [reunionRows] = await pool.execute(verificarQuery, [reunion_id, usuario_rut, usuario_rut]);
@@ -240,6 +311,8 @@ export const actualizarEstadoReunion = async (reunion_id, nuevo_estado, usuario_
     if (reunionRows.length === 0) {
         throw new Error('Reunión no encontrada o sin permisos');
     }
+    
+    const reunion = reunionRows[0];
     
     let updateFields = ['estado = ?'];
     let updateValues = [nuevo_estado];
@@ -252,6 +325,36 @@ export const actualizarEstadoReunion = async (reunion_id, nuevo_estado, usuario_
             updateFields.push('acta_reunion = ?');
             updateValues.push(datos_adicionales.acta_reunion);
         }
+        
+        // Registrar en historial
+        await registrarEnHistorialDirecto({
+            reunion_id: reunion_id,
+            solicitud_id: reunion.solicitud_id,
+            proyecto_id: reunion.proyecto_id,
+            profesor_rut: reunion.profesor_rut,
+            estudiante_rut: reunion.estudiante_rut,
+            fecha_propuesta: reunion.fecha,
+            hora_propuesta: reunion.hora_inicio,
+            tipo_reunion: reunion.tipo_reunion
+        }, 'realizada', usuario_rut, datos_adicionales.acta_reunion || 'Reunión marcada como realizada');
+        
+    } else if (nuevo_estado === 'cancelada') {
+        if (datos_adicionales.motivo_cancelacion) {
+            updateFields.push('motivo_cancelacion = ?');
+            updateValues.push(datos_adicionales.motivo_cancelacion);
+        }
+        
+        // Registrar en historial
+        await registrarEnHistorialDirecto({
+            reunion_id: reunion_id,
+            solicitud_id: reunion.solicitud_id,
+            proyecto_id: reunion.proyecto_id,
+            profesor_rut: reunion.profesor_rut,
+            estudiante_rut: reunion.estudiante_rut,
+            fecha_propuesta: reunion.fecha,
+            hora_propuesta: reunion.hora_inicio,
+            tipo_reunion: reunion.tipo_reunion
+        }, 'cancelada', usuario_rut, datos_adicionales.motivo_cancelacion || 'Reunión cancelada');
     }
     
     if (datos_adicionales.lugar) {
@@ -303,7 +406,7 @@ export const cancelarReunion = async (reunion_id, usuario_rut, motivo = '') => {
         throw new Error('No se puede cancelar una reunión que ya se realizó');
     }
     
-    // Actualizar reunión
+    // Actualizar reunión a cancelada (tabla reuniones_calendario todavía tiene este estado)
     const updateReunionQuery = `
         UPDATE reuniones_calendario 
         SET estado = 'cancelada' 
@@ -312,14 +415,15 @@ export const cancelarReunion = async (reunion_id, usuario_rut, motivo = '') => {
     
     await pool.execute(updateReunionQuery, [reunion_id]);
     
-    // Actualizar solicitud original
+    // Actualizar solicitud original a RECHAZADA (nuevo sistema con 3 estados)
     const updateSolicitudQuery = `
         UPDATE solicitudes_reunion 
-        SET estado = 'cancelada' 
+        SET estado = 'rechazada',
+            comentarios_profesor = ?
         WHERE id = ?
     `;
     
-    await pool.execute(updateSolicitudQuery, [reunion.solicitud_reunion_id]);
+    await pool.execute(updateSolicitudQuery, [motivo || 'Reunión cancelada', reunion.solicitud_reunion_id]);
     
     return true;
 };
@@ -403,6 +507,34 @@ export const obtenerReunionPorId = async (reunion_id) => {
 };
 
 /**
+ * Obtener historial completo de reuniones (para dashboard)
+ * Incluye todas las solicitudes y su estado actual
+ */
+export const obtenerHistorialReuniones = async (usuario_rut) => {
+    const query = `
+        SELECT 
+            hr.*,
+            p.titulo as proyecto_titulo,
+            ue.nombre as estudiante_nombre,
+            up.nombre as profesor_nombre,
+            ur.nombre as realizado_por_nombre,
+            rc.id as reunion_id,
+            rc.estado as estado_reunion_actual
+        FROM historial_reuniones hr
+        INNER JOIN proyectos p ON hr.proyecto_id = p.id
+        INNER JOIN usuarios ue ON hr.estudiante_rut = ue.rut
+        INNER JOIN usuarios up ON hr.profesor_rut = up.rut
+        INNER JOIN usuarios ur ON hr.realizado_por = ur.rut
+        LEFT JOIN reuniones_calendario rc ON hr.reunion_id = rc.id
+        WHERE (hr.profesor_rut = ? OR hr.estudiante_rut = ?)
+        ORDER BY hr.fecha_accion DESC
+    `;
+    
+    const [rows] = await pool.execute(query, [usuario_rut, usuario_rut]);
+    return rows;
+};
+
+/**
  * Obtener estadísticas de reuniones de un usuario
  */
 export const obtenerEstadisticasReuniones = async (usuario_rut) => {
@@ -460,7 +592,7 @@ async function verificarConflictoHorario(profesor_rut, estudiante_rut, fecha, ho
         FROM reuniones_calendario
         WHERE fecha = ? 
         AND (profesor_rut = ? OR estudiante_rut = ?)
-        AND estado IN ('programada', 'en_curso')
+        AND estado = 'programada'
         AND (
             (hora_inicio <= ? AND hora_fin > ?) OR
             (hora_inicio < ? AND hora_fin >= ?) OR
