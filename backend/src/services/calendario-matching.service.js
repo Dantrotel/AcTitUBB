@@ -17,16 +17,16 @@ export const verificarRelacionProfesorEstudiante = async (profesor_rut, estudian
             SELECT 
                 p.id as proyecto_id,
                 p.titulo,
-                ap.rol_profesor,
+                rp.nombre as rol_profesor,
                 rp.nombre as nombre_rol
             FROM proyectos p
-            INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
-            INNER JOIN roles_profesores rp ON ap.rol_profesor = rp.codigo
+            INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
+            INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
             WHERE p.estudiante_rut = ? 
             AND ap.profesor_rut = ? 
             AND ap.activo = TRUE
             ORDER BY 
-                CASE ap.rol_profesor
+                CASE rp.nombre
                     WHEN 'profesor_guia' THEN 1
                     WHEN 'profesor_co_guia' THEN 2
                     WHEN 'profesor_informante' THEN 3
@@ -112,64 +112,104 @@ export const crearDisponibilidadValidada = async (disponibilidadData, usuario_ru
  * @param {number} proyecto_id - ID del proyecto
  * @param {string} usuario_solicitante - RUT del usuario que solicita
  * @param {Object} preferencias - Preferencias de reunión
- * @returns {Promise<Object>} - Resultado del matching
+ * @returns {Promise<Object>} - Opciones de horarios disponibles
  */
 export const buscarYProponerReunion = async (proyecto_id, usuario_solicitante, preferencias = {}) => {
     try {
-        // Obtener información del proyecto
-        const proyectoQuery = `
-            SELECT 
-                p.id,
-                p.titulo,
-                p.estudiante_rut,
-                ap.profesor_rut,
-                ap.rol_profesor
-            FROM proyectos p
-            INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
-            WHERE p.id = ? AND ap.rol_profesor = 'profesor_guia' AND ap.activo = TRUE
-        `;
-        
-        const [proyectoRows] = await pool.execute(proyectoQuery, [proyecto_id]);
-        
-        if (proyectoRows.length === 0) {
-            throw new Error('Proyecto no encontrado o no tiene profesor guía asignado');
-        }
-        
-        const proyecto = proyectoRows[0];
-        
-        // Verificar que el usuario solicitante es parte del proyecto
-        if (usuario_solicitante !== proyecto.profesor_rut && usuario_solicitante !== proyecto.estudiante_rut) {
-            throw new Error('No tienes permisos para solicitar reuniones en este proyecto');
-        }
-        
         // Configurar preferencias por defecto
         const {
             tipo_reunion = 'seguimiento',
             duracion_minutos = 60,
             dias_anticipacion = 14,
-            descripcion = `Reunión de ${tipo_reunion} - ${proyecto.titulo}`
+            descripcion,
+            profesor_rut
         } = preferencias;
+
+        // Validar que se proporcionó el profesor_rut
+        if (!profesor_rut) {
+            throw new Error('profesor_rut es requerido');
+        }
+
+        // Obtener información del proyecto
+        const proyectoQuery = `
+            SELECT 
+                p.id,
+                p.titulo,
+                p.estudiante_rut
+            FROM proyectos p
+            WHERE p.id = ?
+        `;
         
-        // Usar el matching automático
-        const resultado = await CalendarioMatchingModel.proponerReunionAutomatica(
-            proyecto_id,
-            tipo_reunion,
-            descripcion
+        const [proyectoRows] = await pool.execute(proyectoQuery, [proyecto_id]);
+        
+        if (proyectoRows.length === 0) {
+            throw new Error('Proyecto no encontrado');
+        }
+        
+        const proyecto = proyectoRows[0];
+        
+        // Verificar que el usuario solicitante es el estudiante del proyecto
+        if (usuario_solicitante !== proyecto.estudiante_rut) {
+            throw new Error('No tienes permisos para solicitar reuniones en este proyecto');
+        }
+
+        // Verificar que el profesor está asignado al proyecto
+        const validacionProfesorQuery = `
+            SELECT ap.id, rp.nombre as rol_profesor
+            FROM asignaciones_proyectos ap
+            INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            WHERE ap.proyecto_id = ? AND ap.profesor_rut = ? AND ap.activo = TRUE
+        `;
+        const [asignaciones] = await pool.execute(validacionProfesorQuery, [proyecto_id, profesor_rut]);
+        
+        if (asignaciones.length === 0) {
+            throw new Error('El profesor seleccionado no está asignado a tu proyecto');
+        }
+        
+        // Buscar slots disponibles
+        const slots = await CalendarioMatchingModel.buscarSlotsDisponibles(
+            profesor_rut,
+            proyecto.estudiante_rut,
+            duracion_minutos,
+            dias_anticipacion
         );
         
+        if (slots.length === 0) {
+            return {
+                success: false,
+                message: 'No se encontraron horarios disponibles que coincidan entre profesor y estudiante',
+                opciones: [],
+                proyecto_info: {
+                    id: proyecto.id,
+                    titulo: proyecto.titulo,
+                    profesor_rut: profesor_rut,
+                    estudiante_rut: proyecto.estudiante_rut
+                }
+            };
+        }
+        
+        // Calcular probabilidad de éxito para cada slot (simulación simple)
+        const opcionesConProbabilidad = slots.map((slot, index) => ({
+            ...slot,
+            probabilidad_exito: Math.max(95 - (index * 5), 70), // Disminuye según posición
+            urgencia_sugerida: index < 3 ? 'alta' : 'media'
+        }));
+        
         return {
-            ...resultado,
+            success: true,
+            message: `Se encontraron ${slots.length} horarios disponibles`,
+            opciones: opcionesConProbabilidad,
             proyecto_info: {
                 id: proyecto.id,
                 titulo: proyecto.titulo,
-                profesor_rut: proyecto.profesor_rut,
+                profesor_rut: profesor_rut,
                 estudiante_rut: proyecto.estudiante_rut
             },
             solicitante: usuario_solicitante
         };
         
     } catch (error) {
-        throw new Error(`Error en matching de reunión: ${error.message}`);
+        throw new Error(`Error en búsqueda de reunión: ${error.message}`);
     }
 };
 
@@ -214,51 +254,54 @@ export const gestionarRespuestaSolicitud = async (solicitud_id, usuario_rut, res
  */
 export const obtenerDashboardReuniones = async (usuario_rut, role_id) => {
     try {
-        // Obtener solicitudes pendientes
+        // Obtener SOLO solicitudes pendientes (sin confirmar ni rechazar)
         const solicitudesPendientes = await CalendarioMatchingModel.obtenerSolicitudesUsuario(usuario_rut);
         
-        // Obtener reuniones próximas
-        const reunionesProximas = await ReunionesModel.obtenerReunionesUsuario(usuario_rut, 'programada');
+        // Filtrar solo las que están realmente pendientes
+        const solicitudesSinResponder = solicitudesPendientes.filter(s => s.estado === 'pendiente');
         
-        // Obtener disponibilidades actuales
+        // Obtener TODAS las reuniones del usuario (historial completo)
+        const todasReuniones = await ReunionesModel.obtenerReunionesUsuario(usuario_rut);
+        
+        // Separar reuniones por estado
+        const ahora = new Date();
+        
+        const reunionesProgramadas = todasReuniones.filter(r => 
+            r.estado === 'programada' && new Date(r.fecha) >= ahora
+        );
+        
+        const reunionesRealizadas = todasReuniones.filter(r => r.estado === 'realizada');
+        const reunionesCanceladas = todasReuniones.filter(r => r.estado === 'cancelada');
+        
+        // Reuniones próximas (próximos 7 días)
+        const fechaLimite = new Date();
+        fechaLimite.setDate(fechaLimite.getDate() + 7);
+        
+        const reunionesProximas = reunionesProgramadas.filter(r => 
+            new Date(r.fecha) <= fechaLimite
+        );
+        
+        // Obtener disponibilidades
         const disponibilidades = await CalendarioMatchingModel.obtenerDisponibilidadesUsuario(usuario_rut);
         
         // Obtener estadísticas
         const estadisticas = await ReunionesModel.obtenerEstadisticasReuniones(usuario_rut);
         
-        // Filtrar reuniones próximas (próximos 7 días)
-        const fechaLimite = new Date();
-        fechaLimite.setDate(fechaLimite.getDate() + 7);
-        
-        const reunionesProximasSemana = reunionesProximas.filter(reunion => {
-            const fechaReunion = new Date(reunion.fecha);
-            return fechaReunion <= fechaLimite && fechaReunion >= new Date();
-        });
-        
         // Calcular alertas
         const alertas = [];
-        
-        // Alertas por solicitudes sin responder
-        const solicitudesSinResponder = solicitudesPendientes.filter(s => {
-            const esProfesor = s.profesor_rut === usuario_rut;
-            return s.estado === 'pendiente' || 
-                   (esProfesor && s.estado === 'aceptada_estudiante') ||
-                   (!esProfesor && s.estado === 'aceptada_profesor');
-        });
         
         if (solicitudesSinResponder.length > 0) {
             alertas.push({
                 tipo: 'solicitudes_pendientes',
                 cantidad: solicitudesSinResponder.length,
-                mensaje: `Tienes ${solicitudesSinResponder.length} solicitud(es) de reunión pendiente(s) de respuesta`
+                mensaje: `Tienes ${solicitudesSinResponder.length} solicitud(es) de reunión pendiente(s)`
             });
         }
         
-        // Alertas por falta de disponibilidad
-        if (disponibilidades.length === 0) {
+        if (disponibilidades.length === 0 && role_id === 2) {
             alertas.push({
                 tipo: 'sin_disponibilidad',
-                mensaje: 'No has configurado tu disponibilidad horaria. Esto puede dificultar la programación de reuniones.'
+                mensaje: 'No has configurado tu disponibilidad horaria'
             });
         }
         
@@ -270,20 +313,26 @@ export const obtenerDashboardReuniones = async (usuario_rut, role_id) => {
                 es_estudiante: role_id === 1
             },
             solicitudes: {
-                pendientes: solicitudesPendientes,
-                sin_responder: solicitudesSinResponder
+                pendientes: solicitudesSinResponder,
+                total: solicitudesSinResponder.length
             },
             reuniones: {
-                proximas: reunionesProximasSemana,
-                todas_programadas: reunionesProximas
+                proximas: reunionesProximas,
+                programadas: reunionesProgramadas,
+                realizadas: reunionesRealizadas,
+                canceladas: reunionesCanceladas,
+                historial_completo: todasReuniones
             },
             disponibilidades: disponibilidades,
             estadisticas: estadisticas,
             alertas: alertas,
             resumen: {
-                solicitudes_pendientes: solicitudesPendientes.length,
-                reuniones_proxima_semana: reunionesProximasSemana.length,
-                disponibilidades_configuradas: disponibilidades.length
+                solicitudes_pendientes: solicitudesSinResponder.length,
+                reuniones_proximas: reunionesProximas.length,
+                reuniones_programadas: reunionesProgramadas.length,
+                reuniones_realizadas: reunionesRealizadas.length,
+                reuniones_canceladas: reunionesCanceladas.length,
+                total_reuniones: todasReuniones.length
             }
         };
         

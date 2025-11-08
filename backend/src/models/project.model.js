@@ -207,17 +207,6 @@ const obtenerProfesoresAsignadosPropuesta = async (propuesta_id) => {
     return rows;
 };
 
-// Asignar profesor a proyecto con rol específico
-const asignarProfesorProyecto = async ({ proyecto_id, profesor_rut, rol_profesor_id }) => {
-    const query = `
-        INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, activo)
-        VALUES (?, ?, ?, TRUE)
-        ON DUPLICATE KEY UPDATE activo = TRUE, fecha_asignacion = CURRENT_TIMESTAMP
-    `;
-    const [result] = await pool.execute(query, [proyecto_id, profesor_rut, rol_profesor_id]);
-    return result.affectedRows > 0;
-};
-
 // Verificar si un usuario puede ver un proyecto específico
 const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
     // Los administradores pueden ver todos los proyectos
@@ -246,81 +235,69 @@ const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
 
 // Obtener proyectos filtrados por permisos de usuario
 const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
-    let query;
-    let params;
+    try {
+        let query;
+        let params;
 
-    if (rol_usuario === 'admin' || rol_usuario === 3) {
-        // Los administradores ven todos los proyectos
-        query = `
-            SELECT p.*, 
-                   u.nombre AS nombre_estudiante,
-                   u.email AS email_estudiante,
-                   prop.titulo AS titulo_propuesta,
-                   ep.nombre AS estado_proyecto,
-                   GROUP_CONCAT(DISTINCT CONCAT(up.nombre, ' (', rp.nombre, ')')) AS profesores_asignados
-            FROM proyectos p
-            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
-            LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
-            LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
-            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
-            LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
-            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
-            GROUP BY p.id
-            ORDER BY p.fecha_inicio DESC
-        `;
-        params = [];
-    } else if (rol_usuario === 'estudiante' || rol_usuario === 1) {
-        // Los estudiantes solo ven sus propios proyectos
-        query = `
-            SELECT p.*, 
-                   u.nombre AS nombre_estudiante,
-                   u.email AS email_estudiante,
-                   prop.titulo AS titulo_propuesta,
-                   ep.nombre AS estado_proyecto,
-                   GROUP_CONCAT(DISTINCT CONCAT(up.nombre, ' (', rp.nombre, ')')) AS profesores_asignados
-            FROM proyectos p
-            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
-            LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
-            LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
-            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
-            LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
-            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
-            WHERE p.estudiante_rut = ?
-            GROUP BY p.id
-            ORDER BY p.fecha_inicio DESC
-        `;
-        params = [usuario_rut];
-    } else if (rol_usuario === 'profesor' || rol_usuario === 2) {
-        // Los profesores ven proyectos donde están asignados
-        query = `
-            SELECT p.*, 
-                   u.nombre AS nombre_estudiante,
-                   u.email AS email_estudiante,
-                   prop.titulo AS titulo_propuesta,
-                   ep.nombre AS estado_proyecto,
-                   GROUP_CONCAT(DISTINCT CONCAT(up.nombre, ' (', rp.nombre, ')')) AS profesores_asignados,
-                   rp_actual.nombre AS mi_rol
-            FROM proyectos p
-            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
-            LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
-            LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
-            INNER JOIN asignaciones_proyectos ap_usuario ON p.id = ap_usuario.proyecto_id 
-                AND ap_usuario.profesor_rut = ? AND ap_usuario.activo = TRUE
-            LEFT JOIN roles_profesores rp_actual ON ap_usuario.rol_profesor_id = rp_actual.id
-            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
-            LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
-            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
-            GROUP BY p.id
-            ORDER BY p.fecha_inicio DESC
-        `;
-        params = [usuario_rut];
-    } else {
-        // Rol no reconocido, sin acceso
-        return [];
+        if (rol_usuario === 'admin' || rol_usuario === 3) {
+            // Los administradores ven todos los proyectos - consulta simplificada
+            query = `
+                SELECT p.*, 
+                       u.nombre AS nombre_estudiante,
+                       u.email AS email_estudiante,
+                       prop.titulo AS titulo_propuesta
+                FROM proyectos p
+                LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+                LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+                ORDER BY p.fecha_inicio DESC
+            `;
+            params = [];
+        } else if (rol_usuario === 'estudiante' || rol_usuario === 1) {
+            // Los estudiantes solo ven sus propios proyectos - consulta simplificada
+            query = `
+                SELECT p.*, 
+                       u.nombre AS nombre_estudiante,
+                       u.email AS email_estudiante,
+                       prop.titulo AS titulo_propuesta
+                FROM proyectos p
+                LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+                LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+                WHERE p.estudiante_rut = ?
+                ORDER BY p.fecha_inicio DESC
+            `;
+            params = [usuario_rut];
+        } else if (rol_usuario === 'profesor' || rol_usuario === 2) {
+            // Los profesores ven proyectos donde están asignados - consulta simplificada
+            query = `
+                SELECT DISTINCT p.*, 
+                       u.nombre AS nombre_estudiante,
+                       u.email AS email_estudiante,
+                       prop.titulo AS titulo_propuesta
+                FROM proyectos p
+                LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+                LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+                INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id 
+                WHERE ap.profesor_rut = ? AND ap.activo = TRUE
+                ORDER BY p.fecha_inicio DESC
+            `;
+            params = [usuario_rut];
+        } else {
+            // Rol no reconocido, sin acceso
+            return [];
+        }
+
+        console.log('🔍 Ejecutando consulta SQL:', query);
+        console.log('🔍 Parámetros:', params);
+
+        const [rows] = await pool.execute(query, params);
+        
+        console.log('✅ Consulta exitosa, filas obtenidas:', rows.length);
+        
+        return rows;
+    } catch (error) {
+        console.error('❌ Error en obtenerProyectosPorPermisos:', error);
+        throw error;
     }
-
-    const [rows] = await pool.execute(query, params);
-    return rows;
 };
 
 // Obtener detalles de proyecto con verificación de permisos
@@ -479,8 +456,28 @@ const obtenerEstadisticasHitos = async (proyecto_id) => {
         WHERE proyecto_id = ?
     `;
     
-    const [rows] = await pool.execute(query, [proyecto_id]);
-    return rows[0];
+    try {
+        const [rows] = await pool.execute(query, [proyecto_id]);
+        return rows[0] || {
+            total_hitos: 0,
+            completados: 0,
+            en_progreso: 0,
+            retrasados: 0,
+            avance_promedio: 0,
+            criticos: 0
+        };
+    } catch (error) {
+        console.error('Error al obtener estadísticas de hitos:', error);
+        // Retornar valores por defecto si hay error
+        return {
+            total_hitos: 0,
+            completados: 0,
+            en_progreso: 0,
+            retrasados: 0,
+            avance_promedio: 0,
+            criticos: 0
+        };
+    }
 };
 
 // ========== GESTIÓN DE EVALUACIONES ==========
@@ -563,47 +560,70 @@ const actualizarProgresoProyecto = async (proyecto_id) => {
 
 // Obtener dashboard completo del proyecto
 const obtenerDashboardProyecto = async (proyecto_id) => {
-    // Información básica del proyecto
-    const proyecto = await obtenerProyectoPorIdConPermisos(proyecto_id, null, 'admin');
-    if (!proyecto) return null;
+    try {
+        // Información básica del proyecto
+        const proyecto = await obtenerProyectoPorIdConPermisos(proyecto_id, null, 'admin');
+        if (!proyecto) return null;
+        
+        // Estadísticas de hitos
+        const estadisticasHitos = await obtenerEstadisticasHitos(proyecto_id);
     
-    // Estadísticas de hitos
-    const estadisticasHitos = await obtenerEstadisticasHitos(proyecto_id);
+        // Hitos recientes
+        let hitosRecientes = [];
+        try {
+            const [hitosRows] = await pool.execute(`
+                SELECT * FROM hitos_proyecto 
+                WHERE proyecto_id = ? 
+                ORDER BY updated_at DESC 
+                LIMIT 5
+            `, [proyecto_id]);
+            hitosRecientes = hitosRows;
+        } catch (error) {
+            console.warn('Error al obtener hitos recientes:', error.message);
+        }
+        
+        // Evaluaciones recientes
+        let evaluacionesRecientes = [];
+        try {
+            const [evalRows] = await pool.execute(`
+                SELECT e.*, u.nombre AS evaluador_nombre
+                FROM evaluaciones_proyecto e
+                LEFT JOIN usuarios u ON e.profesor_evaluador_rut = u.rut
+                WHERE e.proyecto_id = ? 
+                ORDER BY e.fecha_evaluacion DESC 
+                LIMIT 3
+            `, [proyecto_id]);
+            evaluacionesRecientes = evalRows;
+        } catch (error) {
+            console.warn('Error al obtener evaluaciones recientes:', error.message);
+        }
+        
+        // Próximos hitos
+        let proximosHitos = [];
+        try {
+            const [proximosRows] = await pool.execute(`
+                SELECT * FROM hitos_proyecto 
+                WHERE proyecto_id = ? AND estado IN ('pendiente', 'en_progreso')
+                AND fecha_objetivo >= CURDATE()
+                ORDER BY fecha_objetivo ASC 
+                LIMIT 5
+            `, [proyecto_id]);
+            proximosHitos = proximosRows;
+        } catch (error) {
+            console.warn('Error al obtener próximos hitos:', error.message);
+        }
     
-    // Hitos recientes
-    const hitosRecientes = await pool.execute(`
-        SELECT * FROM hitos_proyecto 
-        WHERE proyecto_id = ? 
-        ORDER BY updated_at DESC 
-        LIMIT 5
-    `, [proyecto_id]);
-    
-    // Evaluaciones recientes
-    const evaluacionesRecientes = await pool.execute(`
-        SELECT e.*, u.nombre AS evaluador_nombre
-        FROM evaluaciones_proyecto e
-        LEFT JOIN usuarios u ON e.profesor_evaluador_rut = u.rut
-        WHERE e.proyecto_id = ? 
-        ORDER BY e.fecha_evaluacion DESC 
-        LIMIT 3
-    `, [proyecto_id]);
-    
-    // Próximos hitos
-    const proximosHitos = await pool.execute(`
-        SELECT * FROM hitos_proyecto 
-        WHERE proyecto_id = ? AND estado IN ('pendiente', 'en_progreso')
-        AND fecha_objetivo >= CURDATE()
-        ORDER BY fecha_objetivo ASC 
-        LIMIT 5
-    `, [proyecto_id]);
-    
-    return {
-        proyecto,
-        estadisticas_hitos: estadisticasHitos,
-        hitos_recientes: hitosRecientes[0],
-        evaluaciones_recientes: evaluacionesRecientes[0],
-        proximos_hitos: proximosHitos[0]
-    };
+        return {
+            proyecto,
+            estadisticas_hitos: estadisticasHitos,
+            hitos_recientes: hitosRecientes,
+            evaluaciones_recientes: evaluacionesRecientes,
+            proximos_hitos: proximosHitos
+        };
+    } catch (error) {
+        console.error('Error al obtener dashboard del proyecto:', error);
+        throw error;
+    }
 };
 
 export const ProjectModel = {
@@ -620,7 +640,6 @@ export const ProjectModel = {
     getProjectStats,
     crearProyectoCompleto,
     obtenerProfesoresAsignadosPropuesta,
-    asignarProfesorProyecto,
     puedeVerProyecto,
     obtenerProyectosPorPermisos,
     obtenerProyectoPorIdConPermisos,

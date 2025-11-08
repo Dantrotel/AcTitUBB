@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
+import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
 
 @Component({
   selector: 'app-home-profesor',
@@ -19,12 +20,16 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    CalendarModalComponent
+    CalendarModalComponent,
+    AlertasFechasComponent
   ],
   templateUrl: './home-profesor.html',
   styleUrls: ['./home-profesor.scss']
 })
 export class HomeProfesor implements OnInit {
+  // Referencia a Math para usar en el template
+  mathHelper = Math;
+  
   profesor: any = {};
   showUserMenu = false;
   showCalendarioMenu = false;
@@ -33,7 +38,6 @@ export class HomeProfesor implements OnInit {
     pendientes: 0,
     revisadas: 0
   };
-  // Nuevas estadísticas de proyectos
   estadisticasProyectos: any = {
     totalProyectos: 0,
     enDesarrollo: 0,
@@ -44,7 +48,6 @@ export class HomeProfesor implements OnInit {
   showCalendarModal = false;
   fechasCalendario: any[] = [];
   proximasFechas: any[] = [];
-  // Nuevos datos de proyectos
   proyectosRecientes: any[] = [];
   proximosHitos: any[] = [];
   
@@ -66,37 +69,33 @@ export class HomeProfesor implements OnInit {
     es_critico: false
   };
 
-  // Math para usar en template
-  Math = Math;
-
   constructor(private ApiService: ApiService, private router: Router) {}
 
   ngOnInit() {
-    const token = localStorage.getItem('token');
+    // Obtener información del profesor desde token
     let rut = '';
+    const token = localStorage.getItem('token');
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         rut = payload.rut || '';
-      } catch {
+      } catch (error) {
         rut = '';
       }
-    }
-
-    if (rut) {
-      this.buscarUserByRut(rut);
     } else {
       const userDataStr = localStorage.getItem('userData');
       if (userDataStr) {
         const userData = JSON.parse(userDataStr);
         this.profesor.nombre = userData.nombre || 'Profesor';
         this.profesor.correo = userData.correo || '';
-      } else {
-        this.profesor.nombre = 'Profesor';
       }
     }
 
-    this.cargarEstadisticas();
+    if (rut) {
+      this.buscarUserByRut(rut);
+    }
+
+    // Cargar datos del dashboard
     this.cargarEstadisticasProyectos();
     this.cargarProyectosRecientes();
     this.cargarFechasCalendario();
@@ -110,181 +109,229 @@ export class HomeProfesor implements OnInit {
 
   buscarUserByRut(rut: string) {
     this.ApiService.buscaruserByrut(rut).subscribe({
-      next: (res: any) => {
-        this.profesor = res;
+      next: (user: any) => {
+        if (user && user.success) {
+          this.profesor = user.data;
+        }
       },
-      error: () => {
-        this.profesor.nombre = 'Profesor';
-      }
-    });
-  }
-
-  cargarEstadisticas() {
-    // Cargar estadísticas del profesor
-    this.ApiService.getPropuestas().subscribe({
-      next: (data: any) => {
-        this.estadisticas.totalPropuestas = data.length || 0;
-        this.estadisticas.pendientes = data.filter((p: any) => p.estado === 'Pendiente').length || 0;
-        this.estadisticas.revisadas = data.filter((p: any) => p.estado !== 'Pendiente').length || 0;
-        
-        // Simular última actividad
-        this.ultimaActividad = 'Hace 2 días';
-      },
-      error: (err) => {
-        console.error('Error al cargar estadísticas:', err);
+      error: (error: any) => {
+        console.error('Error al buscar usuario:', error);
       }
     });
   }
 
   cargarEstadisticasProyectos() {
-    // Cargar estadísticas de proyectos asignados al profesor
+    // Obtener RUT del profesor
+    let profesorRut = '';
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        profesorRut = payload.rut || '';
+      } catch (error) {
+        profesorRut = '';
+      }
+    }
+
+    if (!profesorRut) {
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        profesorRut = userData.rut || '';
+      }
+    }
+
+    // Cargar propuestas asignadas al profesor
+    if (profesorRut) {
+      this.ApiService.getPropuestasAsignadasProfesor(profesorRut).subscribe({
+        next: (data: any) => {
+          if (data && data.success) {
+            this.estadisticas = {
+              totalPropuestas: data.data.length || 0,
+              pendientes: data.data.filter((p: any) => p.estado === 'pendiente').length || 0,
+              revisadas: data.data.filter((p: any) => p.estado === 'revisada').length || 0
+            };
+          }
+        },
+        error: (err: any) => {
+          console.error('Error al cargar estadísticas de propuestas:', err);
+        }
+      });
+    }
+
+    // Cargar proyectos asignados
     this.ApiService.getProyectosAsignados().subscribe({
-      next: (data: any) => {
-        console.log('Proyectos asignados:', data);
-        const proyectos = data.projects || [];
-        
-        this.estadisticasProyectos.totalProyectos = proyectos.length;
-        this.estadisticasProyectos.enDesarrollo = proyectos.filter((p: any) => 
-          p.estado_proyecto?.includes('desarrollo') || p.estado_proyecto?.includes('en_desarrollo')).length;
-        
-        // Calcular próximos hitos y evaluaciones pendientes de forma más realista
-        let proximosHitos = 0;
-        let evaluacionesPendientes = 0;
-        
-        proyectos.forEach((proyecto: any) => {
-          // Simular hitos próximos basado en el estado del proyecto
-          if (proyecto.estado_proyecto?.includes('desarrollo')) {
-            proximosHitos += Math.floor(Math.random() * 2) + 1;
-          }
-          if (proyecto.estado_proyecto?.includes('avance')) {
-            evaluacionesPendientes += 1;
-          }
-        });
-        
-        this.estadisticasProyectos.proximosHitos = proximosHitos;
-        this.estadisticasProyectos.evaluacionesPendientes = evaluacionesPendientes;
+      next: (proyectos: any) => {
+        if (proyectos && proyectos.success) {
+          const listaProyectos = proyectos.data || [];
+          this.estadisticasProyectos.totalProyectos = listaProyectos.length;
+          this.estadisticasProyectos.enDesarrollo = listaProyectos.filter((p: any) => 
+            p.estado_proyecto?.includes('desarrollo') || p.estado_proyecto?.includes('en_desarrollo')).length;
+          
+          // Cargar hitos próximos
+          this.cargarHitosProximos();
+          
+          // Calcular evaluaciones pendientes basado en avances
+          this.calcularEvaluacionesPendientes(listaProyectos);
+        }
       },
-      error: (err: any) => {
-        console.error('Error al cargar estadísticas de proyectos:', err);
-        // Datos por defecto en caso de error
+      error: (error: any) => {
         this.estadisticasProyectos = {
           totalProyectos: 0,
           enDesarrollo: 0,
           proximosHitos: 0,
           evaluacionesPendientes: 0
         };
+        console.error('Error al cargar estadísticas de proyectos:', error);
       }
     });
   }
 
   cargarProyectosRecientes() {
-    // Cargar proyectos recientes del profesor con información completa
     this.ApiService.getProyectosAsignados().subscribe({
       next: (data: any) => {
-        console.log('Datos de proyectos:', data);
-        const proyectos = data.projects || [];
-        
-        this.proyectosRecientes = proyectos.slice(0, 5).map((proyecto: any) => ({
-          id: proyecto.id,
-          titulo: proyecto.titulo,
-          estudiante: proyecto.nombre_estudiante || proyecto.estudiante_nombre || 'Sin asignar',
-          estado: this.formatearEstadoProyecto(proyecto.estado_proyecto),
-          porcentaje_avance: proyecto.porcentaje_avance || Math.floor(Math.random() * 80) + 10,
-          fecha_actualizacion: proyecto.updated_at || proyecto.created_at,
-          rol_profesor: proyecto.rol_profesor || 'profesor_guia',
-          descripcion: proyecto.descripcion || '',
-          fecha_inicio: proyecto.fecha_inicio,
-          fecha_estimada_fin: proyecto.fecha_estimada_fin
-        }));
-        
-        // Si no hay proyectos, cargar datos de ejemplo para testing
-        if (this.proyectosRecientes.length === 0) {
+        if (data && data.projects) {
+          this.proyectosRecientes = data.projects.slice(0, 5).map((proyecto: any) => ({
+            ...proyecto,
+            estado_visual: this.getEstadoClase(proyecto.estado_proyecto || 'en_desarrollo')
+          }));
+          
+          // Cargar datos reales para cada proyecto
+          this.proyectosRecientes.forEach(proyecto => {
+            this.cargarDatosProyecto(proyecto);
+          });
+        } else {
           this.proyectosRecientes = [];
         }
       },
-      error: (err: any) => {
-        console.error('Error al cargar proyectos recientes:', err);
+      error: (error: any) => {
         this.proyectosRecientes = [];
       }
     });
   }
 
-  asignarme(id: string) {
-    this.ApiService.asignarPropuesta(id, {}).subscribe({
-      next: () => alert('Te has asignado esta propuesta correctamente.'),
-      error: () => alert('No se pudo asignar la propuesta.')
-    });
-  }
-
-  toggleUserMenu() {
-    this.showUserMenu = !this.showUserMenu;
-    // Cerrar otros menús
-    this.showCalendarioMenu = false;
-  }
-
-  toggleCalendarioMenu() {
-    this.showCalendarioMenu = !this.showCalendarioMenu;
-    // Cerrar otros menús
-    this.showUserMenu = false;
-  }
-
-  navegar(ruta: string) {
-    this.showUserMenu = false; // Cerrar menú al navegar
-    this.showCalendarioMenu = false; // Cerrar menú de calendario
-    this.router.navigate([ruta]);
-  }
-
-  cerrarSesion() {
-    this.showUserMenu = false;
-    this.ApiService.logout();
-  }
-
-  abrirCalendario() {
-    console.log('Abriendo calendario de profesor');
-    this.cargarFechasCalendario();
-    this.showCalendarModal = true;
-  }
-
-  cerrarCalendario() {
-    this.showCalendarModal = false;
-  }
-
   cargarFechasCalendario() {
     this.ApiService.getMisFechasProfesor().subscribe({
-      next: (response: any) => {
-        console.log('Fechas del profesor cargadas:', response);
-        this.fechasCalendario = response;
-        this.cargarProximasFechas();
+      next: (data: any) => {
+        this.fechasCalendario = data?.data || [];
+        
+        // Filtrar próximas fechas importantes
+        const fechasProximas = this.fechasCalendario
+          .filter((fecha: any) => new Date(fecha.fecha) >= new Date())
+          .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+          .slice(0, 5)
+          .map((fecha: any) => ({
+            titulo: fecha.titulo,
+            fecha: new Date(fecha.fecha),
+            icono: this.getIconoTipoFecha(fecha.tipo_fecha || 'calendario'),
+            es_fecha_importante: false
+          }));
+        
+        this.proximasFechas = fechasProximas;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cargar fechas del calendario:', error);
+        this.fechasCalendario = [];
       }
     });
   }
 
-  cargarProximasFechas() {
-    const fechaActual = new Date();
-    this.proximasFechas = this.fechasCalendario
-      .filter(fecha => new Date(fecha.fecha) >= fechaActual)
-      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-      .slice(0, 3)
-      .map(fecha => ({
-        titulo: fecha.titulo,
-        fecha: new Date(fecha.fecha),
-        icono: this.getIconoTipoFecha(fecha.tipo_fecha)
-      }));
+  getEstadoClase(estado: string): string {
+    const estados: { [key: string]: string } = {
+      'en_desarrollo': 'estado-desarrollo',
+      'completado': 'estado-completado',
+      'pausado': 'estado-pausado',
+      'cancelado': 'estado-cancelado'
+    };
+    return estados[estado] || estado;
+  }
+
+  cargarDatosProyecto(proyecto: any) {
+    this.ApiService.getDashboardProyecto(proyecto.id.toString()).subscribe({
+      next: (dashboard: any) => {
+        if (dashboard && dashboard.success) {
+          proyecto.progreso = dashboard.data.progreso || 0;
+          proyecto.tiempo_transcurrido = this.calcularTiempoTranscurrido(proyecto.fecha_creacion);
+          proyecto.prioridad = this.determinarPrioridad(proyecto, dashboard.data);
+        }
+      },
+      error: () => {
+        // Error manejado silenciosamente
+      }
+    });
+  }
+
+  calcularEvaluacionesPendientes(proyectos: any[]) {
+    let evaluacionesPendientes = 0;
+    
+    proyectos.forEach(proyecto => {
+      // Usar estadísticas del proyecto para obtener datos de cumplimiento
+      this.ApiService.obtenerEstadisticasCumplimiento(proyecto.id.toString()).subscribe({
+        next: (estadisticas: any) => {
+          if (estadisticas && estadisticas.success) {
+            // Contar evaluaciones pendientes basado en hitos no completados próximos a vencer
+            const datosCumplimiento = estadisticas.data;
+            if (datosCumplimiento.hitos_pendientes) {
+              evaluacionesPendientes += datosCumplimiento.hitos_pendientes;
+              this.estadisticasProyectos.evaluacionesPendientes = evaluacionesPendientes;
+            }
+          }
+        },
+        error: () => {
+          // Si no hay datos específicos, usar aproximación basada en estado del proyecto
+          if (proyecto.estado_proyecto === 'en_desarrollo' || 
+              proyecto.estado_proyecto === 'avance_enviado') {
+            evaluacionesPendientes += 1;
+          }
+          this.estadisticasProyectos.evaluacionesPendientes = evaluacionesPendientes;
+        }
+      });
+    });
+  }
+
+  calcularTiempoTranscurrido(fechaActividad: string): string {
+    const ahora = new Date();
+    const fecha = new Date(fechaActividad);
+    const diferencia = ahora.getTime() - fecha.getTime();
+    
+    const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+    
+    if (dias < 1) {
+      const horas = Math.floor(diferencia / (1000 * 60 * 60));
+      return `${horas}h`;
+    } else if (dias === 1) {
+      return '1 día';
+    } else if (dias < 7) {
+      return `${dias} días`;
+    } else {
+      const semanas = Math.floor(dias / 7);
+      return `${semanas} ${semanas === 1 ? 'semana' : 'semanas'}`;
+    }
+  }
+
+  determinarPrioridad(proyecto: any, dashboard: any): string {
+    const hoy = new Date();
+    const fechaLimite = proyecto.fecha_limite ? new Date(proyecto.fecha_limite) : null;
+    
+    if (fechaLimite) {
+      const diasRestantes = Math.ceil((fechaLimite.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+      if (diasRestantes <= 7) return 'alta';
+      if (diasRestantes <= 30) return 'media';
+    }
+    
+    return 'baja';
   }
 
   cargarFechasImportantesProyectos() {
     this.ApiService.getProyectosAsignados().subscribe({
-      next: (response: any) => {
-        if (response && response.projects) {
-          const promesasFechas = response.projects.map((proyecto: any) => 
+      next: (proyectos: any) => {
+        if (proyectos && proyectos.success) {
+          const promesasFechas = proyectos.data.map((proyecto: any) => 
             this.ApiService.getFechasImportantesProyecto(proyecto.id).toPromise()
               .then((fechasResponse: any) => {
                 if (fechasResponse && fechasResponse.success) {
                   return fechasResponse.data.fechas_importantes
-                    .filter((fecha: any) => !fecha.completada)
+                    .filter((fecha: any) => new Date(fecha.fecha_limite) >= new Date())
                     .map((fecha: any) => ({
                       ...fecha,
                       proyecto_titulo: proyecto.titulo,
@@ -295,29 +342,60 @@ export class HomeProfesor implements OnInit {
               })
               .catch(() => [])
           );
-
-          Promise.all(promesasFechas).then(todosFechas => {
-            const fechasCombinadas = todosFechas.flat()
-              .sort((a, b) => new Date(a.fecha_limite).getTime() - new Date(b.fecha_limite).getTime())
-              .slice(0, 5);
-            
-            // Agregar fechas importantes próximas a proximasFechas
-            const fechasImportantes = fechasCombinadas.map(fecha => ({
+          
+          Promise.all(promesasFechas).then((fechasCombinadas: any[]) => {
+            const fechasImportantes = fechasCombinadas.flat().map(fecha => ({
+              id: fecha.id,
               titulo: `${fecha.titulo} - ${fecha.proyecto_titulo}`,
               fecha: new Date(fecha.fecha_limite),
-              icono: this.getIconoTipoFecha(fecha.tipo_fecha),
+              tipo: fecha.tipo_fecha,
               es_fecha_importante: true,
               proyecto_id: fecha.proyecto_id
             }));
-
+            
             this.proximasFechas = [...this.proximasFechas, ...fechasImportantes]
               .sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
-              .slice(0, 5);
+              .slice(0, 8);
           });
         }
       },
-      error: (error) => {
-        console.error('Error al cargar fechas importantes de proyectos:', error);
+      error: (error: any) => {
+        console.error('Error al cargar fechas importantes:', error);
+      }
+    });
+  }
+
+  cargarHitosProximos() {
+    this.ApiService.getProyectosAsignados().subscribe({
+      next: (proyectos: any) => {
+        if (proyectos && proyectos.success) {
+          proyectos.data.forEach((proyecto: any) => {
+            this.ApiService.getHitosProyecto(proyecto.id.toString()).subscribe({
+              next: (hitos: any) => {
+                if (hitos && hitos.success) {
+                  const hitosProximos = hitos.data
+                    .filter((hito: any) => {
+                      const fechaObjetivo = new Date(hito.fecha_objetivo);
+                      const hoy = new Date();
+                      const diasDiferencia = Math.ceil((fechaObjetivo.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                      return diasDiferencia <= 30 && diasDiferencia >= 0;
+                    })
+                    .slice(0, 5);
+                  
+                  this.proximosHitos = [...this.proximosHitos, ...hitosProximos]
+                    .sort((a, b) => new Date(a.fecha_objetivo).getTime() - new Date(b.fecha_objetivo).getTime())
+                    .slice(0, 5);
+                }
+              },
+              error: () => {
+                // Error manejado silenciosamente
+              }
+            });
+          });
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al cargar proyectos para hitos:', error);
       }
     });
   }
@@ -326,104 +404,65 @@ export class HomeProfesor implements OnInit {
     const iconos: { [key: string]: string } = {
       'entrega': 'fas fa-upload',
       'reunion': 'fas fa-users',
-      'evaluacion': 'fas fa-clipboard-check',
       'presentacion': 'fas fa-presentation',
-      'deadline': 'fas fa-clock',
       'revision': 'fas fa-search',
-      'hito': 'fas fa-flag-checkered',
-      'entrega_avance': 'fas fa-file-upload',
-      'entrega_final': 'fas fa-file-archive',
-      'defensa': 'fas fa-microphone'
+      'calendario': 'fas fa-calendar'
     };
-    return iconos[tipo] || 'fas fa-calendar-day';
+    return iconos[tipo] || 'fas fa-calendar';
   }
 
   fechaActual(): Date {
     return new Date();
   }
 
-  // Nuevos métodos para gestión de proyectos
+  formatearFecha(fecha: string | Date): string {
+    const fechaObj = fecha instanceof Date ? fecha : new Date(fecha);
+    return fechaObj.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  formatearPorcentaje(porcentaje: number): string {
+    return Math.round(porcentaje || 0) + '%';
+  }
+
+  formatearEstadoProyecto(estado: string): string {
+    const estados: { [key: string]: string } = {
+      'en_desarrollo': 'En Desarrollo',
+      'completado': 'Completado',
+      'pausado': 'Pausado',
+      'cancelado': 'Cancelado',
+      'propuesta': 'Propuesta',
+      'aprobado': 'Aprobado'
+    };
+    return estados[estado] || estado;
+  }
+
   navegarAProyectos() {
-    // Por ahora, mantener en el home ya que tiene toda la información
-    console.log('Ver todos los proyectos');
-    // En el futuro: this.router.navigate(['/profesor/proyectos']);
+    this.router.navigate(['/profesor/proyectos']);
   }
 
   navegarAProyecto(proyectoId: number) {
-    // Por ahora, mostrar información del proyecto en consola
-    console.log('Navegando al proyecto:', proyectoId);
-    // En el futuro: this.router.navigate(['/proyectos', proyectoId]);
+    this.router.navigate(['/profesor/proyecto', proyectoId]);
   }
 
   navegarAHitos() {
-    console.log('Abriendo gestión de hitos');
-    this.mostrarGestionHitos = true;
-    this.cargarTodosLosHitos();
+    this.router.navigate(['/profesor/hitos']);
   }
 
   navegarAEvaluaciones() {
-    console.log('Navegando a crear evaluaciones');
-    // Por ahora, mostrar en consola, en el futuro implementar página de evaluaciones
-    // this.router.navigate(['/profesor/evaluaciones']);
+    this.router.navigate(['/profesor/evaluaciones']);
   }
 
-  // ===== MÉTODOS DE GESTIÓN DE HITOS =====
-  
-  cargarTodosLosHitos() {
-    this.cargandoHitos = true;
-    this.hitosActivos = [];
-    
-    // Cargar hitos de todos los proyectos del profesor
-    this.proyectosRecientes.forEach(proyecto => {
-      this.ApiService.getHitosProyecto(proyecto.id.toString()).subscribe({
-        next: (response: any) => {
-          console.log('Hitos del proyecto', proyecto.id, ':', response);
-          
-          if (response.hitos && response.hitos.length > 0) {
-            const hitosConProyecto = response.hitos.map((hito: any) => ({
-              ...hito,
-              proyecto_titulo: proyecto.titulo,
-              proyecto_id: proyecto.id,
-              estudiante_nombre: proyecto.estudiante
-            }));
-            
-            this.hitosActivos = [...this.hitosActivos, ...hitosConProyecto];
-          }
-          
-          this.cargandoHitos = false;
-        },
-        error: (error: any) => {
-          console.error('Error al cargar hitos del proyecto:', error);
-          this.cargandoHitos = false;
-        }
-      });
-    });
-  }
-
-  seleccionarProyecto(proyecto: any) {
-    this.proyectoSeleccionado = proyecto;
-    this.cargarHitosProyecto(proyecto.id);
-  }
-
-  cargarHitosProyecto(proyectoId: string) {
-    this.cargandoHitos = true;
-    
-    this.ApiService.getHitosProyecto(proyectoId).subscribe({
-      next: (response: any) => {
-        console.log('Hitos del proyecto:', response);
-        this.hitosActivos = response.hitos || [];
-        this.cargandoHitos = false;
-      },
-      error: (error: any) => {
-        console.error('Error al cargar hitos:', error);
-        this.cargandoHitos = false;
-      }
-    });
+  navegarAFechasImportantes() {
+    this.router.navigate(['/profesor/fechas-importantes']);
   }
 
   abrirModalCrearHito(proyecto?: any) {
+    this.proyectoSeleccionado = proyecto;
     this.hitoEditando = null;
-    this.proyectoSeleccionado = proyecto || this.proyectosRecientes[0];
     this.nuevoHito = {
       nombre: '',
       descripcion: '',
@@ -435,209 +474,234 @@ export class HomeProfesor implements OnInit {
     this.mostrarModalHito = true;
   }
 
-  abrirModalEditarHito(hito: any) {
-    this.hitoEditando = hito;
-    this.nuevoHito = {
-      nombre: hito.nombre,
-      descripcion: hito.descripcion,
-      tipo_hito: hito.tipo_hito,
-      fecha_objetivo: hito.fecha_objetivo,
-      peso_en_proyecto: hito.peso_en_proyecto,
-      es_critico: hito.es_critico
-    };
-    this.mostrarModalHito = true;
+  cerrarModalHito() {
+    this.mostrarModalHito = false;
+    this.hitoEditando = null;
+    this.proyectoSeleccionado = null;
   }
 
   guardarHito() {
-    if (!this.nuevoHito.nombre || !this.nuevoHito.fecha_objetivo) {
-      alert('Por favor completa los campos obligatorios');
+    if (!this.nuevoHito.nombre || !this.nuevoHito.descripcion || !this.nuevoHito.fecha_limite) {
       return;
     }
 
-    const proyectoId = this.proyectoSeleccionado?.id || this.proyectosRecientes[0]?.id;
-    
-    if (this.hitoEditando) {
+    const proyectoId = this.hitoEditando?.proyecto_id || this.proyectoSeleccionado?.id;
+
+    if (!proyectoId) {
+      console.error('Error: no se encontró un ID de proyecto válido.');
+      return;
+    }
+
+    if (this.hitoEditando && this.hitoEditando.id) {
       // Actualizar hito existente
-      this.ApiService.actualizarHitoProyecto(proyectoId.toString(), this.hitoEditando.id, this.nuevoHito).subscribe({
+      this.ApiService.actualizarHitoProyecto(
+        proyectoId.toString(), 
+        this.hitoEditando.id.toString(), 
+        this.nuevoHito
+      ).subscribe({
         next: (response: any) => {
-          console.log('Hito actualizado:', response);
-          this.cerrarModalHito();
-          this.cargarTodosLosHitos();
-          alert('Hito actualizado correctamente');
+          if (response && response.success) {
+            this.cargarHitosProximos();
+            this.cerrarModalHito();
+          }
         },
         error: (error: any) => {
           console.error('Error al actualizar hito:', error);
-          alert('Error al actualizar el hito');
         }
       });
     } else {
       // Crear nuevo hito
-      this.ApiService.crearHitoProyecto(proyectoId.toString(), this.nuevoHito).subscribe({
+      this.ApiService.crearHitoProyecto(
+        proyectoId.toString(), 
+        this.nuevoHito
+      ).subscribe({
         next: (response: any) => {
-          console.log('Hito creado:', response);
-          this.cerrarModalHito();
-          this.cargarTodosLosHitos();
-          alert('Hito creado correctamente');
+          if (response && response.success) {
+            this.cargarHitosProximos();
+            this.cerrarModalHito();
+          }
         },
         error: (error: any) => {
           console.error('Error al crear hito:', error);
-          alert('Error al crear el hito');
         }
       });
     }
   }
 
-  completarHito(hito: any) {
-    const proyectoId = hito.proyecto_id;
+  toggleUserMenu() {
+    this.showUserMenu = !this.showUserMenu;
+    this.showCalendarioMenu = false;
+  }
+
+  toggleCalendarioMenu() {
+    this.showCalendarioMenu = !this.showCalendarioMenu;
+    this.showUserMenu = false;
+  }
+
+  logout() {
+    this.ApiService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  abrirCalendario() {
+    this.showCalendarModal = true;
+  }
+
+  cerrarCalendario() {
+    this.showCalendarModal = false;
+  }
+
+  asignarme(id: string) {
+    // Obtener el RUT del profesor desde el token o localStorage
+    let profesorRut = '';
     
-    this.ApiService.completarHito(proyectoId.toString(), hito.id).subscribe({
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        profesorRut = payload.rut || '';
+      } catch (error) {
+        profesorRut = '';
+      }
+    }
+
+    if (!profesorRut) {
+      const userDataStr = localStorage.getItem('userData');
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        profesorRut = userData.rut || '';
+      }
+    }
+
+    if (!profesorRut) {
+      console.error('Error: No se pudo obtener el RUT del profesor');
+      return;
+    }
+
+    const profesorData = {
+      proyecto_id: id,
+      profesor_rut: profesorRut,
+      tipo_asignacion: 'guia'
+    };
+
+    this.ApiService.asignarProfesorAProyecto(profesorData).subscribe({
       next: (response: any) => {
-        console.log('Hito completado:', response);
-        this.cargarTodosLosHitos();
-        alert('Hito marcado como completado');
+        if (response && response.success) {
+          // Recargar estadísticas y proyectos
+          this.cargarEstadisticasProyectos();
+          this.cargarProyectosRecientes();
+        }
       },
       error: (error: any) => {
-        console.error('Error al completar hito:', error);
-        alert('Error al completar el hito');
+        console.error('Error al asignar proyecto:', error);
       }
     });
   }
 
-  cerrarModalHito() {
-    this.mostrarModalHito = false;
-    this.hitoEditando = null;
+  // Métodos para dashboard de proyectos
+  verDashboardProyecto(proyectoId: number) {
+    this.router.navigate(['/profesor/proyecto', proyectoId, 'dashboard']);
   }
 
+  // Métodos para gestión de hitos
   cerrarGestionHitos() {
     this.mostrarGestionHitos = false;
-    this.hitosActivos = [];
     this.proyectoSeleccionado = null;
   }
 
-  getTipoHitoIcon(tipo: string): string {
-    const iconos: { [key: string]: string } = {
-      'inicio': 'fas fa-play-circle',
-      'planificacion': 'fas fa-clipboard-list',
-      'desarrollo': 'fas fa-code',
-      'entrega_parcial': 'fas fa-upload',
-      'revision': 'fas fa-search',
-      'testing': 'fas fa-vial',
-      'documentacion': 'fas fa-file-alt',
-      'entrega_final': 'fas fa-flag-checkered',
-      'defensa': 'fas fa-users',
-      'cierre': 'fas fa-check-circle'
-    };
-    return iconos[tipo] || 'fas fa-tasks';
+  seleccionarProyecto(proyecto: any) {
+    this.proyectoSeleccionado = proyecto;
+    if (proyecto) {
+      this.cargarHitosProximos();
+    }
   }
 
+  // Métodos para manejo de hitos
   getEstadoHitoClass(estado: string): string {
-    const clases: { [key: string]: string } = {
+    const estados: { [key: string]: string } = {
       'pendiente': 'estado-pendiente',
-      'en_progreso': 'estado-progreso',
+      'en_progreso': 'estado-en-progreso',
       'completado': 'estado-completado',
-      'retrasado': 'estado-retrasado',
-      'cancelado': 'estado-cancelado'
+      'retrasado': 'estado-retrasado'
     };
-    return clases[estado] || 'estado-default';
-  }
-
-  formatearFecha(fecha: string): string {
-    return new Date(fecha).toLocaleDateString('es-ES');
-  }
-
-  diasHastaVencimiento(fechaObjetivo: string): number {
-    const hoy = new Date();
-    const objetivo = new Date(fechaObjetivo);
-    const diferencia = objetivo.getTime() - hoy.getTime();
-    return Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+    return estados[estado] || 'estado-pendiente';
   }
 
   esHitoProximo(fechaObjetivo: string): boolean {
-    const dias = this.diasHastaVencimiento(fechaObjetivo);
-    return dias <= 7 && dias >= 0;
+    const fecha = new Date(fechaObjetivo);
+    const hoy = new Date();
+    const diasDiferencia = Math.ceil((fecha.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+    return diasDiferencia <= 7 && diasDiferencia > 0;
   }
 
   esHitoRetrasado(fechaObjetivo: string, estado: string): boolean {
-    const dias = this.diasHastaVencimiento(fechaObjetivo);
-    return dias < 0 && estado !== 'completado';
+    if (estado === 'completado') return false;
+    const fecha = new Date(fechaObjetivo);
+    const hoy = new Date();
+    return fecha < hoy;
   }
 
-  getEstadoClase(estado: string): string {
-    const estados: { [key: string]: string } = {
-      'en_desarrollo': 'estado-desarrollo',
-      'avance_enviado': 'estado-avance',
-      'completado': 'estado-completado',
-      'pausado': 'estado-pausado'
+  getTipoHitoIcon(tipoHito: string): string {
+    const iconos: { [key: string]: string } = {
+      'entrega': 'fas fa-upload',
+      'presentacion': 'fas fa-presentation',
+      'revision': 'fas fa-search',
+      'evaluacion': 'fas fa-clipboard-check',
+      'milestone': 'fas fa-flag'
     };
-    return estados[estado] || 'estado-default';
+    return iconos[tipoHito] || 'fas fa-circle';
   }
 
-  formatearPorcentaje(porcentaje: number): string {
-    return Math.round(porcentaje || 0) + '%';
-  }
-
-  // Método para formatear estados de proyectos de manera más legible
-  formatearEstadoProyecto(estado: string): string {
-    const estados: { [key: string]: string } = {
-      'esperando_asignacion_profesores': 'Esperando Profesores',
-      'en_desarrollo': 'En Desarrollo',
-      'avance_enviado': 'Avance Enviado',
-      'avance_en_revision': 'En Revisión',
-      'avance_con_comentarios': 'Con Comentarios',
-      'avance_aprobado': 'Avance Aprobado',
-      'pausado': 'Pausado',
-      'completado': 'Completado',
-      'presentado': 'Presentado',
-      'defendido': 'Defendido',
-      'retrasado': 'Retrasado',
-      'en_riesgo': 'En Riesgo',
-      'revision_urgente': 'Revisión Urgente',
-      'excelente_progreso': 'Excelente Progreso'
+  abrirModalEditarHito(hito: any) {
+    this.hitoEditando = { ...hito };
+    this.nuevoHito = {
+      nombre: hito.nombre,
+      descripcion: hito.descripcion,
+      fecha_limite: hito.fecha_objetivo,
+      tipo_hito: hito.tipo_hito || 'milestone'
     };
-    return estados[estado] || estado;
+    this.mostrarModalHito = true;
   }
 
-  // Método para obtener dashboard completo de un proyecto
-  verDashboardProyecto(proyectoId: number) {
-    this.ApiService.getDashboardProyecto(proyectoId.toString()).subscribe({
-      next: (dashboard: any) => {
-        console.log('Dashboard del proyecto:', dashboard);
-        // Aquí podrías abrir un modal con el dashboard completo
-        // o navegar a una página dedicada
-        this.router.navigate(['/profesor/proyectos', proyectoId, 'dashboard']);
+  completarHito(hito: any) {
+    if (!this.proyectoSeleccionado?.id) return;
+
+    const hitoActualizado = {
+      ...hito,
+      estado: 'completado',
+      fecha_completado: new Date().toISOString()
+    };
+
+    this.ApiService.actualizarHitoProyecto(
+      this.proyectoSeleccionado.id.toString(),
+      hito.id.toString(),
+      hitoActualizado
+    ).subscribe({
+      next: (response: any) => {
+        if (response && response.success) {
+          this.cargarHitosProximos();
+        }
       },
-      error: (err: any) => {
-        console.error('Error al cargar dashboard del proyecto:', err);
+      error: (error: any) => {
+        console.error('Error al completar hito:', error);
       }
     });
   }
 
-  // Método para cargar hitos próximos del profesor
-  cargarHitosProximos() {
-    // Este método podría cargar hitos próximos de todos los proyectos del profesor
-    this.proyectosRecientes.forEach(proyecto => {
-      this.ApiService.getHitosProyecto(proyecto.id.toString()).subscribe({
-        next: (hitos: any) => {
-          // Procesar hitos próximos
-          const hitosProximos = hitos.filter((h: any) => {
-            const fechaLimite = new Date(h.fecha_objetivo);
-            const hoy = new Date();
-            const diasDiferencia = (fechaLimite.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24);
-            return diasDiferencia <= 7 && diasDiferencia >= 0 && h.estado !== 'completado';
-          });
-          
-          proyecto.hitosProximos = hitosProximos.length;
-        },
-        error: (err: any) => {
-          console.error('Error al cargar hitos del proyecto:', err);
-        }
-      });
-    });
+  diasHastaVencimiento(fechaObjetivo: string): number {
+    const fecha = new Date(fechaObjetivo);
+    const hoy = new Date();
+    return Math.ceil((fecha.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  // Método para obtener el rol del profesor en un proyecto específico
-  obtenerRolEnProyecto(proyectoId: number): string {
-    const proyecto = this.proyectosRecientes.find(p => p.id === proyectoId);
-    return proyecto?.rol_profesor || 'profesor_guia';
+  // Método para navegación general
+  navegar(ruta: string) {
+    this.router.navigate([ruta]);
+  }
+
+  // Método para cerrar sesión
+  cerrarSesion() {
+    this.ApiService.logout();
+    this.router.navigate(['/login']);
   }
 }

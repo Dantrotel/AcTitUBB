@@ -660,6 +660,324 @@ $text-muted: #6c757d;
   100% { transform: rotate(360deg); }
 }
 
+// ===== ESTILOS PARA CALENDARIO GENERAL =====
+.calendario-general-section {
+  margin: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.estadisticas-calendario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 10px;
+    background: $light-gray;
+
+    &.danger {
+      background: #ffe6e6;
+      .stat-icon { color: $danger-color; }
+    }
+
+    &.warning {
+      background: #fff8e1;
+      .stat-icon { color: $warning-color; }
+    }
+
+    &.info {
+      background: #e7f7f9;
+      .stat-icon { color: $info-color; }
+    }
+
+    &.success {
+      background: #e6f9e6;
+      .stat-icon { color: $success-color; }
+    }
+
+    .stat-icon {
+      font-size: 2.5rem;
+    }
+
+    .stat-content {
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: $dark-gray;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        color: $text-muted;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.filtros-calendario {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  .form-select {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
+  }
+
+  .btn-clear-filters {
+    padding: 0.75rem 1.5rem;
+    background: $danger-color;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: darken($danger-color, 10%);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.calendario-table-container {
+  overflow-x: auto;
+  margin-top: 1.5rem;
+}
+
+.calendario-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+
+  thead {
+    background: $light-gray;
+
+    tr th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: $dark-gray;
+      border-bottom: 2px solid $border-color;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid $border-color;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: $light-gray;
+        transform: scale(1.01);
+      }
+
+      &.estado-vencida {
+        background: #ffe6e6;
+      }
+
+      &.estado-hoy {
+        background: #fff8e1;
+      }
+
+      td {
+        padding: 1rem;
+        vertical-align: middle;
+
+        &.fecha-col {
+          font-weight: 600;
+          color: $dark-gray;
+          white-space: nowrap;
+
+          i {
+            margin-right: 0.5rem;
+            color: $primary-color;
+          }
+        }
+
+        &.titulo-col {
+          max-width: 250px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        &.proyecto-col {
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: $text-muted;
+        }
+
+        &.estudiante-col,
+        &.profesores-col {
+          white-space: nowrap;
+
+          i {
+            margin-right: 0.3rem;
+            color: $text-muted;
+          }
+        }
+
+        &.dias-col {
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .tipo-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &.tipo-entrega_final {
+      background: #ffc107;
+      color: #000;
+    }
+
+    &.tipo-defensa {
+      background: #dc3545;
+      color: white;
+    }
+
+    &.tipo-presentacion {
+      background: #17a2b8;
+      color: white;
+    }
+
+    &.tipo-entrega_avance {
+      background: #6c757d;
+      color: white;
+    }
+
+    &.tipo-revision_parcial {
+      background: #007bff;
+      color: white;
+    }
+  }
+
+  .estado-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &.estado-vencida {
+      background: $danger-color;
+      color: white;
+    }
+
+    &.estado-hoy {
+      background: $warning-color;
+      color: #000;
+    }
+
+    &.estado-pendiente {
+      background: $info-color;
+      color: white;
+    }
+
+    &.estado-completada {
+      background: $success-color;
+      color: white;
+    }
+  }
+
+  .dias-restantes {
+    padding: 0.4rem 0.9rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-block;
+
+    &.vencido {
+      background: $danger-color;
+      color: white;
+    }
+
+    &.hoy {
+      background: $warning-color;
+      color: #000;
+      animation: pulse 2s infinite;
+    }
+
+    &.urgente {
+      background: #ff6b6b;
+      color: white;
+    }
+
+    &.proximo {
+      background: #ffc107;
+      color: #000;
+    }
+
+    &.normal {
+      background: $info-color;
+      color: white;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.empty-calendario,
+.loading-calendario {
+  text-align: center;
+  padding: 3rem;
+  color: $text-muted;
+
+  i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  p {
+    font-size: 1.1rem;
+  }
+}
+
+.loading-calendario i {
+  animation: spin 1s linear infinite;
+}
+
 // Responsive
 @media (max-width: 768px) {
   .gestion-calendario-container {
@@ -702,6 +1020,28 @@ $text-muted: #6c757d;
 
     .volver-section.mobile-only {
       display: flex !important;
+    }
+
+    // Calendario General responsive
+    .calendario-general-section {
+      margin: 1rem;
+      padding: 1rem;
+    }
+
+    .estadisticas-calendario {
+      grid-template-columns: 1fr;
+    }
+
+    .filtros-calendario {
+      flex-direction: column;
+
+      .form-select {
+        width: 100%;
+      }
+    }
+
+    .calendario-table-container {
+      overflow-x: scroll;
     }
   }
 }

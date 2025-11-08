@@ -22,6 +22,16 @@ export class GestionCalendarioComponent implements OnInit {
   loadingFechasImportantes = false;
   mostrarFechasImportantes = false;
   
+  // Calendario General (Artículos 29-32)
+  calendarioGeneral: any = {
+    todas_fechas: [],
+    por_tipo: {},
+    estadisticas: null
+  };
+  cargandoCalendario = false;
+  filtroTipoFecha = '';
+  filtroEstadoFecha = '';
+  
   // Formulario
   mostrarFormulario = false;
   guardando = false;
@@ -50,6 +60,7 @@ export class GestionCalendarioComponent implements OnInit {
     this.cargarFechas();
     this.cargarEstadisticas();
     this.cargarFechasImportantes();
+    this.cargarCalendarioGeneral();
   }
 
   cargarFechas() {
@@ -248,15 +259,117 @@ export class GestionCalendarioComponent implements OnInit {
       'academica': 'Académica',
       'entrega': 'Entrega',
       'revision': 'Revisión',
-      'defensa': 'Defensa',
       'reunion': 'Reunión',
-      'otro': 'Otro'
+      'otro': 'Otro',
+      // Tipos de fechas importantes de proyectos
+      'entrega_final': 'Entrega Final',
+      'defensa': 'Defensa',
+      'presentacion': 'Presentación',
+      'entrega_avance': 'Entrega Avance',
+      'revision_parcial': 'Revisión Parcial'
     };
-    return labels[tipo] || 'Otro';
+    return labels[tipo] || tipo;
+  }
+
+  // ===== MÉTODOS PARA CALENDARIO GENERAL =====
+
+  cargarCalendarioGeneral() {
+    this.cargandoCalendario = true;
+    
+    this.apiService.get('/fechas-importantes/admin/calendario-general').subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.calendarioGeneral = response.data;
+          console.log('📅 Calendario general cargado:', this.calendarioGeneral);
+        }
+        this.cargandoCalendario = false;
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar calendario general:', error);
+        this.cargandoCalendario = false;
+      }
+    });
+  }
+
+  generarAlertasManual() {
+    const confirmacion = confirm('¿Generar alertas automáticas para todas las fechas importantes?\n\nEsto creará notificaciones para fechas próximas (30, 10 días), hoy y vencidas.');
+    
+    if (!confirmacion) return;
+
+    this.apiService.post('/fechas-importantes/alertas/generar', {}).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          alert(`✅ Alertas generadas correctamente:\n\n` +
+                `• 30 días: ${response.data.alerta_30_dias}\n` +
+                `• 10 días: ${response.data.alerta_10_dias}\n` +
+                `• Hoy: ${response.data.alerta_hoy}\n` +
+                `• Vencidas: ${response.data.alerta_vencida}`);
+        }
+      },
+      error: (error) => {
+        console.error('Error al generar alertas:', error);
+        alert('❌ Error al generar alertas: ' + (error.error?.message || 'Error desconocido'));
+      }
+    });
+  }
+
+  getFechasFiltradas(): any[] {
+    let fechas = this.calendarioGeneral.todas_fechas || [];
+
+    // Filtro por tipo
+    if (this.filtroTipoFecha) {
+      fechas = fechas.filter((f: any) => f.tipo_fecha === this.filtroTipoFecha);
+    }
+
+    // Filtro por estado
+    if (this.filtroEstadoFecha) {
+      fechas = fechas.filter((f: any) => f.estado === this.filtroEstadoFecha);
+    }
+
+    return fechas;
+  }
+
+  limpiarFiltrosCalendario() {
+    this.filtroTipoFecha = '';
+    this.filtroEstadoFecha = '';
+  }
+
+  getEstadoLabel(estado: string): string {
+    const labels: { [key: string]: string } = {
+      'vencida': 'Vencida',
+      'hoy': 'Hoy',
+      'pendiente': 'Pendiente',
+      'completada': 'Completada'
+    };
+    return labels[estado] || estado;
+  }
+
+  formatearDiasRestantes(dias: number): string {
+    if (dias === null || dias === undefined) return '-';
+    
+    if (dias < 0) {
+      return `Vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`;
+    } else if (dias === 0) {
+      return '¡HOY!';
+    } else if (dias === 1) {
+      return 'Mañana';
+    } else {
+      return `En ${dias} días`;
+    }
+  }
+
+  getDiasRestantesClase(dias: number): string {
+    if (dias === null || dias === undefined) return '';
+    
+    if (dias < 0) return 'vencido';
+    if (dias === 0) return 'hoy';
+    if (dias <= 10) return 'urgente';
+    if (dias <= 30) return 'proximo';
+    return 'normal';
   }
 
   volver() {
-    // Usar history.back() para volver a la p�gina anterior sin activar guards
+    // Usar history.back() para volver a la página anterior sin activar guards
     window.history.back();
   }
 

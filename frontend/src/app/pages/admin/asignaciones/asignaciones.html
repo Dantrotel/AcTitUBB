@@ -87,10 +87,13 @@
               <label for="proyecto">Proyecto *</label>
               <select id="proyecto" [(ngModel)]="nuevaAsignacion.proyecto_id" name="proyecto" required>
                 <option value="">Seleccionar proyecto</option>
-                <option *ngFor="let proyecto of proyectos" [value]="proyecto.proyecto_id">
+                <option *ngFor="let proyecto of proyectos" [value]="proyecto.proyecto_id || proyecto.id">
                   {{proyecto.titulo}}
                 </option>
               </select>
+              <small *ngIf="proyectos.length === 0" class="text-warning">
+                ⚠️ No hay proyectos disponibles
+              </small>
             </div>
             
             <div class="form-group">
@@ -108,7 +111,7 @@
               <select id="rol" [(ngModel)]="nuevaAsignacion.rol_profesor_id" name="rol" required>
                 <option value="">Seleccionar rol</option>
                 <option *ngFor="let rol of rolesProfesores" [value]="rol.id">
-                  {{rol.descripcion}}
+                  {{rol.nombre}}
                 </option>
               </select>
               <small *ngIf="rolesProfesores.length === 0" class="text-warning">

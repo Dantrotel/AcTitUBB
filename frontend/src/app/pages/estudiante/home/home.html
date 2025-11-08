@@ -80,6 +80,9 @@
     </div>
   </div>
 
+  <!-- Componente de Alertas de Fechas Importantes -->
+  <app-alertas-fechas [maximoAlertas]="5" [autoRefresh]="true"></app-alertas-fechas>
+
   <div class="welcome-section">
     <div class="welcome-content">
       <h1>¡Bienvenido, {{estudiante.nombre || 'Estudiante'}}!</h1>

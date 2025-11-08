@@ -1,53 +1,55 @@
 import { pool } from '../db/connectionDB.js';
 
-// ===== GESTIÓN DE ASIGNACIONES DE PROFESORES A PROYECTOS =====
+// ===== GESTIÓN SIMPLIFICADA DE ASIGNACIONES DE PROFESORES A PROYECTOS =====
+// Basado en el patrón exitoso del sistema de propuestas
 
 /**
- * Asignar un profesor a un proyecto con un rol específico
- * @param {Object} asignacionData - Datos de la asignación
- * @returns {Promise<number>} - ID de la asignación creada
+ * Asignar un profesor a un proyecto
+ * @param {number} proyecto_id - ID del proyecto
+ * @param {string} profesor_rut - RUT del profesor
+ * @returns {Promise<boolean>} - true si se asignó correctamente
  */
-export const asignarProfesorAProyecto = async (asignacionData) => {
-    const { proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, asignado_por } = asignacionData;
-    
-    // Verificar que el profesor tenga rol 2 (profesor)
-    const verificarProfesor = `
-        SELECT id FROM usuarios 
-        WHERE rut = ? AND role_id = 2
-    `;
-    const [profesorExists] = await pool.execute(verificarProfesor, [profesor_rut]);
-    
-    if (profesorExists.length === 0) {
-        throw new Error('El usuario no es un profesor válido');
-    }
-    
-    // Verificar que no exista ya una asignación del mismo rol para el mismo proyecto
-    const verificarAsignacion = `
-        SELECT id FROM asignaciones_proyectos 
-        WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE
-    `;
-    const [asignacionExists] = await pool.execute(verificarAsignacion, [proyecto_id, rol_profesor_id]);
-    
-    if (asignacionExists.length > 0) {
-        throw new Error(`Ya existe un profesor con este rol asignado a este proyecto`);
-    }
-    
-    const query = `
-        INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, activo, asignado_por)
-        VALUES (?, ?, ?, ?, TRUE, ?)
-    `;
-    
-    const fechaAsignacionValue = fecha_asignacion || new Date().toISOString().split('T')[0];
-    
-    const [result] = await pool.execute(query, [
-        proyecto_id,
-        profesor_rut,
-        rol_profesor_id,
-        fechaAsignacionValue,
-        asignado_por
-    ]);
-    
-    return result.insertId;
+export const asignarProfesor = async (proyecto_id, profesor_rut) => {
+  const [result] = await pool.execute(
+    `INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, activo) VALUES (?, ?, 1, TRUE)`,
+    [proyecto_id, profesor_rut]
+  );
+  return result.affectedRows > 0;
+};
+
+/**
+ * Asignar un profesor a un proyecto con rol específico
+ * @param {number} proyecto_id - ID del proyecto
+ * @param {string} profesor_rut - RUT del profesor
+ * @param {number} rol_profesor_id - ID del rol del profesor
+ * @returns {Promise<boolean>} - true si se asignó correctamente
+ */
+export const asignarProfesorConRol = async (proyecto_id, profesor_rut, rol_profesor_id) => {
+  // Verificar que el profesor sea válido
+  const [profesorExists] = await pool.execute(
+    `SELECT rut FROM usuarios WHERE rut = ? AND rol_id = 2`,
+    [profesor_rut]
+  );
+  
+  if (profesorExists.length === 0) {
+    throw new Error('El usuario no es un profesor válido');
+  }
+
+  // Verificar que no exista ya una asignación del mismo rol
+  const [asignacionExists] = await pool.execute(
+    `SELECT id FROM asignaciones_proyectos WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE`,
+    [proyecto_id, rol_profesor_id]
+  );
+  
+  if (asignacionExists.length > 0) {
+    throw new Error('Ya existe un profesor con este rol asignado a este proyecto');
+  }
+
+  const [result] = await pool.execute(
+    `INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, activo) VALUES (?, ?, ?, TRUE)`,
+    [proyecto_id, profesor_rut, rol_profesor_id]
+  );
+  return result.affectedRows > 0;
 };
 
 /**
@@ -62,13 +64,13 @@ export const obtenerProfesoresProyecto = async (proyecto_id) => {
             u.nombre as nombre_profesor,
             u.email as email_profesor,
             rp.nombre as nombre_rol,
-            rp.codigo as codigo_rol
+            rp.nombre as codigo_rol
         FROM asignaciones_proyectos ap
         INNER JOIN usuarios u ON ap.profesor_rut = u.rut
         INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
         WHERE ap.proyecto_id = ? AND ap.activo = TRUE
         ORDER BY 
-            CASE rp.codigo
+            CASE rp.nombre
                 WHEN 'profesor_guia' THEN 1
                 WHEN 'profesor_co_guia' THEN 2
                 WHEN 'profesor_informante' THEN 3
@@ -95,7 +97,7 @@ export const obtenerProyectosProfesor = async (profesor_rut, rol_profesor_id = n
             ap.rol_profesor_id,
             ap.fecha_asignacion,
             rp.nombre as nombre_rol,
-            rp.codigo as codigo_rol,
+            rp.nombre as codigo_rol,
             u.nombre as nombre_estudiante,
             u.email as email_estudiante
         FROM asignaciones_proyectos ap
@@ -185,7 +187,7 @@ export const obtenerAsignacionPorId = async (asignacion_id) => {
             u.email as email_profesor,
             p.titulo as titulo_proyecto,
             rp.nombre as nombre_rol,
-            rp.codigo as codigo_rol
+            rp.nombre as codigo_rol
         FROM asignaciones_proyectos ap
         INNER JOIN usuarios u ON ap.profesor_rut = u.rut
         INNER JOIN proyectos p ON ap.proyecto_id = p.id
@@ -226,7 +228,7 @@ export const obtenerEstadisticasAsignaciones = async (profesor_rut = null) => {
             u.nombre as nombre_profesor,
             ap.rol_profesor_id,
             rp.nombre as nombre_rol,
-            rp.codigo as codigo_rol,
+            rp.nombre as codigo_rol,
             COUNT(*) as total_proyectos,
             COUNT(CASE WHEN ep.nombre = 'en_desarrollo' THEN 1 END) as proyectos_activos,
             COUNT(CASE WHEN ep.nombre = 'completado' THEN 1 END) as proyectos_finalizados
@@ -246,8 +248,8 @@ export const obtenerEstadisticasAsignaciones = async (profesor_rut = null) => {
     }
     
     query += `
-        GROUP BY ap.profesor_rut, ap.rol_profesor_id, u.nombre, rp.nombre, rp.codigo
-        ORDER BY u.nombre, rp.codigo
+        GROUP BY ap.profesor_rut, ap.rol_profesor_id, u.nombre, rp.nombre, rp.nombre
+        ORDER BY u.nombre, rp.nombre
     `;
     
     const [rows] = await pool.execute(query, params);
@@ -299,14 +301,14 @@ export const obtenerTodasLasAsignacionesAdmin = async () => {
             ue.nombre as estudiante_nombre,
             ue.rut as estudiante_rut,
             rp.nombre as nombre_rol,
-            rp.codigo as codigo_rol
+            rp.nombre as codigo_rol
         FROM asignaciones_proyectos ap
         INNER JOIN usuarios u ON ap.profesor_rut = u.rut
         INNER JOIN proyectos p ON ap.proyecto_id = p.id
         INNER JOIN usuarios ue ON p.estudiante_rut = ue.rut
         INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
         WHERE ap.activo = TRUE
-        ORDER BY ap.fecha_asignacion DESC, ap.proyecto_id, rp.codigo
+        ORDER BY ap.fecha_asignacion DESC, ap.proyecto_id, rp.nombre
     `;
     
     const [rows] = await pool.execute(query);
@@ -401,7 +403,7 @@ export const obtenerTodasLasAsignaciones = async () => {
             p.estudiante_rut,
             ue.nombre as nombre_estudiante,
             rp.nombre as nombre_rol,
-            rp.codigo as codigo_rol,
+            rp.nombre as codigo_rol,
             ep.nombre as estado_proyecto
         FROM asignaciones_proyectos ap
         INNER JOIN usuarios u ON ap.profesor_rut = u.rut
@@ -410,9 +412,69 @@ export const obtenerTodasLasAsignaciones = async () => {
         INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
         INNER JOIN estados_proyectos ep ON p.estado_id = ep.id
         WHERE ap.activo = TRUE
-        ORDER BY p.titulo, rp.codigo
+        ORDER BY p.titulo, rp.nombre
     `;
     
     const [rows] = await pool.execute(query);
     return rows;
+};
+
+// ===== FUNCIONES SIMPLIFICADAS BASADAS EN EL PATRÓN DE PROPUESTAS =====
+
+/**
+ * Obtener profesores asignados a un proyecto (versión simplificada)
+ * @param {number} proyecto_id - ID del proyecto
+ * @returns {Promise<Array>} - Lista de profesores asignados
+ */
+export const obtenerProfesoresAsignados = async (proyecto_id) => {
+  const [rows] = await pool.execute(`
+    SELECT 
+      u.rut, u.nombre, u.email, 
+      ap.fecha_asignacion,
+      rp.nombre as rol_nombre,
+      rp.id as rol_id
+    FROM asignaciones_proyectos ap
+    INNER JOIN usuarios u ON ap.profesor_rut = u.rut
+    LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+    WHERE ap.proyecto_id = ? AND ap.activo = TRUE
+    ORDER BY rp.nombre
+  `, [proyecto_id]);
+  return rows;
+};
+
+/**
+ * Desasignar un profesor de un proyecto (versión simplificada)
+ * @param {number} proyecto_id - ID del proyecto
+ * @param {string} profesor_rut - RUT del profesor
+ * @returns {Promise<boolean>} - true si se desasignó correctamente
+ */
+export const desasignarProfesor = async (proyecto_id, profesor_rut) => {
+  const [result] = await pool.execute(
+    `UPDATE asignaciones_proyectos SET activo = FALSE WHERE proyecto_id = ? AND profesor_rut = ?`,
+    [proyecto_id, profesor_rut]
+  );
+  return result.affectedRows > 0;
+};
+
+/**
+ * Obtener proyectos asignados a un profesor (versión simplificada)
+ * @param {string} profesor_rut - RUT del profesor
+ * @returns {Promise<Array>} - Lista de proyectos
+ */
+export const obtenerProyectosAsignadosProfesor = async (profesor_rut) => {
+  const [rows] = await pool.execute(`
+    SELECT 
+      p.*, 
+      u.nombre as nombre_estudiante,
+      ep.nombre as estado_nombre,
+      rp.nombre as rol_nombre
+    FROM asignaciones_proyectos ap
+    INNER JOIN proyectos p ON ap.proyecto_id = p.id
+    INNER JOIN usuarios u ON p.estudiante_rut = u.rut
+    LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
+    LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+    WHERE ap.profesor_rut = ? AND ap.activo = TRUE
+    ORDER BY p.fecha_inicio DESC
+  `, [profesor_rut]);
+  return rows;
 };

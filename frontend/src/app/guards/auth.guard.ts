@@ -20,6 +20,7 @@ export class AuthGuard implements CanActivate {
 
   private clearAuthData(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('userData');
   }
 

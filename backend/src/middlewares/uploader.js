@@ -3,17 +3,34 @@ import path from 'path';
 import fs from 'fs';
 
 // Ruta del directorio donde se guardarán los archivos
-const uploadDir = 'uploads/propuestas';
+const uploadDirPropuestas = 'uploads/propuestas';
+const uploadDirDocumentos = 'uploads/documentos';
 
-// Crear la carpeta si no existe
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Crear las carpetas si no existen
+if (!fs.existsSync(uploadDirPropuestas)) {
+  fs.mkdirSync(uploadDirPropuestas, { recursive: true });
 }
 
-// Configuración de almacenamiento
-const storage = multer.diskStorage({
+if (!fs.existsSync(uploadDirDocumentos)) {
+  fs.mkdirSync(uploadDirDocumentos, { recursive: true });
+}
+
+// Configuración de almacenamiento para propuestas
+const storagePropuestas = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    cb(null, uploadDirPropuestas);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, uniqueName);
+  }
+});
+
+// Configuración de almacenamiento para documentos
+const storageDocumentos = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDirDocumentos);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -34,6 +51,8 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage, fileFilter });
+const uploadPropuestas = multer({ storage: storagePropuestas, fileFilter });
+const uploadDocumentos = multer({ storage: storageDocumentos, fileFilter });
 
-export const uploadPropuesta = upload.single('archivo');
+export const uploadPropuesta = uploadPropuestas.single('archivo');
+export const uploadDocumento = uploadDocumentos.single('archivo');

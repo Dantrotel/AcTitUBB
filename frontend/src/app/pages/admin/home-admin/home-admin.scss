@@ -364,21 +364,243 @@ $dark-gray: #343a40;
     color: rgba(255, 255, 255, 0.9);
   }
 
-  .card-actions {
+  .card-actions .action-text {
     color: white;
+  }
 
-    .action-text {
-      color: white;
-    }
-
-    i {
-      color: white;
-    }
+  .card-actions i {
+    color: white;
   }
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(23, 162, 184, 0.4);
-    border-color: rgba(23, 162, 184, 0.6);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(23, 162, 184, 0.3);
+  }
+}
+
+// Fechas importantes card styles
+.fechas-importantes-card {
+  background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+  border: 2px solid rgba(32, 201, 151, 0.3);
+  color: white;
+
+  .card-icon i {
+    color: white;
+  }
+
+  .card-content h3 {
+    color: white;
+  }
+
+  .card-content p {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .card-actions .action-text {
+    color: white;
+  }
+
+  .card-actions i {
+    color: white;
+  }
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(32, 201, 151, 0.3);
+  }
+}
+
+// ===== SISTEMA DE NOTIFICACIONES =====
+.notifications-wrapper {
+  position: relative;
+
+  .notifications-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 0.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    i {
+      font-size: 1.25rem;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: $danger-color;
+      color: white;
+      border-radius: 50%;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      min-width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  .notifications-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 350px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 1100;
+    margin-top: 0.5rem;
+    max-height: 500px;
+    overflow: hidden;
+
+    .panel-header {
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .btn-small {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+      }
+    }
+
+    .notifications-list {
+      max-height: 400px;
+      overflow-y: auto;
+
+      .notification-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: $light-gray;
+        }
+
+        &.no-leida {
+          background: rgba(0, 75, 141, 0.05);
+          border-left: 3px solid $primary-color;
+        }
+
+        .notification-icon {
+          margin-top: 0.25rem;
+
+          i {
+            font-size: 1.25rem;
+          }
+        }
+
+        .notification-content {
+          flex: 1;
+
+          h4 {
+            margin: 0 0 0.25rem 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: $dark-gray;
+          }
+
+          p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.8rem;
+            color: $dark-gray;
+            line-height: 1.4;
+          }
+
+          .notification-time {
+            font-size: 0.7rem;
+            color: #999;
+            font-style: italic;
+          }
+        }
+
+        .notification-close {
+          background: none;
+          border: none;
+          color: #999;
+          cursor: pointer;
+          padding: 0.25rem;
+          border-radius: 50%;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: #f0f0f0;
+            color: $danger-color;
+          }
+
+          i {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+
+    .no-notifications {
+      padding: 2rem;
+      text-align: center;
+      color: #999;
+
+      i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+// Animación para el badge de notificaciones
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
   }
 } 

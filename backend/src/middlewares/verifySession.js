@@ -16,7 +16,16 @@ const verifySession = async (req, res, next) => {
   }
 
   try {
-    const { rut, rol_id } = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { rut, rol_id, type } = decoded;
+    
+    // Verificar que es un access token válido
+    if (type !== 'access') {
+      return res.status(401).json({ 
+        message: "Token inválido. Use un access token válido.",
+        code: "INVALID_TOKEN_TYPE"
+      });
+    }
     
     // Mapear rol_id a nombre de rol
     const roleMap = {
@@ -44,8 +53,18 @@ const verifySession = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.log(error);
-    return res.status(401).json({ message: "Unauthorized" });
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        message: "Token expirado. Usa el refresh token para obtener uno nuevo.",
+        code: "TOKEN_EXPIRED"
+      });
+    }
+    
+    console.log('Error de verificación de token:', error.message);
+    return res.status(401).json({ 
+      message: "Token inválido",
+      code: "INVALID_TOKEN"
+    });
   }
 };
 

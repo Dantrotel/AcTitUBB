@@ -1,0 +1,193 @@
+<div class="historial-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <h1><i class="fas fa-history"></i> Historial de Reuniones</h1>
+      <p>Registro completo de todas las solicitudes y reuniones</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-volver-header" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+      <button class="btn-export" (click)="exportarCSV()" *ngIf="historialFiltrado.length > 0">
+        <i class="fas fa-file-export"></i>
+        Exportar CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <h3>Cargando historial...</h3>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage && !isLoading" class="alert alert-error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-section" *ngIf="!isLoading && historial.length > 0">
+    <div class="filtros-grid">
+      <div class="filtro-item">
+        <label for="filtroAccion">
+          <i class="fas fa-filter"></i>
+          Acción:
+        </label>
+        <select 
+          id="filtroAccion" 
+          [(ngModel)]="filtroAccion" 
+          (change)="aplicarFiltros()"
+          class="form-select">
+          <option *ngFor="let accion of accionesPosibles" [value]="accion.value">
+            {{ accion.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filtro-item">
+        <label for="filtroFecha">
+          <i class="fas fa-calendar"></i>
+          Período:
+        </label>
+        <select 
+          id="filtroFecha" 
+          [(ngModel)]="filtroFecha" 
+          (change)="aplicarFiltros()"
+          class="form-select">
+          <option *ngFor="let periodo of periodosFecha" [value]="periodo.value">
+            {{ periodo.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filtro-item filtro-busqueda">
+        <label for="filtroBusqueda">
+          <i class="fas fa-search"></i>
+          Buscar:
+        </label>
+        <input 
+          type="text" 
+          id="filtroBusqueda"
+          [(ngModel)]="filtroBusqueda"
+          (ngModelChange)="aplicarFiltros()"
+          placeholder="Buscar en proyecto, personas, comentarios..."
+          class="form-input">
+      </div>
+
+      <div class="filtro-item">
+        <button class="btn-limpiar" (click)="limpiarFiltros()">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    <div class="resultados-info">
+      <span>Mostrando {{ historialFiltrado.length }} de {{ historial.length }} registros</span>
+    </div>
+  </div>
+
+  <!-- Historial Table -->
+  <div class="historial-content" *ngIf="!isLoading && historialFiltrado.length > 0">
+    <div class="historial-timeline">
+      <div 
+        class="timeline-item" 
+        *ngFor="let item of historialFiltrado"
+        [class]="getAccionClass(item.accion)">
+        
+        <div class="timeline-marker">
+          <i class="fas" [class]="getAccionIcon(item.accion)"></i>
+        </div>
+
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <div class="accion-info">
+              <span class="accion-badge" [class]="getAccionClass(item.accion)">
+                {{ getAccionLabel(item.accion) }}
+              </span>
+              <span class="fecha-accion">
+                <i class="fas fa-clock"></i>
+                {{ formatearFecha(item.fecha_accion) }}
+              </span>
+            </div>
+            <div class="reunion-estado" *ngIf="item.estado_reunion_actual">
+              <span class="estado-badge">
+                Estado actual: {{ item.estado_reunion_actual }}
+              </span>
+            </div>
+          </div>
+
+          <div class="timeline-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <strong><i class="fas fa-project-diagram"></i> Proyecto:</strong>
+                <span>{{ item.proyecto_titulo }}</span>
+              </div>
+
+              <div class="info-item">
+                <strong><i class="fas fa-user-graduate"></i> Estudiante:</strong>
+                <span>{{ item.estudiante_nombre }}</span>
+              </div>
+
+              <div class="info-item">
+                <strong><i class="fas fa-chalkboard-teacher"></i> Profesor:</strong>
+                <span>{{ item.profesor_nombre }}</span>
+              </div>
+
+              <div class="info-item">
+                <strong><i class="fas fa-calendar-day"></i> Fecha Reunión:</strong>
+                <span>{{ item.fecha_propuesta }}</span>
+              </div>
+
+              <div class="info-item">
+                <strong><i class="fas fa-clock"></i> Hora:</strong>
+                <span>{{ formatearHora(item.hora_propuesta) }}</span>
+              </div>
+
+              <div class="info-item">
+                <strong><i class="fas fa-tags"></i> Tipo:</strong>
+                <span class="tipo-reunion">{{ item.tipo_reunion }}</span>
+              </div>
+
+              <div class="info-item full-width" *ngIf="item.realizado_por_nombre">
+                <strong><i class="fas fa-user"></i> Realizado por:</strong>
+                <span>{{ item.realizado_por_nombre }}</span>
+              </div>
+
+              <div class="info-item full-width" *ngIf="item.comentarios">
+                <strong><i class="fas fa-comment"></i> Comentarios:</strong>
+                <span class="comentarios">{{ item.comentarios }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && historial.length === 0">
+    <div class="empty-icon">
+      <i class="fas fa-inbox"></i>
+    </div>
+    <h3>No hay historial disponible</h3>
+    <p>Aún no se han registrado reuniones o solicitudes en el sistema</p>
+  </div>
+
+  <!-- No Results State -->
+  <div class="empty-state" *ngIf="!isLoading && historial.length > 0 && historialFiltrado.length === 0">
+    <div class="empty-icon">
+      <i class="fas fa-search"></i>
+    </div>
+    <h3>No se encontraron resultados</h3>
+    <p>Intenta ajustar los filtros de búsqueda</p>
+    <button class="btn btn-primary" (click)="limpiarFiltros()">
+      <i class="fas fa-redo"></i>
+      Limpiar filtros
+    </button>
+  </div>
+</div>

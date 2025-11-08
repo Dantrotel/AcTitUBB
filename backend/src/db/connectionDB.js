@@ -74,7 +74,9 @@ const checkTablesExist = async () => {
         // Lista de tablas nuevas que podrían faltar
         const newTables = [
             'estados_propuestas', 'roles_profesores', 'asignaciones_propuestas',
-            'asignaciones_proyectos', 'fechas_importantes', 'participantes_reuniones'
+            'asignaciones_proyectos', 'fechas_importantes', 'participantes_reuniones',
+            'hitos_proyecto', 'cronogramas_proyecto', 'evaluaciones_proyecto',
+            'hitos_cronograma', 'notificaciones_proyecto', 'configuracion_alertas'
         ];
         
         // Verificar tablas principales
@@ -199,7 +201,10 @@ const executeDatabaseScript = async () => {
                             error.code === 'ER_FK_CANNOT_OPEN_PARENT' ||
                             error.message.includes('Failed to open the referenced table') ||
                             error.code === 'ER_CANT_DROP_FIELD_OR_KEY' ||
-                            error.message.includes("check that column/key exists")) {
+                            error.message.includes("check that column/key exists") ||
+                            error.code === 'ER_PARSE_ERROR' ||
+                            error.message.includes('IF NOT EXISTS') ||
+                            error.message.includes('syntax error')) {
                             console.log(`⚠️  Comando ${commandCount + 1} ya existe o no aplica, continuando...`);
                         } else {
                             console.error(`❌ Error en comando:`, error.message);
@@ -232,7 +237,8 @@ const verifyTables = async () => {
             'roles', 'usuarios', 'estados_propuestas', 'propuestas', 
             'roles_profesores', 'asignaciones_propuestas', 'proyectos',
             'asignaciones_proyectos', 'avances', 'fechas_importantes',
-            'reuniones', 'participantes_reuniones'
+            'reuniones', 'participantes_reuniones', 'hitos_proyecto',
+            'cronogramas_proyecto', 'evaluaciones_proyecto', 'hitos_cronograma'
         ];
 
         let missingTables = [];

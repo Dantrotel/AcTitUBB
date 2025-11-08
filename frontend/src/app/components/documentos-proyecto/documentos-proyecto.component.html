@@ -1,0 +1,173 @@
+<div class="documentos-container">
+  <div class="header">
+    <h2>Gestión de Documentos del Proyecto</h2>
+    <button class="btn btn-primary" (click)="toggleFormulario()">
+      {{ mostrarFormulario ? 'Cancelar' : '+ Subir Documento' }}
+    </button>
+  </div>
+
+  <!-- Formulario de subida -->
+  <div class="upload-form" *ngIf="mostrarFormulario">
+    <h3>Subir Nuevo Documento</h3>
+    <form (ngSubmit)="subirDocumento()">
+      <div class="form-group">
+        <label for="tipoDocumento">Tipo de Documento *</label>
+        <select 
+          id="tipoDocumento" 
+          [(ngModel)]="tipoDocumento" 
+          name="tipoDocumento" 
+          required
+          class="form-control">
+          <option value="">Selecciona un tipo</option>
+          <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
+            {{ tipo.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="archivo">Archivo (PDF, Word) *</label>
+        <input 
+          type="file" 
+          id="archivo" 
+          (change)="onFileSelected($event)" 
+          accept=".pdf,.docx,.doc"
+          required
+          class="form-control">
+        <small *ngIf="archivoSeleccionado">
+          Archivo seleccionado: {{ archivoSeleccionado.name }} 
+          ({{ formatearTamanio(archivoSeleccionado.size) }})
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="estadoDocumento">Estado Inicial</label>
+        <select 
+          id="estadoDocumento" 
+          [(ngModel)]="estadoDocumento" 
+          name="estadoDocumento"
+          class="form-control">
+          <option *ngFor="let estado of estadosDocumento" [value]="estado.value">
+            {{ estado.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="comentarios">Comentarios</label>
+        <textarea 
+          id="comentarios" 
+          [(ngModel)]="comentarios" 
+          name="comentarios" 
+          rows="3"
+          class="form-control"
+          placeholder="Agrega comentarios sobre este documento..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success" [disabled]="cargando || !archivoSeleccionado || !tipoDocumento">
+          {{ cargando ? 'Subiendo...' : 'Subir Documento' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="toggleFormulario()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <div class="filter-group">
+      <label for="filtroTipo">Filtrar por Tipo:</label>
+      <select id="filtroTipo" [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="form-control">
+        <option value="">Todos</option>
+        <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
+          {{ tipo.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="filtroEstado">Filtrar por Estado:</label>
+      <select id="filtroEstado" [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" class="form-control">
+        <option value="">Todos</option>
+        <option *ngFor="let estado of estadosDocumento" [value]="estado.value">
+          {{ estado.label }}
+        </option>
+      </select>
+    </div>
+
+    <button class="btn btn-link" (click)="limpiarFiltros()">Limpiar filtros</button>
+  </div>
+
+  <!-- Lista de documentos -->
+  <div class="documentos-list" *ngIf="!cargando">
+    <div class="documento-card" *ngFor="let doc of documentos">
+      <div class="documento-header">
+        <div class="documento-info">
+          <h4>{{ getTipoLabel(doc.tipo_documento) }}</h4>
+          <span class="badge" [ngClass]="getEstadoBadgeClass(doc.estado)">
+            {{ getEstadoLabel(doc.estado) }}
+          </span>
+        </div>
+        <div class="documento-actions">
+          <button class="btn-icon" (click)="descargarDocumento(doc.id)" title="Descargar">
+            📥
+          </button>
+          <button 
+            *ngIf="puedeEliminarDocumento(doc)"
+            class="btn-icon" 
+            (click)="eliminarDocumento(doc.id)" 
+            title="Eliminar">
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <div class="documento-body">
+        <div class="documento-detail">
+          <strong>Archivo:</strong> {{ doc.nombre_original }}
+        </div>
+        <div class="documento-detail">
+          <strong>Tamaño:</strong> {{ formatearTamanio(doc.tamanio_bytes) }}
+        </div>
+        <div class="documento-detail">
+          <strong>Versión:</strong> {{ doc.version }}
+        </div>
+        <div class="documento-detail">
+          <strong>Subido por:</strong> {{ doc.nombre_subidor }}
+        </div>
+        <div class="documento-detail">
+          <strong>Fecha:</strong> {{ formatearFecha(doc.fecha_subida) }}
+        </div>
+        <div class="documento-detail" *ngIf="doc.comentarios">
+          <strong>Comentarios:</strong> {{ doc.comentarios }}
+        </div>
+        <div class="documento-detail" *ngIf="doc.nombre_revisor">
+          <strong>Revisado por:</strong> {{ doc.nombre_revisor }} 
+          <span *ngIf="doc.fecha_revision">({{ formatearFecha(doc.fecha_revision) }})</span>
+        </div>
+      </div>
+
+      <div class="documento-footer" *ngIf="mostrarBotonesEstado(doc)">
+        <span class="label">Cambiar estado:</span>
+        <button 
+          *ngFor="let estado of estadosDocumento" 
+          class="btn-estado" 
+          [class.active]="doc.estado === estado.value"
+          (click)="actualizarEstado(doc.id, estado.value)">
+          {{ estado.label }}
+        </button>
+      </div>
+    </div>
+
+    <div class="no-documentos" *ngIf="documentos.length === 0">
+      <p>No hay documentos para mostrar</p>
+      <p *ngIf="filtroTipo || filtroEstado">Intenta ajustar los filtros</p>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="cargando">
+    <p>Cargando documentos...</p>
+  </div>
+</div>

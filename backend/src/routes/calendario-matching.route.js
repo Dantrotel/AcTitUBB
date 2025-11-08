@@ -21,11 +21,24 @@ router.get('/disponibilidades', async (req, res) => {
     try {
         const { user } = req;
         
-        const disponibilidades = await CalendarioMatchingModel.obtenerDisponibilidadesUsuario(user.rut);
+        if (!user || !user.rut) {
+            return res.status(401).json({
+                success: false,
+                message: 'Usuario no autenticado'
+            });
+        }
+        
+        const disponibilidades = await CalendarioMatchingModel.obtenerTodasDisponibilidadesUsuario(user.rut);
+        
+        // Mapear 'activo' del backend a 'activa' del frontend
+        const disponibilidadesMapeadas = disponibilidades.map(disp => ({
+            ...disp,
+            activa: disp.activo
+        }));
         
         res.json({
             success: true,
-            data: disponibilidades,
+            data: disponibilidadesMapeadas,
             message: `Disponibilidades de ${user.nombre}`
         });
         
@@ -77,6 +90,70 @@ router.post('/disponibilidades', async (req, res) => {
 });
 
 /**
+ * PUT /api/calendario-matching/disponibilidades/:id
+ * Actualizar disponibilidad existente
+ */
+router.put('/disponibilidades/:id', async (req, res) => {
+    try {
+        const { user } = req;
+        const { id } = req.params;
+        const updateData = req.body;
+        
+        // Validar que el ID sea un número
+        if (isNaN(parseInt(id))) {
+            return res.status(400).json({
+                success: false,
+                message: 'ID de disponibilidad inválido'
+            });
+        }
+        
+        // Mapear 'activa' del frontend a 'activo' del backend si existe
+        if ('activa' in updateData) {
+            updateData.activo = updateData.activa;
+            delete updateData.activa;
+        }
+        
+        // Validar campos si se proporcionan
+        const { dia_semana, hora_inicio, hora_fin, activo } = updateData;
+        
+        if (dia_semana && !['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].includes(dia_semana)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Día de la semana inválido'
+            });
+        }
+        
+        if (hora_inicio && hora_fin && hora_inicio >= hora_fin) {
+            return res.status(400).json({
+                success: false,
+                message: 'La hora de inicio debe ser menor que la hora de fin'
+            });
+        }
+        
+        const actualizado = await CalendarioMatchingModel.actualizarDisponibilidad(id, user.rut, updateData);
+        
+        if (!actualizado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Disponibilidad no encontrada o no tienes permisos para modificarla'
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: 'Disponibilidad actualizada exitosamente'
+        });
+        
+    } catch (error) {
+        console.error('Error actualizando disponibilidad:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
  * DELETE /api/calendario-matching/disponibilidades/:id
  * Eliminar disponibilidad
  */
@@ -111,19 +188,39 @@ router.delete('/disponibilidades/:id', async (req, res) => {
 router.post('/buscar-reunion', async (req, res) => {
     try {
         const { user } = req;
-        const { proyecto_id, tipo_reunion, descripcion, duracion_minutos } = req.body;
+        const { tipo_reunion, descripcion, duracion_minutos, profesor_rut } = req.body;
         
-        if (!proyecto_id) {
+        // Validar que se envió el profesor_rut
+        if (!profesor_rut) {
             return res.status(400).json({
                 success: false,
-                message: 'proyecto_id es requerido'
+                message: 'profesor_rut es requerido'
             });
         }
+
+        // Obtener el proyecto más reciente del estudiante (sin filtrar por estado)
+        const proyectoQuery = `
+            SELECT id FROM proyectos 
+            WHERE estudiante_rut = ?
+            ORDER BY fecha_inicio DESC 
+            LIMIT 1
+        `;
+        const [proyectos] = await pool.execute(proyectoQuery, [user.rut]);
+        
+        if (proyectos.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No tienes proyectos registrados. Debes tener un proyecto para solicitar reuniones.'
+            });
+        }
+
+        const proyecto_id = proyectos[0].id;
         
         const preferencias = {
             tipo_reunion: tipo_reunion || 'seguimiento',
             descripcion: descripcion || undefined,
-            duracion_minutos: duracion_minutos || 60
+            duracion_minutos: duracion_minutos || 60,
+            profesor_rut: profesor_rut
         };
         
         const resultado = await CalendarioMatchingService.buscarYProponerReunion(
@@ -163,16 +260,14 @@ router.get('/solicitudes', async (req, res) => {
             const query = `
                 SELECT 
                     sr.*,
-                    p.titulo as proyecto_titulo,
-                    ue.nombre as estudiante_nombre,
-                    up.nombre as profesor_nombre,
-                    rp.nombre as rol_profesor_nombre
+                    COALESCE(p.titulo, 'Proyecto sin título') as proyecto_titulo,
+                    COALESCE(ue.nombre, 'Estudiante') as estudiante_nombre,
+                    COALESCE(up.nombre, 'Profesor') as profesor_nombre,
+                    'Profesor Guía' as rol_profesor_nombre
                 FROM solicitudes_reunion sr
-                INNER JOIN proyectos p ON sr.proyecto_id = p.id
-                INNER JOIN usuarios ue ON sr.estudiante_rut = ue.rut
-                INNER JOIN usuarios up ON sr.profesor_rut = up.rut
-                INNER JOIN asignaciones_proyectos ap ON ap.proyecto_id = sr.proyecto_id AND ap.profesor_rut = sr.profesor_rut
-                INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+                LEFT JOIN proyectos p ON sr.proyecto_id = p.id
+                LEFT JOIN usuarios ue ON sr.estudiante_rut = ue.rut
+                LEFT JOIN usuarios up ON sr.profesor_rut = up.rut
                 WHERE sr.estudiante_rut = ? 
                 ${estado ? 'AND sr.estado = ?' : 'AND sr.estado NOT IN ("cancelada")'}
                 ORDER BY sr.fecha_propuesta ASC, sr.hora_propuesta ASC
@@ -183,22 +278,18 @@ router.get('/solicitudes', async (req, res) => {
             solicitudes = rows;
             
         } else if (user.role_id === 2) {
-            // PROFESORES: Solo ven solicitudes dirigidas a ellos en proyectos donde están asignados
+            // PROFESORES: Solo ven solicitudes dirigidas a ellos
             const query = `
                 SELECT 
                     sr.*,
-                    p.titulo as proyecto_titulo,
-                    ue.nombre as estudiante_nombre,
-                    up.nombre as profesor_nombre,
-                    rp.nombre as rol_profesor_nombre
+                    COALESCE(p.titulo, 'Proyecto sin título') as proyecto_titulo,
+                    COALESCE(ue.nombre, 'Estudiante') as estudiante_nombre,
+                    COALESCE(up.nombre, 'Profesor') as profesor_nombre,
+                    'Profesor Guía' as rol_profesor_nombre
                 FROM solicitudes_reunion sr
-                INNER JOIN proyectos p ON sr.proyecto_id = p.id
-                INNER JOIN usuarios ue ON sr.estudiante_rut = ue.rut
-                INNER JOIN usuarios up ON sr.profesor_rut = up.rut
-                INNER JOIN asignaciones_proyectos ap ON ap.proyecto_id = sr.proyecto_id 
-                    AND ap.profesor_rut = sr.profesor_rut 
-                    AND ap.activo = TRUE
-                INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+                LEFT JOIN proyectos p ON sr.proyecto_id = p.id
+                LEFT JOIN usuarios ue ON sr.estudiante_rut = ue.rut
+                LEFT JOIN usuarios up ON sr.profesor_rut = up.rut
                 WHERE sr.profesor_rut = ? 
                 ${estado ? 'AND sr.estado = ?' : 'AND sr.estado NOT IN ("cancelada")'}
                 ORDER BY sr.fecha_propuesta ASC, sr.hora_propuesta ASC
@@ -213,16 +304,14 @@ router.get('/solicitudes', async (req, res) => {
             const query = `
                 SELECT 
                     sr.*,
-                    p.titulo as proyecto_titulo,
-                    ue.nombre as estudiante_nombre,
-                    up.nombre as profesor_nombre,
-                    rp.nombre as rol_profesor_nombre
+                    COALESCE(p.titulo, 'Proyecto sin título') as proyecto_titulo,
+                    COALESCE(ue.nombre, 'Estudiante') as estudiante_nombre,
+                    COALESCE(up.nombre, 'Profesor') as profesor_nombre,
+                    'Profesor Guía' as rol_profesor_nombre
                 FROM solicitudes_reunion sr
-                INNER JOIN proyectos p ON sr.proyecto_id = p.id
-                INNER JOIN usuarios ue ON sr.estudiante_rut = ue.rut
-                INNER JOIN usuarios up ON sr.profesor_rut = up.rut
-                INNER JOIN asignaciones_proyectos ap ON ap.proyecto_id = sr.proyecto_id AND ap.profesor_rut = sr.profesor_rut
-                INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+                LEFT JOIN proyectos p ON sr.proyecto_id = p.id
+                LEFT JOIN usuarios ue ON sr.estudiante_rut = ue.rut
+                LEFT JOIN usuarios up ON sr.profesor_rut = up.rut
                 ${estado ? 'WHERE sr.estado = ?' : 'WHERE sr.estado NOT IN ("cancelada")'}
                 ORDER BY sr.fecha_propuesta ASC, sr.hora_propuesta ASC
             `;
@@ -234,7 +323,7 @@ router.get('/solicitudes', async (req, res) => {
         
         res.json({
             success: true,
-            data: solicitudes,
+            data: solicitudes || [],
             message: `Solicitudes de ${user.nombre}`,
             filtros: { estado: estado || 'todas' }
         });
@@ -243,7 +332,8 @@ router.get('/solicitudes', async (req, res) => {
         console.error('Error obteniendo solicitudes:', error);
         res.status(500).json({
             success: false,
-            message: error.message
+            data: [], // Siempre devolver un array vacío
+            message: error.message || 'Error interno del servidor'
         });
     }
 });
@@ -274,6 +364,14 @@ router.post('/solicitudes', async (req, res) => {
             });
         }
 
+        // Calcular hora_fin si no viene
+        let hora_fin_calculada = hora_fin_propuesta;
+        if (!hora_fin_calculada) {
+            const horaInicio = new Date(`2000-01-01 ${hora_inicio_propuesta}`);
+            horaInicio.setMinutes(horaInicio.getMinutes() + duracion_minutos);
+            hora_fin_calculada = horaInicio.toTimeString().slice(0, 5);
+        }
+
         // Verificar que el usuario es estudiante
         if (user.role_id !== 1) {
             return res.status(403).json({
@@ -282,10 +380,10 @@ router.post('/solicitudes', async (req, res) => {
             });
         }
 
-        // Obtener el proyecto activo del estudiante
+        // Obtener el proyecto más reciente del estudiante (sin filtrar por estado)
         const proyectoQuery = `
             SELECT id FROM proyectos 
-            WHERE estudiante_rut = ? AND estado_id IN (1, 2, 3, 4, 5, 6, 11, 12, 13)
+            WHERE estudiante_rut = ?
             ORDER BY fecha_inicio DESC 
             LIMIT 1
         `;
@@ -294,7 +392,7 @@ router.post('/solicitudes', async (req, res) => {
         if (proyectos.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'No tienes proyectos activos para solicitar reuniones'
+                message: 'No tienes proyectos registrados. Debes tener un proyecto para solicitar reuniones.'
             });
         }
 
@@ -333,11 +431,16 @@ router.post('/solicitudes', async (req, res) => {
             comentarios_estudiante: comentarios_adicionales
         });
 
+        // Formatear nombre del rol
+        const rolFormateado = asignaciones[0].rol_nombre
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+
         res.status(201).json({
             success: true,
             data: nuevaSolicitud,
-            message: `Solicitud de reunión enviada exitosamente al ${asignaciones[0].rol_nombre}`,
-            profesor_rol: asignaciones[0].rol_nombre
+            message: `Solicitud de reunión enviada exitosamente al ${rolFormateado}`,
+            profesor_rol: rolFormateado
         });
 
     } catch (error) {
@@ -483,6 +586,127 @@ router.post('/reuniones/:id/cancelar', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/calendario-matching/reuniones/:id/marcar-realizada
+ * Marcar una reunión como realizada
+ */
+router.post('/reuniones/:id/marcar-realizada', async (req, res) => {
+    try {
+        const { user } = req;
+        const { id } = req.params;
+        const { acta_reunion, lugar, modalidad } = req.body;
+        
+        // Validar que el usuario sea profesor de la reunión
+        const [reuniones] = await pool.execute(
+            `SELECT * FROM reuniones_calendario 
+             WHERE id = ? AND profesor_rut = ?`,
+            [id, user.rut]
+        );
+        
+        if (reuniones.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reunión no encontrada o no tienes permisos'
+            });
+        }
+        
+        const reunion = reuniones[0];
+        
+        // Verificar que esté en estado programada
+        if (reunion.estado !== 'programada') {
+            return res.status(400).json({
+                success: false,
+                message: `No se puede marcar como realizada una reunión en estado: ${reunion.estado}`
+            });
+        }
+        
+        // Actualizar reunión
+        const updateQuery = `
+            UPDATE reuniones_calendario 
+            SET estado = 'realizada',
+                fecha_realizacion = NOW(),
+                acta_reunion = ?,
+                lugar = COALESCE(?, lugar),
+                modalidad = COALESCE(?, modalidad)
+            WHERE id = ?
+        `;
+        
+        await pool.execute(updateQuery, [
+            acta_reunion || 'Reunión marcada como realizada',
+            lugar,
+            modalidad,
+            id
+        ]);
+        
+        res.json({
+            success: true,
+            message: 'Reunión marcada como realizada exitosamente'
+        });
+        
+    } catch (error) {
+        console.error('Error marcando reunión como realizada:', error);
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/calendario-matching/reuniones/:id/confirmar
+ * Confirmar una reunión programada
+ */
+router.post('/reuniones/:id/confirmar', async (req, res) => {
+    try {
+        const { user } = req;
+        const { id } = req.params;
+        const { confirmado } = req.body;
+        
+        console.log('🔔 Confirmando reunión:', { id, user: user.rut, confirmado });
+        
+        // Validar que el usuario sea parte de la reunión
+        const [reuniones] = await pool.execute(
+            `SELECT * FROM reuniones_calendario 
+             WHERE id = ? AND (profesor_rut = ? OR estudiante_rut = ?)`,
+            [id, user.rut, user.rut]
+        );
+        
+        if (reuniones.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reunión no encontrada o no tienes permiso para confirmarla'
+            });
+        }
+        
+        const reunion = reuniones[0];
+        
+        // Actualizar estado de la reunión
+        const nuevoEstado = confirmado ? 'confirmada' : 'pendiente';
+        
+        await pool.execute(
+            `UPDATE reuniones_calendario 
+             SET estado = ?, updated_at = NOW() 
+             WHERE id = ?`,
+            [nuevoEstado, id]
+        );
+        
+        console.log('✅ Reunión confirmada:', { id, nuevoEstado });
+        
+        res.json({
+            success: true,
+            data: { id, estado: nuevoEstado },
+            message: `Reunión ${confirmado ? 'confirmada' : 'marcada como pendiente'} exitosamente`
+        });
+        
+    } catch (error) {
+        console.error('❌ Error al confirmar reunión:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // ===== DASHBOARD Y ESTADÍSTICAS =====
 
 /**
@@ -507,6 +731,69 @@ router.get('/dashboard', async (req, res) => {
     } catch (error) {
         console.error('Error obteniendo dashboard:', error);
         res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/calendario-matching/historial-reuniones
+ * Obtener historial completo de todas las reuniones
+ */
+router.get('/historial-reuniones', async (req, res) => {
+    try {
+        const { user } = req;
+        
+        const historial = await ReunionesModel.obtenerHistorialReuniones(user.rut);
+        
+        res.json({
+            success: true,
+            data: historial,
+            message: `Historial de reuniones de ${user.nombre}`
+        });
+        
+    } catch (error) {
+        console.error('Error obteniendo historial:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/calendario-matching/reuniones/:id/marcar-realizada
+ * Marcar una reunión como realizada
+ */
+router.post('/reuniones/:id/marcar-realizada', async (req, res) => {
+    try {
+        const { user } = req;
+        const { id } = req.params;
+        const { acta_reunion } = req.body;
+        
+        const resultado = await ReunionesModel.actualizarEstadoReunion(
+            id,
+            'realizada',
+            user.rut,
+            { acta_reunion: acta_reunion || '' }
+        );
+        
+        if (resultado) {
+            res.json({
+                success: true,
+                message: 'Reunión marcada como realizada exitosamente'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                message: 'Reunión no encontrada o sin permisos'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error marcando reunión como realizada:', error);
+        res.status(400).json({
             success: false,
             message: error.message
         });
@@ -585,65 +872,71 @@ router.get('/estadisticas', async (req, res) => {
 router.get('/profesores', async (req, res) => {
     try {
         const { user } = req;
-        console.log('Usuario solicitando profesores:', user);
+        console.log('📨 GET /profesores - Usuario:', user?.rut || 'NO AUTENTICADO');
         
-        // Verificar que el usuario es estudiante
-        if (user.role_id !== 1) {
-            return res.status(403).json({
+        if (!user || !user.rut) {
+            console.error('❌ Usuario no autenticado');
+            return res.status(401).json({
                 success: false,
-                message: 'Solo los estudiantes pueden ver sus profesores asignados'
+                data: [],
+                message: 'Usuario no autenticado'
             });
         }
-
-        // Obtener el proyecto activo del estudiante
-        const proyectoQuery = `
-            SELECT id FROM proyectos 
-            WHERE estudiante_rut = ? AND estado_id IN (1, 2, 3, 4, 5, 6, 11, 12, 13)
-            ORDER BY fecha_inicio DESC 
-            LIMIT 1
-        `;
-        const [proyectos] = await pool.execute(proyectoQuery, [user.rut]);
-        console.log('Proyectos encontrados:', proyectos);
+        
+        // Obtener el proyecto del estudiante
+        const [proyectos] = await pool.execute(
+            'SELECT id, titulo FROM proyectos WHERE estudiante_rut = ? ORDER BY fecha_inicio DESC LIMIT 1',
+            [user.rut]
+        );
+        
+        console.log('📋 Proyectos encontrados:', proyectos.length);
+        if (proyectos.length > 0) {
+            console.log('   Proyecto:', proyectos[0].titulo, '(ID:', proyectos[0].id + ')');
+        }
         
         if (proyectos.length === 0) {
+            console.log('⚠️  Estudiante sin proyectos');
             return res.json({
                 success: true,
                 data: [],
-                message: 'No tienes proyectos activos'
+                message: 'No tienes proyectos registrados'
             });
         }
-
+        
         const proyecto_id = proyectos[0].id;
-        console.log('Proyecto ID:', proyecto_id);
-
-        // Obtener los profesores asignados al proyecto
+        
+        // Obtener solo profesores asignados a este proyecto
         const profesoresQuery = `
-            SELECT 
+            SELECT DISTINCT
                 u.rut,
                 u.nombre,
                 u.email,
-                rp.nombre as rol_nombre,
-                ap.rol_profesor_id
+                rp.nombre as rol_nombre
             FROM asignaciones_proyectos ap
             INNER JOIN usuarios u ON ap.profesor_rut = u.rut
             INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
             WHERE ap.proyecto_id = ? AND ap.activo = TRUE
-            ORDER BY u.nombre
+            ORDER BY rp.nombre, u.nombre
         `;
+        
         const [profesores] = await pool.execute(profesoresQuery, [proyecto_id]);
-        console.log('Profesores encontrados:', profesores);
+        console.log('👨‍🏫 Profesores asignados:', profesores?.length || 0);
+        if (profesores.length > 0) {
+            profesores.forEach(p => console.log('   -', p.nombre, `(${p.rut}) - ${p.rol_nombre}`));
+        }
 
         res.json({
             success: true,
-            data: profesores,
-            message: `Profesores asignados a tu proyecto (${profesores.length} encontrados)`
+            data: profesores || [],
+            message: `Profesores asignados a tu proyecto (${profesores?.length || 0} encontrados)`
         });
 
     } catch (error) {
         console.error('Error obteniendo profesores del proyecto:', error);
         res.status(500).json({
             success: false,
-            message: error.message
+            data: [], // Siempre devolver un array vacío
+            message: error.message || 'Error interno del servidor'
         });
     }
 });

@@ -2,8 +2,8 @@
   <!-- Header principal -->
   <div class="header">
     <div class="header-content">
-      <h1><i class="fas fa-handshake"></i> Solicitudes de Reunión</h1>
-      <p>Solicita reuniones automáticas con tus profesores basadas en disponibilidad</p>
+      <h1><i class="fas fa-calendar-check"></i> Reservar Reunión</h1>
+      <p>Selecciona un horario disponible de tu profesor y reserva una reunión</p>
     </div>
     <div class="header-actions">
       <button class="btn-volver-header" (click)="volver()">
@@ -34,250 +34,258 @@
 
   <!-- Contenido principal -->
   <div *ngIf="!isLoading">
-    <!-- Formulario de Nueva Solicitud -->
+    
+    <!-- PASO 1: Seleccionar Profesor -->
     <div class="form-section">
       <div class="section-header">
-        <h3><i class="fas fa-plus-circle"></i> Nueva Solicitud de Reunión</h3>
+        <h3><i class="fas fa-user-tie"></i> Paso 1: Seleccionar Profesor</h3>
       </div>
-    
-    <div class="nueva-solicitud-form">
-      <!-- Paso 1: Datos básicos -->
-      <div class="form-step" [class.completed]="profesorSeleccionado">
-        <h4><span class="step-number">1</span> Información de la Reunión</h4>
-        
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="proyecto">Proyecto</label>
-            <select 
-              id="proyecto" 
-              [(ngModel)]="nuevaSolicitud.proyecto_id" 
-              class="form-control"
-              [disabled]="isBuscandoOpciones">
-              <option value="">Seleccionar proyecto</option>
-              <option *ngFor="let proyecto of proyectos" [value]="proyecto.id">
-                {{ proyecto.titulo }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="profesor">Profesor</label>
-            <select 
-              id="profesor" 
-              [(ngModel)]="nuevaSolicitud.profesor_rut" 
-              (change)="onProfesorChange()"
-              class="form-control"
-              [disabled]="isBuscandoOpciones">
-              <option value="">Seleccionar profesor</option>
-              <option *ngFor="let profesor of profesores" [value]="profesor.rut">
-                {{ profesor.nombre }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="duracion">Duración</label>
-            <select 
-              id="duracion" 
-              [(ngModel)]="nuevaSolicitud.duracion_minutos" 
-              class="form-control"
-              [disabled]="isBuscandoOpciones">
-              <option *ngFor="let duracion of duracionesDisponibles" [value]="duracion.value">
-                {{ duracion.label }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="urgencia">Urgencia</label>
-            <select 
-              id="urgencia" 
-              [(ngModel)]="nuevaSolicitud.urgencia" 
-              class="form-control"
-              [disabled]="isBuscandoOpciones">
-              <option *ngFor="let urgencia of nivelesUrgencia" [value]="urgencia.value">
-                {{ urgencia.label }} - {{ urgencia.description }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="motivo">Motivo de la reunión</label>
-          <select 
-            id="motivo" 
-            [(ngModel)]="nuevaSolicitud.motivo" 
-            class="form-control"
-            [disabled]="isBuscandoOpciones">
-            <option value="">Seleccionar motivo</option>
-            <option *ngFor="let motivo of motivosComunes" [value]="motivo">
-              {{ motivo }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="comentarios">Comentarios adicionales (opcional)</label>
-          <textarea 
-            id="comentarios" 
-            [(ngModel)]="nuevaSolicitud.comentarios_adicionales"
-            class="form-control"
-            rows="3"
-            placeholder="Información adicional sobre la reunión..."
-            [disabled]="isBuscandoOpciones">
-          </textarea>
-        </div>
-
-        <div class="form-actions">
-          <button 
-            type="button" 
-            class="btn btn-primary"
-            (click)="buscarOpcionesReunion()"
-            [disabled]="isBuscandoOpciones">
-            <i class="fas fa-search" [class.fa-spin]="isBuscandoOpciones"></i>
-            {{ isBuscandoOpciones ? 'Buscando opciones...' : 'Buscar Horarios Disponibles' }}
-          </button>
-        </div>
+      
+      <div class="form-group">
+        <label for="profesor">Profesor asignado a tu proyecto:</label>
+        <select 
+          id="profesor" 
+          (change)="onProfesorChange()"
+          class="form-control">
+          <option value="">-- Selecciona un profesor --</option>
+          <option *ngFor="let profesor of profesores" [value]="profesor.rut">
+            {{ profesor.nombre }} ({{ profesor.rol_nombre }})
+          </option>
+        </select>
       </div>
 
-      <!-- Paso 2: Opciones de horarios -->
-      <div class="form-step" *ngIf="mostrarOpciones" [class.completed]="false">
-        <h4><span class="step-number">2</span> Seleccionar Horario</h4>
+      <div class="profesor-info" *ngIf="profesorSeleccionado">
+        <div class="info-card">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>{{ profesorSeleccionado.nombre }}</strong>
+            <p>{{ profesorSeleccionado.email }}</p>
+            <p>Rol: {{ profesorSeleccionado.rol_nombre }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 2: Ver Horarios Disponibles -->
+    <div class="form-section" *ngIf="profesorSeleccionado">
+      <div class="section-header">
+        <h3><i class="fas fa-clock"></i> Paso 2: Horarios Disponibles</h3>
+      </div>
+
+      <div *ngIf="isCargandoHorarios" class="loading-small">
+        <i class="fas fa-spinner fa-spin"></i> Cargando horarios...
+      </div>
+
+      <div *ngIf="!isCargandoHorarios && mostrarHorarios">
         
-        <div class="opciones-container" *ngIf="opcionesReunion.length > 0">
-          <p class="opciones-info">
-            <i class="fas fa-info-circle"></i>
-            Se encontraron {{ opcionesReunion.length }} opciones disponibles para reunirse con 
-            <strong>{{ profesorSeleccionado?.nombre }}</strong>
-          </p>
+        <!-- Filtros -->
+        <div class="filtros-section">
+          <div class="form-group inline">
+            <label>Ver horarios de los próximos:</label>
+            <select [(ngModel)]="diasAdelante" (change)="cargarHorariosDisponibles(profesorSeleccionado!.rut)" class="form-control-sm">
+              <option [value]="7">7 días</option>
+              <option [value]="14">14 días</option>
+              <option [value]="21">21 días</option>
+              <option [value]="30">30 días</option>
+            </select>
+          </div>
+        </div>
 
-          <div class="opciones-grid">
-            <div 
-              class="opcion-card" 
-              *ngFor="let opcion of opcionesReunion; trackBy: trackByIndex"
-              (click)="seleccionarOpcion(opcion)"
-              [class.disabled]="isLoading">
-              
-              <div class="opcion-header">
-                <div class="fecha">
-                  <i class="fas fa-calendar"></i>
-                  {{ formatearFecha(opcion.fecha) }}
-                </div>
-                <div class="probabilidad" [class]="getProbabilidadClass(opcion.probabilidad_exito)">
-                  {{ opcion.probabilidad_exito }}% match
-                </div>
+        <!-- Grid de Horarios -->
+        <div class="horarios-grid" *ngIf="horariosDisponibles.length > 0">
+          <div 
+            class="horario-card" 
+            *ngFor="let horario of horariosDisponibles; trackBy: trackById"
+            (click)="seleccionarHorario(horario)"
+            [class.disabled]="horario.reservado || isLoading">
+            
+            <div class="horario-header">
+              <div class="dia-badge" [class]="getDiaClass(horario.dia_semana)">
+                {{ capitalizarDia(horario.dia_semana) }}
               </div>
+              <div class="fecha-badge">
+                {{ formatearFechaCorta(horario.fecha_propuesta) }}
+              </div>
+            </div>
 
-              <div class="opcion-content">
-                <div class="horario">
-                  <i class="fas fa-clock"></i>
-                  {{ formatearHora(opcion.hora_inicio) }} - {{ formatearHora(opcion.hora_fin) }}
-                </div>
-                <div class="duracion">
-                  <i class="fas fa-hourglass-half"></i>
-                  {{ nuevaSolicitud.duracion_minutos }} minutos
-                </div>
+            <div class="horario-content">
+              <div class="hora-principal">
+                <i class="fas fa-clock"></i>
+                {{ formatearHora(horario.hora_inicio) }} - {{ formatearHora(horario.hora_fin) }}
               </div>
+              <div class="fecha-completa">
+                {{ formatearFecha(horario.fecha_propuesta) }}
+              </div>
+            </div>
 
-              <div class="opcion-actions">
-                <button class="btn btn-select" [disabled]="isLoading">
-                  <i class="fas fa-check"></i>
-                  Seleccionar este horario
-                </button>
-              </div>
+            <div class="horario-footer">
+              <button 
+                class="btn btn-select" 
+                [disabled]="horario.reservado || isLoading">
+                <i class="fas fa-check-circle"></i>
+                {{ horario.reservado ? 'No disponible' : 'Reservar' }}
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="no-opciones" *ngIf="opcionesReunion.length === 0 && mostrarOpciones">
+        <!-- Sin horarios -->
+        <div class="empty-state" *ngIf="horariosDisponibles.length === 0">
           <i class="fas fa-calendar-times"></i>
           <h4>No hay horarios disponibles</h4>
-          <p>Intenta modificar la duración o el nivel de urgencia para encontrar más opciones.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lista de Solicitudes -->
-  <div class="solicitudes-list">
-    <h3><i class="fas fa-list"></i> Mis Solicitudes</h3>
-    
-    <div class="loading" *ngIf="isLoading && solicitudes.length === 0">
-      <i class="fas fa-spinner fa-spin"></i> Cargando solicitudes...
-    </div>
-
-    <div class="empty-state" *ngIf="!isLoading && solicitudes.length === 0">
-      <i class="fas fa-inbox"></i>
-      <h4>No tienes solicitudes de reunión</h4>
-      <p>Cuando envíes tu primera solicitud, aparecerá aquí con su estado</p>
-    </div>
-
-    <div class="solicitudes-grid" *ngIf="solicitudes.length > 0">
-      <div 
-        class="solicitud-card" 
-        *ngFor="let solicitud of solicitudes"
-        [class]="getEstadoClass(solicitud.estado)">
-        
-        <div class="card-header">
-          <div class="profesor-info">
-            <h4>{{ solicitud.profesor_nombre || 'Profesor' }}</h4>
-            <span class="fecha-solicitud">
-              {{ solicitud.fecha_solicitud | date:'dd/MM/yyyy HH:mm' }}
-            </span>
-          </div>
-          <div class="estado-badge" [class]="getEstadoClass(solicitud.estado)">
-            {{ getEstadoLabel(solicitud.estado) }}
-          </div>
+          <p>{{ profesorSeleccionado.nombre }} no tiene horarios disponibles en los próximos {{ diasAdelante }} días.</p>
+          <p class="hint">Intenta aumentar el rango de días o contacta directamente con el profesor.</p>
         </div>
 
-        <div class="card-content">
-          <div class="motivo">
-            <i class="fas fa-comment"></i>
-            <span>{{ solicitud.motivo }}</span>
-          </div>
+        <!-- Formulario de reserva (modal inline) -->
+        <div class="reserva-form" *ngIf="horariosDisponibles.length > 0">
+          <h4><i class="fas fa-edit"></i> Detalles de la reunión</h4>
+          <p class="form-hint">Estos detalles se enviarán con tu solicitud</p>
           
-          <div class="detalles">
-            <div class="detalle-item">
-              <i class="fas fa-clock"></i>
-              <span>{{ solicitud.duracion_minutos }} minutos</span>
-            </div>
-            <div class="detalle-item">
-              <i class="fas fa-exclamation"></i>
-              <span [style.color]="getUrgenciaInfo(solicitud.urgencia).color">
-                {{ getUrgenciaInfo(solicitud.urgencia).label }}
-              </span>
-            </div>
+          <div class="form-group">
+            <label for="tipo_reunion">Tipo de reunión:</label>
+            <select 
+              id="tipo_reunion" 
+              [(ngModel)]="nuevaReserva.tipo_reunion" 
+              class="form-control">
+              <option *ngFor="let tipo of tiposReunion" [value]="tipo.value">
+                {{ tipo.label }}
+              </option>
+            </select>
           </div>
 
-          <div class="comentarios" *ngIf="solicitud.comentarios_adicionales">
-            <i class="fas fa-note-sticky"></i>
-            <span>{{ solicitud.comentarios_adicionales }}</span>
+          <div class="form-group">
+            <label for="descripcion">Descripción (opcional):</label>
+            <textarea 
+              id="descripcion" 
+              [(ngModel)]="nuevaReserva.descripcion"
+              class="form-control"
+              rows="3"
+              placeholder="Describe brevemente el propósito de la reunión..."
+              maxlength="500">
+            </textarea>
+            <small>{{ (nuevaReserva.descripcion && nuevaReserva.descripcion.length) || 0 }}/500 caracteres</small>
           </div>
-        </div>
-
-        <div class="card-actions" *ngIf="solicitud.estado === 'pendiente'">
-          <button 
-            class="btn btn-sm btn-danger"
-            (click)="cancelarSolicitud(solicitud.id!)"
-            [disabled]="isLoading">
-            <i class="fas fa-times"></i>
-            Cancelar
-          </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Información útil -->
-  <div class="info-section">
-    <div class="info-card">
-      <h4><i class="fas fa-lightbulb"></i> Consejos para mejores resultados</h4>
-      <ul>
-        <li>Los profesores con más disponibilidades tendrán más opciones de horarios</li>
-        <li>Las solicitudes urgentes priorizan horarios en los próximos días</li>
-        <li>Especifica bien el motivo para que el profesor tenga contexto</li>
-        <li>Las reuniones se confirman automáticamente al seleccionar un horario</li>
-      </ul>
+    <!-- PASO 3: Mis Reservas -->
+    <div class="solicitudes-list">
+      <div class="section-header">
+        <h3><i class="fas fa-list"></i> Mis Reservas</h3>
+      </div>
+      
+      <div class="empty-state" *ngIf="solicitudes.length === 0">
+        <i class="fas fa-inbox"></i>
+        <h4>No tienes reservas</h4>
+        <p>Cuando reserves un horario, aparecerá aquí con su estado</p>
+      </div>
+
+      <div class="solicitudes-grid" *ngIf="solicitudes.length > 0">
+        <div 
+          class="solicitud-card" 
+          *ngFor="let solicitud of solicitudes; trackBy: trackById"
+          [class]="getEstadoClass(solicitud.estado)">
+          
+          <div class="card-header">
+            <div class="profesor-info">
+              <h4>{{ solicitud.profesor_nombre || 'Profesor' }}</h4>
+              <span class="proyecto-info">{{ solicitud.proyecto_titulo }}</span>
+            </div>
+            <div class="estado-badge" [class]="getEstadoClass(solicitud.estado)">
+              <span class="estado-icon">{{ getEstadoIcon(solicitud.estado) }}</span>
+              {{ getEstadoLabel(solicitud.estado) }}
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="reunion-detalles">
+              <div class="detalle-item">
+                <i class="fas fa-calendar"></i>
+                <span>{{ solicitud.fecha_propuesta ? formatearFecha(solicitud.fecha_propuesta) : 'Fecha no disponible' }}</span>
+              </div>
+              <div class="detalle-item">
+                <i class="fas fa-clock"></i>
+                <span>{{ formatearHora(solicitud.hora_propuesta) }} ({{ solicitud.duracion_minutos }} min)</span>
+              </div>
+              <div class="detalle-item">
+                <i class="fas fa-tag"></i>
+                <span>{{ solicitud.tipo_reunion }}</span>
+              </div>
+            </div>
+
+            <div class="descripcion" *ngIf="solicitud.descripcion">
+              <i class="fas fa-align-left"></i>
+              <p>{{ solicitud.descripcion }}</p>
+            </div>
+
+            <div class="comentarios-profesor" *ngIf="solicitud.comentarios_profesor">
+              <div class="comentario-box">
+                <strong>Comentario del profesor:</strong>
+                <p>{{ solicitud.comentarios_profesor }}</p>
+              </div>
+            </div>
+
+            <div class="fecha-creacion">
+              <small>
+                <i class="fas fa-clock"></i>
+                Reservada: {{ solicitud.created_at | date:'dd/MM/yyyy HH:mm' }}
+              </small>
+            </div>
+          </div>
+
+          <div class="card-actions" *ngIf="solicitud.estado === 'pendiente'">
+            <button 
+              class="btn btn-sm btn-danger"
+              (click)="cancelarReserva(solicitud.id!)"
+              [disabled]="isLoading"
+              title="Cancelar esta reserva">
+              <i class="fas fa-times"></i>
+              Cancelar Reserva
+            </button>
+          </div>
+
+          <div class="card-info" *ngIf="solicitud.estado === 'aceptada'">
+            <div class="alert alert-success-sm">
+              <i class="fas fa-check-circle"></i>
+              ¡Reunión confirmada! Aparecerá en tu calendario.
+            </div>
+          </div>
+
+          <div class="card-info" *ngIf="solicitud.estado === 'rechazada'">
+            <div class="alert alert-danger-sm">
+              <i class="fas fa-times-circle"></i>
+              El profesor rechazó esta solicitud.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información útil -->
+    <div class="info-section">
+      <div class="info-card">
+        <h4><i class="fas fa-lightbulb"></i> ¿Cómo funciona?</h4>
+        <ol>
+          <li><strong>Selecciona un profesor</strong> de los asignados a tu proyecto</li>
+          <li><strong>Revisa los horarios disponibles</strong> que el profesor ha publicado</li>
+          <li><strong>Reserva el horario</strong> que más te convenga haciendo clic</li>
+          <li><strong>Espera la confirmación</strong> del profesor (recibirás una notificación)</li>
+          <li><strong>¡Asiste a tu reunión!</strong> Aparecerá en el calendario</li>
+        </ol>
+      </div>
+
+      <div class="info-card">
+        <h4><i class="fas fa-info-circle"></i> Importante</h4>
+        <ul>
+          <li>Al reservar, el horario queda bloqueado temporalmente</li>
+          <li>El profesor debe aceptar tu solicitud</li>
+          <li>Si rechaza, el horario vuelve a estar disponible</li>
+          <li>Puedes cancelar reservas pendientes en cualquier momento</li>
+          <li>Las reuniones aceptadas aparecen automáticamente en el calendario</li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>

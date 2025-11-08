@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { verifySession } from '../middlewares/verifySession.js';
 import { pool } from '../db/connectionDB.js';
+import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
 
 const router = Router();
 
@@ -14,21 +15,7 @@ router.get('/proyecto/:proyecto_id', verifySession, async (req, res) => {
     try {
         const { proyecto_id } = req.params;
         
-        const query = `
-            SELECT 
-                ap.*,
-                u.nombre as nombre_profesor,
-                u.email as email_profesor,
-                rp.nombre as nombre_rol,
-                rp.id as rol_id
-            FROM asignaciones_proyectos ap
-            INNER JOIN usuarios u ON ap.profesor_rut = u.rut
-            INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
-            WHERE ap.proyecto_id = ? AND ap.activo = TRUE
-            ORDER BY rp.nombre
-        `;
-        
-        const [profesores] = await pool.execute(query, [proyecto_id]);
+        const profesores = await asignacionesProfesoresModel.obtenerProfesoresAsignados(proyecto_id);
         
         res.json({
             success: true,
@@ -60,7 +47,7 @@ router.get('/profesor/:profesor_rut', verifySession, async (req, res) => {
             });
         }
         
-        const proyectos = await asignacionesProfesoresModel.obtenerProyectosProfesor(profesor_rut, rol_profesor);
+        const proyectos = await asignacionesProfesoresModel.obtenerProyectosAsignadosProfesor(profesor_rut);
         
         res.json({
             success: true,
@@ -75,53 +62,7 @@ router.get('/profesor/:profesor_rut', verifySession, async (req, res) => {
     }
 });
 
-/**
- * POST /asignaciones-profesores
- * Asignar un profesor a un proyecto
- */
-router.post('/', verifySession, async (req, res) => {
-    try {
-        const { proyecto_id, profesor_rut, rol_profesor_id, observaciones } = req.body;
-        
-        // Validar datos requeridos
-        if (!proyecto_id || !profesor_rut || !rol_profesor_id) {
-            return res.status(400).json({
-                success: false,
-                message: 'Faltan campos obligatorios: proyecto_id, profesor_rut, rol_profesor_id'
-            });
-        }
-        
-        // Solo admin puede asignar profesores
-        if (req.user.role_id !== 3) {
-            return res.status(403).json({
-                success: false,
-                message: 'Solo los administradores pueden asignar profesores a proyectos'
-            });
-        }
-        
-        const asignado_por = req.user.rut;
-        
-        const resultado = await asignacionesProfesoresModel.asignarProfesorAProyecto({
-            proyecto_id,
-            profesor_rut,
-            rol_profesor_id,
-            asignado_por,
-            observaciones
-        });
-        
-        res.status(201).json({
-            success: true,
-            message: 'Profesor asignado exitosamente',
-            data: { id: resultado }
-        });
-    } catch (error) {
-        console.error('Error al asignar profesor:', error);
-        res.status(400).json({
-            success: false,
-            message: error.message || 'Error interno del servidor'
-        });
-    }
-});
+// ===== ASIGNACIONES DE PROFESORES A PROYECTOS =====
 
 /**
  * POST /asignaciones-profesores/multiples
@@ -171,12 +112,12 @@ router.post('/multiples', verifySession, async (req, res) => {
 });
 
 /**
- * PUT /asignaciones-profesores/proyecto/:proyecto_id/rol/:rol_profesor
+ * PUT /asignaciones-profesores/proyecto/:proyecto_id/rol/:rol_profesor_id
  * Cambiar el profesor asignado a un rol específico en un proyecto
  */
-router.put('/proyecto/:proyecto_id/rol/:rol_profesor', verifySession, async (req, res) => {
+router.put('/proyecto/:proyecto_id/rol/:rol_profesor_id', verifySession, async (req, res) => {
     try {
-        const { proyecto_id, rol_profesor } = req.params;
+        const { proyecto_id, rol_profesor_id } = req.params;
         const { nuevo_profesor_rut } = req.body;
         
         if (!nuevo_profesor_rut) {
@@ -196,8 +137,9 @@ router.put('/proyecto/:proyecto_id/rol/:rol_profesor', verifySession, async (req
         
         const nuevaAsignacionId = await asignacionesProfesoresModel.cambiarProfesorProyecto(
             parseInt(proyecto_id),
-            rol_profesor,
-            nuevo_profesor_rut
+            parseInt(rol_profesor_id),
+            nuevo_profesor_rut,
+            req.user.rut
         );
         
         const nuevaAsignacion = await asignacionesProfesoresModel.obtenerAsignacionPorId(nuevaAsignacionId);
@@ -217,12 +159,12 @@ router.put('/proyecto/:proyecto_id/rol/:rol_profesor', verifySession, async (req
 });
 
 /**
- * DELETE /asignaciones-profesores/proyecto/:proyecto_id/rol/:rol_profesor
+ * DELETE /asignaciones-profesores/proyecto/:proyecto_id/rol/:rol_profesor_id
  * Remover un profesor de un proyecto
  */
-router.delete('/proyecto/:proyecto_id/rol/:rol_profesor', verifySession, async (req, res) => {
+router.delete('/proyecto/:proyecto_id/rol/:rol_profesor_id', verifySession, async (req, res) => {
     try {
-        const { proyecto_id, rol_profesor } = req.params;
+        const { proyecto_id, rol_profesor_id } = req.params;
         
         // Solo admin puede remover asignaciones
         if (req.user.role_id !== 3) {
@@ -234,7 +176,7 @@ router.delete('/proyecto/:proyecto_id/rol/:rol_profesor', verifySession, async (
         
         const removido = await asignacionesProfesoresModel.removerProfesorProyecto(
             parseInt(proyecto_id),
-            rol_profesor
+            parseInt(rol_profesor_id)
         );
         
         if (!removido) {
@@ -258,12 +200,12 @@ router.delete('/proyecto/:proyecto_id/rol/:rol_profesor', verifySession, async (
 });
 
 /**
- * GET /asignaciones-profesores/disponibles/:rol_profesor
+ * GET /asignaciones-profesores/disponibles/:rol_profesor_id
  * Obtener profesores disponibles para un rol específico
  */
-router.get('/disponibles/:rol_profesor', verifySession, async (req, res) => {
+router.get('/disponibles/:rol_profesor_id', verifySession, async (req, res) => {
     try {
-        const { rol_profesor } = req.params;
+        const { rol_profesor_id } = req.params;
         
         // Solo admin puede ver profesores disponibles
         if (req.user.role_id !== 3) {
@@ -273,7 +215,7 @@ router.get('/disponibles/:rol_profesor', verifySession, async (req, res) => {
             });
         }
         
-        const profesoresDisponibles = await asignacionesProfesoresModel.obtenerProfesoresDisponibles(rol_profesor);
+        const profesoresDisponibles = await asignacionesProfesoresModel.obtenerProfesoresDisponibles(parseInt(rol_profesor_id));
         
         res.json({
             success: true,
@@ -471,10 +413,40 @@ router.post('/', verifySession, async (req, res) => {
         
         const { proyecto_id, profesor_rut, rol_profesor_id } = req.body;
         
+        console.log('📝 Datos recibidos para asignación:', {
+            proyecto_id,
+            profesor_rut,
+            rol_profesor_id,
+            tipos: {
+                proyecto_id: typeof proyecto_id,
+                profesor_rut: typeof profesor_rut,
+                rol_profesor_id: typeof rol_profesor_id
+            }
+        });
+        
         if (!proyecto_id || !profesor_rut || !rol_profesor_id) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos obligatorios: proyecto_id, profesor_rut, rol_profesor_id'
+                message: 'Faltan campos obligatorios: proyecto_id, profesor_rut, rol_profesor_id',
+                received: { proyecto_id, profesor_rut, rol_profesor_id }
+            });
+        }
+        
+        // Validar y convertir a números
+        const proyectoIdNum = parseInt(proyecto_id);
+        const rolProfesorIdNum = parseInt(rol_profesor_id);
+        
+        if (isNaN(proyectoIdNum)) {
+            return res.status(400).json({
+                success: false,
+                message: `proyecto_id debe ser un número válido. Recibido: ${proyecto_id} (tipo: ${typeof proyecto_id})`
+            });
+        }
+        
+        if (isNaN(rolProfesorIdNum)) {
+            return res.status(400).json({
+                success: false,
+                message: `rol_profesor_id debe ser un número válido. Recibido: ${rol_profesor_id} (tipo: ${typeof rol_profesor_id})`
             });
         }
         
@@ -483,7 +455,7 @@ router.post('/', verifySession, async (req, res) => {
             SELECT id FROM asignaciones_proyectos 
             WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE
         `;
-        const [existente] = await pool.execute(verificarQuery, [proyecto_id, rol_profesor_id]);
+        const [existente] = await pool.execute(verificarQuery, [proyectoIdNum, rolProfesorIdNum]);
         
         if (existente.length > 0) {
             return res.status(409).json({
@@ -497,7 +469,7 @@ router.post('/', verifySession, async (req, res) => {
             INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, asignado_por)
             VALUES (?, ?, ?, ?)
         `;
-        const [result] = await pool.execute(insertQuery, [proyecto_id, profesor_rut, rol_profesor_id, req.user.rut]);
+        const [result] = await pool.execute(insertQuery, [proyectoIdNum, profesor_rut, rolProfesorIdNum, req.user.rut]);
         
         res.status(201).json({
             success: true,
@@ -506,6 +478,44 @@ router.post('/', verifySession, async (req, res) => {
         });
     } catch (error) {
         console.error('Error al crear asignación:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
+ * DELETE /asignaciones-profesores/:proyecto_id/:profesor_rut
+ * Desasignar un profesor de un proyecto (versión simplificada)
+ */
+router.delete('/:proyecto_id/:profesor_rut', verifySession, async (req, res) => {
+    try {
+        const { proyecto_id, profesor_rut } = req.params;
+        
+        // Solo admin puede desasignar profesores
+        if (req.user.role_id !== 3) {
+            return res.status(403).json({
+                success: false,
+                message: 'Solo los administradores pueden desasignar profesores'
+            });
+        }
+        
+        const resultado = await asignacionesProfesoresModel.desasignarProfesor(proyecto_id, profesor_rut);
+        
+        if (resultado) {
+            res.json({
+                success: true,
+                message: 'Profesor desasignado exitosamente'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                message: 'No se encontró la asignación a eliminar'
+            });
+        }
+    } catch (error) {
+        console.error('Error al desasignar profesor:', error);
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'

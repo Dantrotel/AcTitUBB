@@ -1,0 +1,90 @@
+<div class="cronograma-container">
+  <!-- Header principal -->
+  <div class="header-section">
+    <h1>📋 Cronograma de Proyecto</h1>
+    <p *ngIf="cronograma">{{ cronograma.nombre_cronograma || cronograma.nombre || 'Cronograma Principal' }}</p>
+  </div>
+
+  <!-- Información del cronograma -->
+  <div class="cronograma-info" *ngIf="cronograma">
+    <h3>Información del Cronograma</h3>
+    <p>{{ cronograma.descripcion || 'Cronograma principal del proyecto' }}</p>
+    
+    <div class="cronograma-meta">
+      <div class="meta-item">
+        <div class="meta-label">Estado</div>
+        <div class="meta-value">{{ cronograma.estado || 'Borrador' }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Fecha Inicio</div>
+        <div class="meta-value">{{ cronograma.fecha_inicio | date:'dd/MM/yyyy' }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Fecha Fin</div>
+        <div class="meta-value">{{ cronograma.fecha_fin_estimada || cronograma.fecha_fin | date:'dd/MM/yyyy' }}</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Creado por</div>
+        <div class="meta-value">{{ cronograma.creador_nombre || 'Sistema' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas principales -->
+  <div class="estadisticas-grid" *ngIf="cronograma">
+    <div class="estadistica-card">
+      <div class="estadistica-valor">{{ estadisticas.total_hitos || 0 }}</div>
+      <div class="estadistica-label">Hitos Totales</div>
+    </div>
+    <div class="estadistica-card">
+      <div class="estadistica-valor">{{ estadisticas.hitos_completados || 0 }}</div>
+      <div class="estadistica-label">Completados</div>
+    </div>
+    <div class="estadistica-card">
+      <div class="estadistica-valor">{{ estadisticas.hitos_pendientes || 0 }}</div>
+      <div class="estadistica-label">Pendientes</div>
+    </div>
+    <div class="estadistica-card">
+      <div class="estadistica-valor">{{ estadisticas.entregas_total || 0 }}</div>
+      <div class="estadistica-label">Entregas</div>
+    </div>
+    <div class="estadistica-card">
+      <div class="estadistica-valor">{{ estadisticas.progreso || 0 }}%</div>
+      <div class="estadistica-label">Progreso</div>
+    </div>
+  </div>
+
+  <!-- Sección de gestión de hitos -->
+  <div class="gestion-section" *ngIf="cronograma?.id">
+    <h2 class="section-header">🎯 Gestión de Hitos y Entregas</h2>
+    <div class="section-content">
+      <app-gestion-hitos
+        [projectId]="projectId"
+        [cronogramaId]="cronograma?.id || ''"
+        [userRole]="userRole"
+        [userRut]="userRut"
+        (hitosActualizados)="onHitosActualizados()">
+      </app-gestion-hitos>
+    </div>
+  </div>
+    
+  <!-- Mensaje cuando no hay cronograma -->
+  <div *ngIf="!cronograma?.id" class="no-cronograma-message">
+    <h3>🔍 No hay cronograma activo</h3>
+    <p>Este proyecto aún no cuenta con un cronograma de hitos y entregas configurado.</p>
+    <p>Un cronograma es esencial para organizar las entregas y evaluar el progreso del proyecto.</p>
+    <button *ngIf="userRole === '2'" class="btn btn-primary" (click)="crearCronograma()">
+      ✨ Crear Cronograma
+    </button>
+    <button *ngIf="userRole === '1'" class="btn btn-secondary" disabled>
+      ⏳ Esperando asignación de profesor
+    </button>
+  </div>
+
+  <!-- Acciones flotantes -->
+  <div class="floating-actions" *ngIf="cronograma?.id && userRole === '2'">
+    <button class="fab" (click)="editarCronograma()" title="Editar cronograma">
+      ✏️
+    </button>
+  </div>
+</div>

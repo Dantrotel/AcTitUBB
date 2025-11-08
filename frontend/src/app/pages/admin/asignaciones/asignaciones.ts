@@ -34,9 +34,9 @@ export class AsignacionesComponent implements OnInit {
   // Formulario para nueva asignación
   mostrarFormulario = false;
   nuevaAsignacion = {
-    proyecto_id: '',
+    proyecto_id: '' as string | number | null, // String vacío inicial, se convierte a number al enviar
     profesor_rut: '',
-    rol_profesor_id: '', // Cambiado de rol_profesor_id a rol_profesor_id consistente
+    rol_profesor_id: '' as string | number | null, // String vacío inicial, se convierte a number al enviar
     observaciones: ''
   };
 
@@ -323,6 +323,11 @@ export class AsignacionesComponent implements OnInit {
   }
 
   mostrarFormularioAsignacion() {
+    console.log('📋 Abriendo formulario de asignación');
+    console.log('📊 Proyectos disponibles:', this.proyectos);
+    console.log('👥 Profesores disponibles:', this.profesores);
+    console.log('🎭 Roles disponibles:', this.rolesProfesores);
+    
     this.mostrarFormulario = true;
     this.nuevaAsignacion = {
       proyecto_id: '',
@@ -337,16 +342,40 @@ export class AsignacionesComponent implements OnInit {
   }
 
   crearAsignacion() {
-    if (!this.nuevaAsignacion.proyecto_id || !this.nuevaAsignacion.profesor_rut || !this.nuevaAsignacion.rol_profesor_id) {
+    console.log('📝 Valores del formulario antes de convertir:', {
+      proyecto_id: this.nuevaAsignacion.proyecto_id,
+      profesor_rut: this.nuevaAsignacion.profesor_rut,
+      rol_profesor_id: this.nuevaAsignacion.rol_profesor_id,
+      tipos: {
+        proyecto_id: typeof this.nuevaAsignacion.proyecto_id,
+        profesor_rut: typeof this.nuevaAsignacion.profesor_rut,
+        rol_profesor_id: typeof this.nuevaAsignacion.rol_profesor_id
+      }
+    });
+    
+    // Convertir valores del formulario a tipos correctos
+    const proyecto_id = this.nuevaAsignacion.proyecto_id ? Number(this.nuevaAsignacion.proyecto_id) : null;
+    const rol_profesor_id = this.nuevaAsignacion.rol_profesor_id ? Number(this.nuevaAsignacion.rol_profesor_id) : null;
+    
+    console.log('🔢 Valores después de convertir:', { proyecto_id, rol_profesor_id });
+    
+    // Validar después de la conversión
+    if (!proyecto_id || !this.nuevaAsignacion.profesor_rut || !rol_profesor_id) {
+      console.log('❌ Validación falló:', { proyecto_id, profesor_rut: this.nuevaAsignacion.profesor_rut, rol_profesor_id });
       alert('Por favor complete todos los campos obligatorios');
       return;
     }
-
+    
+    // Preparar datos para enviar
+    const asignacionData = {
+      proyecto_id,
+      profesor_rut: this.nuevaAsignacion.profesor_rut,
+      rol_profesor_id
+    };
+    
     this.loadingAsignacion = true;
-    console.log('🔄 Creando asignación profesor-proyecto:', this.nuevaAsignacion);
-
-    // Usar el método específico para crear asignaciones profesor-proyecto
-    this.apiService.crearAsignacionProfesorProyecto(this.nuevaAsignacion).subscribe({
+    console.log('🔄 Creando asignación profesor-proyecto:', asignacionData);
+    this.apiService.asignarProfesorAProyecto(asignacionData).subscribe({
       next: (response: any) => {
         console.log('✅ Asignación profesor-proyecto creada:', response);
         alert('Profesor asignado exitosamente al proyecto');
@@ -357,38 +386,16 @@ export class AsignacionesComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('❌ Error al crear asignación profesor-proyecto:', err);
-        // Fallback al método anterior si falla
-        this.crearAsignacionFallback();
-      }
-    });
-  }
-
-  crearAsignacionFallback() {
-    this.apiService.asignarProfesorAProyecto(this.nuevaAsignacion).subscribe({
-      next: (data: any) => {
-        console.log('⚠️ Asignación creada con fallback:', data);
-        alert('Profesor asignado exitosamente');
-        this.ocultarFormularioAsignacion();
-        this.cargarAsignaciones();
-        this.cargarEstadisticas();
-        this.loadingAsignacion = false;
-      },
-      error: (err: any) => {
-        console.error('❌ Error al crear asignación fallback:', err);
-        alert(err.error?.message || 'Error al asignar profesor');
+        alert(`Error al asignar profesor: ${err.error?.message || err.message || 'Error desconocido'}`);
         this.loadingAsignacion = false;
       }
     });
   }
 
   desasignarProfesor(asignacion: any) {
-    const observaciones = prompt('Observaciones sobre la desasignación (opcional):');
-    
     if (confirm(`¿Está seguro de desasignar a ${asignacion.profesor_nombre} del proyecto ${asignacion.proyecto_titulo}?`)) {
       console.log('🔄 Desasignando profesor de proyecto:', asignacion);
-      
-      // Usar el método específico para desasignar profesor-proyecto
-      this.apiService.eliminarAsignacionProfesorProyecto(asignacion.id).subscribe({
+      this.apiService.desasignarProfesorDeProyecto(asignacion.proyecto_id, asignacion.profesor_rut).subscribe({
         next: (response: any) => {
           console.log('✅ Profesor desasignado del proyecto exitosamente:', response);
           alert('Profesor desasignado exitosamente del proyecto');
@@ -397,26 +404,10 @@ export class AsignacionesComponent implements OnInit {
         },
         error: (err: any) => {
           console.error('❌ Error al desasignar profesor del proyecto:', err);
-          // Fallback al método anterior si falla
-          this.desasignarProfesorFallback(asignacion, observaciones);
+          alert(`Error al desasignar profesor: ${err.error?.message || err.message || 'Error desconocido'}`);
         }
       });
     }
-  }
-
-  desasignarProfesorFallback(asignacion: any, observaciones: string | null) {
-    this.apiService.desasignarProfesorDeProyecto(asignacion.id, observaciones || undefined).subscribe({
-      next: () => {
-        console.log('⚠️ Profesor desasignado con fallback');
-        alert('Profesor desasignado exitosamente');
-        this.cargarAsignaciones();
-        this.cargarEstadisticas();
-      },
-      error: (err: any) => {
-        console.error('❌ Error al desasignar profesor fallback:', err);
-        alert(err.error?.message || 'Error al desasignar profesor');
-      }
-    });
   }
 
   // ============= MÉTODOS PARA VISTA POR PROYECTO =============
@@ -429,8 +420,6 @@ export class AsignacionesComponent implements OnInit {
 
   cargarAsignacionesProyecto(proyectoId: string) {
     console.log('🔄 Cargando asignaciones del proyecto:', proyectoId);
-    
-    // Usar el método específico para obtener profesores de un proyecto
     this.apiService.getProfesoresProyecto(proyectoId).subscribe({
       next: (response: any) => {
         console.log('✅ Profesores del proyecto cargados:', response);
@@ -438,20 +427,6 @@ export class AsignacionesComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('❌ Error cargando profesores del proyecto:', err);
-        // Fallback al método anterior
-        this.cargarAsignacionesProyectoFallback(proyectoId);
-      }
-    });
-  }
-
-  cargarAsignacionesProyectoFallback(proyectoId: string) {
-    this.apiService.getAsignacionesProyecto(proyectoId).subscribe({
-      next: (response: any) => {
-        console.log('⚠️ Asignaciones del proyecto cargadas con fallback:', response);
-        this.asignacionesProyecto = response.asignaciones || [];
-      },
-      error: (err: any) => {
-        console.error('❌ Error cargando asignaciones del proyecto fallback:', err);
         this.asignacionesProyecto = [];
       }
     });
@@ -569,4 +544,4 @@ export class AsignacionesComponent implements OnInit {
     // Usar history.back() para volver a la página anterior sin activar guards
     window.history.back();
   }
-} 
+}

@@ -1,0 +1,129 @@
+<div class="proyecto-cronograma-page">
+  <div class="page-header">
+    <nav class="breadcrumb">
+      <a [routerLink]="'/proyectos'">Proyectos</a>
+      <span class="breadcrumb-separator">></span>
+      <span>{{ proyecto?.titulo || 'Proyecto' }}</span>
+      <span class="breadcrumb-separator">></span>
+      <span>Cronograma</span>
+    </nav>
+    
+    <div class="project-summary" *ngIf="proyecto">
+      <h1>{{ proyecto.titulo }}</h1>
+      <p class="project-description">{{ proyecto.descripcion }}</p>
+      <div class="project-meta">
+        <div class="meta-item" *ngIf="userRole === '1'">
+          <i class="fas fa-user-graduate"></i>
+          <span>Estudiante: {{ proyecto.estudiante_nombre }}</span>
+        </div>
+        <div class="meta-item" *ngIf="proyecto.profesor_guia">
+          <i class="fas fa-user-tie"></i>
+          <span>Profesor Guía: {{ proyecto.profesor_guia }}</span>
+        </div>
+        <div class="meta-item">
+          <i class="fas fa-calendar-alt"></i>
+          <span>{{ formatearFecha(proyecto.fecha_inicio) }} - {{ formatearFecha(proyecto.fecha_fin) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- Pestañas de navegación -->
+    <div class="tabs-navigation">
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 'cronograma'"
+        (click)="cambiarTab('cronograma')">
+        <i class="fas fa-tasks"></i>
+        Cronograma
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 'entregas'"
+        (click)="cambiarTab('entregas')">
+        <i class="fas fa-upload"></i>
+        Entregas
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 'documentos'"
+        (click)="cambiarTab('documentos')">
+        <i class="fas fa-file-alt"></i>
+        Documentos
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 'evaluaciones'"
+        (click)="cambiarTab('evaluaciones')"
+        *ngIf="userRole === '2' || userRole === '3'">
+        <i class="fas fa-star"></i>
+        Evaluaciones
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="tabActiva === 'estadisticas'"
+        (click)="cambiarTab('estadisticas')"
+        *ngIf="userRole === '2' || userRole === '3'">
+        <i class="fas fa-chart-bar"></i>
+        Estadísticas
+      </button>
+    </div>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content">
+      <div *ngIf="tabActiva === 'cronograma'" class="tab-pane active">
+        <app-cronograma-completo
+          [projectId]="projectId"
+          [cronogramaId]="cronogramaId"
+          [userRole]="userRole"
+          [userRut]="userRut">
+        </app-cronograma-completo>
+      </div>
+
+      <div *ngIf="tabActiva === 'entregas'" class="tab-pane active">
+        <div class="entregas-resumen">
+          <h3>Resumen de Entregas</h3>
+          <p>Vista consolidada de todas las entregas del proyecto</p>
+          <!-- Aquí iría un componente específico para el resumen de entregas -->
+        </div>
+      </div>
+
+      <div *ngIf="tabActiva === 'documentos'" class="tab-pane active">
+        <app-documentos-proyecto></app-documentos-proyecto>
+      </div>
+
+      <div *ngIf="tabActiva === 'evaluaciones'" class="tab-pane active">
+        <div class="evaluaciones-panel">
+          <h3>Panel de Evaluaciones</h3>
+          <p>Gestión de evaluaciones y calificaciones</p>
+          <!-- Aquí iría un componente específico para evaluaciones -->
+        </div>
+      </div>
+
+      <div *ngIf="tabActiva === 'estadisticas'" class="tab-pane active">
+        <div class="estadisticas-panel">
+          <h3>Estadísticas del Proyecto</h3>
+          <p>Métricas y análisis de rendimiento</p>
+          <!-- Aquí iría un componente específico para estadísticas -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones flotantes -->
+  <div class="floating-actions" *ngIf="mostrarAccionesFlotantes()">
+    <button 
+      class="fab fab-primary"
+      *ngIf="userRole === '1'"
+      title="Subir entrega rápida">
+      <i class="fas fa-upload"></i>
+    </button>
+    <button 
+      class="fab fab-secondary"
+      *ngIf="userRole === '2' || userRole === '3'"
+      title="Crear hito">
+      <i class="fas fa-plus"></i>
+    </button>
+  </div>
+</div>

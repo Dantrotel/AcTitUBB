@@ -142,13 +142,31 @@
               Cancelar
             </button>
           </div>
+
+          <!-- Acciones para reuniones programadas -->
+          <div class="card-actions" *ngIf="reunion.estado === 'programada' && !necesitaConfirmacion(reunion)">
+            <button 
+              class="btn btn-sm btn-success"
+              (click)="marcarReunionRealizada(reunion.id)"
+              title="Marcar como realizada">
+              <i class="fas fa-check-double"></i>
+              Realizada
+            </button>
+            <button 
+              class="btn btn-sm btn-danger"
+              (click)="cancelarReunion(reunion.id)"
+              title="Cancelar reunión">
+              <i class="fas fa-ban"></i>
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Reuniones Próximas -->
     <div class="reuniones-proximas-section" *ngIf="dashboardData.reuniones_proximas.length > 0">
-      <h3><i class="fas fa-calendar-alt"></i> Próximas Reuniones</h3>
+      <h3><i class="fas fa-calendar-alt"></i> Próximas Reuniones ({{ dashboardData.reuniones_proximas.length }})</h3>
       <div class="reuniones-grid">
         <div class="reunion-card" *ngFor="let reunion of dashboardData.reuniones_proximas">
           <div class="card-header">
@@ -163,13 +181,21 @@
           </div>
 
           <div class="card-content">
+            <div class="titulo" *ngIf="reunion.titulo">
+              <i class="fas fa-heading"></i>
+              <span><strong>{{ reunion.titulo }}</strong></span>
+            </div>
             <div class="horario">
               <i class="fas fa-clock"></i>
               <span>{{ formatearHora(reunion.hora_inicio) }} - {{ formatearHora(reunion.hora_fin) }}</span>
             </div>
-            <div class="motivo">
+            <div class="descripcion" *ngIf="reunion.descripcion">
               <i class="fas fa-comment"></i>
-              <span>{{ reunion.motivo }}</span>
+              <span>{{ reunion.descripcion }}</span>
+            </div>
+            <div class="proyecto" *ngIf="reunion.proyecto_titulo">
+              <i class="fas fa-project-diagram"></i>
+              <span>Proyecto: {{ reunion.proyecto_titulo }}</span>
             </div>
           </div>
 
@@ -187,6 +213,32 @@
               Cancelar
             </button>
           </div>
+
+          <!-- Acciones para reuniones programadas -->
+          <div class="card-actions" *ngIf="reunion.estado === 'programada' && !necesitaConfirmacion(reunion)">
+            <button 
+              class="btn btn-sm btn-success"
+              (click)="marcarReunionRealizada(reunion.id)"
+              title="Marcar como realizada">
+              <i class="fas fa-check-double"></i>
+              Realizada
+            </button>
+            <button 
+              class="btn btn-sm btn-danger"
+              (click)="cancelarReunion(reunion.id)"
+              title="Cancelar reunión">
+              <i class="fas fa-ban"></i>
+              Cancelar
+            </button>
+          </div>
+
+          <!-- Estado solo lectura -->
+          <div class="card-footer" *ngIf="reunion.estado === 'realizada' || reunion.estado === 'cancelada'">
+            <small class="text-muted">
+              <i class="fas fa-info-circle"></i>
+              {{ reunion.estado === 'realizada' ? 'Reunión completada' : 'Reunión cancelada' }}
+            </small>
+          </div>
         </div>
       </div>
     </div>
@@ -194,7 +246,7 @@
     <!-- Solicitudes Pendientes (solo para profesores) -->
     <div class="solicitudes-section" *ngIf="userRole === 'profesor'">
       <div class="section-header">
-        <h3><i class="fas fa-inbox"></i> Solicitudes de Reunión Pendientes</h3>
+        <h3><i class="fas fa-inbox"></i> Solicitudes de Reunión Pendientes ({{ dashboardData.solicitudes_pendientes.length }})</h3>
       </div>
       
       <div *ngIf="dashboardData.solicitudes_pendientes.length > 0" class="solicitudes-grid">
@@ -202,17 +254,21 @@
           <div class="card-header">
             <div class="solicitud-info">
               <h4>{{ solicitud.estudiante_nombre }}</h4>
-              <span class="fecha-solicitud">{{ solicitud.fecha_solicitud | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span class="fecha-solicitud">Solicitada: {{ solicitud.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
             </div>
-            <div class="urgencia-badge" [class]="getUrgenciaClass(solicitud.urgencia)">
-              {{ solicitud.urgencia }}
+            <div class="urgencia-badge" [class]="getTipoReunionClass(solicitud.tipo_reunion)">
+              {{ solicitud.tipo_reunion || 'General' }}
             </div>
           </div>
 
           <div class="card-content">
+            <div class="fecha-propuesta">
+              <i class="fas fa-calendar"></i>
+              <span>{{ solicitud.fecha_propuesta | date:'dd/MM/yyyy' }} a las {{ solicitud.hora_propuesta }}</span>
+            </div>
             <div class="motivo">
               <i class="fas fa-comment"></i>
-              <span>{{ solicitud.motivo }}</span>
+              <span>{{ solicitud.descripcion || 'Sin descripción' }}</span>
             </div>
           </div>
 

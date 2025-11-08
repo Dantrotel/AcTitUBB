@@ -166,6 +166,12 @@
             <i class="fas fa-user-plus"></i>
             Asignar Profesor
           </button>
+
+          <!-- Botón de evaluaciones (solo si tiene proyecto_id) -->
+          <button *ngIf="propuesta.proyecto_id" class="btn-info" (click)="abrirModalEvaluaciones(propuesta)">
+            <i class="fas fa-chart-line"></i>
+            Evaluaciones
+          </button>
           
           <button class="btn-danger" (click)="eliminarPropuesta(propuesta.id)">
             <i class="fas fa-trash"></i>
@@ -182,4 +188,184 @@
   <div class="footer-content">
     <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Gestión de Propuestas</p>
   </div>
-</footer> 
+</footer>
+
+<!-- Modal de Evaluaciones -->
+<div *ngIf="mostrarModalEvaluacion" class="modal-overlay">
+  <div class="modal-content evaluacion-modal">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-chart-line"></i>
+        Evaluaciones - {{ propuestaSeleccionada?.titulo }}
+      </h2>
+      <button class="btn-close" (click)="cerrarModalEvaluacion()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Estadísticas -->
+      <div class="evaluacion-stats" *ngIf="evaluaciones.length > 0">
+        <div class="stat-card">
+          <span class="stat-number">{{ evaluaciones.length }}</span>
+          <span class="stat-label">Evaluaciones</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" [style.color]="obtenerColorNota(obtenerNotaPromedio())">
+            {{ obtenerNotaPromedio() }}
+          </span>
+          <span class="stat-label">Promedio</span>
+        </div>
+      </div>
+
+      <!-- Formulario de evaluación -->
+      <div class="evaluacion-form">
+        <h3>{{ editandoEvaluacion ? 'Editar Evaluación' : 'Nueva Evaluación' }}</h3>
+        <form (ngSubmit)="crearEvaluacion()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="tipoEvaluacion">Tipo de Evaluación:</label>
+              <select id="tipoEvaluacion" [(ngModel)]="evaluacionForm.tipo" name="tipo" required>
+                <option value="avance">Avance</option>
+                <option value="final">Final</option>
+                <option value="defensa">Defensa</option>
+                <option value="presentacion">Presentación</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fechaEvaluacion">Fecha:</label>
+              <input 
+                type="date" 
+                id="fechaEvaluacion" 
+                [(ngModel)]="evaluacionForm.fecha" 
+                name="fecha" 
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="notaEvaluacion">Nota (1.0 - 7.0):</label>
+              <input 
+                type="number" 
+                id="notaEvaluacion" 
+                [(ngModel)]="evaluacionForm.nota" 
+                name="nota" 
+                min="1.0" 
+                max="7.0" 
+                step="0.1" 
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Criterios de evaluación -->
+          <div class="criterios-section">
+            <h4>Criterios de Evaluación:</h4>
+            <div class="criterios-grid">
+              <div class="form-group">
+                <label>Cumplimiento de Objetivos:</label>
+                <select [(ngModel)]="evaluacionForm.criterios.cumplimiento_objetivos" name="cumplimiento">
+                  <option value="">Seleccionar</option>
+                  <option value="excelente">Excelente</option>
+                  <option value="bueno">Bueno</option>
+                  <option value="regular">Regular</option>
+                  <option value="deficiente">Deficiente</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Calidad del Trabajo:</label>
+                <select [(ngModel)]="evaluacionForm.criterios.calidad_trabajo" name="calidad">
+                  <option value="">Seleccionar</option>
+                  <option value="excelente">Excelente</option>
+                  <option value="bueno">Bueno</option>
+                  <option value="regular">Regular</option>
+                  <option value="deficiente">Deficiente</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Presentación:</label>
+                <select [(ngModel)]="evaluacionForm.criterios.presentacion" name="presentacion">
+                  <option value="">Seleccionar</option>
+                  <option value="excelente">Excelente</option>
+                  <option value="bueno">Bueno</option>
+                  <option value="regular">Regular</option>
+                  <option value="deficiente">Deficiente</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Documentación:</label>
+                <select [(ngModel)]="evaluacionForm.criterios.documentacion" name="documentacion">
+                  <option value="">Seleccionar</option>
+                  <option value="excelente">Excelente</option>
+                  <option value="bueno">Bueno</option>
+                  <option value="regular">Regular</option>
+                  <option value="deficiente">Deficiente</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="comentarios">Comentarios:</label>
+            <textarea 
+              id="comentarios" 
+              [(ngModel)]="evaluacionForm.comentarios" 
+              name="comentarios" 
+              rows="3"
+              placeholder="Observaciones y comentarios adicionales..."
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i>
+              {{ editandoEvaluacion ? 'Actualizar' : 'Crear' }} Evaluación
+            </button>
+            <button type="button" class="btn-secondary" (click)="limpiarFormularioEvaluacion()">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de evaluaciones -->
+      <div class="evaluaciones-lista" *ngIf="evaluaciones.length > 0">
+        <h3>Evaluaciones Registradas</h3>
+        <div class="evaluaciones-grid">
+          <div *ngFor="let evaluacion of evaluaciones" class="evaluacion-card">
+            <div class="evaluacion-header">
+              <span class="evaluacion-tipo">{{ obtenerTipoEvaluacionDisplay(evaluacion.tipo) }}</span>
+              <span class="evaluacion-nota" [style.color]="obtenerColorNota(evaluacion.nota)">
+                {{ evaluacion.nota }}/7.0
+              </span>
+            </div>
+            <div class="evaluacion-info">
+              <p><strong>Fecha:</strong> {{ formatearFecha(evaluacion.fecha) }}</p>
+              <p *ngIf="evaluacion.comentarios"><strong>Comentarios:</strong> {{ evaluacion.comentarios }}</p>
+            </div>
+            <div class="evaluacion-actions">
+              <button class="btn-small btn-secondary" (click)="editarEvaluacion(evaluacion)">
+                <i class="fas fa-edit"></i>
+                Editar
+              </button>
+              <button class="btn-small btn-danger" (click)="eliminarEvaluacion(evaluacion.id)">
+                <i class="fas fa-trash"></i>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="evaluaciones.length === 0" class="empty-evaluaciones">
+        <i class="fas fa-chart-line"></i>
+        <p>No hay evaluaciones registradas para este proyecto</p>
+      </div>
+    </div>
+  </div>
+</div> 

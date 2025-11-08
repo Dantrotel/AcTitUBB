@@ -275,6 +275,144 @@
       </ng-template>
     </div>
 
+    <!-- NUEVA SECCIÓN: Calendario General de Fechas Importantes (Artículos 29-32) -->
+    <div class="calendario-general-section">
+      <div class="section-header">
+        <h2>
+          <i class="fas fa-calendar-exclamation"></i> 
+          Calendario General - Fechas Importantes de Proyectos
+        </h2>
+        <div class="section-actions">
+          <button class="btn-secondary" (click)="cargarCalendarioGeneral()">
+            <i class="fas fa-sync-alt"></i>
+            Actualizar
+          </button>
+          <button class="btn-primary" (click)="generarAlertasManual()">
+            <i class="fas fa-bell"></i>
+            Generar Alertas
+          </button>
+        </div>
+      </div>
+
+      <div class="estadisticas-calendario" *ngIf="calendarioGeneral.estadisticas">
+        <div class="stat-card danger">
+          <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{calendarioGeneral.estadisticas.vencidas}}</div>
+            <div class="stat-label">Vencidas</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{calendarioGeneral.estadisticas.hoy}}</div>
+            <div class="stat-label">Hoy</div>
+          </div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{calendarioGeneral.estadisticas.pendientes}}</div>
+            <div class="stat-label">Pendientes</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-content">
+            <div class="stat-number">{{calendarioGeneral.estadisticas.completadas}}</div>
+            <div class="stat-label">Completadas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-calendario">
+        <select [(ngModel)]="filtroTipoFecha" class="form-select">
+          <option value="">Todos los tipos</option>
+          <option value="entrega_final">Entrega Final</option>
+          <option value="defensa">Defensa</option>
+          <option value="presentacion">Presentación</option>
+          <option value="entrega_avance">Entrega Avance</option>
+          <option value="revision_parcial">Revisión Parcial</option>
+        </select>
+
+        <select [(ngModel)]="filtroEstadoFecha" class="form-select">
+          <option value="">Todos los estados</option>
+          <option value="vencida">Vencidas</option>
+          <option value="hoy">Hoy</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="completada">Completadas</option>
+        </select>
+
+        <button class="btn-clear-filters" (click)="limpiarFiltrosCalendario()" *ngIf="filtroTipoFecha || filtroEstadoFecha">
+          <i class="fas fa-times"></i>
+          Limpiar filtros
+        </button>
+      </div>
+
+      <!-- Tabla de fechas importantes -->
+      <div class="calendario-table-container" *ngIf="getFechasFiltradas().length > 0">
+        <table class="calendario-table">
+          <thead>
+            <tr>
+              <th>Fecha Límite</th>
+              <th>Tipo</th>
+              <th>Título</th>
+              <th>Proyecto</th>
+              <th>Estudiante</th>
+              <th>Profesores</th>
+              <th>Estado</th>
+              <th>Días Restantes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fecha of getFechasFiltradas()" 
+                [class]="'estado-' + fecha.estado">
+              <td class="fecha-col">
+                <i class="fas fa-calendar-day"></i>
+                {{ fecha.fecha_limite | date:'dd/MM/yyyy' }}
+              </td>
+              <td>
+                <span class="tipo-badge" [class]="'tipo-' + fecha.tipo_fecha">
+                  {{ getTipoFechaLabel(fecha.tipo_fecha) }}
+                </span>
+              </td>
+              <td class="titulo-col">{{ fecha.titulo }}</td>
+              <td class="proyecto-col">{{ fecha.titulo_proyecto }}</td>
+              <td class="estudiante-col">
+                <i class="fas fa-user"></i>
+                {{ fecha.nombre_estudiante }}
+              </td>
+              <td class="profesores-col">
+                <i class="fas fa-user-tie"></i>
+                {{ fecha.profesores_asignados || 'Sin asignar' }}
+              </td>
+              <td>
+                <span class="estado-badge" [class]="'estado-' + fecha.estado">
+                  {{ getEstadoLabel(fecha.estado) }}
+                </span>
+              </td>
+              <td class="dias-col">
+                <span class="dias-restantes" [class]="getDiasRestantesClase(fecha.dias_restantes)">
+                  {{ formatearDiasRestantes(fecha.dias_restantes) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="empty-calendario" *ngIf="getFechasFiltradas().length === 0 && !cargandoCalendario">
+        <i class="fas fa-calendar-times"></i>
+        <p>No hay fechas importantes que mostrar con los filtros aplicados</p>
+      </div>
+
+      <div class="loading-calendario" *ngIf="cargandoCalendario">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando calendario general...</p>
+      </div>
+    </div>
+
     <!-- Botón volver móvil -->
     <div class="volver-section mobile-only">
       <button class="btn-volver" (click)="volver()">

@@ -8,6 +8,7 @@ const router = e.Router();
 
 router.post('/login', loginController.login);
 router.post('/register', loginController.register);
+router.post('/refresh-token', loginController.refreshToken);
 
 router.get('/confirm/:token', async (req, res) => {
   try {
@@ -38,7 +39,8 @@ router.get('/confirm/:token', async (req, res) => {
   }
 });
 
-router.get('/:rut', loginController.findUserByRut)
-router.put('/perfil', verifySession, loginController.actualizarPerfil)
+router.post('/logout', loginController.logout);
+router.get('/:rut', loginController.findUserByRut);
+router.put('/perfil', verifySession, loginController.actualizarPerfil);
 
 export default router;
