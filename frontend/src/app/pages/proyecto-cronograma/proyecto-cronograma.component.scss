@@ -1,0 +1,406 @@
+/* Variables de colores UBB */
+:host {
+  --ubb-primary: #004b8d;
+  --ubb-secondary: #0066cc;
+  --ubb-accent: #ff6b35;
+  --ubb-success: #28a745;
+  --ubb-warning: #ffc107;
+  --ubb-light: #f8f9fa;
+  --ubb-white: #ffffff;
+  --ubb-gray: #6c757d;
+  --ubb-dark: #343a40;
+}
+
+.proyecto-cronograma-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--ubb-light) 0%, #e9ecef 100%);
+
+  .page-header {
+    background: var(--ubb-white);
+    border-bottom: 1px solid #e9ecef;
+    padding: 20px 0;
+    margin-bottom: 0;
+    box-shadow: 0 2px 10px rgba(0, 75, 141, 0.1);
+
+    .breadcrumb {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--ubb-gray);
+
+      a {
+        color: var(--ubb-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: var(--ubb-secondary);
+          text-decoration: underline;
+        }
+      }
+
+      .breadcrumb-separator {
+        color: #dee2e6;
+        font-weight: bold;
+      }
+    }
+
+    .project-summary {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+
+      h1 {
+        margin: 0 0 8px 0;
+        color: var(--ubb-primary);
+        font-size: 2rem;
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0, 75, 141, 0.1);
+      }
+
+      .project-description {
+        color: var(--ubb-gray);
+        margin-bottom: 16px;
+        line-height: 1.5;
+        font-size: 1.1rem;
+      }
+
+      .project-meta {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--ubb-dark);
+          font-size: 14px;
+          font-weight: 500;
+
+          i {
+            color: var(--ubb-accent);
+            width: 16px;
+          }
+        }
+      }
+    }
+  }
+
+  .page-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+
+    .tabs-navigation {
+      background: var(--ubb-white);
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      padding: 0 20px;
+      gap: 0;
+      box-shadow: 0 2px 5px rgba(0, 75, 141, 0.05);
+
+      .tab-button {
+        background: none;
+        border: none;
+        padding: 16px 20px;
+        color: var(--ubb-gray);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        position: relative;
+
+        &:hover {
+          color: var(--ubb-primary);
+          background: linear-gradient(135deg, var(--ubb-light) 0%, rgba(0, 75, 141, 0.05) 100%);
+        }
+
+        &.active {
+          color: var(--ubb-primary);
+          border-bottom-color: var(--ubb-primary);
+          background: linear-gradient(135deg, var(--ubb-light) 0%, rgba(0, 75, 141, 0.1) 100%);
+          font-weight: 600;
+        }
+
+        i {
+          font-size: 14px;
+          transition: transform 0.3s ease;
+        }
+
+        &:hover i {
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    .tab-content {
+      .tab-pane {
+        display: none;
+        padding: 0;
+
+        &.active {
+          display: block;
+        }
+
+        .entregas-resumen,
+        .evaluaciones-panel,
+        .estadisticas-panel {
+          background: var(--ubb-white);
+          padding: 40px;
+          text-align: center;
+          color: var(--ubb-gray);
+          margin: 2rem;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0, 75, 141, 0.1);
+          border-left: 4px solid var(--ubb-accent);
+
+          h3 {
+            color: var(--ubb-primary);
+            margin-bottom: 12px;
+            font-size: 1.5rem;
+            font-weight: 600;
+          }
+
+          p {
+            font-size: 1.1rem;
+            margin: 0;
+            line-height: 1.6;
+          }
+        }
+      }
+    }
+  }
+
+  .floating-actions {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      &.fab-primary {
+        background: linear-gradient(135deg, var(--ubb-primary) 0%, var(--ubb-secondary) 100%);
+
+        &:hover {
+          background: linear-gradient(135deg, var(--ubb-secondary) 0%, var(--ubb-primary) 100%);
+        }
+      }
+
+      &.fab-secondary {
+        background: linear-gradient(135deg, var(--ubb-accent) 0%, #ff8555 100%);
+
+        &:hover {
+          background: linear-gradient(135deg, #ff8555 0%, var(--ubb-accent) 100%);
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .proyecto-cronograma-page {
+    .page-header {
+      .breadcrumb {
+        padding: 0 15px 12px 15px;
+        font-size: 13px;
+      }
+
+      .project-summary {
+        padding: 0 15px;
+
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .project-description {
+          font-size: 1rem;
+        }
+
+        .project-meta {
+          flex-direction: column;
+          gap: 12px;
+        }
+      }
+    }
+
+    .page-content {
+      .tabs-navigation {
+        padding: 0 15px;
+        overflow-x: auto;
+        white-space: nowrap;
+
+        .tab-button {
+          padding: 12px 16px;
+          font-size: 13px;
+          flex-shrink: 0;
+        }
+      }
+
+      .tab-content .tab-pane {
+        .entregas-resumen,
+        .evaluaciones-panel,
+        .estadisticas-panel {
+          padding: 20px 15px;
+          margin: 1rem;
+
+          h3 {
+            font-size: 1.25rem;
+          }
+
+          p {
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+
+    .floating-actions {
+      bottom: 15px;
+      right: 15px;
+
+      .fab {
+        width: 48px;
+        height: 48px;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .proyecto-cronograma-page {
+    .page-header {
+      .project-summary {
+        h1 {
+          font-size: 1.25rem;
+        }
+
+        .project-description {
+          font-size: 0.95rem;
+        }
+      }
+    }
+
+    .page-content .tabs-navigation .tab-button {
+      padding: 10px 12px;
+      font-size: 12px;
+
+      span {
+        display: none;
+      }
+
+      i {
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Animaciones UBB
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tab-pane.active {
+  animation: fadeInUp 0.4s ease;
+}
+
+.floating-actions .fab {
+  animation: fadeInUp 0.3s ease;
+}
+
+.tabs-navigation .tab-button {
+  animation: slideInFromLeft 0.3s ease;
+}
+
+// Utilidades para el sistema de hitos UBB
+.cronograma-integration {
+  app-cronograma-completo {
+    display: block;
+    width: 100%;
+  }
+}
+
+// Estados y badges con colores UBB
+.badge-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.status-active {
+    background: linear-gradient(135deg, var(--ubb-secondary) 0%, rgba(0, 102, 204, 0.2) 100%);
+    color: var(--ubb-secondary);
+    border: 1px solid var(--ubb-secondary);
+  }
+
+  &.status-completed {
+    background: linear-gradient(135deg, var(--ubb-success) 0%, rgba(40, 167, 69, 0.2) 100%);
+    color: var(--ubb-success);
+    border: 1px solid var(--ubb-success);
+  }
+
+  &.status-pending {
+    background: linear-gradient(135deg, var(--ubb-warning) 0%, rgba(255, 193, 7, 0.2) 100%);
+    color: var(--ubb-warning);
+    border: 1px solid var(--ubb-warning);
+  }
+
+  &.status-overdue {
+    background: linear-gradient(135deg, var(--ubb-accent) 0%, rgba(255, 107, 53, 0.2) 100%);
+    color: var(--ubb-accent);
+    border: 1px solid var(--ubb-accent);
+  }
+}

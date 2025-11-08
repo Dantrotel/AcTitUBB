@@ -137,45 +137,9 @@ export class ApiService {
     });
   }
 
-  // Crear fecha importante
-  crearFechaImportante(data: any) {
-    return this.http.post(`${this.baseUrl}/fechas-importantes`, data, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Obtener fecha importante por ID
-  getFechaImportantePorId(fechaId: string) {
-    return this.http.get(`${this.baseUrl}/fechas-importantes/${fechaId}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Actualizar fecha importante
-  actualizarFechaImportante(fechaId: string, data: any) {
-    return this.http.put(`${this.baseUrl}/fechas-importantes/${fechaId}`, data, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Marcar fecha importante como completada
-  completarFechaImportante(fechaId: string, fechaRealizada?: string) {
-    const data = fechaRealizada ? { fecha_realizada: fechaRealizada } : {};
-    return this.http.put(`${this.baseUrl}/fechas-importantes/${fechaId}/completar`, data, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Eliminar fecha importante (solo admin)
-  eliminarFechaImportante(fechaId: string) {
-    return this.http.delete(`${this.baseUrl}/fechas-importantes/${fechaId}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Admin: obtener todas las fechas importantes de todos los proyectos
+  // Profesor: obtener fechas importantes de proyectos asignados
   getFechasImportantesTodosProyectos() {
-    return this.http.get(`${this.baseUrl}/fechas-importantes/admin/todas`, {
+    return this.http.get(`${this.baseUrl}/calendario/profesor/mis-fechas`, {
       headers: this.getHeaders()
     });
   }
@@ -186,6 +150,15 @@ export class ApiService {
 
   register(data:any){
     return this.http.post(`${this.baseUrl}/users/register`, data);
+  }
+
+  // Refresh token para renovar access token automáticamente
+  refreshToken() {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+    return this.http.post(`${this.baseUrl}/users/refresh-token`, { refreshToken });
   }
 
   getPropuestas() {
@@ -448,6 +421,68 @@ export class ApiService {
     });
   }
 
+  // Métodos mejorados para evaluaciones
+  actualizarEvaluacionProyecto(proyectoId: string, evaluacionId: string, data: any) {
+    return this.http.put(`${this.baseUrl}/projects/${proyectoId}/evaluaciones/${evaluacionId}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  eliminarEvaluacionProyecto(proyectoId: string, evaluacionId: string) {
+    return this.http.delete(`${this.baseUrl}/projects/${proyectoId}/evaluaciones/${evaluacionId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Evaluaciones por profesor
+  getEvaluacionesProfesor() {
+    return this.http.get(`${this.baseUrl}/projects/evaluaciones/profesor`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estadísticas de evaluaciones
+  getEstadisticasEvaluaciones() {
+    return this.http.get(`${this.baseUrl}/projects/evaluaciones/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== MÉTODOS ESPECÍFICOS PARA PROFESORES =====
+  
+  // Obtener proyectos asignados al profesor (como guía o co-guía)
+  getProyectosProfesor() {
+    return this.http.get(`${this.baseUrl}/profesor/proyectos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Gestión de fechas importantes para profesores
+  crearFechaImportante(proyectoId: string, fechaData: any) {
+    return this.http.post(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes`, fechaData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  actualizarFechaImportante(proyectoId: string, fechaId: string, fechaData: any) {
+    return this.http.put(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes/${fechaId}`, fechaData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  eliminarFechaImportante(proyectoId: string, fechaId: string) {
+    return this.http.delete(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes/${fechaId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  marcarFechaCompletada(proyectoId: string, fechaId: string, completada: boolean) {
+    return this.http.patch(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes/${fechaId}/completar`, 
+      { completada }, {
+      headers: this.getHeaders()
+    });
+  }
+
   // ===== MÉTODOS DE ROLES DE PROFESORES =====
 
   // Obtener roles de profesores disponibles
@@ -458,24 +493,16 @@ export class ApiService {
     });
   }
 
-  // Asignar profesor a proyecto con rol específico
-  asignarProfesorAProyecto(data: any) {
-    return this.http.post(`${this.baseUrl}/roles/asignaciones`, data, {
+  // Desasignar profesor de proyecto (versión simplificada)
+  desasignarProfesorDeProyecto(proyectoId: string, profesorRut: string) {
+    return this.http.delete(`${this.baseUrl}/asignaciones-profesores/${proyectoId}/${profesorRut}`, {
       headers: this.getHeaders()
-    });
-  }
-
-  // Desasignar profesor de proyecto
-  desasignarProfesorDeProyecto(asignacionId: string, observaciones?: string) {
-    return this.http.delete(`${this.baseUrl}/roles/asignaciones/${asignacionId}`, {
-      headers: this.getHeaders(),
-      body: { observaciones }
     });
   }
 
   // Obtener asignaciones de un proyecto
   getAsignacionesProyecto(proyectoId: string) {
-    return this.http.get(`${this.baseUrl}/roles/asignaciones/proyecto/${proyectoId}`, {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/proyecto/${proyectoId}`, {
       headers: this.getHeaders()
     });
   }
@@ -504,7 +531,49 @@ export class ApiService {
     });
   }
 
-  // ===== MÉTODOS ESPECÍFICOS PARA ASIGNACIONES-PROFESORES (CONSOLIDADOS) =====
+  // ===== MÉTODOS MEJORADOS PARA ASIGNACIONES-PROFESORES =====
+
+  // Crear asignación múltiple (nuevo)
+  crearAsignacionesMultiples(data: any) {
+    return this.http.post(`${this.baseUrl}/asignaciones-profesores/multiples`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Actualizar asignación profesor-proyecto
+  actualizarAsignacionProfesorProyecto(proyectoId: string, rolProfesorId: string, data: any) {
+    return this.http.put(`${this.baseUrl}/asignaciones-profesores/proyecto/${proyectoId}/rol/${rolProfesorId}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Eliminar asignación específica por proyecto y rol
+  eliminarAsignacionProyectoRol(proyectoId: string, rolProfesorId: string) {
+    return this.http.delete(`${this.baseUrl}/asignaciones-profesores/proyecto/${proyectoId}/rol/${rolProfesorId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener profesores disponibles por rol
+  getProfesoresDisponiblesPorRol(rolProfesorId: string) {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/disponibles/${rolProfesorId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Obtener asignación específica por ID
+  getAsignacionProfesorPorId(asignacionId: string) {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/${asignacionId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Asignar profesor a proyecto (versión simplificada)
+  asignarProfesorAProyecto(data: any) {
+    return this.http.post(`${this.baseUrl}/asignaciones-profesores`, data, {
+      headers: this.getHeaders()
+    });
+  }
 
   // Obtener profesores asignados a un proyecto específico
   getProfesoresProyecto(proyectoId: string) {
@@ -513,13 +582,9 @@ export class ApiService {
     });
   }
 
-  // Obtener proyectos asignados a un profesor específico
-  getProyectosAsignadosProfesor(profesorRut: string, rolProfesorId?: string) {
-    let url = `${this.baseUrl}/asignaciones-profesores/profesor/${profesorRut}`;
-    if (rolProfesorId) {
-      url += `?rol_profesor_id=${rolProfesorId}`;
-    }
-    return this.http.get(url, {
+  // Obtener proyectos asignados a un profesor (versión simplificada)
+  getProyectosAsignadosProfesor(profesorRut: string) {
+    return this.http.get(`${this.baseUrl}/asignaciones-profesores/profesor/${profesorRut}`, {
       headers: this.getHeaders()
     });
   }
@@ -608,6 +673,60 @@ export class ApiService {
     });
   }
 
+  // ===== MÉTODOS PARA GESTIÓN COMPLETA DE ENTREGAS =====
+  
+  // Obtener todas las entregas de un hito
+  obtenerEntregasHito(projectId: string, cronogramaId: string, hitoId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Crear nueva entrega para un hito
+  crearEntregaHito(projectId: string, cronogramaId: string, hitoId: string, entregaData: FormData) {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      // No incluir Content-Type para FormData
+    });
+
+    return this.http.post(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas`, entregaData, {
+      headers: headers
+    });
+  }
+
+  // Actualizar entrega existente
+  actualizarEntregaHito(projectId: string, cronogramaId: string, hitoId: string, entregaId: string, entregaData: FormData) {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      // No incluir Content-Type para FormData
+    });
+
+    return this.http.put(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas/${entregaId}`, entregaData, {
+      headers: headers
+    });
+  }
+
+  // Eliminar entrega
+  eliminarEntregaHito(projectId: string, cronogramaId: string, hitoId: string, entregaId: string) {
+    return this.http.delete(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas/${entregaId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Actualizar hito existente
+  actualizarHitoCronograma(cronogramaId: string, hitoId: string, hitoData: any) {
+    return this.http.put(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/${hitoId}`, hitoData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Eliminar hito
+  eliminarHitoCronograma(cronogramaId: string, hitoId: string) {
+    return this.http.delete(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/${hitoId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // Obtener notificaciones del usuario
   obtenerNotificaciones(soloNoLeidas: boolean = false) {
     const params = soloNoLeidas ? '?solo_no_leidas=true' : '';
@@ -672,7 +791,112 @@ export class ApiService {
     });
   }
 
-  // Solicitudes de reunión
+  // ========================================
+  // SISTEMA DE RESERVAS (NUEVO)
+  // ========================================
+
+  // Estudiante: obtener profesores asignados a su proyecto
+  getProfesoresAsignados() {
+    return this.http.get(`${this.baseUrl}/sistema-reservas/profesores-asignados`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estudiante: ver horarios disponibles de un profesor
+  getHorariosDisponibles(profesorRut: string, diasAdelante: number = 14) {
+    return this.http.get(`${this.baseUrl}/sistema-reservas/horarios-disponibles/${profesorRut}?dias_adelante=${diasAdelante}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estudiante: reservar un horario
+  reservarHorario(data: {
+    disponibilidad_id: number;
+    proyecto_id: number;
+    tipo_reunion: string;
+    descripcion: string;
+  }) {
+    return this.http.post(`${this.baseUrl}/sistema-reservas/reservar`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estudiante: ver mis solicitudes
+  getMisSolicitudes() {
+    return this.http.get(`${this.baseUrl}/sistema-reservas/mis-solicitudes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estudiante: cancelar una reserva pendiente
+  cancelarReserva(solicitudId: number) {
+    return this.http.delete(`${this.baseUrl}/sistema-reservas/cancelar-reserva/${solicitudId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: crear disponibilidad
+  crearDisponibilidad(data: {
+    dia_semana: string;
+    hora_inicio: string;
+    hora_fin: string;
+    fecha_especifica?: string;
+  }) {
+    return this.http.post(`${this.baseUrl}/sistema-reservas/disponibilidades`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: ver todas mis disponibilidades
+  getMisDisponibilidades() {
+    return this.http.get(`${this.baseUrl}/sistema-reservas/mis-disponibilidades`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: actualizar disponibilidad
+  actualizarDisponibilidad(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/sistema-reservas/disponibilidades/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: eliminar disponibilidad
+  eliminarDisponibilidad(id: number) {
+    return this.http.delete(`${this.baseUrl}/sistema-reservas/disponibilidades/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: ver solicitudes pendientes
+  getSolicitudesPendientes() {
+    return this.http.get(`${this.baseUrl}/sistema-reservas/solicitudes-pendientes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Profesor: responder a una reserva
+  responderReserva(solicitudId: number, data: {
+    respuesta: 'aceptar' | 'rechazar';
+    comentarios?: string;
+  }) {
+    return this.http.post(`${this.baseUrl}/sistema-reservas/responder-reserva/${solicitudId}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Ambos roles: obtener dashboard personalizado
+  getDashboardReservas() {
+    return this.http.get(`${this.baseUrl}/sistema-reservas/dashboard`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ========================================
+  // MÉTODOS ANTIGUOS (MANTENER POR COMPATIBILIDAD)
+  // ========================================
+
+  // Solicitudes de reunión (sistema antiguo)
   buscarReunion(data: any) {
     return this.http.post(`${this.baseUrl}/calendario-matching/buscar-reunion`, data, {
       headers: this.getHeaders()
@@ -728,6 +952,18 @@ export class ApiService {
     });
   }
 
+  marcarReunionRealizada(id: string, data: any) {
+    return this.http.post(`${this.baseUrl}/calendario-matching/reuniones/${id}/marcar-realizada`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getHistorialReuniones() {
+    return this.http.get(`${this.baseUrl}/calendario-matching/historial-reuniones`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // Dashboard
   getDashboardReuniones() {
     return this.http.get(`${this.baseUrl}/calendario-matching/dashboard`, {
@@ -750,6 +986,39 @@ export class ApiService {
 
   eliminarBloqueo(id: string) {
     return this.http.delete(`${this.baseUrl}/calendario-matching/bloqueos/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== MÉTODOS GENÉRICOS HTTP =====
+  get(endpoint: string) {
+    return this.http.get(`${this.baseUrl}${endpoint}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  post(endpoint: string, data: any) {
+    // Para FormData, no agregar Content-Type header
+    if (data instanceof FormData) {
+      const token = localStorage.getItem('token');
+      const headers = new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+      });
+      return this.http.post(`${this.baseUrl}${endpoint}`, data, { headers });
+    }
+    return this.http.post(`${this.baseUrl}${endpoint}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  put(endpoint: string, data: any) {
+    return this.http.put(`${this.baseUrl}${endpoint}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  delete(endpoint: string) {
+    return this.http.delete(`${this.baseUrl}${endpoint}`, {
       headers: this.getHeaders()
     });
   }

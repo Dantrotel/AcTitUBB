@@ -6,6 +6,48 @@
   </div>
   
   <div class="navbar-user">
+    <!-- Panel de notificaciones -->
+    <div class="notifications-wrapper">
+      <button class="notifications-btn" (click)="togglePanelNotificaciones()">
+        <i class="fas fa-bell"></i>
+        <span *ngIf="notificacionesNoLeidas > 0" class="notification-badge">{{ notificacionesNoLeidas }}</span>
+      </button>
+      
+      <!-- Panel desplegable de notificaciones -->
+      <div *ngIf="mostrarPanelNotificaciones" class="notifications-panel">
+        <div class="panel-header">
+          <h3>Notificaciones</h3>
+          <button class="btn-small" (click)="marcarTodasComoLeidas()" *ngIf="notificacionesNoLeidas > 0">
+            Marcar todas como leídas
+          </button>
+        </div>
+        
+        <div class="notifications-list" *ngIf="notificaciones.length > 0">
+          <div *ngFor="let notificacion of notificaciones" 
+               class="notification-item" 
+               [class.no-leida]="!notificacion.leida"
+               (click)="marcarComoLeida(notificacion)">
+            <div class="notification-icon" [style.color]="obtenerColorNotificacion(notificacion.tipo)">
+              <i [class]="obtenerIconoNotificacion(notificacion.tipo)"></i>
+            </div>
+            <div class="notification-content">
+              <h4>{{ notificacion.titulo }}</h4>
+              <p>{{ notificacion.mensaje }}</p>
+              <span class="notification-time">{{ formatearTiempoNotificacion(notificacion.fecha) }}</span>
+            </div>
+            <button class="notification-close" (click)="eliminarNotificacion(notificacion.id); $event.stopPropagation()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div *ngIf="notificaciones.length === 0" class="no-notifications">
+          <i class="fas fa-bell-slash"></i>
+          <p>No hay notificaciones</p>
+        </div>
+      </div>
+    </div>
+
     <div class="user-info">
       <i class="fas fa-user-cog"></i>
       <span>{{ userName || 'Administrador' }}</span>
@@ -19,6 +61,9 @@
 
 <!-- Contenido principal -->
 <div class="main-container">
+  <!-- Componente de Alertas Críticas (solo alertas hoy y vencidas) -->
+  <app-alertas-fechas [maximoAlertas]="20" [autoRefresh]="true"></app-alertas-fechas>
+
   <!-- Header con bienvenida -->
   <div class="welcome-header">
     <div class="welcome-content">

@@ -120,24 +120,69 @@ const getMisProyectos = async (req, res) => {
 // Obtener proyectos asignados al profesor autenticado
 const getProyectosAsignados = async (req, res) => {
     try {
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol;
+        console.log('🔍 Debug getProyectosAsignados:', {
+            'req.user': req.user,
+            'req.rut': req.rut,
+            'req.rol_id': req.rol_id
+        });
+
+        // Fallback para extraer datos de usuario
+        const usuario_rut = req.user?.rut || req.rut;
+        let rol_usuario = req.user?.rol;
+
+        // Si no tenemos el rol como string, intentar convertir desde rol_id
+        if (!rol_usuario && req.rol_id) {
+            const roleMap = {
+                1: 'estudiante',
+                2: 'profesor', 
+                3: 'admin'
+            };
+            rol_usuario = roleMap[req.rol_id];
+        }
+
+        console.log('🔍 Variables extraídas:', {
+            usuario_rut,
+            rol_usuario,
+            rol_id: req.rol_id
+        });
 
         if (!usuario_rut) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
+            return res.status(401).json({ message: 'Usuario no autenticado - RUT faltante' });
         }
 
-        if (rol_usuario !== 'profesor') {
-            return res.status(403).json({ message: 'Solo profesores pueden acceder a esta ruta' });
+        // Verificación de permisos más flexible
+        const esProfesor = rol_usuario === 'profesor' || req.rol_id === 2 || req.rol_id === '2';
+        
+        if (!esProfesor) {
+            return res.status(403).json({ 
+                message: `Solo profesores pueden acceder a esta ruta. Rol actual: ${rol_usuario}, ID: ${req.rol_id}` 
+            });
         }
 
-        const projects = await ProjectService.obtenerProyectosPorPermisos(usuario_rut, rol_usuario);
+        console.log('🔍 Llamando a ProjectService.obtenerProyectosPorPermisos...');
+        
+        // Usar 'profesor' como rol por defecto si llegamos aquí
+        const projects = await ProjectService.obtenerProyectosPorPermisos(usuario_rut, rol_usuario || 'profesor');
+        
+        console.log('✅ Proyectos obtenidos exitosamente:', projects.length);
+        
         res.status(200).json({
             total: projects.length,
-            projects: projects
+            projects: projects || [], // Asegurar que siempre sea un array
+            mensaje: projects.length === 0 ? 'No tienes proyectos asignados actualmente' : undefined
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('❌ Error completo en getProyectosAsignados:', {
+            message: error.message,
+            stack: error.stack,
+            sql: error.sql,
+            code: error.code
+        });
+        
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno'
+        });
     }
 };
 
@@ -503,13 +548,10 @@ const obtenerCronograma = async (req, res) => {
 
         const cronograma = await ProjectService.obtenerCronogramaActivo(projectId);
 
-        if (!cronograma) {
-            return res.status(404).json({ message: 'No hay cronograma activo para este proyecto' });
-        }
-
         res.status(200).json({
             success: true,
-            cronograma: cronograma
+            cronograma: cronograma || null,
+            message: cronograma ? 'Cronograma obtenido exitosamente' : 'No hay cronograma activo para este proyecto'
         });
     } catch (error) {
         console.error('Error al obtener cronograma:', error);

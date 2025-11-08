@@ -18,6 +18,25 @@ export class GestionPropuestasComponent implements OnInit {
   filtroEstado = '';
   filtroEstudiante = '';
   filtroProfesor = '';
+  
+  // Evaluaciones
+  mostrarModalEvaluacion = false;
+  propuestaSeleccionada: any = null;
+  evaluaciones: any[] = [];
+  evaluacionForm = {
+    tipo: 'avance',
+    fecha: '',
+    nota: '',
+    comentarios: '',
+    criterios: {
+      cumplimiento_objetivos: '',
+      calidad_trabajo: '',
+      presentacion: '',
+      documentacion: ''
+    }
+  };
+  editandoEvaluacion = false;
+  evaluacionEditId: string | null = null;
 
   constructor(
     private router: Router,
@@ -112,7 +131,7 @@ export class GestionPropuestasComponent implements OnInit {
   }
 
   volver() {
-    // Usar history.back() para volver a la p�gina anterior sin activar guards
+    // Usar history.back() para volver a la p�gina anterior sin activar guards
     window.history.back();
   }
 
@@ -154,5 +173,151 @@ export class GestionPropuestasComponent implements OnInit {
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  // ===== GESTIÓN DE EVALUACIONES =====
+  
+  abrirModalEvaluaciones(propuesta: any) {
+    this.propuestaSeleccionada = propuesta;
+    this.mostrarModalEvaluacion = true;
+    this.cargarEvaluaciones();
+  }
+
+  cerrarModalEvaluacion() {
+    this.mostrarModalEvaluacion = false;
+    this.propuestaSeleccionada = null;
+    this.evaluaciones = [];
+    this.limpiarFormularioEvaluacion();
+  }
+
+  cargarEvaluaciones() {
+    if (!this.propuestaSeleccionada?.id) return;
+
+    this.apiService.getEvaluacionesProyecto(this.propuestaSeleccionada.id.toString()).subscribe({
+      next: (data: any) => {
+        this.evaluaciones = data;
+      },
+      error: (err) => {
+        console.error('Error al cargar evaluaciones:', err);
+        this.error = 'Error al cargar evaluaciones';
+      }
+    });
+  }
+
+  crearEvaluacion() {
+    if (!this.propuestaSeleccionada?.id) return;
+
+    const evaluacionData = {
+      ...this.evaluacionForm,
+      nota: parseFloat(this.evaluacionForm.nota),
+      fecha: new Date(this.evaluacionForm.fecha).toISOString()
+    };
+
+    if (this.editandoEvaluacion && this.evaluacionEditId) {
+      // Actualizar evaluación existente
+      this.apiService.actualizarEvaluacionProyecto(
+        this.propuestaSeleccionada.id.toString(),
+        this.evaluacionEditId,
+        evaluacionData
+      ).subscribe({
+        next: () => {
+          this.cargarEvaluaciones();
+          this.limpiarFormularioEvaluacion();
+          this.editandoEvaluacion = false;
+          this.evaluacionEditId = null;
+        },
+        error: (err) => {
+          console.error('Error al actualizar evaluación:', err);
+          this.error = 'Error al actualizar evaluación';
+        }
+      });
+    } else {
+      // Crear nueva evaluación
+      this.apiService.crearEvaluacionProyecto(this.propuestaSeleccionada.id.toString(), evaluacionData).subscribe({
+        next: () => {
+          this.cargarEvaluaciones();
+          this.limpiarFormularioEvaluacion();
+        },
+        error: (err) => {
+          console.error('Error al crear evaluación:', err);
+          this.error = 'Error al crear evaluación';
+        }
+      });
+    }
+  }
+
+  editarEvaluacion(evaluacion: any) {
+    this.evaluacionForm = {
+      tipo: evaluacion.tipo,
+      fecha: new Date(evaluacion.fecha).toISOString().split('T')[0],
+      nota: evaluacion.nota.toString(),
+      comentarios: evaluacion.comentarios || '',
+      criterios: evaluacion.criterios || {
+        cumplimiento_objetivos: '',
+        calidad_trabajo: '',
+        presentacion: '',
+        documentacion: ''
+      }
+    };
+    this.editandoEvaluacion = true;
+    this.evaluacionEditId = evaluacion.id;
+  }
+
+  eliminarEvaluacion(evaluacionId: string) {
+    if (!this.propuestaSeleccionada?.id) return;
+    
+    if (confirm('¿Estás seguro de eliminar esta evaluación?')) {
+      this.apiService.eliminarEvaluacionProyecto(
+        this.propuestaSeleccionada.id.toString(),
+        evaluacionId
+      ).subscribe({
+        next: () => {
+          this.cargarEvaluaciones();
+        },
+        error: (err) => {
+          console.error('Error al eliminar evaluación:', err);
+          this.error = 'Error al eliminar evaluación';
+        }
+      });
+    }
+  }
+
+  limpiarFormularioEvaluacion() {
+    this.evaluacionForm = {
+      tipo: 'avance',
+      fecha: '',
+      nota: '',
+      comentarios: '',
+      criterios: {
+        cumplimiento_objetivos: '',
+        calidad_trabajo: '',
+        presentacion: '',
+        documentacion: ''
+      }
+    };
+    this.editandoEvaluacion = false;
+    this.evaluacionEditId = null;
+  }
+
+  obtenerNotaPromedio(): number {
+    if (this.evaluaciones.length === 0) return 0;
+    const suma = this.evaluaciones.reduce((acc, ev) => acc + parseFloat(ev.nota), 0);
+    return Math.round((suma / this.evaluaciones.length) * 10) / 10;
+  }
+
+  obtenerColorNota(nota: number): string {
+    if (nota >= 5.5) return '#28a745'; // Verde
+    if (nota >= 4.0) return '#ffc107'; // Amarillo
+    return '#dc3545'; // Rojo
+  }
+
+  obtenerTipoEvaluacionDisplay(tipo: string): string {
+    const tipos: { [key: string]: string } = {
+      'avance': 'Avance',
+      'final': 'Final',
+      'defensa': 'Defensa',
+      'presentacion': 'Presentación'
+    };
+    return tipos[tipo] || tipo;
   }
 } 

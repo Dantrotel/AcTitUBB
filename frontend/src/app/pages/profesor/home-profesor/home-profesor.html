@@ -63,17 +63,42 @@
 
 <!-- Contenido principal -->
 <div class="main-container">
+  <!-- Componente de Alertas de Fechas Importantes -->
+  <app-alertas-fechas [maximoAlertas]="10" [autoRefresh]="true"></app-alertas-fechas>
+
   <div class="welcome-section">
     <div class="welcome-content">
-      <h1><i class="fas fa-chalkboard-teacher"></i> ¡Bienvenido, {{profesor.nombre || 'Profesor'}}!</h1>
-      <p class="status-text">
-        <i class="fas fa-info-circle"></i>
-        Panel de gestión de propuestas de título
-      </p>
+      <div class="welcome-text">
+        <h1>
+          <i class="fas fa-chalkboard-teacher"></i> 
+          ¡Bienvenido, {{profesor.nombre || 'Profesor'}}!
+        </h1>
+        <p class="status-text">
+          <i class="fas fa-university"></i>
+          Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título
+        </p>
+        <div class="welcome-stats">
+          <div class="stat-chip">
+            <i class="fas fa-tasks"></i>
+            <span>{{ estadisticas.pendientes || 0 }} Pendientes</span>
+          </div>
+          <div class="stat-chip">
+            <i class="fas fa-project-diagram"></i>
+            <span>{{ estadisticasProyectos.totalProyectos || 0 }} Proyectos</span>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="welcome-illustration">
-      <i class="fas fa-rocket"></i>
+      <div class="illustration-container">
+        <i class="fas fa-graduation-cap"></i>
+        <div class="floating-elements">
+          <i class="fas fa-star"></i>
+          <i class="fas fa-lightbulb"></i>
+          <i class="fas fa-trophy"></i>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -337,6 +362,29 @@
           </div>
         </div>
 
+        <div class="action-card featured-card" (click)="navegarAFechasImportantes()">
+          <div class="card-header">
+            <div class="action-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <span class="action-badge featured">Para tesistas</span>
+          </div>
+          <div class="action-content">
+            <h4>Fechas Importantes</h4>
+            <p>Gestionar fechas límite y entregas importantes de tus estudiantes tesistas</p>
+            <div class="feature-highlights">
+              <span class="highlight">
+                <i class="fas fa-clock"></i>
+                Recordatorios automáticos
+              </span>
+              <span class="highlight">
+                <i class="fas fa-bell"></i>
+                Notificaciones próximas
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="action-card" (click)="navegar('profesor/cronogramas')">
           <div class="action-icon">
             <i class="fas fa-calendar-alt"></i>
@@ -479,7 +527,7 @@
                   ({{ diasHastaVencimiento(hito.fecha_objetivo) }} días)
                 </span>
                 <span class="dias-retraso" *ngIf="esHitoRetrasado(hito.fecha_objetivo, hito.estado)">
-                  ({{ Math.abs(diasHastaVencimiento(hito.fecha_objetivo)) }} días de retraso)
+                  ({{ mathHelper.abs(diasHastaVencimiento(hito.fecha_objetivo)) }} días de retraso)
                 </span>
               </div>
               

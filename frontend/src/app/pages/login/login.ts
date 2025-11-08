@@ -50,8 +50,11 @@ login() {
 
       const payload = JSON.parse(atob(token.split('.')[1]));
       console.log('Payload decodificado:', payload);
-      // Guardar el token en localStorage
+      // Guardar el token y refresh token en localStorage
       localStorage.setItem('token', token);
+      if (res.refreshToken) {
+        localStorage.setItem('refreshToken', res.refreshToken);
+      }
       localStorage.setItem('userData', JSON.stringify(payload));
 
       // Redirigir según el rol (comparando como número)

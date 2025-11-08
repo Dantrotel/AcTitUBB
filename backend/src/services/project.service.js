@@ -2,6 +2,7 @@ import { ProjectModel, actualizarEstadoProyecto, obtenerProfesoresProyecto } fro
 import * as fechasImportantesModel from '../models/fechas-importantes.model.js';
 import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
 import * as AvanceModel from '../models/avance.model.js';
+import { pool } from '../db/connectionDB.js';
 
 const createProject = async (titulo, descripcion, estudianteId) => {
     if (!titulo || !descripcion) {
@@ -82,10 +83,11 @@ const transferirAsignacionesProfesores = async (propuesta_id, proyecto_id) => {
 
         // Asignar cada profesor al proyecto con rol por defecto de 'profesor_guia'
         for (const profesor of profesoresAsignados) {
-            await ProjectModel.asignarProfesorProyecto({
+            await asignacionesProfesoresModel.asignarProfesorAProyecto({
                 proyecto_id: proyecto_id,
                 profesor_rut: profesor.profesor_rut,
-                rol_profesor_id: 1 // 'profesor_guia' por defecto
+                rol_profesor_id: 1, // 'profesor_guia' por defecto
+                asignado_por: 'system' // Sistema automático
             });
         }
 
@@ -113,23 +115,38 @@ const verificarYActivarProyectoSiCompleto = async (proyecto_id) => {
             return false;
         }
 
-        // Verificar que estén los 3 roles: profesor_guia (1), profesor_revisor (2), profesor_informante (3)
-        const rolesRequeridos = [1, 2, 3];
+        // Obtener dinámicamente los roles requeridos básicos de la base de datos
+        const rolesRequeridosQuery = `
+            SELECT id, nombre FROM roles_profesores 
+            WHERE nombre IN ('profesor_guia', 'profesor_co_guia', 'profesor_informante')
+            ORDER BY id
+        `;
+        const [rolesRequeridosData] = await pool.execute(rolesRequeridosQuery);
+        const rolesRequeridos = rolesRequeridosData.map(rol => rol.id);
+        
+        if (rolesRequeridos.length === 0) {
+            console.log(`⚠️ No se encontraron roles básicos configurados en la BD`);
+            return false;
+        }
+        
         const rolesAsignados = profesoresAsignados.map(p => p.rol_profesor_id);
         
-        const todosCumplidos = rolesRequeridos.every(rol => rolesAsignados.includes(rol));
+        // Verificar que al menos estén los roles mínimos (guía es obligatorio)
+        const rolGuia = rolesRequeridosData.find(r => r.nombre === 'profesor_guia');
+        const tieneRolGuia = rolGuia && rolesAsignados.includes(rolGuia.id);
         
-        if (todosCumplidos) {
+        // Para activar el proyecto se requiere al menos el profesor guía
+        if (tieneRolGuia) {
             // Cambiar el estado del proyecto a 'en_desarrollo' (estado_id = 2)
             await actualizarEstadoProyecto(proyecto_id, 2);
-            console.log(`✅ Proyecto ${proyecto_id} activado automáticamente - Todos los roles asignados`);
+            console.log(`✅ Proyecto ${proyecto_id} activado automáticamente - Profesor guía asignado`);
             
             // TODO: Crear notificación para el estudiante
             // await crearNotificacionProyectoActivado(proyecto_id);
             
             return true;
         } else {
-            console.log(`⚠️ Proyecto ${proyecto_id}: Faltan roles. Asignados: [${rolesAsignados.join(', ')}], Requeridos: [${rolesRequeridos.join(', ')}]`);
+            console.log(`⚠️ Proyecto ${proyecto_id}: Falta profesor guía. Asignados: [${rolesAsignados.join(', ')}]`);
             return false;
         }
     } catch (error) {

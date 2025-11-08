@@ -8,34 +8,45 @@ interface Profesor {
   rut: string;
   nombre: string;
   email: string;
+  rol_nombre?: string;
+  proyecto_id?: number;
+  proyecto_titulo?: string;
 }
 
 interface Proyecto {
   id: number;
   titulo: string;
-  estudiante_rut: string;
-  profesor_guia_rut?: string;
-  profesor_guia_nombre?: string;
+  rol_profesor?: string;
 }
 
 interface SolicitudReunion {
   id?: number;
   proyecto_id?: number;
-  profesor_rut: string;
-  motivo: string;
-  duracion_minutos: number;
-  urgencia: 'baja' | 'media' | 'alta';
-  estado: string;
-  fecha_solicitud?: string;
-  comentarios_adicionales?: string;
+  proyecto_titulo?: string;
+  profesor_rut?: string;
   profesor_nombre?: string;
+  estudiante_rut?: string;
+  estudiante_nombre?: string;
+  fecha_propuesta: string;
+  hora_propuesta: string;
+  duracion_minutos: number;
+  tipo_reunion: string;
+  descripcion?: string;
+  estado: 'pendiente' | 'aceptada' | 'rechazada';
+  created_at?: string;
+  comentarios_profesor?: string;
 }
 
-interface OpcionReunion {
-  fecha: string;
+interface HorarioDisponible {
+  id: number;
+  profesor_rut: string;
+  profesor_nombre: string;
+  dia_semana: string;
   hora_inicio: string;
   hora_fin: string;
-  probabilidad_exito: number;
+  fecha_propuesta: string;
+  activo: boolean;
+  reservado: boolean;
 }
 
 @Component({
@@ -46,48 +57,41 @@ interface OpcionReunion {
   styleUrls: ['./solicitudes-reunion.component.scss']
 })
 export class SolicitudesReunionComponent implements OnInit {
+  // Listas principales
   profesores: Profesor[] = [];
-  proyectos: Proyecto[] = [];
   solicitudes: SolicitudReunion[] = [];
-  opcionesReunion: OpcionReunion[] = [];
+  horariosDisponibles: HorarioDisponible[] = [];
   
-  nuevaSolicitud: SolicitudReunion = {
-    proyecto_id: undefined,
-    profesor_rut: '',
-    motivo: '',
-    duracion_minutos: 60,
-    urgencia: 'media',
-    estado: 'pendiente',
-    comentarios_adicionales: ''
-  };
-
-  mostrarOpciones = false;
+  // Estado de la UI
   profesorSeleccionado: Profesor | null = null;
+  proyectoActual: Proyecto | null = null;
+  mostrarHorarios = false;
   isLoading = false;
-  isBuscandoOpciones = false;
+  isCargandoHorarios = false;
   errorMessage = '';
   successMessage = '';
+  
+  // Filtros
+  diasAdelante = 14;
 
-  motivosComunes = [
-    'Reunión de seguimiento de proyecto',
-    'Consulta sobre metodología',
-    'Revisión de avances',
-    'Planificación de objetivos',
-    'Resolución de dudas',
-    'Otro (especificar en comentarios)'
-  ];
+  // Formulario de nueva reserva
+  nuevaReserva = {
+    disponibilidad_id: 0,
+    proyecto_id: 0,
+    fecha_propuesta: '',
+    hora_inicio_bloque: '',
+    hora_fin_bloque: '',
+    tipo_reunion: 'seguimiento',
+    descripcion: ''
+  };
 
-  duracionesDisponibles = [
-    { value: 30, label: '30 minutos' },
-    { value: 60, label: '1 hora' },
-    { value: 90, label: '1 hora 30 minutos' },
-    { value: 120, label: '2 horas' }
-  ];
-
-  nivelesUrgencia = [
-    { value: 'baja', label: 'Baja', color: '#48bb78', description: 'Puede esperar más de una semana' },
-    { value: 'media', label: 'Media', color: '#ed8936', description: 'Preferible en esta semana' },
-    { value: 'alta', label: 'Alta', color: '#f56565', description: 'Urgente, dentro de 2-3 días' }
+  // Opciones
+  tiposReunion = [
+    { value: 'seguimiento', label: 'Seguimiento de proyecto' },
+    { value: 'revision_avance', label: 'Revisión de avances' },
+    { value: 'orientacion', label: 'Orientación metodológica' },
+    { value: 'defensa_parcial', label: 'Defensa parcial' },
+    { value: 'otra', label: 'Otra' }
   ];
 
   constructor(
@@ -96,188 +100,198 @@ export class SolicitudesReunionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.cargarProyectos();
     this.cargarProfesores();
     this.cargarSolicitudes();
   }
 
-  cargarProyectos() {
-    this.apiService.getMisProyectos().subscribe({
-      next: (response: any) => {
-        this.proyectos = response.data || response || [];
-      },
-      error: (error) => {
-        console.error('Error al cargar proyectos:', error);
-        this.errorMessage = 'Error al cargar la lista de proyectos';
-      }
-    });
-  }
+  // ==========================================
+  // CARGA DE DATOS
+  // ==========================================
 
   cargarProfesores() {
-    this.apiService.getProfesoresParaReunion().subscribe({
+    this.isLoading = true;
+    this.apiService.getProfesoresAsignados().subscribe({
       next: (response: any) => {
-        this.profesores = response.data || response || [];
+        console.log('Profesores asignados:', response);
+        this.profesores = response.data || [];
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error al cargar profesores:', error);
         this.errorMessage = 'Error al cargar la lista de profesores';
+        this.isLoading = false;
       }
     });
   }
 
   cargarSolicitudes() {
-    this.isLoading = true;
-    this.apiService.getSolicitudesReunion().subscribe({
+    this.apiService.getMisSolicitudes().subscribe({
       next: (response: any) => {
-        this.solicitudes = response.data || response || [];
-        this.isLoading = false;
+        console.log('Mis solicitudes (raw):', response);
+        this.solicitudes = response.data || [];
+        
+        // Debug: Verificar fecha_propuesta de cada solicitud
+        this.solicitudes.forEach((sol, index) => {
+          console.log(`Solicitud ${index}:`, {
+            id: sol.id,
+            fecha_propuesta: sol.fecha_propuesta,
+            hora_propuesta: sol.hora_propuesta,
+            estado: sol.estado
+          });
+        });
       },
       error: (error) => {
         console.error('Error al cargar solicitudes:', error);
         this.errorMessage = 'Error al cargar las solicitudes';
-        this.isLoading = false;
       }
     });
   }
 
-  onProfesorChange() {
-    this.profesorSeleccionado = this.profesores.find(p => p.rut === this.nuevaSolicitud.profesor_rut) || null;
-    this.mostrarOpciones = false;
-    this.opcionesReunion = [];
-  }
-
-  buscarOpcionesReunion() {
-    if (!this.validarSolicitud()) {
-      return;
-    }
-
-    if (!this.nuevaSolicitud.proyecto_id) {
-      this.errorMessage = 'Debe seleccionar un proyecto';
-      return;
-    }
-
-    this.isBuscandoOpciones = true;
+  cargarHorariosDisponibles(profesorRut: string) {
+    this.isCargandoHorarios = true;
     this.errorMessage = '';
+    this.horariosDisponibles = [];
 
-    const datosBusqueda = {
-      proyecto_id: this.nuevaSolicitud.proyecto_id,
-      tipo_reunion: 'seguimiento',
-      descripcion: this.nuevaSolicitud.motivo,
-      duracion_minutos: this.nuevaSolicitud.duracion_minutos
-    };
-
-    this.apiService.buscarReunion(datosBusqueda).subscribe({
+    this.apiService.getHorariosDisponibles(profesorRut, this.diasAdelante).subscribe({
       next: (response: any) => {
-        this.opcionesReunion = response.data?.opciones || response.opciones || [];
-        this.mostrarOpciones = true;
-        this.isBuscandoOpciones = false;
-        
-        if (this.opcionesReunion.length === 0) {
-          this.errorMessage = 'No se encontraron horarios disponibles. Intenta con diferentes parámetros.';
+        console.log('Horarios disponibles:', response);
+        this.horariosDisponibles = response.data || [];
+        this.proyectoActual = response.proyecto || null;
+        this.mostrarHorarios = true;
+        this.isCargandoHorarios = false;
+
+        if (this.horariosDisponibles.length === 0) {
+          this.errorMessage = `${this.profesorSeleccionado?.nombre} no tiene horarios disponibles en los próximos ${this.diasAdelante} días.`;
         }
       },
       error: (error) => {
-        console.error('Error al buscar opciones:', error);
-        this.errorMessage = error.error?.message || 'Error al buscar opciones de reunión';
-        this.isBuscandoOpciones = false;
-        this.mostrarOpciones = false;
+        console.error('Error al cargar horarios:', error);
+        this.errorMessage = error.error?.message || 'Error al cargar horarios disponibles';
+        this.isCargandoHorarios = false;
+        this.mostrarHorarios = false;
       }
     });
   }
 
-  seleccionarOpcion(opcion: OpcionReunion) {
+  // ==========================================
+  // EVENTOS DE SELECCIÓN
+  // ==========================================
+
+  onProfesorChange() {
+    const profesorRut = (document.getElementById('profesor') as HTMLSelectElement)?.value;
+    
+    if (!profesorRut) {
+      this.profesorSeleccionado = null;
+      this.mostrarHorarios = false;
+      this.horariosDisponibles = [];
+      return;
+    }
+
+    this.profesorSeleccionado = this.profesores.find(p => p.rut === profesorRut) || null;
+    
+    if (this.profesorSeleccionado) {
+      this.cargarHorariosDisponibles(this.profesorSeleccionado.rut);
+    }
+  }
+
+  // ==========================================
+  // RESERVAR HORARIO
+  // ==========================================
+
+  seleccionarHorario(horario: HorarioDisponible) {
+    if (!this.proyectoActual) {
+      this.errorMessage = 'No se pudo identificar el proyecto';
+      return;
+    }
+
+    if (horario.reservado) {
+      this.errorMessage = 'Este horario ya está reservado';
+      return;
+    }
+
+    // Confirmar reserva
+    const confirmacion = confirm(
+      `¿Deseas reservar este horario?\n\n` +
+      `Profesor: ${horario.profesor_nombre}\n` +
+      `Fecha: ${this.formatearFecha(horario.fecha_propuesta)}\n` +
+      `Hora: ${this.formatearHora(horario.hora_inicio)} - ${this.formatearHora(horario.hora_fin)}\n` +
+      `Día: ${this.capitalizarDia(horario.dia_semana)}`
+    );
+
+    if (!confirmacion) return;
+
     this.isLoading = true;
     this.errorMessage = '';
 
-    const solicitudCompleta = {
-      ...this.nuevaSolicitud,
-      fecha_propuesta: opcion.fecha,
-      hora_inicio_propuesta: opcion.hora_inicio,
-      hora_fin_propuesta: opcion.hora_fin
+    const reservaData = {
+      disponibilidad_id: horario.id,
+      proyecto_id: this.proyectoActual.id,
+      fecha_propuesta: horario.fecha_propuesta,
+      hora_inicio_bloque: horario.hora_inicio,
+      hora_fin_bloque: horario.hora_fin,
+      tipo_reunion: this.nuevaReserva.tipo_reunion,
+      descripcion: this.nuevaReserva.descripcion || `Reunión de ${this.nuevaReserva.tipo_reunion}`
     };
 
-    this.apiService.crearSolicitudReunion(solicitudCompleta).subscribe({
+    this.apiService.reservarHorario(reservaData).subscribe({
       next: (response: any) => {
-        this.successMessage = 'Solicitud de reunión enviada exitosamente';
+        console.log('Reserva exitosa:', response);
+        this.successMessage = '✅ Horario reservado exitosamente. El profesor debe aceptar la solicitud.';
+        
+        // Recargar datos
         this.cargarSolicitudes();
-        this.limpiarFormulario();
+        if (this.profesorSeleccionado) {
+          this.cargarHorariosDisponibles(this.profesorSeleccionado.rut);
+        }
+        
+        // Limpiar formulario
+        this.nuevaReserva.descripcion = '';
+        this.nuevaReserva.tipo_reunion = 'seguimiento';
+        
         this.isLoading = false;
-        setTimeout(() => this.successMessage = '', 3000);
+        setTimeout(() => this.successMessage = '', 5000);
       },
       error: (error) => {
-        console.error('Error al crear solicitud:', error);
-        this.errorMessage = error.error?.message || 'Error al enviar la solicitud';
+        console.error('Error al reservar:', error);
+        this.errorMessage = error.error?.message || 'Error al reservar el horario';
         this.isLoading = false;
       }
     });
   }
 
-  cancelarSolicitud(solicitudId: number) {
-    if (!confirm('¿Estás seguro de cancelar esta solicitud?')) {
+  // ==========================================
+  // CANCELAR RESERVA
+  // ==========================================
+
+  cancelarReserva(solicitudId: number) {
+    if (!confirm('¿Estás seguro de cancelar esta reserva? El horario quedará disponible nuevamente.')) {
       return;
     }
 
     this.isLoading = true;
-    this.apiService.responderSolicitudReunion(solicitudId.toString(), {
-      respuesta: 'cancelada',
-      comentarios: 'Cancelada por el estudiante'
-    }).subscribe({
+    this.apiService.cancelarReserva(solicitudId).subscribe({
       next: (response: any) => {
-        this.successMessage = 'Solicitud cancelada exitosamente';
+        this.successMessage = 'Reserva cancelada exitosamente';
         this.cargarSolicitudes();
+        
+        if (this.profesorSeleccionado) {
+          this.cargarHorariosDisponibles(this.profesorSeleccionado.rut);
+        }
+        
         this.isLoading = false;
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al cancelar solicitud:', error);
-        this.errorMessage = 'Error al cancelar la solicitud';
+        console.error('Error al cancelar:', error);
+        this.errorMessage = error.error?.message || 'Error al cancelar la reserva';
         this.isLoading = false;
       }
     });
   }
 
-  private validarSolicitud(): boolean {
-    if (!this.nuevaSolicitud.proyecto_id) {
-      this.errorMessage = 'Debe seleccionar un proyecto';
-      return false;
-    }
-
-    if (!this.nuevaSolicitud.profesor_rut) {
-      this.errorMessage = 'Debe seleccionar un profesor';
-      return false;
-    }
-
-    if (!this.nuevaSolicitud.motivo.trim()) {
-      this.errorMessage = 'Debe especificar el motivo de la reunión';
-      return false;
-    }
-
-    if (!this.nuevaSolicitud.duracion_minutos) {
-      this.errorMessage = 'Debe seleccionar la duración de la reunión';
-      return false;
-    }
-
-    return true;
-  }
-
-  private limpiarFormulario() {
-    this.nuevaSolicitud = {
-      proyecto_id: undefined,
-      profesor_rut: '',
-      motivo: '',
-      duracion_minutos: 60,
-      urgencia: 'media',
-      estado: 'pendiente',
-      comentarios_adicionales: ''
-    };
-    this.profesorSeleccionado = null;
-    this.mostrarOpciones = false;
-    this.opcionesReunion = [];
-  }
-
-  getUrgenciaInfo(urgencia: string) {
-    return this.nivelesUrgencia.find(n => n.value === urgencia) || this.nivelesUrgencia[1];
-  }
+  // ==========================================
+  // UTILIDADES
+  // ==========================================
 
   getEstadoClass(estado: string): string {
     switch (estado) {
@@ -306,24 +320,93 @@ export class SolicitudesReunionComponent implements OnInit {
   }
 
   formatearFecha(fecha: string): string {
-    return new Date(fecha).toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!fecha) return 'Fecha no disponible';
+    try {
+      // Si viene en formato ISO (2025-11-05T03:00:00.000Z), extraer solo la fecha
+      let fechaStr = fecha;
+      if (fecha.includes('T')) {
+        fechaStr = fecha.split('T')[0]; // Extraer "2025-11-05"
+      }
+      
+      // Parsear manualmente para evitar problemas de timezone
+      const [year, month, day] = fechaStr.split('-').map(Number);
+      if (!year || !month || !day) return 'Fecha inválida';
+      const date = new Date(year, month - 1, day); // month es 0-indexed
+      return date.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formateando fecha:', fecha, error);
+      return 'Fecha inválida';
+    }
+  }
+
+  formatearFechaCorta(fecha: string): string {
+    if (!fecha) return 'N/A';
+    try {
+      // Si viene en formato ISO (2025-11-05T03:00:00.000Z), extraer solo la fecha
+      let fechaStr = fecha;
+      if (fecha.includes('T')) {
+        fechaStr = fecha.split('T')[0]; // Extraer "2025-11-05"
+      }
+      
+      // Parsear manualmente para evitar problemas de timezone
+      const [year, month, day] = fechaStr.split('-').map(Number);
+      if (!year || !month || !day) return 'N/A';
+      const date = new Date(year, month - 1, day); // month es 0-indexed
+      return date.toLocaleDateString('es-ES', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      });
+    } catch (error) {
+      console.error('Error formateando fecha corta:', fecha, error);
+      return 'N/A';
+    }
   }
 
   formatearHora(hora: string): string {
     return hora.slice(0, 5); // HH:MM
   }
 
+  capitalizarDia(dia: string): string {
+    return dia.charAt(0).toUpperCase() + dia.slice(1).toLowerCase();
+  }
+
+  getDiaClass(dia: string): string {
+    const dias: { [key: string]: string } = {
+      'lunes': 'dia-lunes',
+      'martes': 'dia-martes',
+      'miercoles': 'dia-miercoles',
+      'jueves': 'dia-jueves',
+      'viernes': 'dia-viernes',
+      'sabado': 'dia-sabado',
+      'domingo': 'dia-domingo'
+    };
+    return dias[dia.toLowerCase()] || '';
+  }
+
+  getEstadoIcon(estado: string): string {
+    switch (estado) {
+      case 'pendiente': return '⏳';
+      case 'aceptada': return '✅';
+      case 'rechazada': return '❌';
+      default: return '❓';
+    }
+  }
+
   trackByIndex(index: number, item: any): number {
     return index;
   }
 
+  trackById(index: number, item: any): number {
+    return item.id || index;
+  }
+
   volver() {
-    // Usar history.back() para volver a la p�gina anterior sin activar guards
     window.history.back();
   }
 }
