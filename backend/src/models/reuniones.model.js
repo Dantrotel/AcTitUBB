@@ -609,3 +609,425 @@ async function verificarConflictoHorario(profesor_rut, estudiante_rut, fecha, ho
     
     return rows[0].ocupado > 0;
 }
+
+// ===== GESTIÓN DE ACTAS DE REUNIÓN =====
+
+/**
+ * Generar número de acta automático
+ * @param {number} proyectoId 
+ * @returns {Promise<string>}
+ */
+async function generarNumeroActa(proyectoId) {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) + 1 as siguiente
+        FROM actas_reunion
+        WHERE proyecto_id = ?
+    `, [proyectoId]);
+    
+    const numero = rows[0].siguiente;
+    const año = new Date().getFullYear();
+    return `ACT-${String(proyectoId).padStart(3, '0')}-${String(numero).padStart(3, '0')}-${año}`;
+}
+
+/**
+ * Crear acta de reunión
+ * @param {Object} data - Datos del acta
+ * @returns {Promise<number>} - ID del acta creada
+ */
+export const crearActaReunion = async ({
+    reunion_id,
+    proyecto_id,
+    fecha_reunion,
+    hora_inicio,
+    hora_fin,
+    lugar = null,
+    asistentes,
+    objetivo,
+    temas_tratados,
+    acuerdos,
+    tareas_asignadas = null,
+    proximos_pasos = null,
+    observaciones = null,
+    creado_por
+}) => {
+    try {
+        // Validar que la reunión existe
+        const [reunion] = await pool.execute(`
+            SELECT * FROM reuniones_calendario WHERE id = ?
+        `, [reunion_id]);
+
+        if (reunion.length === 0) {
+            throw new Error('Reunión no encontrada');
+        }
+
+        // Validar que el creador es parte de la reunión
+        if (reunion[0].profesor_rut !== creado_por && reunion[0].estudiante_rut !== creado_por) {
+            throw new Error('Solo los participantes pueden crear el acta');
+        }
+
+        // Verificar que no exista ya un acta para esta reunión
+        const [actaExistente] = await pool.execute(`
+            SELECT id FROM actas_reunion WHERE reunion_id = ?
+        `, [reunion_id]);
+
+        if (actaExistente.length > 0) {
+            throw new Error('Ya existe un acta para esta reunión');
+        }
+
+        const numero_acta = await generarNumeroActa(proyecto_id);
+
+        // Convertir asistentes a JSON si es array
+        const asistentesJSON = typeof asistentes === 'string' ? asistentes : JSON.stringify(asistentes);
+
+        const [result] = await pool.execute(`
+            INSERT INTO actas_reunion (
+                reunion_id, proyecto_id, numero_acta, fecha_reunion,
+                hora_inicio, hora_fin, lugar, asistentes, objetivo,
+                temas_tratados, acuerdos, tareas_asignadas, proximos_pasos,
+                observaciones, creado_por, estado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'borrador')
+        `, [
+            reunion_id, proyecto_id, numero_acta, fecha_reunion,
+            hora_inicio, hora_fin, lugar, asistentesJSON, objetivo,
+            temas_tratados, acuerdos, tareas_asignadas, proximos_pasos,
+            observaciones, creado_por
+        ]);
+
+        return result.insertId;
+    } catch (error) {
+        console.error('Error al crear acta:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener acta por ID
+ * @param {number} actaId 
+ * @returns {Promise<Object>}
+ */
+export const obtenerActaPorId = async (actaId) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                ar.*,
+                p.titulo AS proyecto_titulo,
+                p.estudiante_rut,
+                u_est.nombre AS estudiante_nombre,
+                u_creador.nombre AS creado_por_nombre,
+                rc.profesor_rut,
+                u_prof.nombre AS profesor_nombre
+            FROM actas_reunion ar
+            INNER JOIN proyectos p ON ar.proyecto_id = p.id
+            INNER JOIN usuarios u_est ON p.estudiante_rut = u_est.rut
+            INNER JOIN usuarios u_creador ON ar.creado_por = u_creador.rut
+            INNER JOIN reuniones_calendario rc ON ar.reunion_id = rc.id
+            INNER JOIN usuarios u_prof ON rc.profesor_rut = u_prof.rut
+            WHERE ar.id = ?
+        `, [actaId]);
+
+        if (rows.length === 0) return null;
+
+        const acta = rows[0];
+        // Parsear asistentes si es JSON
+        try {
+            acta.asistentes = JSON.parse(acta.asistentes);
+        } catch (e) {
+            // Si no es JSON válido, dejar como está
+        }
+
+        return acta;
+    } catch (error) {
+        console.error('Error al obtener acta:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener actas por proyecto
+ * @param {number} proyectoId 
+ * @returns {Promise<Array>}
+ */
+export const obtenerActasPorProyecto = async (proyectoId) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                ar.*,
+                rc.tipo_reunion,
+                u_creador.nombre AS creado_por_nombre,
+                CASE 
+                    WHEN ar.firma_estudiante = TRUE AND ar.firma_profesor = TRUE THEN 'firmada'
+                    WHEN ar.firma_estudiante = FALSE OR ar.firma_profesor = FALSE THEN 'pendiente_firma'
+                    ELSE ar.estado
+                END as estado_calculado
+            FROM actas_reunion ar
+            INNER JOIN reuniones_calendario rc ON ar.reunion_id = rc.id
+            INNER JOIN usuarios u_creador ON ar.creado_por = u_creador.rut
+            WHERE ar.proyecto_id = ?
+            ORDER BY ar.fecha_reunion DESC, ar.created_at DESC
+        `, [proyectoId]);
+
+        return rows;
+    } catch (error) {
+        console.error('Error al obtener actas por proyecto:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener actas por reunión
+ * @param {number} reunionId 
+ * @returns {Promise<Object|null>}
+ */
+export const obtenerActaPorReunion = async (reunionId) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                ar.*,
+                p.titulo AS proyecto_titulo,
+                u_creador.nombre AS creado_por_nombre
+            FROM actas_reunion ar
+            INNER JOIN proyectos p ON ar.proyecto_id = p.id
+            INNER JOIN usuarios u_creador ON ar.creado_por = u_creador.rut
+            WHERE ar.reunion_id = ?
+        `, [reunionId]);
+
+        if (rows.length === 0) return null;
+
+        const acta = rows[0];
+        try {
+            acta.asistentes = JSON.parse(acta.asistentes);
+        } catch (e) {}
+
+        return acta;
+    } catch (error) {
+        console.error('Error al obtener acta por reunión:', error);
+        throw error;
+    }
+};
+
+/**
+ * Actualizar acta de reunión
+ * @param {number} actaId 
+ * @param {Object} data 
+ * @param {string} usuario_rut 
+ * @returns {Promise<boolean>}
+ */
+export const actualizarActa = async (actaId, data, usuario_rut) => {
+    try {
+        // Verificar que el acta existe y el usuario tiene permisos
+        const [acta] = await pool.execute(`
+            SELECT ar.*, p.estudiante_rut, rc.profesor_rut
+            FROM actas_reunion ar
+            INNER JOIN proyectos p ON ar.proyecto_id = p.id
+            INNER JOIN reuniones_calendario rc ON ar.reunion_id = rc.id
+            WHERE ar.id = ?
+        `, [actaId]);
+
+        if (acta.length === 0) {
+            throw new Error('Acta no encontrada');
+        }
+
+        const actaData = acta[0];
+
+        // Solo el creador puede editar si está en borrador
+        if (actaData.estado === 'borrador' && actaData.creado_por !== usuario_rut) {
+            throw new Error('Solo el creador puede editar el acta en borrador');
+        }
+
+        // No se puede editar si ya está firmada
+        if (actaData.estado === 'firmada') {
+            throw new Error('No se puede editar un acta firmada');
+        }
+
+        const updateFields = [];
+        const updateValues = [];
+
+        const camposEditables = [
+            'objetivo', 'temas_tratados', 'acuerdos', 'tareas_asignadas',
+            'proximos_pasos', 'observaciones', 'lugar'
+        ];
+
+        camposEditables.forEach(campo => {
+            if (data[campo] !== undefined) {
+                updateFields.push(`${campo} = ?`);
+                updateValues.push(data[campo]);
+            }
+        });
+
+        if (data.asistentes) {
+            updateFields.push('asistentes = ?');
+            updateValues.push(typeof data.asistentes === 'string' ? data.asistentes : JSON.stringify(data.asistentes));
+        }
+
+        if (updateFields.length === 0) {
+            return false;
+        }
+
+        updateValues.push(actaId);
+
+        const [result] = await pool.execute(`
+            UPDATE actas_reunion 
+            SET ${updateFields.join(', ')}
+            WHERE id = ?
+        `, updateValues);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al actualizar acta:', error);
+        throw error;
+    }
+};
+
+/**
+ * Firmar acta (estudiante o profesor)
+ * @param {number} actaId 
+ * @param {string} usuario_rut 
+ * @param {string} tipo - 'estudiante' o 'profesor'
+ * @returns {Promise<Object>}
+ */
+export const firmarActa = async (actaId, usuario_rut, tipo) => {
+    try {
+        const [acta] = await pool.execute(`
+            SELECT ar.*, p.estudiante_rut, rc.profesor_rut
+            FROM actas_reunion ar
+            INNER JOIN proyectos p ON ar.proyecto_id = p.id
+            INNER JOIN reuniones_calendario rc ON ar.reunion_id = rc.id
+            WHERE ar.id = ?
+        `, [actaId]);
+
+        if (acta.length === 0) {
+            throw new Error('Acta no encontrada');
+        }
+
+        const actaData = acta[0];
+
+        // Validar que el usuario corresponde al tipo
+        if (tipo === 'estudiante' && actaData.estudiante_rut !== usuario_rut) {
+            throw new Error('No eres el estudiante de este proyecto');
+        }
+
+        if (tipo === 'profesor' && actaData.profesor_rut !== usuario_rut) {
+            throw new Error('No eres el profesor de esta reunión');
+        }
+
+        // Verificar que el acta no esté ya firmada por este usuario
+        const campoFirma = tipo === 'estudiante' ? 'firma_estudiante' : 'firma_profesor';
+        if (actaData[campoFirma]) {
+            throw new Error('Ya has firmado esta acta');
+        }
+
+        // Actualizar firma
+        const campoFechaFirma = tipo === 'estudiante' ? 'fecha_firma_estudiante' : 'fecha_firma_profesor';
+        
+        await pool.execute(`
+            UPDATE actas_reunion 
+            SET ${campoFirma} = TRUE, 
+                ${campoFechaFirma} = CURRENT_TIMESTAMP,
+                estado = CASE 
+                    WHEN firma_estudiante = TRUE AND firma_profesor = TRUE THEN 'firmada'
+                    ELSE 'pendiente_firma'
+                END
+            WHERE id = ?
+        `, [actaId]);
+
+        // Verificar si ambos firmaron
+        const [actaActualizada] = await pool.execute(`
+            SELECT firma_estudiante, firma_profesor, estado
+            FROM actas_reunion WHERE id = ?
+        `, [actaId]);
+
+        const ambasFirmas = actaActualizada[0].firma_estudiante && actaActualizada[0].firma_profesor;
+
+        return {
+            success: true,
+            firmado_por: tipo,
+            acta_completa: ambasFirmas,
+            estado: actaActualizada[0].estado
+        };
+    } catch (error) {
+        console.error('Error al firmar acta:', error);
+        throw error;
+    }
+};
+
+/**
+ * Publicar acta (cambiar de borrador a pendiente_firma)
+ * @param {number} actaId 
+ * @param {string} usuario_rut 
+ * @returns {Promise<boolean>}
+ */
+export const publicarActa = async (actaId, usuario_rut) => {
+    try {
+        const [acta] = await pool.execute(`
+            SELECT * FROM actas_reunion WHERE id = ?
+        `, [actaId]);
+
+        if (acta.length === 0) {
+            throw new Error('Acta no encontrada');
+        }
+
+        if (acta[0].creado_por !== usuario_rut) {
+            throw new Error('Solo el creador puede publicar el acta');
+        }
+
+        if (acta[0].estado !== 'borrador') {
+            throw new Error('Solo se pueden publicar actas en borrador');
+        }
+
+        const [result] = await pool.execute(`
+            UPDATE actas_reunion 
+            SET estado = 'pendiente_firma'
+            WHERE id = ?
+        `, [actaId]);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al publicar acta:', error);
+        throw error;
+    }
+};
+
+/**
+ * Archivar acta
+ * @param {number} actaId 
+ * @param {string} usuario_rut 
+ * @returns {Promise<boolean>}
+ */
+export const archivarActa = async (actaId, usuario_rut) => {
+    try {
+        const [acta] = await pool.execute(`
+            SELECT ar.*, p.estudiante_rut, rc.profesor_rut
+            FROM actas_reunion ar
+            INNER JOIN proyectos p ON ar.proyecto_id = p.id
+            INNER JOIN reuniones_calendario rc ON ar.reunion_id = rc.id
+            WHERE ar.id = ?
+        `, [actaId]);
+
+        if (acta.length === 0) {
+            throw new Error('Acta no encontrada');
+        }
+
+        const actaData = acta[0];
+
+        // Solo profesor o admin pueden archivar
+        if (actaData.profesor_rut !== usuario_rut) {
+            throw new Error('Solo el profesor puede archivar actas');
+        }
+
+        // Solo se pueden archivar actas firmadas
+        if (actaData.estado !== 'firmada') {
+            throw new Error('Solo se pueden archivar actas firmadas');
+        }
+
+        const [result] = await pool.execute(`
+            UPDATE actas_reunion 
+            SET estado = 'archivada'
+            WHERE id = ?
+        `, [actaId]);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al archivar acta:', error);
+        throw error;
+    }
+};

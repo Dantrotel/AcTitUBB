@@ -288,8 +288,38 @@ export class ApiService {
     });
   }
 
+  getDetalleUsuario(rut: string) {
+    return this.http.get(`${this.baseUrl}/admin/usuarios/${rut}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearUsuario(data: any) {
+    return this.http.post(`${this.baseUrl}/admin/usuarios`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
   actualizarUsuario(rut: string, data: any) {
     return this.http.put(`${this.baseUrl}/admin/usuarios/${rut}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  cambiarEstadoUsuario(rut: string, confirmado: boolean) {
+    return this.http.put(`${this.baseUrl}/admin/usuarios/${rut}/estado`, { confirmado }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  cambiarRolUsuario(rut: string, rol_id: number) {
+    return this.http.put(`${this.baseUrl}/admin/usuarios/${rut}/rol`, { rol_id }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  resetearPasswordUsuario(rut: string, nueva_password: string) {
+    return this.http.post(`${this.baseUrl}/admin/usuarios/${rut}/reset-password`, { nueva_password }, {
       headers: this.getHeaders()
     });
   }
@@ -299,6 +329,13 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/users/perfil`, data, {
       headers: this.getHeaders()
     });
+  }
+
+  cambiarPasswordPropia(password_actual: string, password_nueva: string) {
+    return this.http.put(`${this.baseUrl}/users/cambiar-password`, 
+      { password_actual, password_nueva },
+      { headers: this.getHeaders() }
+    );
   }
 
   eliminarUsuario(rut: string) {

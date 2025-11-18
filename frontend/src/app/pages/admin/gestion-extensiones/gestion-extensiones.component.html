@@ -1,0 +1,298 @@
+<div class="page-container">
+  <nav class="navbar">
+    <button class="btn-back" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+    <h1>Gestión de Extensiones de Plazo</h1>
+  </nav>
+
+  <div class="page-content">
+    <!-- Estadísticas -->
+    <div class="estadisticas-grid" *ngIf="estadisticas">
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ estadisticas.total_solicitudes }}</h3>
+          <p>Total Solicitudes</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon pendiente">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ estadisticas.pendientes }}</h3>
+          <p>Pendientes</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon revision">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ estadisticas.en_revision }}</h3>
+          <p>En Revisión</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon aprobada">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ estadisticas.aprobadas }}</h3>
+          <p>Aprobadas</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon promedio">
+          <i class="fas fa-calendar-plus"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ estadisticas.promedio_dias_extension || 0 }}</h3>
+          <p>Días Promedio Extensión</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert alert-error" *ngIf="error">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ error }}</span>
+    </div>
+
+    <div class="alert alert-success" *ngIf="mensaje">
+      <i class="fas fa-check-circle"></i>
+      <span>{{ mensaje }}</span>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="loading && solicitudes.length === 0">
+      <div class="spinner"></div>
+      <p>Cargando solicitudes...</p>
+    </div>
+
+    <!-- Tabla de Solicitudes -->
+    <div class="solicitudes-container" *ngIf="!loading || solicitudes.length > 0">
+      <div class="table-header">
+        <h2>
+          <i class="fas fa-list"></i>
+          Solicitudes Pendientes y En Revisión
+        </h2>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="solicitudes.length === 0 && !loading">
+        <i class="fas fa-inbox"></i>
+        <h3>No hay solicitudes pendientes</h3>
+        <p>Todas las solicitudes han sido procesadas</p>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-responsive" *ngIf="solicitudes.length > 0">
+        <table class="solicitudes-table">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Estudiante</th>
+              <th>Fecha Original</th>
+              <th>Fecha Solicitada</th>
+              <th>Días</th>
+              <th>Estado</th>
+              <th>Solicitud</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let solicitud of solicitudes">
+              <td>
+                <strong>{{ solicitud.proyecto_titulo }}</strong>
+              </td>
+              <td>{{ solicitud.estudiante_nombre }}</td>
+              <td>{{ formatearFechaCorta(solicitud.fecha_original) }}</td>
+              <td>{{ formatearFechaCorta(solicitud.fecha_solicitada) }}</td>
+              <td>
+                <span class="dias-badge">+{{ solicitud.dias_extension }} días</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getEstadoBadgeClass(solicitud.estado)">
+                  {{ getEstadoLabel(solicitud.estado) }}
+                </span>
+              </td>
+              <td>
+                <small class="fecha-solicitud">
+                  Hace {{ solicitud.dias_desde_solicitud }} días
+                </small>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button 
+                    class="btn-icon btn-info" 
+                    (click)="verDetalle(solicitud)"
+                    title="Ver detalle">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button 
+                    class="btn-icon btn-warning" 
+                    (click)="marcarEnRevision(solicitud)"
+                    *ngIf="solicitud.estado === 'pendiente'"
+                    title="Marcar en revisión">
+                    <i class="fas fa-search"></i>
+                  </button>
+                  <button 
+                    class="btn-icon btn-success" 
+                    (click)="abrirModalAprobar(solicitud)"
+                    title="Aprobar">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button 
+                    class="btn-icon btn-danger" 
+                    (click)="abrirModalRechazar(solicitud)"
+                    title="Rechazar">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalle -->
+<div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-info-circle"></i>
+        Detalle de Solicitud
+      </h3>
+      <button class="btn-close" (click)="cerrarModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="solicitudSeleccionada">
+      <div class="detalle-grid">
+        <div class="detalle-item">
+          <label>Proyecto:</label>
+          <span>{{ solicitudSeleccionada.proyecto_titulo }}</span>
+        </div>
+
+        <div class="detalle-item">
+          <label>Estudiante:</label>
+          <span>{{ solicitudSeleccionada.estudiante_nombre }}</span>
+        </div>
+
+        <div class="detalle-item">
+          <label>Fecha Original:</label>
+          <span>{{ formatearFecha(solicitudSeleccionada.fecha_original) }}</span>
+        </div>
+
+        <div class="detalle-item">
+          <label>Fecha Solicitada:</label>
+          <span>{{ formatearFecha(solicitudSeleccionada.fecha_solicitada) }}</span>
+        </div>
+
+        <div class="detalle-item full-width">
+          <label>Días de Extensión:</label>
+          <span class="dias-badge-large">{{ solicitudSeleccionada.dias_extension }} días</span>
+        </div>
+
+        <div class="detalle-item full-width">
+          <label>Motivo:</label>
+          <div class="texto-box">{{ solicitudSeleccionada.motivo }}</div>
+        </div>
+
+        <div class="detalle-item full-width">
+          <label>Justificación Detallada:</label>
+          <div class="texto-box">{{ solicitudSeleccionada.justificacion_detallada }}</div>
+        </div>
+
+        <div class="detalle-item full-width" *ngIf="solicitudSeleccionada.documento_respaldo">
+          <label>Documento Respaldo:</label>
+          <a [href]="'http://localhost:3000/uploads/extensiones/' + solicitudSeleccionada.documento_respaldo" 
+             target="_blank" 
+             class="btn-download">
+            <i class="fas fa-download"></i>
+            Descargar Documento
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModal()">Cerrar</button>
+      <button class="btn btn-success" (click)="cerrarModal(); abrirModalAprobar(solicitudSeleccionada!)">
+        <i class="fas fa-check"></i>
+        Aprobar
+      </button>
+      <button class="btn btn-danger" (click)="cerrarModal(); abrirModalRechazar(solicitudSeleccionada!)">
+        <i class="fas fa-times"></i>
+        Rechazar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Acción (Aprobar/Rechazar) -->
+<div class="modal-overlay" *ngIf="mostrarModalAccion" (click)="cerrarModalAccion()">
+  <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i [class]="accion === 'aprobar' ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+        {{ accion === 'aprobar' ? 'Aprobar' : 'Rechazar' }} Solicitud
+      </h3>
+      <button class="btn-close" (click)="cerrarModalAccion()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p *ngIf="accion === 'aprobar'">
+        ¿Estás seguro de que deseas <strong>aprobar</strong> esta solicitud de extensión?
+        La fecha límite se actualizará automáticamente.
+      </p>
+      <p *ngIf="accion === 'rechazar'">
+        ¿Estás seguro de que deseas <strong>rechazar</strong> esta solicitud de extensión?
+        El estudiante será notificado.
+      </p>
+
+      <div class="form-group">
+        <label for="comentarios">
+          Comentarios {{ accion === 'rechazar' ? '(Obligatorio, mínimo 20 caracteres)' : '(Opcional)' }}:
+        </label>
+        <textarea 
+          id="comentarios"
+          class="form-textarea" 
+          [(ngModel)]="comentarios" 
+          rows="4"
+          [placeholder]="accion === 'rechazar' ? 'Explica el motivo del rechazo...' : 'Agrega comentarios adicionales (opcional)...'"
+          [required]="accion === 'rechazar'"></textarea>
+        <small class="help-text" *ngIf="accion === 'rechazar'">
+          {{ comentarios.length }}/1000 caracteres (mínimo 20)
+        </small>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalAccion()">Cancelar</button>
+      <button 
+        class="btn" 
+        [ngClass]="accion === 'aprobar' ? 'btn-success' : 'btn-danger'"
+        (click)="confirmarAccion()"
+        [disabled]="loading">
+        <i [class]="loading ? 'fas fa-spinner fa-spin' : (accion === 'aprobar' ? 'fas fa-check' : 'fas fa-times')"></i>
+        {{ loading ? 'Procesando...' : (accion === 'aprobar' ? 'Confirmar Aprobación' : 'Confirmar Rechazo') }}
+      </button>
+    </div>
+  </div>
+</div>

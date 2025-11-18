@@ -52,17 +52,17 @@ export class FechasImportantesProfesorComponent implements OnInit {
 
   cargarProyectosAsignados() {
     this.cargando = true;
-    console.log('🔍 FechasProfesor - Cargando proyectos asignados...');
+    // // // console.log('🔍 FechasProfesor - Cargando proyectos asignados...');
     
     // Cargar proyectos donde el profesor es guía o co-guía
     this.apiService.getProyectosProfesor().subscribe({
       next: (response: any) => {
-        console.log('🔍 FechasProfesor - Proyectos asignados:', response);
+        // // // console.log('🔍 FechasProfesor - Proyectos asignados:', response);
         this.proyectosAsignados = Array.isArray(response) ? response : (response.data || []);
         this.cargarTodasLasFechas();
       },
       error: (error) => {
-        console.error('❌ Error al cargar proyectos del profesor:', error);
+        // console.error('❌ Error al cargar proyectos del profesor:', error);
         this.proyectosAsignados = [];
         this.cargando = false;
       }
@@ -76,7 +76,7 @@ export class FechasImportantesProfesorComponent implements OnInit {
       return;
     }
 
-    console.log('🔍 FechasProfesor - Cargando fechas de todos los proyectos...');
+    // // // console.log('🔍 FechasProfesor - Cargando fechas de todos los proyectos...');
     this.fechasImportantes = [];
 
     // Cargar fechas importantes de todos los proyectos asignados
@@ -102,10 +102,10 @@ export class FechasImportantesProfesorComponent implements OnInit {
         new Date(a.fecha_limite).getTime() - new Date(b.fecha_limite).getTime()
       );
 
-      console.log('✅ FechasProfesor - Fechas cargadas:', this.fechasImportantes);
+      // // // console.log('✅ FechasProfesor - Fechas cargadas:', this.fechasImportantes);
       this.cargando = false;
     }).catch(error => {
-      console.error('❌ Error cargando fechas:', error);
+      // console.error('❌ Error cargando fechas:', error);
       this.cargando = false;
     });
   }
@@ -128,7 +128,7 @@ export class FechasImportantesProfesorComponent implements OnInit {
         this.cargando = false;
       },
       error: (error) => {
-        console.error('❌ Error cargando fechas del proyecto:', error);
+        // console.error('❌ Error cargando fechas del proyecto:', error);
         this.fechasImportantes = [];
         this.cargando = false;
       }
@@ -144,17 +144,17 @@ export class FechasImportantesProfesorComponent implements OnInit {
   crearFechaImportante() {
     if (!this.validarFormulario()) return;
 
-    console.log('🔍 FechasProfesor - Creando fecha importante:', this.nuevaFecha);
+    // // // console.log('🔍 FechasProfesor - Creando fecha importante:', this.nuevaFecha);
 
     this.apiService.crearFechaImportante(this.nuevaFecha.proyecto_id, this.nuevaFecha).subscribe({
       next: (response) => {
-        console.log('✅ Fecha importante creada:', response);
+        // // // console.log('✅ Fecha importante creada:', response);
         this.mostrarFormulario = false;
         this.cargarTodasLasFechas();
         this.limpiarFormulario();
       },
       error: (error) => {
-        console.error('❌ Error al crear fecha importante:', error);
+        // console.error('❌ Error al crear fecha importante:', error);
         alert('Error al crear la fecha importante. Intenta de nuevo.');
       }
     });
@@ -182,14 +182,14 @@ export class FechasImportantesProfesorComponent implements OnInit {
       this.nuevaFecha
     ).subscribe({
       next: (response) => {
-        console.log('✅ Fecha importante actualizada:', response);
+        // // // console.log('✅ Fecha importante actualizada:', response);
         this.mostrarFormulario = false;
         this.fechaSeleccionada = null;
         this.cargarTodasLasFechas();
         this.limpiarFormulario();
       },
       error: (error) => {
-        console.error('❌ Error al actualizar fecha importante:', error);
+        // console.error('❌ Error al actualizar fecha importante:', error);
         alert('Error al actualizar la fecha importante. Intenta de nuevo.');
       }
     });
@@ -199,11 +199,11 @@ export class FechasImportantesProfesorComponent implements OnInit {
     if (confirm(`¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`)) {
       this.apiService.eliminarFechaImportante(fecha.proyecto_id, fecha.id).subscribe({
         next: () => {
-          console.log('✅ Fecha importante eliminada');
+          // // // console.log('✅ Fecha importante eliminada');
           this.cargarTodasLasFechas();
         },
         error: (error) => {
-          console.error('❌ Error al eliminar fecha importante:', error);
+          // console.error('❌ Error al eliminar fecha importante:', error);
           alert('Error al eliminar la fecha importante. Intenta de nuevo.');
         }
       });
@@ -215,10 +215,10 @@ export class FechasImportantesProfesorComponent implements OnInit {
     this.apiService.marcarFechaCompletada(fecha.proyecto_id, fecha.id, estadoNuevo).subscribe({
       next: () => {
         fecha.completada = estadoNuevo;
-        console.log(`✅ Fecha ${estadoNuevo ? 'completada' : 'marcada como pendiente'}`);
+        // console.log(`✅ Fecha ${estadoNuevo ? 'completada' : 'marcada como pendiente'}`);
       },
       error: (error) => {
-        console.error('❌ Error al cambiar estado de la fecha:', error);
+        // console.error('❌ Error al cambiar estado de la fecha:', error);
         alert('Error al cambiar el estado de la fecha.');
       }
     });

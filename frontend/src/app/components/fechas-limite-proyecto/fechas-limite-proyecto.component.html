@@ -1,0 +1,160 @@
+<div class="fechas-limite-container">
+  <div class="fechas-header">
+    <h3>
+      <i class="fas fa-calendar-alt"></i>
+      Fechas Límite y Entregas
+    </h3>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando fechas...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="alert alert-error" *ngIf="error && !loading">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && !error && fechas.length === 0">
+    <i class="fas fa-calendar-times"></i>
+    <h4>No hay fechas importantes registradas</h4>
+    <p>Tu profesor aún no ha establecido fechas de entrega para este proyecto.</p>
+  </div>
+
+  <!-- Lista de Fechas -->
+  <div class="fechas-lista" *ngIf="!loading && !error && fechas.length > 0">
+    <div 
+      class="fecha-card" 
+      *ngFor="let fecha of fechas"
+      [class.completada]="fecha.completada"
+      [class.vencida]="fecha.estado === 'vencida' && !fecha.completada"
+      [class.vigente]="fecha.estado === 'vigente'">
+      
+      <!-- Header de la tarjeta -->
+      <div class="fecha-header">
+        <div class="fecha-tipo">
+          <i class="fas fa-bookmark"></i>
+          <span>{{ getTipoFechaLabel(fecha.tipo_fecha) }}</span>
+        </div>
+        <span class="badge" [ngClass]="getEstadoBadgeClass(fecha.estado)">
+          <i [class]="fecha.completada ? 'fas fa-check-circle' : 'fas fa-circle'"></i>
+          {{ getEstadoLabel(fecha.estado) }}
+        </span>
+      </div>
+
+      <!-- Título y descripción -->
+      <div class="fecha-body">
+        <h4>{{ fecha.titulo }}</h4>
+        <p class="descripcion" *ngIf="fecha.descripcion">
+          {{ fecha.descripcion }}
+        </p>
+
+        <!-- Información de fechas -->
+        <div class="fecha-info">
+          <div class="info-item">
+            <i class="fas fa-calendar"></i>
+            <span>
+              <strong>Fecha límite:</strong> 
+              {{ formatearFecha(fecha.fecha_limite) }}
+            </span>
+          </div>
+
+          <!-- Si tiene extensión aprobada -->
+          <div class="info-item extension-aprobada" *ngIf="fecha.fecha_limite_extendida">
+            <i class="fas fa-calendar-plus"></i>
+            <span>
+              <strong>Extensión aprobada:</strong> 
+              {{ formatearFecha(fecha.fecha_limite_extendida) }}
+              <span class="badge badge-success">
+                +{{ fecha.extension?.dias_extension }} días
+              </span>
+            </span>
+          </div>
+
+          <!-- Si tiene extensión pendiente -->
+          <div class="info-item extension-pendiente" *ngIf="fecha.extension && fecha.extension.estado !== 'aprobada'">
+            <i class="fas fa-clock"></i>
+            <span>
+              <strong>Extensión {{ fecha.extension.estado }}:</strong>
+              {{ formatearFecha(fecha.extension.fecha_solicitada) }}
+            </span>
+          </div>
+
+          <!-- Creado por -->
+          <div class="info-item" *ngIf="fecha.creado_por_nombre">
+            <i class="fas fa-user"></i>
+            <span>
+              <strong>Establecido por:</strong> {{ fecha.creado_por_nombre }}
+            </span>
+          </div>
+
+          <!-- Días restantes -->
+          <div class="info-item dias-restantes">
+            <i class="fas fa-hourglass-half"></i>
+            <span 
+              class="dias-badge" 
+              [ngClass]="getDiasRestantesClass(fecha.dias_restantes, fecha.estado)">
+              {{ getDiasRestantesTexto(fecha.dias_restantes, fecha.estado) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Mensaje de motivo/restricción -->
+        <div class="motivo-box" *ngIf="fecha.motivo">
+          <i [class]="fecha.puede_subir ? 'fas fa-info-circle' : 'fas fa-exclamation-triangle'"></i>
+          <span>{{ fecha.motivo }}</span>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="fecha-actions" *ngIf="fecha.requiere_entrega && !fecha.completada">
+        
+        <!-- Si puede subir archivos -->
+        <button 
+          class="btn btn-primary"
+          *ngIf="fecha.puede_subir"
+          (click)="subirArchivos(fecha)">
+          <i class="fas fa-upload"></i>
+          Subir Archivos
+        </button>
+
+        <!-- Si puede solicitar prórroga -->
+        <button 
+          class="btn btn-warning"
+          *ngIf="fecha.puede_solicitar_extension && !fecha.puede_subir"
+          (click)="solicitarProrroga(fecha)">
+          <i class="fas fa-clock"></i>
+          Solicitar Prórroga
+        </button>
+
+        <!-- Si tiene extensión pendiente -->
+        <div class="alert alert-info" *ngIf="fecha.extension && (fecha.extension.estado === 'pendiente' || fecha.extension.estado === 'en_revision')">
+          <i class="fas fa-spinner fa-pulse"></i>
+          <span>Tu solicitud de extensión está {{ fecha.extension.estado }}. Espera la respuesta del administrador.</span>
+        </div>
+
+        <!-- Si está vencida y no permite extensión -->
+        <div class="alert alert-danger" *ngIf="fecha.estado === 'vencida' && !fecha.puede_solicitar_extension && !fecha.puede_subir">
+          <i class="fas fa-ban"></i>
+          <span>Esta fecha ha vencido y no permite solicitar extensiones.</span>
+        </div>
+      </div>
+
+      <!-- Si está completada -->
+      <div class="completada-badge" *ngIf="fecha.completada">
+        <i class="fas fa-check-double"></i>
+        <span>Entrega completada el {{ formatearFecha(fecha.fecha_realizada || '') }}</span>
+      </div>
+
+      <!-- Si no requiere entrega, solo es informativa -->
+      <div class="info-badge" *ngIf="!fecha.requiere_entrega">
+        <i class="fas fa-info-circle"></i>
+        <span>Esta fecha es solo informativa, no requiere entrega de documentos</span>
+      </div>
+    </div>
+  </div>
+</div>

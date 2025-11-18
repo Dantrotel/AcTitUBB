@@ -13,6 +13,11 @@ import asignacionesProfesoresRouter from './routes/asignaciones-profesores.route
 import calendarioMatchingRouter from './routes/calendario-matching.route.js';
 import sistemaReservasRouter from './routes/sistema-reservas.route.js';
 import documentoRouter from './routes/documento.routes.js';
+import comisionRouter from './routes/comision.route.js';
+import extensionRouter from './routes/extension.route.js';
+import reunionesRouter from './routes/reuniones.route.js';
+import fechasLimiteRouter from './routes/fechas-limite.route.js';
+import periodoPropuestasRouter from './routes/periodo-propuestas.route.js';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 
@@ -121,6 +126,11 @@ app.use('/api/v1/asignaciones-profesores', asignacionesProfesoresRouter);
 app.use('/api/v1/calendario-matching', calendarioMatchingRouter);
 app.use('/api/v1/sistema-reservas', sistemaReservasRouter);
 app.use('/api/v1/documentos', documentoRouter);
+app.use('/api/v1/comision', comisionRouter);
+app.use('/api/v1/extensiones', extensionRouter);
+app.use('/api/v1/reuniones', reunionesRouter);
+app.use('/api/v1/fechas-limite', fechasLimiteRouter);
+app.use('/api/v1/periodo-propuestas', periodoPropuestasRouter);
 
 
 

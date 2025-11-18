@@ -333,98 +333,11 @@
     </div>
   </div>
 
-  <!-- Fechas importantes (solo cuando hay proyecto activo) -->
-  <div class="fechas-importantes-section" *ngIf="proyectoActivo">
-    <div class="fechas-card">
-      <div class="card-header">
-        <i class="fas fa-calendar-exclamation"></i>
-        <h3>Fechas Importantes</h3>
-        <div class="loading-indicator" *ngIf="loadingFechas">
-          <i class="fas fa-spinner fa-spin"></i>
-        </div>
-      </div>
-      
-      <div class="card-content">
-        <!-- Fechas próximas (alertas) -->
-        <div class="fechas-proximas" *ngIf="fechasProximas.length > 0">
-          <h4><i class="fas fa-exclamation-triangle"></i> Fechas Próximas</h4>
-          <div class="fechas-list">
-            <div 
-              *ngFor="let fecha of fechasProximas" 
-              class="fecha-item proxima"
-              [class]="getFechaClaseEstado(fecha)">
-              <div class="fecha-icon">
-                <i class="fas fa-calendar-day"></i>
-              </div>
-              <div class="fecha-info">
-                <div class="fecha-titulo">{{ fecha.titulo }}</div>
-                <div class="fecha-tipo">{{ formatearTipoFecha(fecha.tipo_fecha) }}</div>
-                <div class="fecha-tiempo">{{ getTextoTiempoFecha(fecha) }}</div>
-                <div class="fecha-fecha">{{ formatearFechaCompleta(fecha.fecha_limite) }}</div>
-              </div>
-              <div class="fecha-acciones" *ngIf="!fecha.completada">
-                <button 
-                  class="btn-completar" 
-                  (click)="completarFechaImportante(fecha.id)"
-                  title="Marcar como completada">
-                  <i class="fas fa-check"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Todas las fechas importantes -->
-        <div class="fechas-todas" *ngIf="fechasImportantes.length > 0">
-          <h4><i class="fas fa-list"></i> Todas las Fechas</h4>
-          <div class="fechas-grid">
-            <div 
-              *ngFor="let fecha of fechasImportantes" 
-              class="fecha-card"
-              [class]="getFechaClaseEstado(fecha)">
-              <div class="fecha-header">
-                <span class="fecha-tipo-badge">{{ formatearTipoFecha(fecha.tipo_fecha) }}</span>
-                <span class="fecha-estado">{{ getFechaEstado(fecha) }}</span>
-              </div>
-              <div class="fecha-body">
-                <h5>{{ fecha.titulo }}</h5>
-                <p *ngIf="fecha.descripcion">{{ fecha.descripcion }}</p>
-                <div class="fecha-meta">
-                  <div class="fecha-limite">
-                    <i class="fas fa-calendar"></i>
-                    {{ fecha.fecha_limite | date:'dd/MM/yyyy' }}
-                  </div>
-                  <div class="fecha-tiempo-restante">
-                    <i class="fas fa-clock"></i>
-                    {{ getTextoTiempoFecha(fecha) }}
-                  </div>
-                </div>
-              </div>
-              <div class="fecha-footer" *ngIf="!fecha.completada">
-                <button 
-                  class="btn-completar-small" 
-                  (click)="completarFechaImportante(fecha.id)">
-                  <i class="fas fa-check"></i>
-                  Completar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mensaje cuando no hay fechas -->
-        <div class="no-fechas" *ngIf="!loadingFechas && fechasImportantes.length === 0 && fechasProximas.length === 0">
-          <div class="no-fechas-icon">
-            <i class="fas fa-calendar-plus"></i>
-          </div>
-          <div class="no-fechas-text">
-            <h4>No hay fechas importantes</h4>
-            <p>Tu profesor aún no ha establecido fechas importantes para este proyecto</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Fechas importantes con límites de entrega (componente integrado) -->
+  <app-fechas-limite-proyecto 
+    *ngIf="proyectoActivo" 
+    [proyectoId]="proyectoActivo.id">
+  </app-fechas-limite-proyecto>
 
   <!-- Sección de estadísticas rápidas -->
   <div class="stats-section">

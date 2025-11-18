@@ -42,5 +42,6 @@ router.get('/confirm/:token', async (req, res) => {
 router.post('/logout', loginController.logout);
 router.get('/:rut', loginController.findUserByRut);
 router.put('/perfil', verifySession, loginController.actualizarPerfil);
+router.put('/cambiar-password', verifySession, loginController.cambiarPasswordPropia);
 
 export default router;

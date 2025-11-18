@@ -346,26 +346,64 @@ $dark-gray: #343a40;
   }
 }
 
-// Calendario Matching card styles
-.calendar-matching-card {
-  background: linear-gradient(135deg, $info-color 0%, #138496 100%);
-  border: 2px solid rgba(23, 162, 184, 0.3);
+// Sistema de Calendario Unificado card styles
+.calendar-unified-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid rgba(102, 126, 234, 0.3);
   color: white;
+  grid-column: span 2; // Ocupa 2 columnas para destacar
 
-  .card-icon i {
-    color: white;
+  .card-icon {
+    background: rgba(255, 255, 255, 0.2);
+    
+    i {
+      color: white;
+    }
   }
 
   .card-content h3 {
     color: white;
+    font-size: 1.5rem;
   }
 
   .card-content p {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    .badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.3s ease;
+
+      i {
+        font-size: 0.9rem;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.35);
+        transform: scale(1.05);
+      }
+    }
   }
 
   .card-actions .action-text {
     color: white;
+    font-weight: 600;
   }
 
   .card-actions i {
@@ -374,39 +412,14 @@ $dark-gray: #343a40;
 
   &:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(23, 162, 184, 0.3);
+    box-shadow: 0 16px 40px rgba(102, 126, 234, 0.4);
   }
 }
 
-// Fechas importantes card styles
-.fechas-importantes-card {
-  background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
-  border: 2px solid rgba(32, 201, 151, 0.3);
-  color: white;
-
-  .card-icon i {
-    color: white;
-  }
-
-  .card-content h3 {
-    color: white;
-  }
-
-  .card-content p {
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .card-actions .action-text {
-    color: white;
-  }
-
-  .card-actions i {
-    color: white;
-  }
-
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(32, 201, 151, 0.3);
+// Responsive para la tarjeta unificada
+@media (max-width: 768px) {
+  .calendar-unified-card {
+    grid-column: span 1;
   }
 }
 

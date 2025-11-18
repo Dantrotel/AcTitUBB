@@ -17,11 +17,16 @@ import {
 // Crear fecha global (solo admin)
 export const crearFechaGlobalController = async (req, res) => {
     try {
-        const { titulo, descripcion, fecha, tipo_fecha } = req.body;
+        console.log('📅 Intentando crear fecha global...');
+        console.log('  - Body:', req.body);
+        console.log('  - Usuario:', req.user);
+        
+        const { titulo, descripcion, fecha, tipo_fecha, es_global } = req.body;
         const creado_por_rut = req.user?.rut;
 
         // Validar campos requeridos
         if (!titulo || !fecha || !tipo_fecha) {
+            console.error('❌ Faltan campos requeridos');
             return res.status(400).json({ 
                 message: 'Faltan campos requeridos: titulo, fecha, tipo_fecha' 
             });
@@ -29,41 +34,52 @@ export const crearFechaGlobalController = async (req, res) => {
 
         // Validar que el usuario esté autenticado
         if (!req.user || !creado_por_rut) {
+            console.error('❌ Usuario no autenticado');
             return res.status(401).json({ 
                 message: 'Usuario no autenticado' 
             });
         }
 
         // Verificar que el usuario sea admin
+        console.log('  - Rol del usuario:', req.user.rol);
         if (req.user.rol !== 'admin') {
+            console.error('❌ Usuario no es admin, rol:', req.user.rol);
             return res.status(403).json({ 
-                message: 'Solo los administradores pueden crear fechas globales' 
+                message: 'Solo los administradores pueden crear fechas globales',
+                debug: {
+                    rolRecibido: req.user.rol,
+                    rolEsperado: 'admin'
+                }
             });
         }
 
         // Validar formato de fecha
         if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            console.error('❌ Formato de fecha inválido:', fecha);
             return res.status(400).json({ 
                 message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
             });
         }
 
+        console.log('✅ Validaciones OK, creando fecha en BD...');
         const fechaId = await crearFechaGlobal({
             titulo,
             descripcion,
             fecha,
             tipo_fecha,
+            es_global: es_global || false,
             creado_por_rut
         });
 
+        console.log('✅ Fecha creada exitosamente, ID:', fechaId);
         res.status(201).json({
             ok: true,
             message: 'Fecha global creada exitosamente',
             fecha_id: fechaId
         });
     } catch (error) {
-        console.error('Error al crear fecha global:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        console.error('❌ Error al crear fecha global:', error);
+        res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
 

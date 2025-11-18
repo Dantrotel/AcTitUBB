@@ -161,9 +161,10 @@ export class HomeProfesor implements OnInit {
 
     // Cargar proyectos asignados
     this.ApiService.getProyectosAsignados().subscribe({
-      next: (proyectos: any) => {
-        if (proyectos && proyectos.success) {
-          const listaProyectos = proyectos.data || [];
+      next: (response: any) => {
+        // ✅ FIX: Backend devuelve { total, projects }, no { success, data }
+        if (response && response.projects) {
+          const listaProyectos = response.projects || [];
           this.estadisticasProyectos.totalProyectos = listaProyectos.length;
           this.estadisticasProyectos.enDesarrollo = listaProyectos.filter((p: any) => 
             p.estado_proyecto?.includes('desarrollo') || p.estado_proyecto?.includes('en_desarrollo')).length;
@@ -324,9 +325,10 @@ export class HomeProfesor implements OnInit {
 
   cargarFechasImportantesProyectos() {
     this.ApiService.getProyectosAsignados().subscribe({
-      next: (proyectos: any) => {
-        if (proyectos && proyectos.success) {
-          const promesasFechas = proyectos.data.map((proyecto: any) => 
+      next: (response: any) => {
+        // ✅ FIX: Backend devuelve { total, projects }, no { success, data }
+        if (response && response.projects) {
+          const promesasFechas = response.projects.map((proyecto: any) => 
             this.ApiService.getFechasImportantesProyecto(proyecto.id).toPromise()
               .then((fechasResponse: any) => {
                 if (fechasResponse && fechasResponse.success) {
@@ -367,9 +369,10 @@ export class HomeProfesor implements OnInit {
 
   cargarHitosProximos() {
     this.ApiService.getProyectosAsignados().subscribe({
-      next: (proyectos: any) => {
-        if (proyectos && proyectos.success) {
-          proyectos.data.forEach((proyecto: any) => {
+      next: (response: any) => {
+        // ✅ FIX: Backend devuelve { total, projects }, no { success, data }
+        if (response && response.projects) {
+          response.projects.forEach((proyecto: any) => {
             this.ApiService.getHitosProyecto(proyecto.id.toString()).subscribe({
               next: (hitos: any) => {
                 if (hitos && hitos.success) {
