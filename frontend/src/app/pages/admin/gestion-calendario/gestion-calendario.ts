@@ -39,7 +39,8 @@ export class GestionCalendarioComponent implements OnInit {
     titulo: '',
     descripcion: '',
     fecha: '',
-    tipo_fecha: ''
+    tipo_fecha: '',
+    es_global: false
   };
 
   // Modal de eliminación
@@ -170,16 +171,24 @@ export class GestionCalendarioComponent implements OnInit {
   }
 
   crearFecha() {
+    console.log('🔍 Intentando crear fecha global:', this.nuevaFecha);
+    
     if (!this.nuevaFecha.titulo || !this.nuevaFecha.fecha || !this.nuevaFecha.tipo_fecha) {
+      console.error('❌ Validación fallida - campos faltantes:', {
+        titulo: this.nuevaFecha.titulo,
+        fecha: this.nuevaFecha.fecha,
+        tipo_fecha: this.nuevaFecha.tipo_fecha
+      });
       alert('Por favor completa todos los campos requeridos');
       return;
     }
 
+    console.log('✅ Validación OK, enviando datos...');
     this.guardando = true;
     
     this.apiService.crearFechaGlobal(this.nuevaFecha).subscribe({
       next: (response: any) => {
-        console.log('Fecha creada:', response);
+        console.log('✅ Fecha creada exitosamente:', response);
         alert('Fecha global creada exitosamente');
         this.limpiarFormulario();
         this.mostrarFormulario = false;
@@ -187,8 +196,26 @@ export class GestionCalendarioComponent implements OnInit {
         this.guardando = false;
       },
       error: (error) => {
-        console.error('Error al crear fecha:', error);
-        alert('Error al crear la fecha: ' + (error.error?.message || 'Error desconocido'));
+        console.error('❌ Error al crear fecha:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.error?.message,
+          error: error
+        });
+        
+        let mensajeError = 'Error desconocido';
+        
+        if (error.status === 401) {
+          mensajeError = 'No estás autenticado. Por favor inicia sesión de nuevo.';
+        } else if (error.status === 403) {
+          mensajeError = 'No tienes permisos para crear fechas globales (solo administradores).';
+        } else if (error.status === 400) {
+          mensajeError = error.error?.message || 'Datos inválidos en el formulario.';
+        } else if (error.error?.message) {
+          mensajeError = error.error.message;
+        }
+        
+        alert('Error al crear la fecha: ' + mensajeError);
         this.guardando = false;
       }
     });
@@ -199,7 +226,8 @@ export class GestionCalendarioComponent implements OnInit {
       titulo: '',
       descripcion: '',
       fecha: '',
-      tipo_fecha: ''
+      tipo_fecha: '',
+      es_global: false
     };
   }
 

@@ -1,0 +1,181 @@
+<div class="fechas-importantes-container">
+  <div class="header">
+    <h2>
+      <i class="fas fa-calendar-check"></i>
+      Gestión de Fechas Importantes
+    </h2>
+    <button class="btn btn-primary" (click)="mostrarFormularioCrear()">
+      <i class="fas fa-plus"></i>
+      Nueva Fecha
+    </button>
+  </div>
+
+  <!-- Formulario de creación/edición -->
+  <div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cancelarFormulario()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{fechaSeleccionada ? 'Editar' : 'Crear'}} Fecha Importante</h3>
+        <button class="btn-close" (click)="cancelarFormulario()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form (ngSubmit)="guardarFecha()" class="fecha-form">
+        <div class="form-group">
+          <label for="titulo">Título *</label>
+          <input 
+            type="text" 
+            id="titulo"
+            [(ngModel)]="nuevaFecha.titulo"
+            name="titulo"
+            placeholder="Título de la fecha importante"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea 
+            id="descripcion"
+            [(ngModel)]="nuevaFecha.descripcion"
+            name="descripcion"
+            placeholder="Descripción detallada"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="proyecto">Proyecto *</label>
+            <select id="proyecto" [(ngModel)]="nuevaFecha.proyecto_id" name="proyecto_id" required>
+              <option value="">Seleccionar proyecto</option>
+              <ng-container *ngFor="let proyecto of proyectos">
+                <option [value]="proyecto.id">{{proyecto.titulo}}</option>
+              </ng-container>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="fecha_limite">Fecha Límite *</label>
+            <input 
+              type="date" 
+              id="fecha_limite"
+              [(ngModel)]="nuevaFecha.fecha_limite"
+              name="fecha_limite"
+              required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tipo_fecha">Tipo de Fecha</label>
+            <select id="tipo_fecha" [(ngModel)]="nuevaFecha.tipo_fecha" name="tipo_fecha">
+              <ng-container *ngFor="let tipo of tiposFecha">
+                <option [value]="tipo.value">{{tipo.label}}</option>
+              </ng-container>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="prioridad">Prioridad</label>
+            <select id="prioridad" [(ngModel)]="nuevaFecha.prioridad" name="prioridad">
+              <ng-container *ngFor="let prioridad of prioridades">
+                <option [value]="prioridad.value">{{prioridad.label}}</option>
+              </ng-container>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelarFormulario()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="cargando">
+            <i class="fas fa-save"></i>
+            {{fechaSeleccionada ? 'Actualizar' : 'Crear'}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="cargando">
+    <i class="fas fa-spinner fa-spin"></i>
+    Cargando fechas importantes...
+  </div>
+
+  <!-- Lista de fechas importantes -->
+  <div class="fechas-grid" *ngIf="!cargando">
+    <div class="fecha-card" 
+         *ngFor="let fecha of (fechas && fechas.length ? fechas : []); trackBy: trackById" 
+         [ngClass]="[obtenerClasePrioridad(fecha.prioridad), obtenerClaseEstado(fecha)]">
+      
+      <div class="fecha-header">
+        <div class="fecha-tipo">
+          <i class="fas fa-calendar-alt"></i>
+          {{fecha.tipo_fecha | titlecase}}
+        </div>
+        <div class="fecha-prioridad">
+          {{fecha.prioridad | titlecase}}
+        </div>
+      </div>
+
+      <div class="fecha-content">
+        <h4 class="fecha-titulo">{{fecha.titulo}}</h4>
+        <p class="fecha-descripcion" *ngIf="fecha.descripcion">
+          {{fecha.descripcion}}
+        </p>
+        <div class="fecha-proyecto">
+          <i class="fas fa-project-diagram"></i>
+          {{fecha.proyecto_nombre}}
+        </div>
+      </div>
+
+      <div class="fecha-footer">
+        <div class="fecha-limite">
+          <i class="fas fa-clock"></i>
+          {{formatearFecha(fecha.fecha_limite)}}
+        </div>
+        
+        <div class="fecha-estado" *ngIf="fecha.completada">
+          <i class="fas fa-check-circle"></i>
+          Completada
+        </div>
+      </div>
+
+      <div class="fecha-actions">
+        <button 
+          class="btn btn-sm btn-success" 
+          *ngIf="!fecha.completada"
+          (click)="completarFecha(fecha)"
+          title="Marcar como completada">
+          <i class="fas fa-check"></i>
+        </button>
+        
+        <button 
+          class="btn btn-sm btn-warning" 
+          (click)="editarFecha(fecha)"
+          title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        
+        <button 
+          class="btn btn-sm btn-danger" 
+          (click)="eliminarFecha(fecha)"
+          title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="empty-state" *ngIf="fechas.length === 0">
+      <i class="fas fa-calendar-times"></i>
+      <h3>No hay fechas importantes</h3>
+      <p>Comienza creando una nueva fecha importante para tus proyectos</p>
+      <button class="btn btn-primary" (click)="mostrarFormularioCrear()">
+        <i class="fas fa-plus"></i>
+        Crear Primera Fecha
+      </button>
+    </div>
+  </div>
+</div>

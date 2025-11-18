@@ -1,0 +1,99 @@
+<div class="comision-container">
+  <div class="comision-header">
+    <h3>
+      <i class="fas fa-users"></i>
+      Comisión Evaluadora
+    </h3>
+    
+    <div class="estado-badge" *ngIf="estadoComision">
+      <span [class]="estadoComision.completa ? 'badge badge-success' : 'badge badge-warning'">
+        <i [class]="estadoComision.completa ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
+        {{ estadoComision.completa ? 'Comisión Completa' : 'Comisión Incompleta' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando comisión...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="alert alert-error" *ngIf="error && !loading">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && !error && comision.length === 0">
+    <i class="fas fa-user-slash"></i>
+    <h4>No hay comisión asignada</h4>
+    <p>Este proyecto aún no tiene una comisión evaluadora asignada.</p>
+  </div>
+
+  <!-- Miembros de la Comisión -->
+  <div class="miembros-grid" *ngIf="!loading && !error && comision.length > 0">
+    <div class="miembro-card" *ngFor="let miembro of comision">
+      <div class="miembro-header">
+        <div class="miembro-avatar">
+          <i class="fas fa-user-tie"></i>
+        </div>
+        
+        <div class="miembro-info">
+          <h4>{{ miembro.profesor_nombre }}</h4>
+          <span class="badge" [ngClass]="getRolClass(miembro.rol_comision)">
+            {{ getRolLabel(miembro.rol_comision) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="miembro-detalles">
+        <div class="detalle-item">
+          <i class="fas fa-envelope"></i>
+          <span>{{ miembro.profesor_email }}</span>
+        </div>
+        
+        <div class="detalle-item">
+          <i class="fas fa-id-card"></i>
+          <span>{{ miembro.profesor_rut }}</span>
+        </div>
+        
+        <div class="detalle-item">
+          <i class="fas fa-calendar"></i>
+          <span>Designado: {{ formatearFecha(miembro.fecha_designacion) }}</span>
+        </div>
+        
+        <div class="detalle-item observaciones" *ngIf="miembro.observaciones">
+          <i class="fas fa-info-circle"></i>
+          <span>{{ miembro.observaciones }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado Detallado -->
+  <div class="estado-detalle" *ngIf="!loading && !error && estadoComision && comision.length > 0">
+    <h4>Estado de la Comisión</h4>
+    <div class="requisitos-grid">
+      <div class="requisito-item" [class.completo]="estadoComision.tiene_presidente">
+        <i [class]="estadoComision.tiene_presidente ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+        <span>Presidente</span>
+      </div>
+      
+      <div class="requisito-item" [class.completo]="estadoComision.tiene_secretario">
+        <i [class]="estadoComision.tiene_secretario ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+        <span>Secretario</span>
+      </div>
+      
+      <div class="requisito-item" [class.completo]="estadoComision.vocales >= 1">
+        <i [class]="estadoComision.vocales >= 1 ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+        <span>Vocal{{ estadoComision.vocales !== 1 ? 'es' : '' }} ({{ estadoComision.vocales }}/1+)</span>
+      </div>
+    </div>
+    
+    <div class="total-miembros">
+      <strong>Total de miembros:</strong> {{ estadoComision.total_miembros }}
+    </div>
+  </div>
+</div>

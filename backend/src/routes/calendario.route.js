@@ -16,7 +16,6 @@ import { verifySession } from '../middlewares/verifySession.js';
 
 const router = Router();
 
-// ===== RUTAS PARA ADMIN =====
 
 // Crear fecha global (solo admin)
 router.post('/admin/global', verifySession, crearFechaGlobalController);

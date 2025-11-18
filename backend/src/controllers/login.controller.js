@@ -105,7 +105,8 @@ const login = async (req, res) => {
             nombre: user.nombre,
             token: accessToken,
             refreshToken: refreshToken,
-            expiresIn: '4h'
+            expiresIn: '4h',
+            debe_cambiar_password: user.debe_cambiar_password || false  // Flag para forzar cambio de contraseña
         });
 
     } catch (error) {
@@ -242,11 +243,61 @@ const actualizarPerfil = async (req, res) => {
   }
 };
 
+const cambiarPasswordPropia = async (req, res) => {
+  try {
+    const { rut } = req; // Viene del middleware verifySession
+    const { password_actual, password_nueva } = req.body;
+    
+    console.log('🔑 Cambio de contraseña para:', rut);
+    
+    if (!password_actual || !password_nueva) {
+      return res.status(400).json({ message: 'Se requieren la contraseña actual y la nueva' });
+    }
+    
+    // Validar que la contraseña nueva tenga al menos 6 caracteres
+    if (password_nueva.length < 6) {
+      return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+    
+    // Obtener usuario
+    const user = await UserModel.findPersonByRut(rut);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    // Verificar contraseña actual
+    const match = await bcrypt.compare(password_actual, user.password);
+    if (!match) {
+      return res.status(401).json({ message: 'Contraseña actual incorrecta' });
+    }
+    
+    // Hashear la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password_nueva, salt);
+    
+    // Actualizar contraseña
+    const actualizado = await UserModel.cambiarPasswordPropia(rut, hashedPassword);
+    
+    if (actualizado) {
+      console.log('✅ Contraseña actualizada para:', rut);
+      res.json({ 
+        message: 'Contraseña actualizada correctamente' 
+      });
+    } else {
+      res.status(500).json({ message: 'No se pudo actualizar la contraseña' });
+    }
+  } catch (error) {
+    console.error('Error al cambiar contraseña:', error);
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
 export const loginController = {
     register,
     login,
     logout,
     refreshToken,
     findUserByRut,
-    actualizarPerfil
+    actualizarPerfil,
+    cambiarPasswordPropia
 };

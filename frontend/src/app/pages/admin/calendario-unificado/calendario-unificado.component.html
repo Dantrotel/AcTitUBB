@@ -1,0 +1,519 @@
+<div class="calendario-unificado-container">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <button class="btn-back" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+    <h1>
+      <i class="fas fa-calendar-alt"></i>
+      Gestión de Calendario Unificado
+    </h1>
+  </nav>
+
+  <!-- Mensajes de error/éxito -->
+  <div class="alert alert-error" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <div class="alert alert-success" *ngIf="mensaje">
+    <i class="fas fa-check-circle"></i>
+    {{ mensaje }}
+  </div>
+
+  <!-- Tabs de navegación -->
+  <div class="tabs-navigation">
+    <div 
+      *ngFor="let tab of tabs" 
+      class="tab-item" 
+      [class.active]="tabActiva === tab.id"
+      (click)="cambiarTab(tab.id)">
+      <div class="tab-icon">
+        <i [class]="tab.icon"></i>
+      </div>
+      <div class="tab-label">{{ tab.label }}</div>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando datos...</p>
+  </div>
+
+  <!-- ========== CONTENIDO: CALENDARIO GLOBAL ========== -->
+  <div *ngIf="tabActiva === 'calendario' && !loading" class="tab-content-section">
+    <!-- Botón crear fecha -->
+    <div class="section-header">
+      <h2><i class="fas fa-calendar-alt"></i> Fechas Globales</h2>
+      <button class="btn-primary" (click)="toggleFormularioFecha()">
+        <i [class]="mostrarFormularioFecha ? 'fas fa-times' : 'fas fa-plus'"></i>
+        {{ mostrarFormularioFecha ? 'Cancelar' : 'Nueva Fecha' }}
+      </button>
+    </div>
+
+    <!-- Formulario crear fecha -->
+    <div class="form-container" *ngIf="mostrarFormularioFecha">
+      <form (ngSubmit)="crearFechaGlobal()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="titulo">Título *</label>
+            <input 
+              type="text" 
+              id="titulo" 
+              [(ngModel)]="nuevaFecha.titulo"
+              name="titulo"
+              placeholder="Ej: Inicio de período académico"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="fecha">Fecha *</label>
+            <input 
+              type="date" 
+              id="fecha" 
+              [(ngModel)]="nuevaFecha.fecha"
+              name="fecha"
+              required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tipo_fecha">Tipo de Fecha *</label>
+            <select 
+              id="tipo_fecha" 
+              [(ngModel)]="nuevaFecha.tipo_fecha"
+              name="tipo_fecha"
+              required>
+              <option value="">Seleccione un tipo</option>
+              <optgroup label="📚 Fechas Académicas">
+                <option value="academica">Evento Académico General</option>
+                <option value="inicio_semestre">Inicio de Semestre</option>
+                <option value="fin_semestre">Fin de Semestre</option>
+                <option value="feriado">Feriado / No Laborable</option>
+                <option value="receso">Receso Académico</option>
+              </optgroup>
+              <optgroup label="📋 Propuestas">
+                <option value="entrega_propuesta">⭐ Entrega de Propuestas</option>
+                <option value="revision_propuesta">Revisión de Propuestas</option>
+              </optgroup>
+              <optgroup label="📄 Entregas y Avances">
+                <option value="entrega">Entrega General</option>
+                <option value="entrega_avance">Entrega de Avance</option>
+                <option value="entrega_parcial">Entrega Parcial</option>
+                <option value="entrega_final">Entrega Final/Memoria</option>
+              </optgroup>
+              <optgroup label="📊 Evaluaciones">
+                <option value="evaluacion">Evaluación</option>
+                <option value="revision">Revisión</option>
+                <option value="presentacion">Presentación</option>
+                <option value="defensa">Defensa Final</option>
+                <option value="defensa_parcial">Defensa Parcial</option>
+              </optgroup>
+              <optgroup label="🤝 Reuniones y Seguimiento">
+                <option value="reunion">Reunión</option>
+                <option value="seguimiento">Reunión de Seguimiento</option>
+                <option value="orientacion">Sesión de Orientación</option>
+              </optgroup>
+              <optgroup label="📅 Hitos y Plazos">
+                <option value="hito">Hito del Proyecto</option>
+                <option value="deadline">Fecha Límite</option>
+                <option value="plazo_extension">Plazo de Extensión</option>
+              </optgroup>
+              <optgroup label="🎯 Otros">
+                <option value="otro">Otro</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- Checkbox "Fecha Global" -->
+        <div class="form-group checkbox-group">
+          <div class="checkbox-label">
+            <input 
+              type="checkbox" 
+              id="es_global" 
+              [(ngModel)]="nuevaFecha.es_global"
+              name="es_global">
+            <label for="es_global" class="checkbox-text">
+              <i class="fas fa-globe"></i>
+              <strong>⭐ Fecha Global</strong>
+              <span class="help-text">
+                (Requerido para "Entrega de Propuestas" - Controla el período de envío y habilita la funcionalidad para estudiantes)
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea 
+            id="descripcion" 
+            [(ngModel)]="nuevaFecha.descripcion"
+            name="descripcion"
+            rows="3"
+            placeholder="Descripción adicional (opcional)"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="guardandoFecha">
+            <i class="fas fa-save"></i>
+            {{ guardandoFecha ? 'Guardando...' : 'Crear Fecha' }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="toggleFormularioFecha()">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="estadisticas-grid" *ngIf="estadisticasFechas">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ estadisticasFechas.total_fechas || 0 }}</div>
+          <div class="stat-label">Total Fechas</div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-globe"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ estadisticasFechas.fechas_globales || 0 }}</div>
+          <div class="stat-label">Fechas Globales</div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ estadisticasFechas.fechas_futuras || 0 }}</div>
+          <div class="stat-label">Próximas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Listado de fechas -->
+    <div class="fechas-grid" *ngIf="fechasGlobales.length > 0">
+      <div class="fecha-card" *ngFor="let fecha of fechasGlobales">
+        <div class="fecha-header">
+          <div class="fecha-icon" [class]="'tipo-' + fecha.tipo_fecha">
+            <i class="fas" [class]="getIconoTipoFecha(fecha.tipo_fecha)"></i>
+          </div>
+          <div class="fecha-info">
+            <h3>{{ fecha.titulo }}</h3>
+            <p class="fecha-date">
+              <i class="fas fa-calendar"></i>
+              {{ formatearFecha(fecha.fecha) }}
+            </p>
+            <span class="fecha-tipo-badge" [class]="'tipo-' + fecha.tipo_fecha">
+              {{ fecha.tipo_fecha }}
+            </span>
+          </div>
+        </div>
+        
+        <p class="fecha-descripcion" *ngIf="fecha.descripcion">
+          {{ fecha.descripcion }}
+        </p>
+
+        <div class="fecha-actions">
+          <button class="btn-danger-sm" (click)="confirmarEliminarFecha(fecha)">
+            <i class="fas fa-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="empty-state" *ngIf="fechasGlobales.length === 0 && !loading">
+      <i class="fas fa-calendar-times"></i>
+      <p>No hay fechas globales registradas</p>
+      <button class="btn-primary" (click)="toggleFormularioFecha()">
+        <i class="fas fa-plus"></i>
+        Crear Primera Fecha
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== CONTENIDO: PERÍODO DE PROPUESTAS ========== -->
+  <div *ngIf="tabActiva === 'propuestas' && !loading" class="tab-content-section">
+    <div class="section-header">
+      <h2><i class="fas fa-calendar-check"></i> Control del Período de Propuestas</h2>
+    </div>
+
+    <!-- Estado del período -->
+    <div class="periodo-estado-card" *ngIf="estadoPeriodo">
+      <!-- Período configurado -->
+      <div *ngIf="estadoPeriodo.existe" class="periodo-info">
+        <div class="periodo-badge" [class]="getEstadoClass()">
+          <i class="fas fa-circle"></i>
+          {{ getEstadoLabel() }}
+        </div>
+
+        <div class="periodo-details">
+          <h3>{{ estadoPeriodo.titulo }}</h3>
+          <p class="periodo-descripcion">{{ estadoPeriodo.descripcion }}</p>
+          
+          <div class="periodo-meta">
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <strong>Fecha límite:</strong> {{ formatearFecha(estadoPeriodo.fecha_limite || '') }}
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-clock"></i>
+              <strong>Días restantes:</strong> {{ getDiasRestantesTexto() }}
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-toggle-on"></i>
+              <strong>Estado:</strong> {{ estadoPeriodo.habilitada ? 'Habilitado' : 'Deshabilitado' }}
+            </div>
+          </div>
+
+          <div class="periodo-mensaje" *ngIf="estadoPeriodo.mensaje">
+            <i class="fas fa-info-circle"></i>
+            {{ estadoPeriodo.mensaje }}
+          </div>
+        </div>
+
+        <!-- Acciones del período -->
+        <div class="periodo-actions">
+          <button 
+            *ngIf="!estadoPeriodo.habilitada"
+            class="btn-success" 
+            (click)="habilitarPeriodo()">
+            <i class="fas fa-check-circle"></i>
+            Habilitar Período
+          </button>
+
+          <button 
+            *ngIf="estadoPeriodo.habilitada"
+            class="btn-danger" 
+            (click)="deshabilitarPeriodo()">
+            <i class="fas fa-times-circle"></i>
+            Deshabilitar Período
+          </button>
+
+          <button 
+            class="btn-secondary" 
+            (click)="deshabilitarVencidos()">
+            <i class="fas fa-broom"></i>
+            Deshabilitar Vencidos
+          </button>
+
+          <button 
+            class="btn-secondary" 
+            (click)="cambiarTab('calendario')">
+            <i class="fas fa-calendar"></i>
+            Ver Calendario Global
+          </button>
+        </div>
+      </div>
+
+      <!-- Sin período configurado -->
+      <div *ngIf="!estadoPeriodo.existe" class="periodo-no-configurado">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>No hay período de propuestas configurado</h3>
+        <p class="aviso-importante">
+          <i class="fas fa-lightbulb"></i>
+          <strong>¿Cómo configurar el período de propuestas?</strong>
+        </p>
+        <p class="instrucciones">
+          Para habilitar el sistema de propuestas para los estudiantes:
+        </p>
+        <ol class="pasos-configuracion">
+          <li>Ve a la pestaña <strong>"Calendario Global"</strong> (primera pestaña)</li>
+          <li>Click en <strong>"Nueva Fecha"</strong></li>
+          <li>Selecciona tipo: <strong>"⭐ Entrega de Propuestas"</strong></li>
+          <li>✅ <strong>MARCA</strong> el checkbox <strong>"⭐ Fecha Global"</strong></li>
+          <li>La fecha aparecerá automáticamente aquí para habilitarla/deshabilitarla</li>
+        </ol>
+        <button class="btn-primary" (click)="cambiarTab('calendario')">
+          <i class="fas fa-arrow-left"></i>
+          Ir a Calendario Global
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CONTENIDO: REUNIONES ========== -->
+  <div *ngIf="tabActiva === 'reuniones' && !loading" class="tab-content-section">
+    <div class="section-header">
+      <h2><i class="fas fa-handshake"></i> Todas las Reuniones</h2>
+    </div>
+
+    <!-- Estadísticas de reuniones -->
+    <div class="estadisticas-grid" *ngIf="reuniones.length > 0">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-handshake"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ calcularEstadisticasReuniones().total }}</div>
+          <div class="stat-label">Total Reuniones</div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ calcularEstadisticasReuniones().programadas }}</div>
+          <div class="stat-label">Programadas</div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ calcularEstadisticasReuniones().confirmadas }}</div>
+          <div class="stat-label">Confirmadas</div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ calcularEstadisticasReuniones().completadas }}</div>
+          <div class="stat-label">Completadas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+      <div class="filtro-group">
+        <label for="filtroEstado">
+          <i class="fas fa-filter"></i>
+          Filtrar por estado:
+        </label>
+        <select 
+          id="filtroEstado" 
+          [(ngModel)]="filtroEstadoReunion" 
+          (change)="aplicarFiltrosReuniones()"
+          class="form-select">
+          <option *ngFor="let estado of estadosDisponibles" [value]="estado.value">
+            {{ estado.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label for="busqueda">
+          <i class="fas fa-search"></i>
+          Buscar:
+        </label>
+        <input 
+          type="text" 
+          id="busqueda" 
+          [(ngModel)]="busquedaTexto" 
+          (input)="aplicarFiltrosReuniones()"
+          placeholder="Buscar por nombre o motivo..."
+          class="form-input">
+      </div>
+
+      <button 
+        class="btn-secondary" 
+        (click)="limpiarFiltrosReuniones()"
+        *ngIf="filtroEstadoReunion || busquedaTexto">
+        <i class="fas fa-times"></i>
+        Limpiar Filtros
+      </button>
+    </div>
+
+    <!-- Lista de reuniones -->
+    <div class="reuniones-list">
+      <h3>{{ getReunionesFiltradasPorEstado().length }} reunion(es) encontrada(s)</h3>
+      
+      <div 
+        class="reunion-item" 
+        *ngFor="let reunion of getReunionesFiltradasPorEstado()">
+        <div class="reunion-header">
+          <div class="reunion-icon">
+            <i class="fas fa-handshake"></i>
+          </div>
+          <div class="reunion-info">
+            <h4>{{ reunion.motivo || 'Reunión de seguimiento' }}</h4>
+            <p class="reunion-fecha">
+              <i class="fas fa-calendar"></i>
+              {{ formatearFecha(reunion.fecha) }} 
+              <span class="hora">
+                <i class="fas fa-clock"></i>
+                {{ formatearHora(reunion.hora_inicio) }}
+                <span *ngIf="reunion.hora_fin"> - {{ formatearHora(reunion.hora_fin) }}</span>
+              </span>
+            </p>
+            <p class="reunion-participantes">
+              <i class="fas fa-user"></i>
+              Estudiante: {{ reunion.estudiante_nombre || reunion.estudiante_rut }}
+              <span class="separator">|</span>
+              <i class="fas fa-chalkboard-teacher"></i>
+              Profesor: {{ reunion.profesor_nombre || reunion.profesor_rut }}
+            </p>
+          </div>
+          <div class="reunion-estado">
+            <span class="badge" [class]="getEstadoReunionClass(reunion.estado)">
+              {{ getEstadoReunionLabel(reunion.estado) }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="reunion-details" *ngIf="reunion.descripcion">
+          <p><i class="fas fa-info-circle"></i> {{ reunion.descripcion }}</p>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div class="empty-state" *ngIf="getReunionesFiltradasPorEstado().length === 0">
+        <i class="fas fa-calendar-times"></i>
+        <p *ngIf="filtroEstadoReunion || busquedaTexto">No se encontraron reuniones con los filtros aplicados</p>
+        <p *ngIf="!filtroEstadoReunion && !busquedaTexto">No hay reuniones registradas</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal eliminar fecha -->
+<div class="modal-overlay" *ngIf="mostrarModalEliminar" (click)="cancelarEliminar()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="fas fa-exclamation-triangle"></i>
+        Confirmar Eliminación
+      </h2>
+    </div>
+    <div class="modal-body">
+      <p>¿Estás seguro de que deseas eliminar esta fecha?</p>
+      <div class="fecha-preview" *ngIf="fechaAEliminar">
+        <strong>{{ fechaAEliminar.titulo }}</strong>
+        <p>{{ formatearFecha(fechaAEliminar.fecha) }}</p>
+      </div>
+      <p class="warning-text">Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" (click)="eliminarFechaGlobal()" [disabled]="eliminandoFecha">
+        <i class="fas fa-trash"></i>
+        {{ eliminandoFecha ? 'Eliminando...' : 'Sí, Eliminar' }}
+      </button>
+      <button class="btn-secondary" (click)="cancelarEliminar()">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>

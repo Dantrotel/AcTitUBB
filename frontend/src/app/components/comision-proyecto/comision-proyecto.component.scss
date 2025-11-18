@@ -1,0 +1,318 @@
+.comision-container {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.comision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin: 0;
+
+    i {
+      color: #667eea;
+    }
+  }
+}
+
+.estado-badge {
+  .badge {
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &.badge-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    &.badge-warning {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+  }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #718096;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  &.alert-error {
+    background-color: #fff5f5;
+    color: #c53030;
+    border-left: 4px solid #c53030;
+
+    i {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+
+  i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+  }
+
+  h4 {
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 0.95rem;
+  }
+}
+
+.miembros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.miembro-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #cbd5e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.miembro-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.miembro-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  i {
+    font-size: 1.75rem;
+    color: white;
+  }
+}
+
+.miembro-info {
+  flex: 1;
+
+  h4 {
+    font-size: 1.1rem;
+    color: #2d3748;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    &.badge-presidente {
+      background-color: #fef5e7;
+      color: #d68910;
+      border: 1px solid #f9e79f;
+    }
+
+    &.badge-secretario {
+      background-color: #e8f4fd;
+      color: #0052cc;
+      border: 1px solid #b3d9ff;
+    }
+
+    &.badge-vocal {
+      background-color: #f0f4ff;
+      color: #5e72e4;
+      border: 1px solid #c7d2fe;
+    }
+
+    &.badge-suplente {
+      background-color: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+    }
+  }
+}
+
+.miembro-detalles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detalle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #4a5568;
+
+  i {
+    color: #667eea;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
+
+  &.observaciones {
+    background-color: #f7fafc;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid #667eea;
+
+    span {
+      font-style: italic;
+      color: #2d3748;
+    }
+  }
+}
+
+.estado-detalle {
+  background-color: #f7fafc;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 2px solid #e2e8f0;
+
+  h4 {
+    color: #2d3748;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+  }
+}
+
+.requisitos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.requisito-item {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+
+  i {
+    font-size: 1.5rem;
+    color: #cbd5e0;
+  }
+
+  span {
+    font-weight: 600;
+    color: #718096;
+    font-size: 0.9rem;
+  }
+
+  &.completo {
+    border-color: #68d391;
+    background-color: #f0fff4;
+
+    i {
+      color: #38a169;
+    }
+
+    span {
+      color: #2f855a;
+    }
+  }
+}
+
+.total-miembros {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-size: 1rem;
+  color: #2d3748;
+  border: 1px solid #e2e8f0;
+
+  strong {
+    color: #667eea;
+  }
+}
+
+@media (max-width: 768px) {
+  .comision-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .miembros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .requisitos-grid {
+    grid-template-columns: 1fr;
+  }
+}
