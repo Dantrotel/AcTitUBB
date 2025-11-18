@@ -18,6 +18,12 @@ import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion
 import { GestionProfesoresComponent } from './pages/admin/gestion-profesores/gestion-profesores';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
+import { GestionComisionComponent } from './pages/admin/gestion-comision/gestion-comision';
+import { GestionExtensionesComponent } from './pages/admin/gestion-extensiones/gestion-extensiones.component';
+import { GestionPeriodoPropuestasComponent } from './pages/admin/gestion-periodo-propuestas/gestion-periodo-propuestas.component';
+import { FechasImportantesComponent } from './pages/admin/fechas-importantes/fechas-importantes.component';
+import { CalendarioUnificadoComponent } from './pages/admin/calendario-unificado/calendario-unificado.component';
+import { SolicitarExtensionComponent } from './pages/estudiante/solicitar-extension/solicitar-extension.component';
 import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
 import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-importantes/fechas-importantes-profesor.component';
 
@@ -43,6 +49,10 @@ export const routes: Routes = [
   // Rutas públicas
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { 
+    path: 'cambiar-password', 
+    loadComponent: () => import('./pages/cambiar-password/cambiar-password').then(m => m.CambiarPasswordComponent)
+  },
 
   // Rutas protegidas con AuthGuard
   { path: 'perfil', component: PerfilEstudianteComponent, canActivate: [AuthGuard] },
@@ -68,9 +78,13 @@ export const routes: Routes = [
   { path: 'admin/profesores', component: GestionProfesoresComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
+  { path: 'admin/comision', component: GestionComisionComponent, canActivate: [AuthGuard] },
+  { path: 'admin/extensiones', component: GestionExtensionesComponent, canActivate: [AuthGuard] },
+  { path: 'admin/gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, canActivate: [AuthGuard] },
+  { path: 'admin/fechas-importantes', component: FechasImportantesComponent, canActivate: [AuthGuard] },
+  { path: 'admin/calendario-unificado', component: CalendarioUnificadoComponent, canActivate: [AuthGuard] },
 
   // Rutas del profesor
-  { path: 'profesor/fechas-importantes', component: FechasImportantesProfesorComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario-matching', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
 
   {
@@ -185,6 +199,17 @@ export const routes: Routes = [
       {
         path: 'proyecto/:id/documentos',
         component: DocumentosProyectoComponent,
+        canActivate: [AuthGuard]
+      },
+      // Ruta para solicitar extensión de plazo
+      {
+        path: 'solicitar-extension',
+        component: SolicitarExtensionComponent,
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'solicitar-extension/:proyectoId',
+        component: SolicitarExtensionComponent,
         canActivate: [AuthGuard]
       }
     ],

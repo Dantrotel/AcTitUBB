@@ -1,0 +1,274 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-users"></i>
+    <span>Gestión de Comisiones Evaluadoras</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <button class="btn-secondary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
+</nav>
+
+<div class="main-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1><i class="fas fa-gavel"></i> Gestión de Comisiones Evaluadoras</h1>
+    <p>Asigna y gestiona los miembros de las comisiones evaluadoras para cada proyecto</p>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="error" class="alert alert-error">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <div *ngIf="mensaje" class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    {{ mensaje }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && proyectos.length === 0" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando proyectos...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div *ngIf="!loading || proyectos.length > 0" class="content-grid">
+    
+    <!-- Lista de proyectos -->
+    <div class="proyectos-panel">
+      <div class="panel-header">
+        <h2><i class="fas fa-folder-open"></i> Proyectos</h2>
+        <span class="badge">{{ proyectos.length }}</span>
+      </div>
+
+      <div class="proyectos-lista">
+        <div *ngFor="let proyecto of proyectos" 
+             class="proyecto-item"
+             [class.selected]="proyectoSeleccionado?.id === proyecto.id"
+             (click)="seleccionarProyecto(proyecto)">
+          
+          <div class="proyecto-info">
+            <h3>{{ proyecto.titulo }}</h3>
+            <p class="estudiante">
+              <i class="fas fa-user-graduate"></i>
+              {{ proyecto.estudiante_nombre }}
+            </p>
+          </div>
+
+          <div class="comision-estado">
+            <span *ngIf="proyecto.comision_completa" class="badge badge-success">
+              <i class="fas fa-check-circle"></i>
+              Completa
+            </span>
+            <span *ngIf="!proyecto.comision_completa" class="badge badge-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              Incompleta
+            </span>
+            
+            <div class="miembros-count">
+              {{ proyecto.total_miembros }}/3 miembros
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="proyectos.length === 0" class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <p>No hay proyectos disponibles</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalle de comisión -->
+    <div class="comision-panel" *ngIf="proyectoSeleccionado">
+      <div class="panel-header">
+        <div>
+          <h2><i class="fas fa-users-cog"></i> Comisión Evaluadora</h2>
+          <p class="proyecto-titulo">{{ proyectoSeleccionado.titulo }}</p>
+        </div>
+        <button class="btn-primary" (click)="abrirFormulario()" [disabled]="loading">
+          <i class="fas fa-user-plus"></i>
+          Agregar Miembro
+        </button>
+      </div>
+
+      <!-- Formulario agregar miembro -->
+      <div *ngIf="mostrarFormulario" class="formulario-miembro">
+        <div class="form-header">
+          <h3><i class="fas fa-user-plus"></i> Agregar Miembro</h3>
+          <button class="btn-close" (click)="cerrarFormulario()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form (ngSubmit)="agregarMiembro()">
+          <div class="form-group">
+            <label for="profesor">
+              Profesor *
+              <span class="help-text">Selecciona un profesor para la comisión</span>
+            </label>
+            <select id="profesor" 
+                    [(ngModel)]="profesorSeleccionado" 
+                    name="profesor"
+                    class="form-select"
+                    required>
+              <option value="">Seleccione un profesor</option>
+              <option *ngFor="let profesor of profesoresDisponibles" [value]="profesor.rut">
+                {{ profesor.nombre }} ({{ profesor.total_comisiones_activas }} comisiones activas)
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="rol">
+              Rol en la Comisión *
+              <span class="help-text">Asigna el rol del profesor en esta comisión</span>
+            </label>
+            <select id="rol" 
+                    [(ngModel)]="rolSeleccionado" 
+                    name="rol"
+                    class="form-select"
+                    required>
+              <option value="">Seleccione un rol</option>
+              <option *ngFor="let rol of rolesDisponibles" [value]="rol.value">
+                {{ rol.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="observaciones">
+              Observaciones
+              <span class="help-text">Información adicional (opcional)</span>
+            </label>
+            <textarea id="observaciones" 
+                      [(ngModel)]="observaciones" 
+                      name="observaciones"
+                      class="form-textarea"
+                      rows="3"
+                      placeholder="Ej: Especialista en el área, experiencia previa..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="loading">
+              <i class="fas fa-save"></i>
+              {{ loading ? 'Guardando...' : 'Agregar Miembro' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de miembros -->
+      <div class="miembros-lista">
+        <div *ngFor="let miembro of comision" class="miembro-card">
+          <div class="miembro-header">
+            <div class="miembro-avatar">
+              <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="miembro-info">
+              <h3>{{ miembro.profesor_nombre }}</h3>
+              <p class="email">
+                <i class="fas fa-envelope"></i>
+                {{ miembro.profesor_email }}
+              </p>
+              <p class="rut">
+                <i class="fas fa-id-card"></i>
+                {{ miembro.profesor_rut }}
+              </p>
+            </div>
+            <span class="badge" [ngClass]="getRolClass(miembro.rol_comision)">
+              {{ getRolLabel(miembro.rol_comision) }}
+            </span>
+          </div>
+
+          <div class="miembro-detalles">
+            <div class="detalle-item">
+              <i class="fas fa-calendar-alt"></i>
+              <span>Designado el {{ formatearFecha(miembro.fecha_designacion) }}</span>
+            </div>
+            <div *ngIf="miembro.observaciones" class="detalle-item">
+              <i class="fas fa-sticky-note"></i>
+              <span>{{ miembro.observaciones }}</span>
+            </div>
+          </div>
+
+          <div class="miembro-actions">
+            <button class="btn-danger" (click)="removerMiembro(miembro.id)" [disabled]="loading">
+              <i class="fas fa-user-minus"></i>
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="comision.length === 0" class="empty-state">
+          <i class="fas fa-users-slash"></i>
+          <p>No hay miembros asignados a esta comisión</p>
+          <button class="btn-primary" (click)="abrirFormulario()">
+            <i class="fas fa-user-plus"></i>
+            Agregar Primer Miembro
+          </button>
+        </div>
+      </div>
+
+      <!-- Estado de la comisión -->
+      <div class="comision-estado-detalle">
+        <h3><i class="fas fa-check-double"></i> Estado de la Comisión</h3>
+        <div class="estado-grid">
+          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_presidente > 0">
+            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_presidente > 0" 
+                           [class.fa-times-circle]="proyectoSeleccionado.tiene_presidente === 0"></i>
+            <span>Presidente</span>
+          </div>
+          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_secretario > 0">
+            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_secretario > 0" 
+                           [class.fa-times-circle]="proyectoSeleccionado.tiene_secretario === 0"></i>
+            <span>Secretario</span>
+          </div>
+          <div class="estado-item" [class.completo]="proyectoSeleccionado.total_vocales >= 1">
+            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.total_vocales >= 1" 
+                           [class.fa-times-circle]="proyectoSeleccionado.total_vocales === 0"></i>
+            <span>Vocal (mín. 1)</span>
+          </div>
+        </div>
+
+        <div class="estado-resumen">
+          <span *ngIf="proyectoSeleccionado.comision_completa" class="badge-lg badge-success">
+            <i class="fas fa-check-circle"></i>
+            Comisión Completa
+          </span>
+          <span *ngIf="!proyectoSeleccionado.comision_completa" class="badge-lg badge-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Faltan {{ 3 - proyectoSeleccionado.total_miembros }} miembros mínimos
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instrucciones iniciales -->
+    <div class="comision-panel empty-panel" *ngIf="!proyectoSeleccionado">
+      <div class="empty-state-large">
+        <i class="fas fa-hand-point-left"></i>
+        <h2>Selecciona un Proyecto</h2>
+        <p>Selecciona un proyecto de la lista para gestionar su comisión evaluadora</p>
+        
+        <div class="info-card">
+          <h3><i class="fas fa-info-circle"></i> Requisitos de la Comisión</h3>
+          <ul>
+            <li><strong>Presidente:</strong> 1 requerido</li>
+            <li><strong>Secretario:</strong> 1 requerido</li>
+            <li><strong>Vocales:</strong> Mínimo 1 requerido</li>
+            <li><strong>Suplentes:</strong> Opcionales</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
+import { FechasLimiteProyectoComponent } from '../../../components/fechas-limite-proyecto/fechas-limite-proyecto.component';
 
 
 @Component({
@@ -20,7 +21,8 @@ import { AlertasFechasComponent } from '../../../components/alertas-fechas/alert
     MatButtonModule,
     MatTooltipModule,
     FormsModule,
-    AlertasFechasComponent
+    AlertasFechasComponent,
+    FechasLimiteProyectoComponent
   ],
   templateUrl: './home.html',
   styleUrls: ['./home.scss']
@@ -147,7 +149,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         this.estudiante = data;
         this.loadingEstudiante = false;
-        console.log('✅ Datos del estudiante cargados:', this.estudiante);
+        // // // // // // // // // // console.log('✅ Datos del estudiante cargados:', this.estudiante);
       },
       error: (err) => {
         console.error('Error al obtener usuario:', err);
@@ -165,16 +167,16 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         this.propuestas = Array.isArray(data) ? data : [];
         this.loadingPropuestas = false;
-        console.log('✅ Propuestas del estudiante cargadas:', this.propuestas);
+        // // // // // // // // // // console.log('✅ Propuestas del estudiante cargadas:', this.propuestas);
         
         // Debug información del profesor
         if (this.propuestas.length > 0) {
-          console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
-          console.log('🔍 Campos relacionados al profesor:');
-          console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
-          console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
-          console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
-          console.log('  - profesor_email:', this.propuestas[0].profesor_email);
+          // // // // // // // // // // console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
+          // // // // // // // // // // console.log('🔍 Campos relacionados al profesor:');
+          // // // // // // // // // // console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
+          // // // // // // // // // // console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
+          // // // // // // // // // // console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
+          // // // // // // // // // // console.log('  - profesor_email:', this.propuestas[0].profesor_email);
         }
         
         this.calcularEstadisticas();
@@ -193,27 +195,27 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   cargarProyectos() {
     this.loadingProyectos = true;
-    console.log('🔄 Cargando proyectos del estudiante...');
+    // // // // // // // // // // console.log('🔄 Cargando proyectos del estudiante...');
     
     this.ApiService.getMisProyectos().subscribe({
       next: (response: any) => {
         this.loadingProyectos = false;
-        console.log('✅ Respuesta proyectos:', response);
+        // // // // // // // // // // console.log('✅ Respuesta proyectos:', response);
         
         if (response && response.projects) {
           this.proyectos = response.projects;
-          console.log('📁 Proyectos cargados:', this.proyectos.length);
+          // // // // // // // // // // console.log('📁 Proyectos cargados:', this.proyectos.length);
           
           // Encontrar proyecto activo (el más reciente o el único)
           if (this.proyectos.length > 0) {
             this.proyectoActivo = this.proyectos[0];
-            console.log('🎯 Proyecto activo:', this.proyectoActivo);
+            // // // // // // // // // // console.log('🎯 Proyecto activo:', this.proyectoActivo);
             this.cargarDashboardProyecto();
             this.cargarFechasImportantes();
           }
         } else {
           this.proyectos = [];
-          console.log('📭 No se encontraron proyectos');
+          // // // // // // // // // // console.log('📭 No se encontraron proyectos');
         }
       },
       error: (error) => {
@@ -227,21 +229,21 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   cargarDashboardProyecto() {
     if (!this.proyectoActivo?.id) {
-      console.log('⚠️ No hay proyecto activo para cargar dashboard');
+      // // // // // // // // // // console.log('⚠️ No hay proyecto activo para cargar dashboard');
       return;
     }
 
-    console.log('🔄 Cargando dashboard del proyecto:', this.proyectoActivo.id);
+    // // // // // // // // // // console.log('🔄 Cargando dashboard del proyecto:', this.proyectoActivo.id);
     
     this.ApiService.getDashboardProyecto(this.proyectoActivo.id).subscribe({
       next: (response: any) => {
-        console.log('✅ Dashboard del proyecto cargado:', response);
+        // // // // // // // // // // console.log('✅ Dashboard del proyecto cargado:', response);
         
         if (response.success && response.dashboard) {
           // Actualizar datos del proyecto con información del dashboard
           this.proyectoActivo = { ...this.proyectoActivo, ...response.dashboard };
           this.calcularProgresoProyectoReal();
-          console.log('🎯 Proyecto activo actualizado:', this.proyectoActivo);
+          // // // // // // // // // // console.log('🎯 Proyecto activo actualizado:', this.proyectoActivo);
         }
       },
       error: (error) => {
@@ -253,24 +255,24 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   cargarFechasImportantes() {
     if (!this.proyectoActivo?.id) {
-      console.log('⚠️ No hay proyecto activo para cargar fechas importantes');
+      // // // // // // // // // // console.log('⚠️ No hay proyecto activo para cargar fechas importantes');
       return;
     }
 
     this.loadingFechas = true;
-    console.log('🔄 Cargando fechas importantes del proyecto:', this.proyectoActivo.id);
+    // // // // // // // // // // console.log('🔄 Cargando fechas importantes del proyecto:', this.proyectoActivo.id);
     
     this.ApiService.getFechasImportantesProyecto(this.proyectoActivo.id).subscribe({
       next: (response: any) => {
-        console.log('✅ Fechas importantes cargadas:', response);
+        // // // // // // // // // // console.log('✅ Fechas importantes cargadas:', response);
         this.loadingFechas = false;
         
         if (response.success && response.data) {
           this.fechasImportantes = response.data.fechas_importantes || [];
           this.fechasProximas = response.data.fechas_proximas || [];
           
-          console.log('📅 Fechas importantes:', this.fechasImportantes.length);
-          console.log('⏰ Fechas próximas:', this.fechasProximas.length);
+          // // // // // // // // // // console.log('📅 Fechas importantes:', this.fechasImportantes.length);
+          // // // // // // // // // // console.log('⏰ Fechas próximas:', this.fechasProximas.length);
         } else {
           this.fechasImportantes = [];
           this.fechasProximas = [];
@@ -298,7 +300,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     
     this.ApiService.marcarFechaCompletada(this.proyectoActivo.id, fechaId, true).subscribe({
       next: (response: any) => {
-        console.log('✅ Fecha completada:', response);
+        // // // // // // // // // // console.log('✅ Fecha completada:', response);
         // Recargar fechas importantes
         this.cargarFechasImportantes();
       },
@@ -316,10 +318,14 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     }
 
     // Si tiene información de hitos, calcular basado en eso
-    if (this.proyectoActivo.hitos_total > 0) {
-      const porcentajeHitos = (this.proyectoActivo.hitos_completados / this.proyectoActivo.hitos_total) * 100;
-      this.progresoProyecto = Math.round(porcentajeHitos);
-      console.log(`📊 Progreso basado en hitos: ${this.progresoProyecto}% (${this.proyectoActivo.hitos_completados}/${this.proyectoActivo.hitos_total})`);
+    if (this.proyectoActivo.hitos_total && this.proyectoActivo.hitos_total > 0) {
+      // ✅ FIX: Validar casos edge (null, undefined, mayor a 100%)
+      const hitosCompletados = this.proyectoActivo.hitos_completados || 0;
+      const hitosTotal = this.proyectoActivo.hitos_total || 1;
+      const porcentajeHitos = (hitosCompletados / hitosTotal) * 100;
+      // Asegurar que el progreso nunca exceda 100%
+      this.progresoProyecto = Math.min(100, Math.max(0, Math.round(porcentajeHitos)));
+      // // console.log(`📊 Progreso basado en hitos: ${this.progresoProyecto}% (${hitosCompletados}/${hitosTotal})`);
     } else {
       // Fallback al método anterior basado en propuestas
       this.calcularProgresoProyecto();
@@ -386,11 +392,11 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       });
       this.ultimaPropuesta = this.propuestas[0];
       
-      console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
-      console.log('🔍 Info profesor en última propuesta:');
-      console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
-      console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
-      console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
+      // // // // // // // // // // console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
+      // // // // // // // // // // console.log('🔍 Info profesor en última propuesta:');
+      // // // // // // // // // // console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
+      // // // // // // // // // // console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
+      // // // // // // // // // // console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
     }
   }
 
@@ -439,7 +445,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     // SOLO cargar fechas reales desde la base de datos
     this.ApiService.getFechasProximas(3).subscribe({
       next: (response: any) => {
-        console.log('Fechas próximas del backend:', response);
+        // // // // // // // // // // console.log('Fechas próximas del backend:', response);
         
         if (Array.isArray(response) && response.length > 0) {
           this.proximasFechas = response.map((fecha: any) => ({
@@ -449,17 +455,17 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
             esDelBackend: true,
             creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
           }));
-          console.log('✅ Fechas cargadas desde BD:', this.proximasFechas.length);
+          // // // // // // // // // // console.log('✅ Fechas cargadas desde BD:', this.proximasFechas.length);
         } else {
           this.proximasFechas = [];
-          console.log('ℹ️  No hay fechas en la base de datos');
+          // // // // // // // // // // console.log('ℹ️  No hay fechas en la base de datos');
         }
       },
       error: (error) => {
         console.error('Error al cargar fechas próximas:', error);
         // NO generar fechas dummy - solo dejar vacío
         this.proximasFechas = [];
-        console.log('⚠️  Error cargando fechas, lista vacía');
+        // // // // // // // // // // console.log('⚠️  Error cargando fechas, lista vacía');
       }
     });
   }
@@ -540,7 +546,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   }
 
   abrirCalendario() {
-    console.log('Abriendo calendario con propuestas:', this.propuestas);
+    // // // // // // // // // // // console.log('Abriendo calendario con propuestas:', this.propuestas);
     this.showCalendarModal = true;
   }
 
@@ -569,19 +575,19 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     if (!this.proyectoActivo?.id) return;
 
     this.loadingHitos = true;
-    console.log('🔄 Cargando hitos del proyecto:', this.proyectoActivo.id);
+    // // // // // // // // // // console.log('🔄 Cargando hitos del proyecto:', this.proyectoActivo.id);
 
     this.ApiService.getHitosProyecto(this.proyectoActivo.id).subscribe({
       next: (response: any) => {
         this.loadingHitos = false;
-        console.log('✅ Hitos cargados:', response);
+        // // // // // // // // // // console.log('✅ Hitos cargados:', response);
         
         if (response.success && response.hitos) {
           this.hitosProyecto = response.hitos;
-          console.log('📋 Hitos del proyecto:', this.hitosProyecto.length);
+          // // // // // // // // // // console.log('📋 Hitos del proyecto:', this.hitosProyecto.length);
         } else {
           this.hitosProyecto = [];
-          console.log('📭 No hay hitos en el proyecto');
+          // // // // // // // // // // console.log('📭 No hay hitos en el proyecto');
         }
       },
       error: (error) => {
@@ -596,11 +602,11 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   completarHitoEstudiante(hito: any) {
     if (!this.proyectoActivo?.id || !hito.id) return;
 
-    console.log('🔄 Completando hito:', hito.titulo);
+    // // // // // // // // // // console.log('🔄 Completando hito:', hito.titulo);
 
     this.ApiService.completarHito(this.proyectoActivo.id, hito.id).subscribe({
       next: (response: any) => {
-        console.log('✅ Hito completado:', response);
+        // // // // // // // // // // console.log('✅ Hito completado:', response);
         
         // Actualizar el estado local del hito
         const hitoIndex = this.hitosProyecto.findIndex(h => h.id === hito.id);
@@ -612,7 +618,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         // Recargar dashboard para actualizar estadísticas
         this.cargarDashboardProyecto();
         
-        console.log('🎉 Hito marcado como completado exitosamente');
+        // // // // // // // // // // console.log('🎉 Hito marcado como completado exitosamente');
       },
       error: (error) => {
         console.error('❌ Error al completar hito:', error);
@@ -637,7 +643,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         if (response.success && response.data) {
           this.hitosProyecto = response.data;
-          console.log('Hitos cargados:', this.hitosProyecto);
+          // // // // // // // // // // console.log('Hitos cargados:', this.hitosProyecto);
         } else {
           this.hitosProyecto = [];
           this.errorCargaHitos = response.message || 'No se pudieron cargar los hitos';
@@ -674,7 +680,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     if (file) {
       this.archivoHitoSeleccionado = file;
       this.validarEntregaHito(); // Usar la nueva validación
-      console.log('📎 Archivo seleccionado:', file.name, file.size);
+      // // // // // // // // // // console.log('📎 Archivo seleccionado:', file.name, file.size);
     }
   }
 
@@ -697,18 +703,18 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       formData.append('comentarios', this.comentariosEntregaHito.trim());
       formData.append('fecha_entrega', new Date().toISOString().split('T')[0]);
 
-      console.log('🔄 Entregando hito:', this.hitoSeleccionado.titulo || this.hitoSeleccionado.nombre_hito);
+      // // // // // // // // // // console.log('🔄 Entregando hito:', this.hitoSeleccionado.titulo || this.hitoSeleccionado.nombre_hito);
 
       const response = await this.ApiService.entregarHito(this.hitoSeleccionado.id, formData).toPromise();
       
-      console.log('✅ Hito entregado exitosamente:', response);
+      // // // // // // // // // // console.log('✅ Hito entregado exitosamente:', response);
       
       // Recargar hitos y dashboard
       this.cargarHitos();
       this.cargarDashboardProyecto();
       
       this.cerrarModalEntregarHito();
-      console.log('🎉 Entrega completada exitosamente');
+      // // // // // // // // // // console.log('🎉 Entrega completada exitosamente');
 
     } catch (error: any) {
       console.error('❌ Error al entregar hito:', error);

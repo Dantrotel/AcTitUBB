@@ -1,4 +1,5 @@
 import * as PropuestasService from '../services/propuesta.service.js';
+import * as FechasLimiteModel from '../models/fechas-limite.model.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -106,6 +107,19 @@ export const crearPropuestaController = async (req, res) => {
       area_tematica: area_tematica || 'FALTA',
       estudiante_rut: estudiante_rut || 'FALTA'
     });
+
+    // 🔒 VALIDAR FECHA LÍMITE PARA CREAR PROPUESTA
+    const permisoCreacion = await FechasLimiteModel.verificarPermisoCrearPropuesta(estudiante_rut);
+    if (!permisoCreacion.puede_crear) {
+      console.log('❌ Fuera de plazo para crear propuesta:', permisoCreacion.motivo);
+      return res.status(403).json({ 
+        message: permisoCreacion.motivo,
+        fecha_limite: permisoCreacion.fecha_limite,
+        dias_restantes: permisoCreacion.dias_restantes,
+        fuera_de_plazo: true
+      });
+    }
+    console.log('✅ Dentro del plazo para crear propuesta:', permisoCreacion.motivo);
 
     // Validación estricta de campos obligatorios
     const errores = [];
@@ -468,6 +482,24 @@ export const ActualizarPropuesta = async (req, res) => {
     if (!puedeEditar) {
       return res.status(403).json({ message: 'No tienes permisos para editar esta propuesta' });
     }
+
+    // 🔒 VALIDAR FECHA LÍMITE SEGÚN EL ESTADO DE LA PROPUESTA
+    const permisoActualizacion = await FechasLimiteModel.verificarPermisoActualizarPropuesta(
+      id, 
+      estudiante_rut, 
+      propuesta.estado
+    );
+    
+    if (!permisoActualizacion.puede_actualizar) {
+      console.log('❌ No puede actualizar propuesta:', permisoActualizacion.motivo);
+      return res.status(403).json({ 
+        message: permisoActualizacion.motivo,
+        fecha_limite: permisoActualizacion.fecha_limite,
+        dias_restantes: permisoActualizacion.dias_restantes,
+        fuera_de_plazo: true
+      });
+    }
+    console.log('✅ Puede actualizar propuesta:', permisoActualizacion.motivo);
 
     let archivoPath = undefined; // undefined significa que no se actualiza el archivo
     let nombreArchivoOriginal = undefined;

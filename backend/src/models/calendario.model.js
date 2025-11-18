@@ -3,11 +3,28 @@ import { pool } from '../db/connectionDB.js';
 // ===== FECHAS GLOBALES (ADMIN) =====
 
 // Crear una fecha global (solo admin)
-export const crearFechaGlobal = async ({ titulo, descripcion, fecha, tipo_fecha, creado_por_rut }) => {
+export const crearFechaGlobal = async ({ titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut }) => {
+    // Si es_global está marcado y es tipo entrega_propuesta, crear TAMBIÉN en fechas_importantes
+    if (es_global && tipo_fecha === 'entrega_propuesta') {
+        console.log('📋 Creando fecha de entrega_propuesta en fechas_importantes (para control de período)...');
+        try {
+            const [resultImportante] = await pool.execute(
+                `INSERT INTO fechas_importantes (tipo_fecha, titulo, descripcion, fecha_limite, es_global, proyecto_id, habilitada, permite_extension, creado_por)
+                 VALUES (?, ?, ?, ?, TRUE, NULL, FALSE, TRUE, ?)`,
+                [tipo_fecha, titulo, descripcion, fecha, creado_por_rut]
+            );
+            console.log('✅ Fecha creada en fechas_importantes, ID:', resultImportante.insertId);
+        } catch (error) {
+            console.error('❌ Error al crear en fechas_importantes:', error);
+            // Continuar de todas formas con la creación en fechas_calendario
+        }
+    }
+    
+    // Crear siempre en fechas_calendario (para visualización)
     const [result] = await pool.execute(
         `INSERT INTO fechas_calendario (titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut)
-         VALUES (?, ?, ?, ?, TRUE, ?)`,
-        [titulo, descripcion, fecha, tipo_fecha, creado_por_rut]
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [titulo, descripcion, fecha, tipo_fecha, es_global || false, creado_por_rut]
     );
     return result.insertId;
 };
@@ -127,10 +144,41 @@ export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, ti
 
 // Eliminar fecha (marcar como inactiva)
 export const eliminarFecha = async (fecha_id) => {
+    // Primero obtener información de la fecha para saber si es una fecha global de propuestas
+    const [fechas] = await pool.execute(
+        `SELECT tipo_fecha, es_global, titulo, fecha FROM fechas_calendario WHERE id = ?`,
+        [fecha_id]
+    );
+
+    if (fechas.length === 0) {
+        return false;
+    }
+
+    const fecha = fechas[0];
+
+    // Soft delete en fechas_calendario
     const [result] = await pool.execute(
         `UPDATE fechas_calendario SET activa = FALSE WHERE id = ?`,
         [fecha_id]
     );
+
+    // Si es una fecha de entrega_propuesta con es_global=TRUE, también eliminar de fechas_importantes
+    if (fecha.tipo_fecha === 'entrega_propuesta' && fecha.es_global) {
+        console.log('🗑️  Eliminando fecha de propuestas de fechas_importantes...');
+        
+        await pool.execute(
+            `DELETE FROM fechas_importantes 
+             WHERE tipo_fecha = 'entrega_propuesta' 
+             AND es_global = TRUE 
+             AND proyecto_id IS NULL
+             AND titulo = ?
+             AND DATE(fecha_limite) = DATE(?)`,
+            [fecha.titulo, fecha.fecha]
+        );
+        
+        console.log('✅ Fecha eliminada de ambas tablas');
+    }
+
     return result.affectedRows > 0;
 };
 

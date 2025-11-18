@@ -5,6 +5,11 @@ import {
   obtenerTodosLosUsuarios,
   actualizarUsuario,
   eliminarUsuario,
+  cambiarEstadoUsuario,
+  cambiarRolUsuario,
+  crearUsuario,
+  resetearPasswordUsuario,
+  obtenerDetalleUsuario,
   obtenerTodosLosProfesores,
   obtenerPropuestasAsignadasAProfesor,
   obtenerTodasLasAsignaciones,
@@ -29,7 +34,12 @@ router.use(verificarAdmin);
 
 // ===== RUTAS DE USUARIOS =====
 router.get('/usuarios', obtenerTodosLosUsuarios);
+router.get('/usuarios/:rut', obtenerDetalleUsuario);
+router.post('/usuarios', crearUsuario);
 router.put('/usuarios/:rut', actualizarUsuario);
+router.put('/usuarios/:rut/estado', cambiarEstadoUsuario);
+router.put('/usuarios/:rut/rol', cambiarRolUsuario);
+router.post('/usuarios/:rut/reset-password', resetearPasswordUsuario);
 router.delete('/usuarios/:rut', eliminarUsuario);
 
 // ===== RUTAS DE PROFESORES =====

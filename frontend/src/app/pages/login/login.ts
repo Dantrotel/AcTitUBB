@@ -57,6 +57,14 @@ login() {
       }
       localStorage.setItem('userData', JSON.stringify(payload));
 
+      // ✅ Verificar si debe cambiar contraseña
+      if (res.debe_cambiar_password) {
+        console.log('⚠️  Usuario debe cambiar contraseña temporal');
+        localStorage.setItem('debe_cambiar_password', 'true');
+        this.router.navigate(['/cambiar-password']);
+        return;
+      }
+
       // Redirigir según el rol (comparando como número)
       const rolId = Number(payload.rol_id);
       // Redirigir según el rol del usuario

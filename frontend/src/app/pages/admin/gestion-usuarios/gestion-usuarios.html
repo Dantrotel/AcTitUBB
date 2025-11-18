@@ -15,13 +15,23 @@
 
 <!-- Contenido principal -->
 <div class="main-container">
+  <!-- Mensajes de éxito -->
+  <div *ngIf="mensaje" class="alert alert-success">
+    <i class="fas fa-check-circle"></i>
+    {{ mensaje }}
+  </div>
+
   <!-- Header -->
   <div class="page-header">
     <div class="header-content">
       <h1>Gestión de Usuarios</h1>
       <p>Administra todos los usuarios del sistema</p>
     </div>
-    <div class="header-stats">
+    <div class="header-actions">
+      <button class="btn-success" (click)="abrirModalCrear()">
+        <i class="fas fa-user-plus"></i>
+        Nuevo Usuario
+      </button>
       <div class="stat-item">
         <span class="stat-number">{{ usuarios.length }}</span>
         <span class="stat-label">Total</span>
@@ -148,7 +158,7 @@
         </div>
 
         <div class="card-actions">
-          <button class="btn-primary" (click)="editarUsuario(usuario)">
+          <button class="btn-primary" (click)="abrirModalEditar(usuario)">
             <i class="fas fa-edit"></i>
             Editar
           </button>
@@ -157,12 +167,305 @@
             <i class="fas fa-toggle-on"></i>
             Cambiar Estado
           </button>
+
+          <button class="btn-warning" (click)="abrirModalResetPassword(usuario)">
+            <i class="fas fa-key"></i>
+            Resetear Contraseña
+          </button>
           
-          <button class="btn-danger" (click)="eliminarUsuario(usuario)">
+          <button class="btn-danger" (click)="abrirModalEliminar(usuario)">
             <i class="fas fa-trash"></i>
             Eliminar
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODALES ========== -->
+
+<!-- Modal Crear Usuario -->
+<div *ngIf="mostrarModalCrear" class="modal-overlay" (click)="cerrarModalCrear()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-plus"></i> Crear Nuevo Usuario</h2>
+      <button class="modal-close" (click)="cerrarModalCrear()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="error" class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+
+      <form (ngSubmit)="crearUsuario()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rut">RUT *</label>
+            <input 
+              type="text" 
+              id="rut" 
+              [(ngModel)]="nuevoUsuario.rut"
+              name="rut"
+              placeholder="12345678-9"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="nombre">Nombre Completo *</label>
+            <input 
+              type="text" 
+              id="nombre" 
+              [(ngModel)]="nuevoUsuario.nombre"
+              name="nombre"
+              placeholder="Juan Pérez González"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input 
+              type="email" 
+              id="email" 
+              [(ngModel)]="nuevoUsuario.email"
+              name="email"
+              placeholder="usuario@ubiobio.cl"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña *</label>
+            <input 
+              type="password" 
+              id="password" 
+              [(ngModel)]="nuevoUsuario.password"
+              name="password"
+              placeholder="Contraseña temporal"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rol">Rol *</label>
+            <select id="rol" [(ngModel)]="nuevoUsuario.rol_id" name="rol" required>
+              <option [value]="rol.id" *ngFor="let rol of roles">{{ rol.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="nuevoUsuario.confirmado"
+                name="confirmado"
+              >
+              <span>Usuario activo (habilitado)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" [disabled]="procesando">
+            <i class="fas fa-save"></i>
+            {{ procesando ? 'Creando...' : 'Crear Usuario' }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="cerrarModalCrear()">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div *ngIf="mostrarModalEditar" class="modal-overlay" (click)="cerrarModalEditar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-edit"></i> Editar Usuario</h2>
+      <button class="modal-close" (click)="cerrarModalEditar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="error" class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+
+      <form (ngSubmit)="guardarEdicion()">
+        <div class="form-group">
+          <label>RUT</label>
+          <input 
+            type="text" 
+            [value]="usuarioEditar?.rut"
+            disabled
+            class="input-disabled"
+          >
+          <small>El RUT no se puede modificar</small>
+        </div>
+
+        <div class="form-group">
+          <label for="nombreEdit">Nombre Completo *</label>
+          <input 
+            type="text" 
+            id="nombreEdit" 
+            [(ngModel)]="usuarioEditar.nombre"
+            name="nombre"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="emailEdit">Email *</label>
+          <input 
+            type="email" 
+            id="emailEdit" 
+            [(ngModel)]="usuarioEditar.email"
+            name="email"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="rolEdit">Rol *</label>
+          <select id="rolEdit" [(ngModel)]="usuarioEditar.rol_id" name="rol" required>
+            <option [value]="rol.id" *ngFor="let rol of roles">{{ rol.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" [disabled]="procesando">
+            <i class="fas fa-save"></i>
+            {{ procesando ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="cerrarModalEditar()">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resetear Contraseña -->
+<div *ngIf="mostrarModalResetPassword" class="modal-overlay" (click)="cerrarModalResetPassword()">
+  <div class="modal-container modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-key"></i> Resetear Contraseña</h2>
+      <button class="modal-close" (click)="cerrarModalResetPassword()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Mensaje de éxito -->
+      <div *ngIf="mensaje" class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        {{ mensaje }}
+      </div>
+
+      <!-- Mensaje de error -->
+      <div *ngIf="error" class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+
+      <p class="modal-text">
+        Se ha generado una contraseña temporal para el usuario:
+      </p>
+
+      <div class="usuario-info-box">
+        <strong>{{ usuarioEditar?.nombre }}</strong>
+        <p>RUT: {{ usuarioEditar?.rut }}</p>
+        <p>Email: {{ usuarioEditar?.email }}</p>
+      </div>
+
+      <div class="password-display">
+        <label>Contraseña Temporal Generada:</label>
+        <div class="password-box">
+          <input 
+            type="text" 
+            [value]="passwordTemporal"
+            readonly
+            class="password-input"
+          >
+          <button type="button" class="btn-copy" (click)="copiarPassword()">
+            <i class="fas fa-copy"></i>
+            Copiar
+          </button>
+        </div>
+        <small><i class="fas fa-exclamation-triangle"></i> Copia esta contraseña antes de confirmar el reset</small>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-warning" (click)="confirmarResetPassword()" [disabled]="procesando">
+          <i class="fas fa-sync-alt"></i>
+          {{ procesando ? 'Reseteando...' : 'Confirmar Reset en BD' }}
+        </button>
+        <button class="btn-secondary" (click)="cerrarModalResetPassword()">
+          <i class="fas fa-times"></i>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar Eliminar -->
+<div *ngIf="mostrarModalConfirmarEliminar" class="modal-overlay" (click)="cerrarModalEliminar()">
+  <div class="modal-container modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header modal-danger">
+      <h2><i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación</h2>
+      <button class="modal-close" (click)="cerrarModalEliminar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="error" class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+
+      <p class="modal-text">
+        ¿Estás seguro de que deseas eliminar este usuario?
+      </p>
+
+      <div class="usuario-info-box danger">
+        <strong>{{ usuarioEliminar?.nombre }}</strong>
+        <p>RUT: {{ usuarioEliminar?.rut }}</p>
+        <p>Email: {{ usuarioEliminar?.email }}</p>
+      </div>
+
+      <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p><strong>Esta acción no se puede deshacer.</strong></p>
+        <p>Se eliminarán todos los datos asociados a este usuario.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" (click)="confirmarEliminar()" [disabled]="procesando">
+          <i class="fas fa-trash"></i>
+          {{ procesando ? 'Eliminando...' : 'Sí, Eliminar' }}
+        </button>
+        <button class="btn-secondary" (click)="cerrarModalEliminar()">
+          <i class="fas fa-times"></i>
+          Cancelar
+        </button>
       </div>
     </div>
   </div>

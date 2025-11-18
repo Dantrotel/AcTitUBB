@@ -329,17 +329,23 @@ CREATE TABLE IF NOT EXISTS fechas_calendario (
 -- Tabla de Fechas Importantes específicas de cada proyecto
 CREATE TABLE IF NOT EXISTS fechas_importantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
-    tipo_fecha ENUM('entrega', 'reunion', 'evaluacion', 'hito', 'deadline', 'presentacion', 'entrega_avance', 'entrega_final', 'defensa', 'revision', 'otro') DEFAULT 'otro',
+    proyecto_id INT NULL, -- NULL para fechas globales de propuestas
+    tipo_fecha ENUM('entrega_propuesta', 'entrega', 'reunion', 'evaluacion', 'hito', 'deadline', 'presentacion', 'entrega_avance', 'entrega_final', 'defensa', 'revision', 'otro') DEFAULT 'otro',
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
     fecha_limite DATE NOT NULL,
+    permite_extension BOOLEAN DEFAULT TRUE, -- Si permite solicitar extensión después de la fecha límite
+    habilitada BOOLEAN DEFAULT TRUE COMMENT 'Controla si el período está activo para recibir entregas. El admin puede deshabilitarlo manualmente o se deshabilita automáticamente al alcanzar la fecha límite',
+    requiere_entrega BOOLEAN DEFAULT FALSE, -- Si requiere entrega de archivos/documentos
+    creado_por VARCHAR(10) NULL, -- RUT del profesor o admin que creó la fecha
     completada BOOLEAN DEFAULT FALSE,
     fecha_realizada DATE NULL,
     notas TEXT,
+    es_global BOOLEAN DEFAULT FALSE, -- Si es una fecha global (para todas las propuestas, no específica de proyecto)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(rut)
 );
 
 -- Tabla de Cronogramas de Proyecto (acordados entre guía y estudiante)
@@ -586,6 +592,8 @@ CREATE INDEX idx_proyectos_estado ON proyectos(estado_id);
 CREATE INDEX idx_avances_proyecto ON avances(proyecto_id);
 CREATE INDEX idx_avances_estado ON avances(estado_id);
 CREATE INDEX idx_fechas_proyecto ON fechas_importantes(proyecto_id);
+CREATE INDEX idx_fechas_importantes_propuestas_globales ON fechas_importantes(es_global, tipo_fecha, habilitada, fecha_limite);
+CREATE INDEX idx_fechas_propuestas_globales ON fechas_importantes(tipo_fecha, es_global, fecha_limite);
 CREATE INDEX idx_fechas_calendario_global ON fechas_calendario(es_global, fecha);
 CREATE INDEX idx_fechas_calendario_profesor ON fechas_calendario(profesor_rut, fecha);
 CREATE INDEX idx_fechas_calendario_estudiante ON fechas_calendario(estudiante_rut, fecha);
@@ -889,6 +897,115 @@ INSERT IGNORE INTO fechas_importantes (
 (1, 'defensa', 'Defensa Final', 'Defensa final del proyecto de título', '2025-06-20'),
 (2, 'entrega_avance', 'Prototipo App', 'Entrega del prototipo funcional', '2025-04-10'),
 (2, 'presentacion', 'Presentación Intermedia', 'Presentación de avances a comité', '2025-05-15');
+
+-- ===== TABLAS ADICIONALES: COMISIÓN EVALUADORA, EXTENSIONES Y ACTAS =====
+
+-- Tabla de Comisión Evaluadora (Tribunal)
+CREATE TABLE IF NOT EXISTS comision_evaluadora (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    rol_comision ENUM('presidente', 'secretario', 'vocal', 'suplente') NOT NULL,
+    fecha_designacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_remocion TIMESTAMP NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    observaciones TEXT NULL,
+    asignado_por VARCHAR(10) NOT NULL, -- RUT del admin
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
+    UNIQUE KEY unique_comision_rol (proyecto_id, rol_comision, activo),
+    INDEX idx_comision_proyecto (proyecto_id, activo),
+    INDEX idx_comision_profesor (profesor_rut, activo)
+);
+
+-- Tabla de Solicitudes de Extensión/Prórroga
+CREATE TABLE IF NOT EXISTS solicitudes_extension (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    fecha_importante_id INT NULL, -- NULL si es extensión general del proyecto
+    solicitante_rut VARCHAR(10) NOT NULL,
+    fecha_original DATE NOT NULL,
+    fecha_solicitada DATE NOT NULL,
+    dias_extension INT GENERATED ALWAYS AS (DATEDIFF(fecha_solicitada, fecha_original)) STORED,
+    motivo TEXT NOT NULL,
+    justificacion_detallada TEXT NOT NULL,
+    documento_respaldo VARCHAR(255) NULL,
+    estado ENUM('pendiente', 'en_revision', 'aprobada', 'rechazada') DEFAULT 'pendiente',
+    aprobado_por VARCHAR(10) NULL,
+    fecha_revision TIMESTAMP NULL,
+    fecha_resolucion TIMESTAMP NULL,
+    comentarios_revision TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (fecha_importante_id) REFERENCES fechas_importantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (solicitante_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (aprobado_por) REFERENCES usuarios(rut),
+    INDEX idx_extension_proyecto (proyecto_id, estado),
+    INDEX idx_extension_solicitante (solicitante_rut),
+    INDEX idx_extension_estado (estado),
+    INDEX idx_extension_fecha (created_at)
+);
+
+-- Tabla de Actas de Reunión
+CREATE TABLE IF NOT EXISTS actas_reunion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reunion_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    numero_acta VARCHAR(20) NOT NULL, -- Ej: ACT-001-2025
+    fecha_reunion DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    lugar VARCHAR(255) NULL,
+    -- Contenido del acta
+    asistentes TEXT NOT NULL, -- JSON con lista de asistentes
+    objetivo TEXT NOT NULL,
+    temas_tratados TEXT NOT NULL,
+    acuerdos TEXT NOT NULL,
+    tareas_asignadas TEXT NULL,
+    proximos_pasos TEXT NULL,
+    observaciones TEXT NULL,
+    -- Firmas digitales
+    firma_estudiante BOOLEAN DEFAULT FALSE,
+    fecha_firma_estudiante TIMESTAMP NULL,
+    firma_profesor BOOLEAN DEFAULT FALSE,
+    fecha_firma_profesor TIMESTAMP NULL,
+    -- Archivo del acta (opcional, si se genera PDF)
+    archivo_acta VARCHAR(255) NULL,
+    -- Estado y auditoría
+    estado ENUM('borrador', 'pendiente_firma', 'firmada', 'archivada') DEFAULT 'borrador',
+    creado_por VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (reunion_id) REFERENCES reuniones_calendario(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(rut),
+    UNIQUE KEY unique_numero_acta (numero_acta),
+    INDEX idx_acta_reunion (reunion_id),
+    INDEX idx_acta_proyecto (proyecto_id, estado),
+    INDEX idx_acta_fecha (fecha_reunion),
+    INDEX idx_acta_estado (estado)
+);
+
+-- Tabla de Historial de Extensiones (para auditoría)
+CREATE TABLE IF NOT EXISTS historial_extensiones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    solicitud_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    accion ENUM('solicitud_creada', 'en_revision', 'aprobada', 'rechazada', 'modificada') NOT NULL,
+    realizado_por VARCHAR(10) NOT NULL,
+    comentarios TEXT NULL,
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (solicitud_id) REFERENCES solicitudes_extension(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (realizado_por) REFERENCES usuarios(rut),
+    INDEX idx_historial_solicitud (solicitud_id),
+    INDEX idx_historial_proyecto (proyecto_id),
+    INDEX idx_historial_fecha (fecha_accion)
+);
 
 -- ===== VERIFICACIÓN DE DATOS CREADOS =====
 SELECT 'Datos de prueba para Sistema de Calendario con Matching creados exitosamente' as status;

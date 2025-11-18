@@ -94,6 +94,72 @@ const eliminarUsuario = async (rut) => {
     return result.affectedRows > 0;
 };
 
+// Cambiar estado de usuario (activar/desactivar)
+const cambiarEstadoUsuario = async (rut, confirmado) => {
+    const [result] = await pool.execute(
+        `UPDATE usuarios SET confirmado = ?, updated_at = NOW() WHERE rut = ?`,
+        [confirmado ? 1 : 0, rut]
+    );
+    return result.affectedRows > 0;
+};
+
+// Cambiar rol de usuario
+const cambiarRolUsuario = async (rut, rol_id) => {
+    const [result] = await pool.execute(
+        `UPDATE usuarios SET rol_id = ?, updated_at = NOW() WHERE rut = ?`,
+        [rol_id, rut]
+    );
+    return result.affectedRows > 0;
+};
+
+// Crear usuario desde admin (con todos los campos)
+const crearUsuarioAdmin = async ({ rut, nombre, email, password, rol_id, confirmado = true }) => {
+    const [result] = await pool.execute(
+        `INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [rut, nombre, email, password, rol_id, confirmado ? 1 : 0]
+    );
+    return result.insertId;
+};
+
+// Resetear contraseña (generar contraseña temporal)
+const resetearPassword = async (rut, nuevaPassword) => {
+    const [result] = await pool.execute(
+        `UPDATE usuarios SET password = ?, debe_cambiar_password = TRUE, updated_at = NOW() WHERE rut = ?`,
+        [nuevaPassword, rut]
+    );
+    return result.affectedRows > 0;
+};
+
+// Cambiar contraseña del usuario (después del primer login con password temporal)
+const cambiarPasswordPropia = async (rut, nuevaPassword) => {
+    const [result] = await pool.execute(
+        `UPDATE usuarios SET password = ?, debe_cambiar_password = FALSE, updated_at = NOW() WHERE rut = ?`,
+        [nuevaPassword, rut]
+    );
+    return result.affectedRows > 0;
+};
+
+// Obtener usuario completo por RUT (con más detalles)
+const obtenerUsuarioCompleto = async (rut) => {
+    const [rows] = await pool.execute(
+        `SELECT 
+            u.rut, 
+            u.nombre, 
+            u.email, 
+            u.rol_id, 
+            u.confirmado, 
+            u.created_at,
+            u.updated_at,
+            r.nombre as rol_nombre
+         FROM usuarios u
+         LEFT JOIN roles r ON u.rol_id = r.id
+         WHERE u.rut = ?`,
+        [rut]
+    );
+    return rows[0];
+};
+
 export const UserModel = {
     createPerson,
     findPersonByEmail,
@@ -102,5 +168,11 @@ export const UserModel = {
     confirmarCuentaPorEmail,
     obtenerUsuariosPorRol,
     actualizarUsuario,
-    eliminarUsuario
+    eliminarUsuario,
+    cambiarEstadoUsuario,
+    cambiarRolUsuario,
+    crearUsuarioAdmin,
+    resetearPassword,
+    cambiarPasswordPropia,
+    obtenerUsuarioCompleto
 };

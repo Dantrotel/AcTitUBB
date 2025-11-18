@@ -254,54 +254,58 @@ export const gestionarRespuestaSolicitud = async (solicitud_id, usuario_rut, res
  */
 export const obtenerDashboardReuniones = async (usuario_rut, role_id) => {
     try {
-        // Obtener SOLO solicitudes pendientes (sin confirmar ni rechazar)
+        // Obtener solicitudes pendientes (solo estados pendiente, aceptada_profesor, aceptada_estudiante)
         const solicitudesPendientes = await CalendarioMatchingModel.obtenerSolicitudesUsuario(usuario_rut);
         
-        // Filtrar solo las que están realmente pendientes
-        const solicitudesSinResponder = solicitudesPendientes.filter(s => s.estado === 'pendiente');
-        
-        // Obtener TODAS las reuniones del usuario (historial completo)
+        // Obtener TODAS las reuniones programadas (no solo próximas)
         const todasReuniones = await ReunionesModel.obtenerReunionesUsuario(usuario_rut);
         
-        // Separar reuniones por estado
-        const ahora = new Date();
-        
-        const reunionesProgramadas = todasReuniones.filter(r => 
-            r.estado === 'programada' && new Date(r.fecha) >= ahora
-        );
-        
-        const reunionesRealizadas = todasReuniones.filter(r => r.estado === 'realizada');
-        const reunionesCanceladas = todasReuniones.filter(r => r.estado === 'cancelada');
-        
-        // Reuniones próximas (próximos 7 días)
-        const fechaLimite = new Date();
-        fechaLimite.setDate(fechaLimite.getDate() + 7);
-        
-        const reunionesProximas = reunionesProgramadas.filter(r => 
-            new Date(r.fecha) <= fechaLimite
-        );
-        
-        // Obtener disponibilidades
+        // Obtener disponibilidades actuales
         const disponibilidades = await CalendarioMatchingModel.obtenerDisponibilidadesUsuario(usuario_rut);
         
         // Obtener estadísticas
         const estadisticas = await ReunionesModel.obtenerEstadisticasReuniones(usuario_rut);
         
+        // Filtrar reuniones por estado (solo programadas y futuras)
+        const ahora = new Date();
+        const reunionesActivas = todasReuniones.filter(reunion => {
+            const fechaReunion = new Date(reunion.fecha);
+            return reunion.estado === 'programada' && fechaReunion >= ahora;
+        });
+        
+        // Filtrar reuniones próximas (próximos 7 días)
+        const fechaLimite = new Date();
+        fechaLimite.setDate(fechaLimite.getDate() + 7);
+        
+        const reunionesProximasSemana = reunionesActivas.filter(reunion => {
+            const fechaReunion = new Date(reunion.fecha);
+            return fechaReunion <= fechaLimite;
+        });
+        
         // Calcular alertas
         const alertas = [];
+        
+        // Alertas por solicitudes sin responder
+        const solicitudesSinResponder = solicitudesPendientes.filter(s => {
+            const esProfesor = s.profesor_rut === usuario_rut;
+            return s.estado === 'pendiente' || 
+                   (esProfesor && s.estado === 'aceptada_estudiante') ||
+                   (!esProfesor && s.estado === 'aceptada_profesor');
+        });
         
         if (solicitudesSinResponder.length > 0) {
             alertas.push({
                 tipo: 'solicitudes_pendientes',
                 cantidad: solicitudesSinResponder.length,
-                mensaje: `Tienes ${solicitudesSinResponder.length} solicitud(es) de reunión pendiente(s)`
+                mensaje: `Tienes ${solicitudesSinResponder.length} solicitud(es) de reunión pendiente(s) de respuesta`
             });
         }
         
-        if (disponibilidades.length === 0 && role_id === 2) {
+        // Alertas por falta de disponibilidad
+        if (disponibilidades.length === 0) {
             alertas.push({
                 tipo: 'sin_disponibilidad',
-                mensaje: 'No has configurado tu disponibilidad horaria'
+                mensaje: 'No has configurado tu disponibilidad horaria. Esto puede dificultar la programación de reuniones.'
             });
         }
         
@@ -313,26 +317,21 @@ export const obtenerDashboardReuniones = async (usuario_rut, role_id) => {
                 es_estudiante: role_id === 1
             },
             solicitudes: {
-                pendientes: solicitudesSinResponder,
-                total: solicitudesSinResponder.length
+                pendientes: solicitudesPendientes,
+                sin_responder: solicitudesSinResponder
             },
             reuniones: {
-                proximas: reunionesProximas,
-                programadas: reunionesProgramadas,
-                realizadas: reunionesRealizadas,
-                canceladas: reunionesCanceladas,
-                historial_completo: todasReuniones
+                proximas: reunionesProximasSemana,
+                todas_programadas: reunionesActivas
             },
             disponibilidades: disponibilidades,
             estadisticas: estadisticas,
             alertas: alertas,
             resumen: {
-                solicitudes_pendientes: solicitudesSinResponder.length,
-                reuniones_proximas: reunionesProximas.length,
-                reuniones_programadas: reunionesProgramadas.length,
-                reuniones_realizadas: reunionesRealizadas.length,
-                reuniones_canceladas: reunionesCanceladas.length,
-                total_reuniones: todasReuniones.length
+                solicitudes_pendientes: solicitudesPendientes.length,
+                reuniones_proxima_semana: reunionesProximasSemana.length,
+                reuniones_programadas: reunionesActivas.length,
+                disponibilidades_configuradas: disponibilidades.length
             }
         };
         

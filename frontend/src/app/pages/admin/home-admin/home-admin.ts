@@ -85,31 +85,43 @@ export class HomeAdminComponent implements OnInit {
   }
 
   // Navegación a diferentes secciones
-  irAGestionPropuestas() {
+  irAGestionPropuestas(): void {
     this.router.navigate(['/admin/propuestas']);
   }
 
-  irAGestionUsuarios() {
+  irAGestionUsuarios(): void {
     this.router.navigate(['/admin/usuarios']);
   }
 
-  irAGestionProfesores() {
+  irAGestionProfesores(): void {
     this.router.navigate(['/admin/profesores']);
   }
 
-  irAAsignaciones() {
+  irAAsignaciones(): void {
     this.router.navigate(['/admin/asignaciones']);
   }
 
-  irAGestionCalendario() {
+  irAGestionCalendario(): void {
     this.router.navigate(['/admin/calendario']);
   }
 
-  irACalendarioMatching() {
+  irAGestionPeriodoPropuestas(): void {
+    this.router.navigate(['/admin/gestion-periodo-propuestas']);
+  }
+
+  irAFechasImportantes(): void {
+    this.router.navigate(['/admin/fechas-importantes']);
+  }
+
+  irACalendarioMatching(): void {
     this.router.navigate(['/calendario-matching/dashboard']);
   }
 
-  cerrarSesion() {
+  irACalendarioUnificado(): void {
+    this.router.navigate(['/admin/calendario-unificado']);
+  }
+
+  cerrarSesion(): void {
     localStorage.removeItem('token');
     this.router.navigate(['/login']);
   }

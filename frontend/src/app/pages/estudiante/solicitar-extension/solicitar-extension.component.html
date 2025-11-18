@@ -1,0 +1,190 @@
+<div class="page-container">
+  <nav class="navbar">
+    <button class="btn-back" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+    <h1>Solicitar Extensión de Plazo</h1>
+  </nav>
+
+  <div class="page-content">
+    <div class="page-header">
+      <i class="fas fa-clock"></i>
+      <div>
+        <h2>Nueva Solicitud de Extensión</h2>
+        <p *ngIf="proyectoTitulo">Proyecto: <strong>{{ proyectoTitulo }}</strong></p>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert alert-error" *ngIf="error">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ error }}</span>
+    </div>
+
+    <div class="alert alert-success" *ngIf="mensaje">
+      <i class="fas fa-check-circle"></i>
+      <span>{{ mensaje }}</span>
+    </div>
+
+    <!-- Loading Fechas -->
+    <div class="loading-state" *ngIf="loadingFechas">
+      <div class="spinner"></div>
+      <p>Cargando fechas del proyecto...</p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="form-container" *ngIf="!loadingFechas">
+      <form (ngSubmit)="solicitarExtension()">
+        
+        <!-- Seleccionar Fecha -->
+        <div class="form-group">
+          <label for="fecha">
+            <i class="fas fa-calendar-day"></i>
+            Fecha Importante a Extender *
+          </label>
+          <select 
+            id="fecha" 
+            class="form-select" 
+            [(ngModel)]="fechaImportanteId" 
+            name="fechaImportante"
+            (change)="onFechaSeleccionada()"
+            required>
+            <option [value]="null">Selecciona una fecha...</option>
+            <option *ngFor="let fecha of fechasDisponibles" [value]="fecha.id">
+              {{ fecha.tipo_fecha }} - {{ formatearFecha(fecha.fecha_limite) }}
+              <span *ngIf="fecha.descripcion"> ({{ fecha.descripcion }})</span>
+            </option>
+          </select>
+          <small class="help-text">Selecciona la fecha límite que necesitas extender</small>
+        </div>
+
+        <!-- Fecha Original (readonly) -->
+        <div class="form-group" *ngIf="fechaOriginal">
+          <label>
+            <i class="fas fa-calendar-check"></i>
+            Fecha Límite Actual
+          </label>
+          <input 
+            type="text" 
+            class="form-input" 
+            [value]="formatearFecha(fechaOriginal)" 
+            readonly>
+        </div>
+
+        <!-- Nueva Fecha Solicitada -->
+        <div class="form-group" *ngIf="fechaOriginal">
+          <label for="fechaNueva">
+            <i class="fas fa-calendar-plus"></i>
+            Nueva Fecha Solicitada *
+          </label>
+          <input 
+            type="date" 
+            id="fechaNueva"
+            class="form-input" 
+            [(ngModel)]="fechaSolicitada" 
+            name="fechaSolicitada"
+            [min]="fechaOriginal"
+            required>
+          <small class="help-text">
+            Debe ser posterior al {{ formatearFecha(fechaOriginal) }}
+            <span *ngIf="calcularDiasExtension() > 0" class="dias-extension">
+              ({{ calcularDiasExtension() }} días de extensión)
+            </span>
+          </small>
+        </div>
+
+        <!-- Motivo -->
+        <div class="form-group">
+          <label for="motivo">
+            <i class="fas fa-comment-dots"></i>
+            Motivo de la Solicitud *
+          </label>
+          <textarea 
+            id="motivo"
+            class="form-textarea" 
+            [(ngModel)]="motivo" 
+            name="motivo"
+            rows="3"
+            minlength="10"
+            maxlength="200"
+            placeholder="Describe brevemente el motivo (mínimo 10 caracteres)"
+            required></textarea>
+          <small class="help-text">
+            {{ motivo.length }}/200 caracteres (mínimo 10)
+          </small>
+        </div>
+
+        <!-- Justificación Detallada -->
+        <div class="form-group">
+          <label for="justificacion">
+            <i class="fas fa-align-left"></i>
+            Justificación Detallada *
+          </label>
+          <textarea 
+            id="justificacion"
+            class="form-textarea" 
+            [(ngModel)]="justificacionDetallada" 
+            name="justificacion"
+            rows="6"
+            minlength="50"
+            maxlength="1000"
+            placeholder="Explica detalladamente las razones de tu solicitud, incluyendo circunstancias, dificultades encontradas, etc. (mínimo 50 caracteres)"
+            required></textarea>
+          <small class="help-text">
+            {{ justificacionDetallada.length }}/1000 caracteres (mínimo 50)
+          </small>
+        </div>
+
+        <!-- Documento de Respaldo -->
+        <div class="form-group">
+          <label for="archivo">
+            <i class="fas fa-paperclip"></i>
+            Documento de Respaldo (Opcional)
+          </label>
+          <div class="file-input-wrapper">
+            <input 
+              type="file" 
+              id="archivo"
+              class="file-input" 
+              (change)="onArchivoSeleccionado($event)"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+            <label for="archivo" class="file-label">
+              <i class="fas fa-upload"></i>
+              {{ archivoSeleccionado ? archivoSeleccionado.name : 'Seleccionar archivo' }}
+            </label>
+          </div>
+          <small class="help-text">
+            Formatos permitidos: PDF, DOC, DOCX, JPG, PNG (máximo 5MB)
+          </small>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Importante:</strong>
+            <ul>
+              <li>Tu solicitud será revisada por el administrador</li>
+              <li>Recibirás una notificación cuando sea aprobada o rechazada</li>
+              <li>La extensión solo se aplicará si es aprobada</li>
+              <li>Puedes adjuntar documentos que respalden tu solicitud</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="volver()" [disabled]="loading">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading || loadingFechas">
+            <i [class]="loading ? 'fas fa-spinner fa-spin' : 'fas fa-paper-plane'"></i>
+            {{ loading ? 'Enviando...' : 'Enviar Solicitud' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
