@@ -215,11 +215,32 @@ export class VerPropuestaComponent implements OnInit {
 
   // Verificar si el usuario puede editar la propuesta (solo estudiantes que crearon la propuesta)
   puedeEditarPropuesta(): boolean {
-    const puedeEditar = this.esEstudiante && this.propuesta && this.propuesta.estudiante_rut === this.userRut;
+    // Si el backend envía el flag puedeEditar, usarlo
+    if (this.propuesta && typeof this.propuesta.puedeEditar === 'boolean') {
+      return this.propuesta.puedeEditar;
+    }
+    
+    // Fallback: verificar si es estudiante y (creador o miembro del equipo)
+    if (!this.esEstudiante || !this.propuesta) {
+      return false;
+    }
+    
+    const esCreador = this.propuesta.estudiante_rut === this.userRut;
+    const esMiembroEquipo = this.propuesta.estudiantes?.some((e: any) => e.rut === this.userRut);
+    const perteneceAlEquipo = esCreador || esMiembroEquipo;
+    
+    // Solo permitir edición en estados editables
+    const estadosEditables = ['pendiente', 'correcciones'];
+    const estadoPermiteEdicion = estadosEditables.includes(this.propuesta.estado_nombre);
+    
+    const puedeEditar = perteneceAlEquipo && estadoPermiteEdicion;
+    
     console.log('🔍 Puede editar propuesta:', {
       esEstudiante: this.esEstudiante,
-      estudianteRut: this.propuesta?.estudiante_rut,
-      userRut: this.userRut,
+      esCreador: esCreador,
+      esMiembroEquipo: esMiembroEquipo,
+      estadoActual: this.propuesta.estado_nombre,
+      estadoPermiteEdicion: estadoPermiteEdicion,
       puedeEditar: puedeEditar
     });
     return puedeEditar;

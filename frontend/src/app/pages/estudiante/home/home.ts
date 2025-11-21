@@ -698,14 +698,13 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     try {
       this.loadingEntrega = true;
 
-      const formData = new FormData();
-      formData.append('archivo', this.archivoHitoSeleccionado!);
-      formData.append('comentarios', this.comentariosEntregaHito.trim());
-      formData.append('fecha_entrega', new Date().toISOString().split('T')[0]);
-
       // // // // // // // // // // console.log('🔄 Entregando hito:', this.hitoSeleccionado.titulo || this.hitoSeleccionado.nombre_hito);
 
-      const response = await this.ApiService.entregarHito(this.hitoSeleccionado.id, formData).toPromise();
+      const response = await this.ApiService.entregarHito(
+        this.hitoSeleccionado.id, 
+        this.archivoHitoSeleccionado!, 
+        this.comentariosEntregaHito.trim()
+      ).toPromise();
       
       // // // // // // // // // // console.log('✅ Hito entregado exitosamente:', response);
       

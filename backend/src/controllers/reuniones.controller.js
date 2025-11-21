@@ -1,4 +1,8 @@
 import * as reunionesModel from '../models/reuniones.model.js';
+import { sendRespuestaReunionEmail } from '../services/email.service.js';
+import { UserModel } from '../models/user.model.js';
+import { logger } from '../config/logger.js';
+import { pool } from '../db/connectionDB.js';
 
 /**
  * Responder a solicitud de reunión
@@ -23,6 +27,43 @@ export const responderSolicitud = async (req, res) => {
             respuesta,
             comentarios || ''
         );
+
+        // 📧 Enviar email al estudiante que solicitó la reunión
+        try {
+            const [solicitud] = await pool.query(`
+                SELECT 
+                    sr.estudiante_rut,
+                    sr.fecha_propuesta,
+                    p.titulo as proyecto_titulo
+                FROM solicitudes_reunion sr
+                INNER JOIN proyectos p ON sr.proyecto_id = p.id
+                WHERE sr.id = ?
+            `, [solicitudId]);
+
+            if (solicitud.length > 0) {
+                const estudiante = await UserModel.findPersonByRut(solicitud[0].estudiante_rut);
+                const profesor = await UserModel.findPersonByRut(usuario_rut);
+                
+                if (estudiante && estudiante.email && estudiante.rol_id !== 3 && profesor) {
+                    await sendRespuestaReunionEmail(
+                        estudiante.email,
+                        estudiante.nombre,
+                        profesor.nombre,
+                        solicitud[0].proyecto_titulo,
+                        respuesta === 'aceptar' ? 'aceptada' : 'rechazada',
+                        solicitud[0].fecha_propuesta,
+                        comentarios || ''
+                    );
+                    logger.info('Email de respuesta de reunión enviado', { 
+                        solicitud_id: solicitudId, 
+                        estudiante_email: estudiante.email,
+                        estado: respuesta 
+                    });
+                }
+            }
+        } catch (emailError) {
+            logger.error('Error al enviar email de respuesta de reunión', { error: emailError.message });
+        }
 
         res.json(resultado);
     } catch (error) {

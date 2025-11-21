@@ -1,0 +1,35 @@
+%!TEX root = ../informe.tex
+\chapter{Conclusiones}\label{cap:conclusiones}
+Este capítulo presenta la síntesis final del proyecto AcTitUBB y plantea líneas de trabajo futuro que permitirían ampliar su impacto institucional y técnico. Las conclusiones se derivan de la articulación entre requerimientos, diseño, desarrollo e integración operativa observada en los capítulos previos.
+
+\section{Conclusión General}\label{sec:conclusion-general}
+AcTitUBB entrega una plataforma integral para gestionar el ciclo de titulación, desde la postulación de propuestas hasta la coordinación de reuniones y manejo de entregables finales. A lo largo del desarrollo se consolidó una arquitectura modular (Angular 20 en frontend; Express 5 + MySQL en backend) que soporta las principales funciones académicas: validación y transición de propuestas a proyectos, asignación de roles docentes, definición y seguimiento de hitos, calendarización con matching de disponibilidades, versionado de documentos y notificaciones internas/externas.
+
+Los objetivos planteados se cumplieron al: (i) unificar el modelo de datos en un script maestro que centraliza la persistencia y reduce ambigüedades; (ii) establecer flujos claros de autenticación y autorización con JWT y control de rol; (iii) materializar un subsistema de reuniones que cruza disponibilidad y genera trazabilidad mediante historial; (iv) asegurar trazabilidad en acciones críticas con auditoría y métricas cualitativas de rendimiento satisfactorias; y (v) ofrecer una interfaz coherente que separa funciones por rol (estudiante, profesor, administrador) con estados vacíos, validaciones y feedback oportuno.
+
+Las incidencias enfrentadas —desalineación de rutas, referencias a columnas inexistentes, ajuste de validaciones de rol, unificación de scripts SQL y relajación del rate limiting en desarrollo— impulsaron mejoras que fortalecen la mantenibilidad. El código resultante evidencia separación de capas, control explícito de efectos laterales (subida de archivos, correo) y bases para escalamiento horizontal del backend.
+
+Se reconoce como limitación la ausencia de pruebas automatizadas extensivas y mediciones cuantitativas formales (benchmark de concurrencia, estrés sobre endpoints de matching). Aun así, la robustez funcional y la alineación a requerimientos institucionales posicionan la solución como un cimiento sólido para la gestión académica del proceso de titulación.
+
+En síntesis, el proyecto logra integrar componentes esenciales del flujo de titulación, reduce fricciones operativas y prepara una estructura que facilita extensiones futuras sin comprometer la coherencia del diseño existente.
+
+\section{Trabajo Futuro (Sólo Informe Final)}\label{sec:trabajo-futuro}
+Existen oportunidades de evolución orientadas a ampliar cobertura funcional, calidad técnica y valor estratégico:
+\begin{enumerate}
+  \item \textbf{Pruebas Automatizadas y Calidad}: Incorporar baterías de pruebas unitarias (servicios y controladores), pruebas de integración sobre endpoints críticos y pruebas end-to-end (Cypress / Playwright) para reducir riesgo de regresiones. Integrar análisis estático (ESLint estricto, SonarQube) y pipeline CI/CD.
+  \item \textbf{Métricas y Observabilidad}: Añadir instrumentación (APM, logs estructurados, métricas Prometheus) para medir tiempo de respuesta, frecuencias de error y uso de funcionalidades (reuniones, hitos). Esto permitiría retroalimentar decisiones de mejora y capacidad.
+  \item \textbf{Analítica Predictiva}: Desarrollar módulo de analítica que calcule riesgo de atraso por correlación entre cumplimiento de hitos, reprogramaciones de reuniones y entregas de documentos. Modelos simples de clasificación podrían priorizar intervenciones tempranas del profesor guía.
+  \item \textbf{Gestión Documental Avanzada}: Integrar almacenamiento externo (S3, Azure Blob) con control de versiones más granular, firma digital de entregas y validaciones automáticas de formato (plantillas institucionales, verificación de metadatos).
+  \item \textbf{Integración Institucional}: Conectar con sistemas de gestión académica (SIGA / matrícula) para sincronizar datos de usuario y estados de inscripción; APIs hacia repositorios de investigación para archivado final y DOI.
+  \item \textbf{Extensión de Matching}: Incorporar algoritmos de optimización (interval scheduling, heurísticas multi-objetivo) para sugerir la mejor franja considerando preferencias de ambos actores y evitar saturación de horarios.
+  \item \textbf{Escalabilidad y Despliegue}: Migrar a contenedores orquestados (Kubernetes), configurar autoescalado basado en métricas y reforzar la estrategia de configuración por entorno (secretos en vault seguro).
+  \item \textbf{Internacionalización y Accesibilidad}: Implementar i18n para otros idiomas y auditoría de accesibilidad (WCAG 2.1 AA) con mejoras en contraste, navegación via teclado y etiquetas ARIA enriquecidas.
+  \item \textbf{Gestión de Flujos Avanzados}: Añadir revisor externo (pare evaluador), rondas de retroalimentación formal con timestamps y comparative tracking de versiones de documento (diff visual).
+  \item \textbf{Panel Analítico de Estado Institucional}: Dashboard administrativo con agregados de porcentaje de avance global, distribución de estados de proyectos y mapa de carga docente para balancear asignaciones futuras.
+  \item \textbf{Automatización de Recordatorios}: Motor de eventos que envíe recordatorios antes de fechas importantes e hitos próximos a vencer, con lógica configurable por umbral.
+  \item \textbf{Seguridad Avanzada}: Rotación automática de secretos JWT, detección de comportamientos anómalos (multiple login fallido), cifrado de documentos en reposo y análisis de vulnerabilidades periódicas.
+\end{enumerate}
+La prioridad inicial debería enfocarse en pruebas automatizadas y observabilidad para cimentar confianza operativa; posteriormente, analítica predictiva y paneles administrativos brindarían valor estratégico. Las mejoras propuestas aprovechan la modularidad actual y se integran con disrupción mínima en las capas existentes.
+
+\bigskip
+La proyección futura muestra un camino claro hacia una plataforma institucional madura, escalable y analíticamente informada, consolidando a AcTitUBB como herramienta clave en la gestión de titulación.

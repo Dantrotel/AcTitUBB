@@ -116,6 +116,30 @@
           </div>
         </div>
 
+        <!-- Campos de Estudiantes Adicionales -->
+        <div class="estudiantes-adicionales-container" *ngIf="mostrarEstudiantesAdicionales">
+          <div class="form-group" *ngFor="let estudiante of estudiantes_adicionales; let i = index">
+            <label [for]="'estudiante_' + (i + 2)">
+              <i class="fas fa-user-plus"></i>
+              RUT del Estudiante {{ i + 2 }} *
+            </label>
+            <input
+              [id]="'estudiante_' + (i + 2)"
+              type="text"
+              [(ngModel)]="estudiantes_adicionales[i]"
+              [name]="'estudiante_adicional_' + i"
+              placeholder="Ej: 12345678-9"
+              required
+              class="form-input"
+              maxlength="12"
+              pattern="^\d{7,8}-[0-9kK]{1}$">
+            <small class="form-hint">
+              <i class="fas fa-info-circle"></i>
+              Formato: 12345678-9 (sin puntos)
+            </small>
+          </div>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="complejidad_estimada">

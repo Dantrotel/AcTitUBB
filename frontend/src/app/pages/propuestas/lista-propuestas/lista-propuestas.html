@@ -135,6 +135,11 @@
           <p class="descripcion">{{ propuesta.descripcion | slice:0:100 }}{{ propuesta.descripcion?.length > 100 ? '...' : '' }}</p>
           
           <div class="info-grid">
+            <div class="info-item" *ngIf="propuesta.estudiantes_completo">
+              <i class="fas fa-users"></i>
+              <span>{{ propuesta.estudiantes_completo }}</span>
+            </div>
+            
             <div class="info-item" *ngIf="propuesta.nombre_profesor">
               <i class="fas fa-chalkboard-teacher"></i>
               <span>{{ propuesta.nombre_profesor }}</span>

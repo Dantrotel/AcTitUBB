@@ -1,0 +1,91 @@
+%!TEX root = ../informe.tex
+\chapter{Proyecto}
+\label{cap:proyecto}
+
+Este capítulo describe el proyecto de software desarrollado para gestionar integralmente el proceso de titulación en la Universidad del Bío-Bío (AcTitUBB). El sistema automatiza la cadena de valor desde la postulación de propuestas, la creación y seguimiento de proyectos, la asignación de profesores en distintos roles, la planificación con cronogramas e hitos, la comunicación mediante notificaciones y la coordinación de reuniones con un subsistema de \emph{calendario con matching} que contempla disponibilidades, solicitudes y confirmaciones. La plataforma se compone de un frontend en Angular y un backend en Node.js/Express con persistencia en MySQL. Además, se contemplan servicios transversales como autenticación JWT, control de acceso por roles, envío de correos, subida y gestión de documentos y mecanismos defensivos (CORS y rate limiting).
+
+\section{Objetivo General del Software}
+Diseñar e implementar una plataforma web robusta, segura y escalable que soporte el ciclo completo de titulación, integrando: (i) registro y autenticación de usuarios, (ii) gestión de propuestas y proyectos, (iii) asignación de profesores en roles formales (guía, informante, co-guía, etc.), (iv) planificación y seguimiento mediante cronogramas e hitos, (v) orquestación de reuniones con matching automático de disponibilidades y (vi) almacenamiento controlado de documentos académicos; todo ello con trazabilidad y auditoría de las acciones relevantes.
+
+\section{Objetivos Específicos del Software}
+\begin{itemize}
+  \item Implementar un modelo de datos relacional que represente usuarios, roles, propuestas, proyectos, asignaciones de profesores, cronogramas, hitos, notificaciones, disponibilidades, solicitudes y reuniones, con claves foráneas e índices de rendimiento.
+  \item Desarrollar servicios REST que permitan: creación y revisión de propuestas; transición a proyecto; asignación y sustitución de profesores por rol; creación, entrega y revisión de hitos; notificaciones a actores clave; y gestión de disponibilidades/solicitudes/reuniones.
+  \item Integrar un mecanismo de autenticación y autorización basado en JWT, con protección de rutas y verificación de rol (estudiante, profesor, admin) en el backend y guardas en el frontend.
+  \item Incorporar un subsistema de calendarización que cruce disponibilidades profesor–estudiante y proponga franjas viables, generando solicitudes y reuniones confirmadas con historial de acciones.
+  \item Permitir la carga controlada de documentos asociados al proyecto (p. ej., propuesta final, informes de avance, borradores y documento final), con versionado básico y registro de revisiones.
+  \item Proveer una experiencia de usuario responsiva en Angular, con navegación protegida, formularios validados, retroalimentación de estado (mensajes y spinners) y listados filtrables/paginables.
+  \item Asegurar la trazabilidad mediante auditoría de eventos críticos y colecciones Postman que documenten y prueben la API.
+\end{itemize}
+
+\section{Metodología de Desarrollo}
+Se adoptó un enfoque incremental–iterativo con prácticas ágiles ligeras (Kanban). Las funcionalidades se organizaron en \emph{épicas} y \emph{historias} alineadas a los flujos de negocio (propuestas, proyectos, asignaciones, cronogramas, reuniones y documentos). Cada iteración contempló:
+\begin{enumerate}
+  \item Diseño técnico: definición de entidades, endpoints y rutas Angular.
+  \item Implementación vertical: modelo–servicio–controlador–ruta en backend y servicio–vista–navegación en frontend.
+  \item Pruebas manuales asistidas por la colección Postman (\texttt{postman/Calendario-Matching-Examples.postman\_collection.json}).
+  \item Revisión y endurecimiento: validaciones, manejo de errores, CORS y \emph{rate limiting}.
+\end{enumerate}
+El repositorio separa responsabilidades por capas: controladores, servicios, modelos, middlewares y rutas en el backend; y páginas, componentes y servicios en el frontend. Se usaron ramas y \emph{pull requests} para integrar cambios de forma controlada.
+
+\section{Estándares de Documentación}
+La documentación del sistema se articula en tres niveles:
+\begin{itemize}
+  \item \textbf{Documentación de código}: nombres semánticos, modularización y comentarios en funciones críticas (p. ej., matching de reuniones, validaciones de disponibilidad y verificación de relación profesor–estudiante). Convenciones REST en rutas (\texttt{/api/v1/...}) y uso consistente de verbos HTTP.
+  \item \textbf{Artefactos del informe}: este capítulo, diagramas de casos de uso y de componentes, diagrama ER de la base de datos y tablas de trazabilidad requisitos–implementación–pruebas.
+  \item \textbf{Evidencia ejecutable}: colección Postman con ejemplos de solicitudes para disponibilidades, búsquedas de reunión, solicitudes y respuestas; scripts SQL consolidando toda la estructura en un único \texttt{database.sql} para reproducibilidad.
+\end{itemize}
+Se mantienen \emph{readmes} por paquete cuando procede y se añaden mensajes de confirmación (commits) descriptivos para facilitar auditoría.
+
+\section{Técnicas y Notaciones}
+\begin{itemize}
+  \item \textbf{REST y JSON}: diseño de recursos con prefijo \texttt{/api/v1}, utilización de códigos de estado HTTP y cuerpos JSON tipados en frontend.
+  \item \textbf{Autenticación JWT}: emisión y validación de tokens; guarda de rutas e inyección del header \texttt{Authorization: Bearer} desde Angular.
+  \item \textbf{Diseño de datos}: normalización relacional, claves foráneas, restricciones de \texttt{CHECK} e índices compuestos (p. ej., \texttt{idx\_proyecto\_estado}, \texttt{idx\_solicitud\_profesor}).
+  \item \textbf{UML}: diagramas de casos de uso (actores: estudiante, profesor, admin), componentes (frontend/backend/DB), clases (entidades principales) y secuencia (flujo de solicitud de reunión y aceptación).
+  \item \textbf{Validaciones de negocio}: verificación de relación profesor–estudiante por proyecto antes de proponer reunión; controles de rango horario y de solapamiento en disponibilidades.
+  \item \textbf{Seguridad defensiva}: CORS de orígenes conocidos, \emph{rate limiting} en autenticación (relajado en desarrollo), sanitización de subida de archivos y separación de credenciales por entorno.
+\end{itemize}
+
+\section{Tecnologías Utilizadas}
+\subsection*{Frontend}
+\begin{itemize}
+  \item \textbf{Angular 20}: arquitectura de componentes, enrutado, formularios y \emph{guards}. Librería de UI: Angular Material.
+  \item \textbf{RxJS}: manejo reactivo de flujos HTTP y estado de carga.
+  \item \textbf{Herramientas}: Angular CLI (construcción y \emph{serve}), Karma/Jasmine para pruebas unitarias (base instalada).
+\end{itemize}
+
+\subsection*{Backend}
+\begin{itemize}
+  \item \textbf{Node.js + Express 5}: servidor HTTP modularizado por rutas (\texttt{users}, \texttt{projects}, \texttt{propuestas}, \texttt{calendario}, \texttt{calendario-matching}, \texttt{asignaciones-profesores}, \texttt{documentos}).
+  \item \textbf{Autenticación y seguridad}: \texttt{jsonwebtoken} para JWT, \texttt{cors} para orígenes permitidos, \texttt{express-rate-limit} como mitigación de fuerza bruta.
+  \item \textbf{Persistencia}: \texttt{mysql2} (pool de conexiones) contra MySQL.
+  \item \textbf{Carga de archivos}: \texttt{multer} para subida de documentos, con persistencia en directorio \texttt{uploads/} y metadatos en BD.
+  \item \textbf{Correo}: \texttt{nodemailer} para notificaciones por email.
+  \item \textbf{Middlewares}: verificación de sesión (JWT), auditoría, control de listas negras, validador de RUT.
+\end{itemize}
+
+\subsection*{Base de Datos (MySQL)}
+\begin{itemize}
+  \item \textbf{Modelado principal}: \texttt{usuarios}, \texttt{roles}, \texttt{propuestas}, \texttt{proyectos}, \texttt{roles\_profesores}, \texttt{asignaciones\_proyectos}, \texttt{cronogramas\_proyecto}, \texttt{hitos\_cronograma}, \texttt{hitos\_proyecto}, \texttt{evaluaciones\_proyecto}, \texttt{fechas\_importantes}, \texttt{notificaciones\_proyecto}.
+  \item \textbf{Calendario con matching}: \texttt{disponibilidades}, \texttt{solicitudes\_reunion}, \texttt{reuniones\_calendario} e \texttt{historial\_reuniones}.
+  \item \textbf{Documentos}: \texttt{documentos\_proyecto} con versionado básico y estados de revisión.
+  \item \textbf{Rendimiento}: índices por combinación de campos de consulta frecuente (p. ej., proyecto–estado, fechas, destinatario–activa), claves únicas de negocio (asignación activa por rol y proyecto) y borrado en cascada donde aplica.
+\end{itemize}
+
+\subsection*{DevOps y despliegue}
+\begin{itemize}
+  \item \textbf{Docker Compose}: orquestación local de servicios (frontend, backend, base de datos) y \texttt{dockerfile} por componente.
+  \item \textbf{Nginx}: \emph{reverse proxy} y servidor estático para frontend.
+  \item \textbf{Variables de entorno}: archivo \texttt{.env} con credenciales y configuración por entorno (puertos, cadena de conexión, secreto JWT, credenciales de correo).
+\end{itemize}
+
+\subsection*{Colecciones y utilitarios}
+\begin{itemize}
+  \item \textbf{Postman}: colección de ejemplos para disponibilidades, búsqueda de reunión, solicitudes, reprogramaciones y cancelaciones.
+  \item \textbf{Scripts SQL}: consolidación en \texttt{backend/src/db/database.sql} para construir la BD desde cero, con datos semilla mínimos.
+  \item \textbf{Gestión de archivos}: estructura \texttt{uploads/} por tipo de documento, con nombres sanitizados y referencias en BD.
+\end{itemize}
+
+\bigskip
+En síntesis, el sistema entrega una solución integral al proceso de titulación, soportando los flujos institucionales clave y ofreciendo capacidades avanzadas de planificación y coordinación entre actores, con una base tecnológica moderna y buenas prácticas de ingeniería de software.

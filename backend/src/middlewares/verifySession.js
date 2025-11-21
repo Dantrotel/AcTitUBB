@@ -2,21 +2,35 @@ import jwt from 'jsonwebtoken';
 import { isBlacklisted } from './blacklist.js'; // ajusta la ruta según tu proyecto
 
 const verifySession = async (req, res, next) => {
+  console.log('🔍 verifySession - Método:', req.method, 'URL:', req.url);
+  console.log('🔍 verifySession - Headers Authorization:', req.headers.authorization ? 'Presente' : 'Ausente');
+  
   let token = req.headers.authorization;
 
   if (!token) {
+    console.log('❌ verifySession - No se encontró token de autorización');
     return res.status(401).json({ message: "Unauthorized" });
   }
 
+  console.log('🔍 verifySession - Token completo:', token.substring(0, 30) + '...');
   token = token.split(" ")[1];
+  console.log('🔍 verifySession - Token extraído:', token ? token.substring(0, 30) + '...' : 'UNDEFINED');
 
-  // Verificar si el token está en la blacklist
-  if (isBlacklisted(token)) {
-    return res.status(401).json({ message: "Token revoked. Please login again." });
+  // Verificar si el token está en la blacklist (IMPORTANTE: await porque isBlacklisted es async)
+  const tokenBlacklisted = await isBlacklisted(token);
+  if (tokenBlacklisted) {
+    console.log('❌ verifySession - Token en blacklist (revocado)');
+    return res.status(401).json({ 
+      message: "Token revoked. Please login again.",
+      code: "TOKEN_REVOKED"
+    });
   }
+  console.log('✅ verifySession - Token NO está en blacklist');
 
   try {
+    console.log('🔍 verifySession - Verificando token con JWT...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('✅ verifySession - Token verificado exitosamente:', decoded);
     const { rut, rol_id, type } = decoded;
     
     // Verificar que es un access token válido
@@ -53,14 +67,21 @@ const verifySession = async (req, res, next) => {
     
     next();
   } catch (error) {
+    console.error('❌ verifySession - Error al verificar token:', error.name, error.message);
+    
     if (error.name === 'TokenExpiredError') {
+      console.log('❌ verifySession - Token expirado');
       return res.status(401).json({ 
         message: "Token expirado. Usa el refresh token para obtener uno nuevo.",
         code: "TOKEN_EXPIRED"
       });
     }
     
-    console.log('Error de verificación de token:', error.message);
+    if (error.name === 'JsonWebTokenError') {
+      console.log('❌ verifySession - Token JWT inválido:', error.message);
+    }
+    
+    console.log('❌ verifySession - Error de verificación de token:', error.message);
     return res.status(401).json({ 
       message: "Token inválido",
       code: "INVALID_TOKEN"

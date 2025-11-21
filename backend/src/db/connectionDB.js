@@ -76,7 +76,7 @@ const checkTablesExist = async () => {
             'estados_propuestas', 'roles_profesores', 'asignaciones_propuestas',
             'asignaciones_proyectos', 'fechas_importantes', 'participantes_reuniones',
             'hitos_proyecto', 'cronogramas_proyecto', 'evaluaciones_proyecto',
-            'hitos_cronograma', 'notificaciones_proyecto', 'configuracion_alertas'
+            'hitos_cronograma', 'notificaciones_proyecto', 'configuracion_alertas', ''
         ];
         
         // Verificar tablas principales
@@ -188,6 +188,9 @@ const executeDatabaseScript = async () => {
                             error.code === 'ER_DUP_KEYNAME' ||
                             error.message.includes('Duplicate key name') ||
                             error.message.includes('Duplicate index') ||
+                            error.code === 'ER_DUP_FIELDNAME' ||
+                            error.code === 'ER_DUP_FIELD' ||
+                            error.message.includes('Duplicate column name') ||
                             error.code === 'ER_DUP_USERNAME' ||
                             error.message.includes('Duplicate user') ||
                             error.code === 'ER_DB_CREATE_EXISTS' ||
@@ -238,7 +241,8 @@ const verifyTables = async () => {
             'roles_profesores', 'asignaciones_propuestas', 'proyectos',
             'asignaciones_proyectos', 'avances', 'fechas_importantes',
             'reuniones', 'participantes_reuniones', 'hitos_proyecto',
-            'cronogramas_proyecto', 'evaluaciones_proyecto', 'hitos_cronograma'
+            'cronogramas_proyecto', 'evaluaciones_proyecto', 'hitos_cronograma',
+            'historial_reuniones', 'documentos_proyecto'
         ];
 
         let missingTables = [];
