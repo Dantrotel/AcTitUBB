@@ -45,6 +45,10 @@ export class ActualizarPropuestaComponent implements OnInit {
 
   // Variables de control para validaciones
   mostrarJustificacionComplejidad = false;
+  
+  // Estudiantes adicionales
+  estudiantes_adicionales: string[] = [];
+  mostrarEstudiantesAdicionales = false;
 
   constructor(
     private apiService: ApiService,
@@ -121,6 +125,15 @@ export class ActualizarPropuestaComponent implements OnInit {
         }
         
         this.propuesta = data;
+        
+        // Cargar estudiantes adicionales si existen
+        if (data.estudiantes && Array.isArray(data.estudiantes)) {
+          // Filtrar estudiantes que no sean el creador
+          const estudiantesNoCreador = data.estudiantes.filter((e: any) => !e.es_creador);
+          this.estudiantes_adicionales = estudiantesNoCreador.map((e: any) => e.rut);
+          this.mostrarEstudiantesAdicionales = this.estudiantes_adicionales.length > 0;
+        }
+        
         // Validar justificación de complejidad al cargar
         this.validarJustificacionComplejidad();
         this.loading = false;
@@ -134,7 +147,36 @@ export class ActualizarPropuestaComponent implements OnInit {
   }
 
   onEstudiantesChange() {
+    this.actualizarEstudiantesAdicionales();
     this.validarJustificacionComplejidad();
+  }
+  
+  actualizarEstudiantesAdicionales() {
+    const numEstudiantes = parseInt(this.propuesta.numero_estudiantes);
+    
+    if (numEstudiantes > 1) {
+      this.mostrarEstudiantesAdicionales = true;
+      const cantidadAdicionales = numEstudiantes - 1;
+      
+      // Ajustar tamaño del array
+      if (this.estudiantes_adicionales.length < cantidadAdicionales) {
+        // Agregar campos vacíos
+        while (this.estudiantes_adicionales.length < cantidadAdicionales) {
+          this.estudiantes_adicionales.push('');
+        }
+      } else if (this.estudiantes_adicionales.length > cantidadAdicionales) {
+        // Reducir el array
+        this.estudiantes_adicionales = this.estudiantes_adicionales.slice(0, cantidadAdicionales);
+      }
+    } else {
+      this.mostrarEstudiantesAdicionales = false;
+      this.estudiantes_adicionales = [];
+    }
+  }
+  
+  validarRUT(rut: string): boolean {
+    const rutPattern = /^\d{7,8}-[0-9kK]{1}$/;
+    return rutPattern.test(rut);
   }
 
   onComplejidadChange() {
@@ -175,12 +217,48 @@ export class ActualizarPropuestaComponent implements OnInit {
     if (this.propuesta.descripcion.length > 1000) return 'La descripción no puede exceder 1000 caracteres';
     if (this.propuesta.area_tematica.length > 100) return 'El área temática no puede exceder 100 caracteres';
 
+    // Validar estudiantes adicionales
+    if (parseInt(this.propuesta.numero_estudiantes) > 1) {
+      const rutSet = new Set();
+      
+      for (let i = 0; i < this.estudiantes_adicionales.length; i++) {
+        const rut = this.estudiantes_adicionales[i]?.trim();
+        
+        if (!rut) {
+          return `Debes ingresar el RUT del Estudiante ${i + 2}`;
+        }
+        
+        if (!this.validarRUT(rut)) {
+          return `El RUT del Estudiante ${i + 2} no es válido. Formato: 12345678-9`;
+        }
+        
+        if (rutSet.has(rut)) {
+          return `El RUT del Estudiante ${i + 2} está duplicado`;
+        }
+        
+        rutSet.add(rut);
+      }
+    }
+
     return null;
   }
 
   private puedeEditarPropuesta(propuesta: any): boolean {
-    // Solo el creador puede editar su propuesta
-    return propuesta.estudiante_rut === this.userRut;
+    // Si el backend envía el flag puedeEditar, usarlo
+    if (typeof propuesta.puedeEditar === 'boolean') {
+      return propuesta.puedeEditar;
+    }
+    
+    // Verificar si es creador o miembro del equipo
+    const esCreador = propuesta.estudiante_rut === this.userRut;
+    const esMiembroEquipo = propuesta.estudiantes?.some((e: any) => e.rut === this.userRut);
+    const perteneceAlEquipo = esCreador || esMiembroEquipo;
+    
+    // Solo permitir edición en estados editables
+    const estadosEditables = ['pendiente', 'correcciones'];
+    const estadoPermiteEdicion = estadosEditables.includes(propuesta.estado_nombre);
+    
+    return perteneceAlEquipo && estadoPermiteEdicion;
   }
 
   formatearFechaHoraParaMySQL(date: Date): string {
@@ -338,6 +416,14 @@ export class ActualizarPropuestaComponent implements OnInit {
       formData.append('bibliografia', this.propuesta.bibliografia);
     }
     
+    // Agregar estudiantes adicionales
+    if (this.estudiantes_adicionales.length > 0) {
+      const estudiantesLimpios = this.estudiantes_adicionales
+        .map(rut => rut.trim())
+        .filter(rut => rut !== '');
+      formData.append('estudiantes_adicionales', JSON.stringify(estudiantesLimpios));
+    }
+    
     // Agregar el archivo
     if (this.nuevoArchivo) {
       formData.append('archivo', this.nuevoArchivo);
@@ -368,6 +454,10 @@ export class ActualizarPropuestaComponent implements OnInit {
 
   private actualizarPropuestaSinArchivo() {
     // Enviar todos los datos sin archivo
+    const estudiantesLimpios = this.estudiantes_adicionales
+      .map(rut => rut.trim())
+      .filter(rut => rut !== '');
+    
     const datosActualizacion = {
       titulo: this.propuesta.titulo,
       descripcion: this.propuesta.descripcion,
@@ -381,7 +471,8 @@ export class ActualizarPropuestaComponent implements OnInit {
       metodologia_propuesta: this.propuesta.metodologia_propuesta,
       justificacion_complejidad: this.propuesta.justificacion_complejidad || '',
       recursos_necesarios: this.propuesta.recursos_necesarios || '',
-      bibliografia: this.propuesta.bibliografia || ''
+      bibliografia: this.propuesta.bibliografia || '',
+      estudiantes_adicionales: estudiantesLimpios
     };
 
     this.apiService.updatePropuesta(this.propuestaId, datosActualizacion).subscribe({

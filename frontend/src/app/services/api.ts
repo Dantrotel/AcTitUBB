@@ -413,36 +413,190 @@ export class ApiService {
     });
   }
 
-  // Gestión de hitos
+  // ===== SISTEMA UNIFICADO DE CRONOGRAMAS Y HITOS ✅ =====
+  // Ver documentación: backend/SISTEMA_HITOS_UNIFICADO.md
+
+  // Gestión de Cronogramas
+  getCronogramaProyecto(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/cronograma`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearCronograma(proyectoId: string, data: any) {
+    return this.http.post(`${this.baseUrl}/projects/${proyectoId}/cronograma`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  aprobarCronograma(cronogramaId: string) {
+    return this.http.patch(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/aprobar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Gestión de Hitos del Cronograma
+  getHitosCronograma(cronogramaId: string) {
+    return this.http.get(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearHitoCronograma(cronogramaId: string, data: any) {
+    // Mapear campos para compatibilidad
+    const hitoData = {
+      nombre_hito: data.nombre_hito || data.nombre,
+      descripcion: data.descripcion,
+      tipo_hito: data.tipo_hito || this.mapearTipoHito(data.tipo || 'entregable'),
+      fecha_limite: data.fecha_limite,
+      peso_en_proyecto: data.peso_en_proyecto || data.peso_porcentual || 0,
+      es_critico: data.es_critico || false,
+      hito_predecesor_id: data.hito_predecesor_id || null
+    };
+
+    return this.http.post(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos`, hitoData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Entregas y Revisiones de Hitos
+  entregarHito(hitoId: string, archivo: File, comentarios: string) {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('comentarios_estudiante', comentarios);
+
+    // Headers sin Content-Type para FormData
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.post(`${this.baseUrl}/projects/hitos/${hitoId}/entregar`, formData, {
+      headers: headers
+    });
+  }
+
+  revisarHito(hitoId: string, revision: any) {
+    const revisionData = {
+      comentarios_profesor: revision.retroalimentacion || revision.comentarios_profesor,
+      calificacion: revision.calificacion,
+      estado: revision.estado === 'aprobado' ? 'aprobado' : 'requiere_correcciones'
+    };
+
+    return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, revisionData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Estadísticas de Cumplimiento
+  getEstadisticasCumplimiento(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Notificaciones
+  getNotificaciones() {
+    return this.http.get(`${this.baseUrl}/projects/notificaciones`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  marcarNotificacionLeida(notificacionId: string) {
+    return this.http.patch(`${this.baseUrl}/projects/notificaciones/${notificacionId}/leer`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Configuración de Alertas
+  configurarAlertas(proyectoId: string, alertas: any) {
+    return this.http.post(`${this.baseUrl}/projects/${proyectoId}/alertas`, alertas, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ⚠️ MÉTODOS DEPRECATED (Sistema Antiguo - Usar cronogramas) ⚠️
+  /** @deprecated Usar getCronogramaProyecto() y getHitosCronograma() en su lugar */
   getHitosProyecto(id: string) {
+    console.warn('⚠️ getHitosProyecto() está DEPRECATED. Usar getCronogramaProyecto() + getHitosCronograma()');
     return this.http.get(`${this.baseUrl}/projects/${id}/hitos`, {
       headers: this.getHeaders()
     });
   }
 
+  /** @deprecated Usar crearHitoCronograma() en su lugar */
   crearHitoProyecto(id: string, data: any) {
+    console.warn('⚠️ crearHitoProyecto() está DEPRECATED. Usar crearHitoCronograma()');
     return this.http.post(`${this.baseUrl}/projects/${id}/hitos`, data, {
       headers: this.getHeaders()
     });
   }
 
+  /** @deprecated Sistema unificado maneja esto automáticamente */
   actualizarHitoProyecto(id: string, hitoId: string, data: any) {
+    console.warn('⚠️ actualizarHitoProyecto() está DEPRECATED');
     return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}`, data, {
       headers: this.getHeaders()
     });
   }
 
+  /** @deprecated Usar entregarHito() en su lugar */
   completarHito(id: string, hitoId: string) {
+    console.warn('⚠️ completarHito() está DEPRECATED. Usar entregarHito()');
     return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}/completar`, {}, {
       headers: this.getHeaders()
     });
   }
 
-  // Obtener detalles específicos de un hito
+  /** @deprecated Los hitos se obtienen del cronograma */
   getDetalleHito(proyectoId: string, hitoId: string) {
+    console.warn('⚠️ getDetalleHito() está DEPRECATED');
     return this.http.get(`${this.baseUrl}/projects/${proyectoId}/hitos/${hitoId}`, {
       headers: this.getHeaders()
     });
+  }
+
+  // ===== FUNCIONES HELPER =====
+  
+  private mapearTipoHito(tipoLegacy: string): string {
+    const mapa: { [key: string]: string } = {
+      'entregable': 'entrega_documento',
+      'revision': 'revision_avance',
+      'presentacion': 'evaluacion',
+      'evaluacion': 'evaluacion',
+      'documento': 'entrega_documento',
+      'codigo': 'entrega_documento',
+      'reunion': 'reunion_seguimiento'
+    };
+    return mapa[tipoLegacy] || 'entrega_documento';
+  }
+
+  /**
+   * Normaliza hito del backend para compatibilidad con componentes
+   */
+  normalizarHito(hito: any): any {
+    return {
+      ...hito,
+      nombre: hito.nombre_hito || hito.nombre,
+      peso_porcentual: hito.peso_en_proyecto || hito.peso_porcentual || 0,
+      prioridad: this.calcularPrioridad(hito),
+      obligatorio: true,
+      acepta_entregas: true,
+      fecha_inicio: hito.created_at
+    };
+  }
+
+  private calcularPrioridad(hito: any): string {
+    if (hito.es_critico) return 'critica';
+    
+    const diasRestantes = Math.ceil(
+      (new Date(hito.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    );
+    
+    if (diasRestantes < 0) return 'critica';
+    if (diasRestantes <= 3) return 'alta';
+    if (diasRestantes <= 7) return 'media';
+    return 'baja';
   }
 
   // Gestión de evaluaciones
@@ -654,58 +808,41 @@ export class ApiService {
     });
   }
 
-  // ===== MÉTODOS PARA SISTEMA DE CRONOGRAMAS Y ENTREGAS =====
+  // ===== MÉTODOS ADICIONALES DEL SISTEMA =====
 
-  // Crear cronograma para un proyecto
-  crearCronograma(projectId: string, cronogramaData: any) {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/cronograma`, cronogramaData, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Obtener cronograma activo de un proyecto
+  // Obtener cronograma activo de un proyecto (alias)
   obtenerCronograma(projectId: string) {
-    return this.http.get(`${this.baseUrl}/projects/${projectId}/cronograma`, {
-      headers: this.getHeaders()
-    });
+    return this.getCronogramaProyecto(projectId);
   }
 
-  // Aprobar cronograma (desde perspectiva del estudiante)
-  aprobarCronograma(cronogramaId: string) {
-    return this.http.patch(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/aprobar`, {}, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Crear hito en cronograma
-  crearHitoCronograma(cronogramaId: string, hitoData: any) {
-    return this.http.post(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos`, hitoData, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Obtener hitos de un cronograma
+  // Obtener hitos de un cronograma (alias)
   obtenerHitosCronograma(cronogramaId: string) {
-    return this.http.get(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos`, {
+    return this.getHitosCronograma(cronogramaId);
+  }
+
+  // Obtener notificaciones del usuario
+  obtenerNotificaciones(soloNoLeidas: boolean = false) {
+    const params = soloNoLeidas ? '?solo_no_leidas=true' : '';
+    return this.http.get(`${this.baseUrl}/projects/notificaciones${params}`, {
       headers: this.getHeaders()
     });
   }
 
-  // Entregar hito (subir archivo)
-  entregarHito(hitoId: string, formData: FormData) {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
-      // No incluir Content-Type para FormData
-    });
+  // Obtener estadísticas de cumplimiento (alias)
+  obtenerEstadisticasCumplimiento(projectId: string) {
+    return this.getEstadisticasCumplimiento(projectId);
+  }
 
-    return this.http.post(`${this.baseUrl}/projects/hitos/${hitoId}/entregar`, formData, {
-      headers: headers
+  // Actualizar hito existente
+  actualizarHitoCronograma(cronogramaId: string, hitoId: string, hitoData: any) {
+    return this.http.put(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/${hitoId}`, hitoData, {
+      headers: this.getHeaders()
     });
   }
 
-  // Revisar hito entregado
-  revisarHito(hitoId: string, revisionData: any) {
-    return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, revisionData, {
+  // Eliminar hito
+  eliminarHitoCronograma(cronogramaId: string, hitoId: string) {
+    return this.http.delete(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/${hitoId}`, {
       headers: this.getHeaders()
     });
   }
@@ -723,7 +860,6 @@ export class ApiService {
   crearEntregaHito(projectId: string, cronogramaId: string, hitoId: string, entregaData: FormData) {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${localStorage.getItem('token')}`
-      // No incluir Content-Type para FormData
     });
 
     return this.http.post(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas`, entregaData, {
@@ -735,7 +871,6 @@ export class ApiService {
   actualizarEntregaHito(projectId: string, cronogramaId: string, hitoId: string, entregaId: string, entregaData: FormData) {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${localStorage.getItem('token')}`
-      // No incluir Content-Type para FormData
     });
 
     return this.http.put(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas/${entregaId}`, entregaData, {
@@ -746,49 +881,6 @@ export class ApiService {
   // Eliminar entrega
   eliminarEntregaHito(projectId: string, cronogramaId: string, hitoId: string, entregaId: string) {
     return this.http.delete(`${this.baseUrl}/projects/${projectId}/cronogramas/${cronogramaId}/hitos/${hitoId}/entregas/${entregaId}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Actualizar hito existente
-  actualizarHitoCronograma(cronogramaId: string, hitoId: string, hitoData: any) {
-    return this.http.put(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/${hitoId}`, hitoData, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Eliminar hito
-  eliminarHitoCronograma(cronogramaId: string, hitoId: string) {
-    return this.http.delete(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/${hitoId}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Obtener notificaciones del usuario
-  obtenerNotificaciones(soloNoLeidas: boolean = false) {
-    const params = soloNoLeidas ? '?solo_no_leidas=true' : '';
-    return this.http.get(`${this.baseUrl}/projects/notificaciones${params}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Marcar notificación como leída
-  marcarNotificacionLeida(notificacionId: string) {
-    return this.http.patch(`${this.baseUrl}/projects/notificaciones/${notificacionId}/leer`, {}, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Configurar alertas de proyecto
-  configurarAlertas(projectId: string, configData: any) {
-    return this.http.post(`${this.baseUrl}/projects/${projectId}/alertas`, configData, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Obtener estadísticas de cumplimiento
-  obtenerEstadisticasCumplimiento(projectId: string) {
-    return this.http.get(`${this.baseUrl}/projects/${projectId}/estadisticas`, {
       headers: this.getHeaders()
     });
   }

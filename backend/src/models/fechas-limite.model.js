@@ -351,15 +351,15 @@ export const verificarPermisoCrearPropuesta = async (estudianteRut) => {
             LIMIT 1
         `);
 
-        // Si no hay fecha límite configurada, permitir siempre
+        // Si no hay fecha límite configurada, NO permitir crear propuestas
         if (fechas.length === 0) {
             return {
-                puede_crear: true,
-                motivo: 'No hay período de propuestas configurado. Contacta al administrador.',
+                puede_crear: false,
+                motivo: 'No hay período de propuestas configurado. Contacta al administrador para que establezca una fecha límite.',
                 fecha_limite: null,
                 dias_restantes: null,
                 sin_limite: true,
-                habilitada: true
+                habilitada: false
             };
         }
 

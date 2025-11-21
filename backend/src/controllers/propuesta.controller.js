@@ -2,21 +2,21 @@ import * as PropuestasService from '../services/propuesta.service.js';
 import * as FechasLimiteModel from '../models/fechas-limite.model.js';
 import path from 'path';
 import fs from 'fs';
+import { logger } from '../config/logger.js';
+import { notifyPropuestaAprobada, notifyPropuestaRechazada, notifyAsignacionProfesor } from '../config/socket.js';
+import { sendAsignacionProfesorEmail } from '../services/email.service.js';
+import { UserModel } from '../models/user.model.js';
 
 // Endpoint temporal de debug para identificar el problema
 export const debugPropuestaController = async (req, res) => {
   try {
-    console.log('=== DEBUG PROPUESTA ===');
-    console.log('Method:', req.method);
-    console.log('URL:', req.url);
-    console.log('Headers Content-Type:', req.headers['content-type']);
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-    console.log('File:', req.file);
-    console.log('User from token:', {
-      rut: req.rut,
-      rol: req.rol,
-      rol_id: req.rol_id,
-      role_id: req.role_id
+    logger.debug('Debug propuesta iniciado', {
+      method: req.method,
+      url: req.url,
+      contentType: req.headers['content-type'],
+      body: req.body,
+      file: req.file,
+      user: { rut: req.rut, rol_id: req.rol_id }
     });
 
     // Validar qué campos están llegando
@@ -29,14 +29,16 @@ export const debugPropuestaController = async (req, res) => {
       }
     });
 
-    console.log('Campos faltantes:', camposFaltantes);
+    logger.debug('Validación de campos', { camposFaltantes });
 
     // Validar fecha si existe
     if (req.body.fecha_envio) {
       const fecha = new Date(req.body.fecha_envio);
-      console.log('Fecha original:', req.body.fecha_envio);
-      console.log('Fecha parseada:', fecha);
-      console.log('Fecha válida:', !isNaN(fecha));
+      logger.debug('Validación de fecha', { 
+        original: req.body.fecha_envio, 
+        parseada: fecha, 
+        valida: !isNaN(fecha) 
+      });
     }
 
     res.json({
@@ -65,7 +67,7 @@ export const debugPropuestaController = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error en debug:', error);
+    logger.error('Error en debug propuesta', { error: error.message });
     res.status(500).json({ 
       success: false, 
       error: error.message 
@@ -74,9 +76,11 @@ export const debugPropuestaController = async (req, res) => {
 };
 
 export const crearPropuestaController = async (req, res) => {
-  console.log('=== CREAR PROPUESTA ===');
-  console.log('BODY:', req.body);
-  console.log('FILE:', req.file);
+  logger.info('Iniciando creación de propuesta', { 
+    rut: req.rut, 
+    body: req.body, 
+    file: req.file?.originalname 
+  });
 
   try {
     const { 
@@ -96,14 +100,30 @@ export const crearPropuestaController = async (req, res) => {
       recursos_necesarios,
       bibliografia
     } = req.body;
+    
+    // Parsear estudiantes_adicionales si viene como string JSON
+    let estudiantes_adicionales = req.body.estudiantes_adicionales;
+    if (typeof estudiantes_adicionales === 'string' && estudiantes_adicionales.trim() !== '') {
+      try {
+        estudiantes_adicionales = JSON.parse(estudiantes_adicionales);
+      } catch (e) {
+        logger.error('Error parseando estudiantes_adicionales', { error: e.message, valor: estudiantes_adicionales });
+        estudiantes_adicionales = [];
+      }
+    } else if (!estudiantes_adicionales) {
+      estudiantes_adicionales = [];
+    }
+    
     const estudiante_rut = req.rut;
 
-    console.log('Datos extraídos:', {
+    logger.debug('Datos extraídos de propuesta', {
       titulo: titulo || 'FALTA',
       descripcion: descripcion || 'FALTA', 
       fecha_envio: fecha_envio || 'FALTA',
       modalidad: modalidad || 'FALTA',
       numero_estudiantes: numero_estudiantes || 'FALTA',
+      estudiantes_adicionales: estudiantes_adicionales,
+      estudiantes_adicionales_length: estudiantes_adicionales?.length,
       area_tematica: area_tematica || 'FALTA',
       estudiante_rut: estudiante_rut || 'FALTA'
     });
@@ -111,7 +131,10 @@ export const crearPropuestaController = async (req, res) => {
     // 🔒 VALIDAR FECHA LÍMITE PARA CREAR PROPUESTA
     const permisoCreacion = await FechasLimiteModel.verificarPermisoCrearPropuesta(estudiante_rut);
     if (!permisoCreacion.puede_crear) {
-      console.log('❌ Fuera de plazo para crear propuesta:', permisoCreacion.motivo);
+      logger.warn('Intento de crear propuesta fuera de plazo', { 
+        rut: estudiante_rut, 
+        motivo: permisoCreacion.motivo 
+      });
       return res.status(403).json({ 
         message: permisoCreacion.motivo,
         fecha_limite: permisoCreacion.fecha_limite,
@@ -119,7 +142,7 @@ export const crearPropuestaController = async (req, res) => {
         fuera_de_plazo: true
       });
     }
-    console.log('✅ Dentro del plazo para crear propuesta:', permisoCreacion.motivo);
+    logger.info('Propuesta dentro del plazo', { motivo: permisoCreacion.motivo });
 
     // Validación estricta de campos obligatorios
     const errores = [];
@@ -183,6 +206,7 @@ export const crearPropuestaController = async (req, res) => {
       nombre_archivo_original,
       modalidad,
       numero_estudiantes: parseInt(numero_estudiantes),
+      estudiantes_adicionales,
       complejidad_estimada,
       justificacion_complejidad,
       duracion_estimada_semestres: parseInt(duracion_estimada_semestres),
@@ -305,12 +329,49 @@ export const asignarProfesor = async (req, res) => {
       return res.status(400).json({ message: 'Datos incompletos para asignar profesor.' });
     }
 
-    const success = await PropuestasService.asignarProfesor(id, profesor_rut);
-    if (!success) return res.status(404).json({ message: 'Propuesta no encontrada' });
+    const resultado = await PropuestasService.asignarProfesor(id, profesor_rut);
+    if (!resultado) return res.status(404).json({ message: 'Propuesta no encontrada' });
+
+    // 🔔 Notificar al estudiante sobre la asignación del profesor
+    if (resultado.estudiante_rut) {
+      // WebSocket notification
+      notifyAsignacionProfesor(resultado.estudiante_rut, {
+        propuesta_id: id,
+        titulo: resultado.titulo || 'Tu propuesta',
+        profesor_rut: profesor_rut,
+        profesor_nombre: resultado.profesor_nombre || 'Profesor asignado'
+      });
+      
+      // 📧 Email notification
+      try {
+        const estudiante = await UserModel.findPersonByRut(resultado.estudiante_rut);
+        if (estudiante && estudiante.email && estudiante.rol_id !== 3) { // No enviar a admins
+          await sendAsignacionProfesorEmail(
+            estudiante.email,
+            estudiante.nombre,
+            resultado.titulo,
+            resultado.profesor_nombre
+          );
+          logger.info('Email de asignación enviado', { 
+            propuesta_id: id, 
+            estudiante_email: estudiante.email 
+          });
+        }
+      } catch (emailError) {
+        logger.error('Error al enviar email de asignación', { error: emailError.message });
+        // No falla el proceso, solo registra el error
+      }
+      
+      logger.info('Profesor asignado a propuesta - notificaciones enviadas', { 
+        propuesta_id: id, 
+        profesor: profesor_rut,
+        estudiante: resultado.estudiante_rut 
+      });
+    }
 
     return res.json({ message: 'Profesor asignado correctamente' });
   } catch (error) {
-    console.error(error);
+    logger.error('Error al asignar profesor', { error: error.message, propuesta_id: req.params.id });
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -373,6 +434,30 @@ export const revisarPropuesta = async (req, res) => {
       return res.status(404).json({ message: 'Error al procesar la propuesta' });
     }
 
+    // 🔔 Enviar notificaciones WebSocket según el estado
+    if (estado === 'aprobada' && resultado.estudiante_rut) {
+      notifyPropuestaAprobada(resultado.estudiante_rut, {
+        propuesta_id: id,
+        titulo: resultado.titulo || 'Tu propuesta',
+        comentarios: comentarios_profesor,
+        proyecto_id: resultado.proyecto_id
+      });
+      logger.info('Propuesta aprobada - notificación enviada', { 
+        propuesta_id: id, 
+        estudiante: resultado.estudiante_rut 
+      });
+    } else if (estado === 'rechazada' && resultado.estudiante_rut) {
+      notifyPropuestaRechazada(resultado.estudiante_rut, {
+        propuesta_id: id,
+        titulo: resultado.titulo || 'Tu propuesta',
+        comentarios: comentarios_profesor
+      });
+      logger.info('Propuesta rechazada - notificación enviada', { 
+        propuesta_id: id, 
+        estudiante: resultado.estudiante_rut 
+      });
+    }
+
     // Si se creó un proyecto automáticamente, incluir esa información en la respuesta
     if (resultado.proyecto_id) {
       return res.json({ 
@@ -384,7 +469,7 @@ export const revisarPropuesta = async (req, res) => {
 
     return res.json({ message: resultado.message });
   } catch (error) {
-    console.error(error);
+    logger.error('Error al revisar propuesta', { error: error.message, propuesta_id: req.params.id });
     return res.status(500).json({ message: error.message || 'Error interno del servidor' });
   }
 };
@@ -410,7 +495,7 @@ export const obtenerPropuestaPorId = async (req, res) => {
     console.log('🔍 Debug permisos - User RUT:', userRut);
     console.log('🔍 Debug permisos - User Role:', userRole);
 
-    const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
+    const propuesta = await PropuestasService.obtenerPropuestaPorId(id, userRut, userRole);
     if (!propuesta) return res.status(404).json({ message: 'Propuesta no encontrada' });
 
     console.log('🔍 Debug permisos - Propuesta encontrada:', {
@@ -438,8 +523,23 @@ export const obtenerPropuestaPorId = async (req, res) => {
 export const eliminarPropuesta = async (req, res) => {
   try {
     const { id } = req.params;
+    const userRut = req.rut;
+    const userRole = req.rol_id;
+    
+    // Obtener la propuesta
+    const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
+    if (!propuesta) return res.status(404).json({ message: 'Propuesta no encontrada' });
+    
+    // Verificar permisos de edición (los administradores pueden eliminar cualquier propuesta)
+    if (userRole !== 3) { // Si no es administrador
+      const puedeEditar = await PropuestasService.verificarPermisosEdicion(propuesta, userRut);
+      if (!puedeEditar) {
+        return res.status(403).json({ message: 'No tienes permisos para eliminar esta propuesta' });
+      }
+    }
+    
     const success = await PropuestasService.eliminarPropuesta(id);
-    if (!success) return res.status(404).json({ message: 'Propuesta no encontrada' });
+    if (!success) return res.status(500).json({ message: 'Error al eliminar la propuesta' });
 
     return res.json({ message: 'Propuesta eliminada correctamente' });
   } catch (error) {
@@ -463,7 +563,21 @@ export const descargarArchivo = (req, res) => {
 export const ActualizarPropuesta = async (req, res) => {
   try {
     const { id } = req.params;
-    const { titulo, descripcion } = req.body;
+    const { 
+      titulo, 
+      descripcion,
+      modalidad,
+      numero_estudiantes,
+      complejidad_estimada,
+      justificacion_complejidad,
+      duracion_estimada_semestres,
+      area_tematica,
+      objetivos_generales,
+      objetivos_especificos,
+      metodologia_propuesta,
+      recursos_necesarios,
+      bibliografia
+    } = req.body;
     const estudiante_rut = req.rut;
 
     const fechaEnvioFinal = new Date(); // fecha automática
@@ -529,6 +643,17 @@ export const ActualizarPropuesta = async (req, res) => {
       fecha_envio: fechaEnvioFinal,
       archivo: archivoPath,
       nombre_archivo_original: nombreArchivoOriginal,
+      modalidad,
+      numero_estudiantes,
+      complejidad_estimada,
+      justificacion_complejidad,
+      duracion_estimada_semestres,
+      area_tematica,
+      objetivos_generales,
+      objetivos_especificos,
+      metodologia_propuesta,
+      recursos_necesarios,
+      bibliografia
     });
 
     if (!success) return res.status(404).json({ message: 'Propuesta no encontrada' });

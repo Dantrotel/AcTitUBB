@@ -59,9 +59,48 @@ const crearProyectoDesdeAprobacion = async (propuestaData) => {
 
         console.log(`✅ Proyecto creado automáticamente: ID ${proyectoId} para propuesta ${id}`);
 
+        // Transferir TODOS los estudiantes de la propuesta al proyecto
+        await transferirEstudiantesAlProyecto(id, proyectoId);
+
         return proyectoId;
     } catch (error) {
         console.error('Error al crear proyecto desde aprobación:', error);
+        throw error;
+    }
+};
+
+/**
+ * Transferir estudiantes de propuesta a proyecto
+ * @param {number} propuesta_id - ID de la propuesta
+ * @param {number} proyecto_id - ID del proyecto
+ */
+const transferirEstudiantesAlProyecto = async (propuesta_id, proyecto_id) => {
+    try {
+        // Obtener todos los estudiantes vinculados a la propuesta
+        const [estudiantes] = await pool.execute(
+            `SELECT estudiante_rut, es_creador, orden 
+             FROM estudiantes_propuestas 
+             WHERE propuesta_id = ? 
+             ORDER BY orden ASC`,
+            [propuesta_id]
+        );
+
+        if (!estudiantes || estudiantes.length === 0) {
+            throw new Error('No se encontraron estudiantes vinculados a la propuesta');
+        }
+
+        // Transferir cada estudiante al proyecto
+        for (const estudiante of estudiantes) {
+            await pool.execute(
+                `INSERT INTO estudiantes_proyectos (proyecto_id, estudiante_rut, es_creador, orden) 
+                 VALUES (?, ?, ?, ?)`,
+                [proyecto_id, estudiante.estudiante_rut, estudiante.es_creador, estudiante.orden]
+            );
+        }
+
+        console.log(`✅ Transferidos ${estudiantes.length} estudiante(s) al proyecto ${proyecto_id}`);
+    } catch (error) {
+        console.error('Error al transferir estudiantes:', error);
         throw error;
     }
 };
@@ -166,7 +205,25 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
         throw new Error('Usuario y rol son requeridos');
     }
     
-    return await ProjectModel.obtenerProyectosPorPermisos(usuario_rut, rol_usuario);
+    const proyectos = await ProjectModel.obtenerProyectosPorPermisos(usuario_rut, rol_usuario);
+    
+    // Agregar flags de permisos para estudiantes
+    if (rol_usuario === 'estudiante' || rol_usuario === 1) {
+        return proyectos.map(proyecto => {
+            // Los estudiantes pueden editar proyectos en ciertos estados
+            // (Similar a propuestas, pero proyectos tienen diferentes estados)
+            const puedeEditar = true; // Por ahora, todos los miembros del equipo pueden editar
+            const puedeEliminar = false; // Por seguridad, eliminar proyectos es más restrictivo
+            
+            return {
+                ...proyecto,
+                puedeEditar,
+                puedeEliminar
+            };
+        });
+    }
+    
+    return proyectos;
 };
 
 /**
@@ -472,10 +529,22 @@ const puedeModificarProyecto = async (proyecto_id, usuario_rut, rol_usuario) => 
         return await puedeEvaluarProyecto(proyecto_id, usuario_rut);
     }
 
-    // Los estudiantes solo pueden modificar sus propios proyectos
+    // Los estudiantes solo pueden modificar sus propios proyectos o los de su equipo
     if (rol_usuario === 'estudiante') {
         const proyecto = await ProjectModel.obtenerProyectoPorIdConPermisos(proyecto_id, usuario_rut, rol_usuario);
-        return proyecto && proyecto.estudiante_rut === usuario_rut;
+        if (!proyecto) return false;
+        
+        // Verificar si es el creador
+        if (proyecto.estudiante_rut === usuario_rut) {
+            return true;
+        }
+        
+        // Verificar si es miembro del equipo
+        const [rows] = await pool.execute(
+            'SELECT * FROM estudiantes_proyectos WHERE proyecto_id = ? AND estudiante_rut = ?',
+            [proyecto_id, usuario_rut]
+        );
+        return rows.length > 0;
     }
 
     return false;
@@ -527,6 +596,17 @@ const obtenerCronogramaActivo = async (proyecto_id) => {
 };
 
 /**
+ * Obtener cronograma por ID (helper)
+ */
+const obtenerCronogramaPorId = async (cronograma_id) => {
+    const [rows] = await pool.query(
+        'SELECT * FROM cronogramas_proyecto WHERE id = ? LIMIT 1',
+        [cronograma_id]
+    );
+    return rows[0] || null;
+};
+
+/**
  * Aprobar cronograma por estudiante
  */
 const aprobarCronogramaPorEstudiante = async (cronograma_id) => {
@@ -534,9 +614,33 @@ const aprobarCronogramaPorEstudiante = async (cronograma_id) => {
 };
 
 /**
- * Crear hito en cronograma
+ * Crear hito en cronograma (SISTEMA UNIFICADO)
  */
 const crearHitoCronograma = async (hitoData) => {
+    // Validaciones de negocio
+    if (!hitoData.nombre_hito || !hitoData.tipo_hito || !hitoData.fecha_limite) {
+        throw new Error('Nombre, tipo de hito y fecha límite son obligatorios');
+    }
+
+    if (new Date(hitoData.fecha_limite) < new Date()) {
+        throw new Error('La fecha límite no puede estar en el pasado');
+    }
+
+    // Validar peso si se proporciona
+    if (hitoData.peso_en_proyecto) {
+        if (hitoData.peso_en_proyecto > 100 || hitoData.peso_en_proyecto < 0) {
+            throw new Error('El peso del hito debe estar entre 0 y 100');
+        }
+
+        // Verificar que el total de pesos no exceda 100%
+        const hitosExistentes = await AvanceModel.obtenerHitosCronograma(hitoData.cronograma_id);
+        const pesoTotal = hitosExistentes.reduce((total, hito) => total + (parseFloat(hito.peso_en_proyecto) || 0), 0);
+        
+        if (pesoTotal + parseFloat(hitoData.peso_en_proyecto) > 100) {
+            throw new Error(`El peso total de hitos no puede exceder 100%. Actualmente: ${pesoTotal.toFixed(2)}%`);
+        }
+    }
+
     return await AvanceModel.crearHitoCronograma(hitoData);
 };
 
@@ -555,10 +659,49 @@ const entregarHito = async (hito_id, entregaData) => {
 };
 
 /**
- * Revisar hito entregado
+ * Revisar hito entregado (CON AUDITORÍA)
  */
-const revisarHito = async (hito_id, revisionData) => {
-    return await AvanceModel.revisarHito(hito_id, revisionData);
+const revisarHito = async (hito_id, revisionData, profesor_rut) => {
+    // Validar calificación si se proporciona
+    if (revisionData.calificacion) {
+        if (revisionData.calificacion < 1.0 || revisionData.calificacion > 7.0) {
+            throw new Error('La calificación debe estar entre 1.0 y 7.0');
+        }
+    }
+
+    return await AvanceModel.revisarHito(hito_id, {
+        ...revisionData,
+        actualizado_por_rut: profesor_rut
+    });
+};
+
+/**
+ * Obtener información completa del hito para notificaciones
+ */
+const obtenerInfoHito = async (hito_id) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT 
+                h.id,
+                h.nombre as nombre_hito,
+                h.descripcion,
+                p.id as proyecto_id,
+                p.titulo as proyecto_titulo,
+                p.estudiante_rut,
+                pg.profesor_rut as profesor_guia_rut
+            FROM hitos h
+            INNER JOIN cronogramas c ON h.cronograma_id = c.id
+            INNER JOIN proyectos p ON c.proyecto_id = p.id
+            LEFT JOIN profesores_guias pg ON p.id = pg.proyecto_id AND pg.rol = 'guia'
+            WHERE h.id = ?
+            LIMIT 1
+        `, [hito_id]);
+        
+        return rows[0] || null;
+    } catch (error) {
+        console.error('Error al obtener info del hito:', error);
+        return null;
+    }
 };
 
 /**
@@ -677,11 +820,13 @@ export const ProjectService = {
     // Sistema de cronogramas y entregas
     crearCronograma,
     obtenerCronogramaActivo,
+    obtenerCronogramaPorId,
     aprobarCronogramaPorEstudiante,
     crearHitoCronograma,
     obtenerHitosCronograma,
     entregarHito,
     revisarHito,
+    obtenerInfoHito,
     obtenerNotificacionesUsuario,
     marcarNotificacionLeida,
     configurarAlertas,

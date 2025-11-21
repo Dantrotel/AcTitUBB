@@ -55,7 +55,11 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('token');
-    console.log('Interceptando solicitud:', req.url);
+    console.log('🔍 Interceptando solicitud:', req.url);
+    console.log('🔑 Token presente:', !!token);
+    if (token) {
+      console.log('🔑 Token (primeros 20 chars):', token.substring(0, 20) + '...');
+    }
 
     // Si es la ruta de refresh token, no agregar token ni verificar expiración
     if (req.url.includes('/refresh-token')) {
@@ -71,6 +75,10 @@ export class AuthInterceptor implements HttpInterceptor {
     let authReq = req;
     if (token) {
       authReq = this.addToken(req, token);
+      console.log('✅ Token agregado a la solicitud');
+      console.log('📋 Headers:', authReq.headers.get('Authorization') ? 'Authorization presente' : 'Authorization ausente');
+    } else {
+      console.warn('⚠️ No hay token para agregar');
     }
 
     return next.handle(authReq).pipe(
@@ -83,11 +91,19 @@ export class AuthInterceptor implements HttpInterceptor {
           if (error.error?.code === 'TOKEN_EXPIRED' || 
               error.error?.message?.includes('Token expirado') ||
               error.error?.message?.includes('jwt expired')) {
-            console.warn('Token expirado detectado en respuesta, renovando...');
+            console.warn('⏰ Token expirado detectado en respuesta, renovando...');
             return this.handleTokenRefresh(req, next);
-          } else {
-            // Otros errores 401 (credenciales inválidas, etc.)
-            console.warn('Error de autenticación, limpiando sesión');
+          } 
+          // Token revocado (en blacklist)
+          else if (error.error?.code === 'TOKEN_REVOKED' || 
+                   error.error?.message?.includes('Token revoked')) {
+            console.warn('🚫 Token revocado detectado, limpiando sesión...');
+            this.clearAuthData();
+            this.redirectToLogin();
+          } 
+          // Otros errores 401 (credenciales inválidas, etc.)
+          else {
+            console.warn('❌ Error de autenticación, limpiando sesión');
             this.clearAuthData();
             this.redirectToLogin();
           }
