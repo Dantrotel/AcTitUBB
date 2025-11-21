@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-crear-propuesta',
@@ -31,10 +32,18 @@ export class CrearPropuestaComponent {
   recursos_necesarios = '';
   bibliografia = '';
 
+  // Estudiantes adicionales
+  estudiantes_adicionales: string[] = [];
+  mostrarEstudiantesAdicionales = false;
+
   // Variables de control para validaciones
   mostrarJustificacionComplejidad = false;
 
-  constructor(private apiService: ApiService, private router: Router) {}
+  constructor(
+    private apiService: ApiService, 
+    private router: Router,
+    private notificationService: NotificationService
+  ) {}
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -43,10 +52,33 @@ export class CrearPropuestaComponent {
 
   onEstudiantesChange() {
     this.validarJustificacionComplejidad();
+    this.actualizarEstudiantesAdicionales();
   }
 
   onComplejidadChange() {
     this.validarJustificacionComplejidad();
+  }
+
+  private actualizarEstudiantesAdicionales() {
+    const numEstudiantes = parseInt(this.numero_estudiantes);
+    
+    if (numEstudiantes > 1) {
+      this.mostrarEstudiantesAdicionales = true;
+      // Ajustar el array según el número de estudiantes
+      const cantidadAdicionales = numEstudiantes - 1;
+      if (this.estudiantes_adicionales.length < cantidadAdicionales) {
+        // Agregar campos vacíos
+        while (this.estudiantes_adicionales.length < cantidadAdicionales) {
+          this.estudiantes_adicionales.push('');
+        }
+      } else if (this.estudiantes_adicionales.length > cantidadAdicionales) {
+        // Remover campos sobrantes
+        this.estudiantes_adicionales = this.estudiantes_adicionales.slice(0, cantidadAdicionales);
+      }
+    } else {
+      this.mostrarEstudiantesAdicionales = false;
+      this.estudiantes_adicionales = [];
+    }
   }
 
   private validarJustificacionComplejidad() {
@@ -58,6 +90,13 @@ export class CrearPropuestaComponent {
     if (!this.mostrarJustificacionComplejidad) {
       this.justificacion_complejidad = '';
     }
+  }
+
+  private validarRUT(rut: string): boolean {
+    if (!rut || rut.trim() === '') return false;
+    // Formato: 12345678-9
+    const rutPattern = /^\d{7,8}-[0-9kK]{1}$/;
+    return rutPattern.test(rut);
   }
 
   private validarFormulario(): string | null {
@@ -73,6 +112,24 @@ export class CrearPropuestaComponent {
     if (!this.objetivos_especificos.trim()) return 'Los objetivos específicos son obligatorios';
     if (!this.metodologia_propuesta.trim()) return 'La metodología propuesta es obligatoria';
     if (!this.archivo) return 'Debes seleccionar un archivo (PDF o Word)';
+
+    // Validar estudiantes adicionales
+    if (parseInt(this.numero_estudiantes) > 1) {
+      const rutSet = new Set();
+      for (let i = 0; i < this.estudiantes_adicionales.length; i++) {
+        const rut = this.estudiantes_adicionales[i].trim();
+        if (!rut) {
+          return `Debes ingresar el RUT del estudiante ${i + 2}`;
+        }
+        if (!this.validarRUT(rut)) {
+          return `El RUT del estudiante ${i + 2} no es válido (formato: 12345678-9)`;
+        }
+        if (rutSet.has(rut)) {
+          return 'No puedes agregar el mismo estudiante dos veces';
+        }
+        rutSet.add(rut);
+      }
+    }
 
     // Validación específica de justificación
     if (this.mostrarJustificacionComplejidad && !this.justificacion_complejidad.trim()) {
@@ -91,7 +148,7 @@ export class CrearPropuestaComponent {
     // Validar formulario antes de enviar
     const errorValidacion = this.validarFormulario();
     if (errorValidacion) {
-      alert(errorValidacion);
+      this.notificationService.error('Error de validación', errorValidacion);
       return;
     }
 
@@ -126,17 +183,25 @@ export class CrearPropuestaComponent {
       formData.append('bibliografia', this.bibliografia);
     }
 
+    // Agregar estudiantes adicionales si existen
+    if (this.estudiantes_adicionales.length > 0) {
+      const estudiantesLimpios = this.estudiantes_adicionales
+        .map(rut => rut.trim())
+        .filter(rut => rut !== '');
+      formData.append('estudiantes_adicionales', JSON.stringify(estudiantesLimpios));
+    }
+
     this.apiService.createPropuesta(formData).subscribe({
       next: (res: any) => {
         console.log('Propuesta creada:', res);
-        alert('Propuesta creada con éxito');
+        this.notificationService.success('¡Propuesta creada!', 'Tu propuesta ha sido enviada exitosamente');
         this.isSubmitting = false;
         this.router.navigate(['/estudiante']);
       },
       error: (err: any) => {
         console.error('Error:', err);
         const mensaje = err.error?.message || 'Hubo un error al crear la propuesta';
-        alert(mensaje);
+        this.notificationService.error('Error al crear propuesta', mensaje);
         this.isSubmitting = false;
       }
     });

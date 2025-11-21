@@ -54,7 +54,7 @@ import {
           <div class="hito-header">
             <div class="hito-info">
               <h3>{{ hito.nombre }}</h3>
-              <span class="hito-tipo badge" [class]="'badge-' + hito.tipo">{{ hito.tipo }}</span>
+              <span class="hito-tipo badge" [class]="'badge-' + hito.tipo_hito">{{ hito.tipo_hito }}</span>
               <span class="hito-estado badge" [class]="'badge-' + hito.estado">{{ hito.estado }}</span>
               <span class="hito-prioridad badge" [class]="'badge-prioridad-' + hito.prioridad">{{ hito.prioridad }}</span>
             </div>
@@ -73,7 +73,7 @@ import {
             <div class="hito-fechas">
               <div class="fecha-item">
                 <i class="fas fa-calendar-start"></i>
-                <span>Inicio: {{ formatearFecha(hito.fecha_inicio) }}</span>
+                <span>Inicio: {{ hito.fecha_inicio ? formatearFecha(hito.fecha_inicio) : 'No definido' }}</span>
               </div>
               <div class="fecha-item">
                 <i class="fas fa-calendar-times"></i>
@@ -91,7 +91,7 @@ import {
           <!-- Sección de Entregas -->
           <div class="entregas-section" *ngIf="hito.acepta_entregas">
             <div class="entregas-header">
-              <h4>Entregas ({{ obtenerEntregasHito(hito.id).length }}/{{ hito.max_entregas_estudiante }})</h4>
+              <h4>Entregas ({{ obtenerEntregasHito(hito.id.toString()).length }}/{{ obtenerMaxEntregas(hito) }})</h4>
               <button 
                 *ngIf="puedeSubirEntrega(hito)" 
                 (click)="abrirModalSubirEntrega(hito)" 
@@ -101,7 +101,7 @@ import {
             </div>
 
             <div class="entregas-list">
-              <div *ngFor="let entrega of obtenerEntregasHito(hito.id)" class="entrega-item">
+              <div *ngFor="let entrega of obtenerEntregasHito(hito.id.toString())" class="entrega-item">
                 <div class="entrega-info">
                   <div class="entrega-archivo">
                     <i class="fas fa-file"></i>
@@ -153,22 +153,24 @@ import {
               <div class="modal-body">
                 <div class="row">
                   <div class="col-md-6">
-                    <label class="form-label">Nombre *</label>
-                    <input type="text" formControlName="nombre" class="form-control" 
-                           [class.is-invalid]="formHito.get('nombre')?.invalid && formHito.get('nombre')?.touched">
-                    <div class="invalid-feedback" *ngIf="formHito.get('nombre')?.invalid && formHito.get('nombre')?.touched">
+                    <label class="form-label">Nombre del Hito *</label>
+                    <input type="text" formControlName="nombre_hito" class="form-control" 
+                           [class.is-invalid]="formHito.get('nombre_hito')?.invalid && formHito.get('nombre_hito')?.touched"
+                           placeholder="Ej: Entrega Capítulo 1">
+                    <div class="invalid-feedback" *ngIf="formHito.get('nombre_hito')?.invalid && formHito.get('nombre_hito')?.touched">
                       El nombre es requerido (3-100 caracteres)
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">Tipo *</label>
-                    <select formControlName="tipo" class="form-select" 
-                            [class.is-invalid]="formHito.get('tipo')?.invalid && formHito.get('tipo')?.touched">
+                    <label class="form-label">Tipo de Hito *</label>
+                    <select formControlName="tipo_hito" class="form-select" 
+                            [class.is-invalid]="formHito.get('tipo_hito')?.invalid && formHito.get('tipo_hito')?.touched">
                       <option value="">Seleccionar tipo</option>
-                      <option value="entregable">Entregable</option>
-                      <option value="revision">Revisión</option>
-                      <option value="presentacion">Presentación</option>
-                      <option value="evaluacion">Evaluación</option>
+                      <option value="entrega_documento">📄 Entrega de Documento</option>
+                      <option value="revision_avance">🔍 Revisión de Avance</option>
+                      <option value="reunion_seguimiento">👥 Reunión de Seguimiento</option>
+                      <option value="evaluacion">📊 Evaluación</option>
+                      <option value="defensa">🎤 Defensa/Presentación</option>
                     </select>
                   </div>
                 </div>
@@ -179,53 +181,53 @@ import {
                             [class.is-invalid]="formHito.get('descripcion')?.invalid && formHito.get('descripcion')?.touched"></textarea>
                 </div>
 
-                <div class="row">
-                  <div class="col-md-6">
-                    <label class="form-label">Fecha de Inicio *</label>
-                    <input type="datetime-local" formControlName="fecha_inicio" class="form-control" 
-                           [class.is-invalid]="formHito.get('fecha_inicio')?.invalid && formHito.get('fecha_inicio')?.touched">
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Fecha Límite *</label>
-                    <input type="datetime-local" formControlName="fecha_limite" class="form-control" 
-                           [class.is-invalid]="formHito.get('fecha_limite')?.invalid && formHito.get('fecha_limite')?.touched">
-                  </div>
+                <div class="mb-3">
+                  <label class="form-label">Fecha Límite de Entrega *</label>
+                  <input type="datetime-local" formControlName="fecha_limite" class="form-control" 
+                         [class.is-invalid]="formHito.get('fecha_limite')?.invalid && formHito.get('fecha_limite')?.touched">
+                  <div class="form-text">Fecha y hora máxima para entregar este hito</div>
                 </div>
 
                 <div class="row">
-                  <div class="col-md-4">
-                    <label class="form-label">Peso Porcentual *</label>
-                    <input type="number" formControlName="peso_porcentual" class="form-control" 
-                           min="0" max="100" step="0.1">
+                  <div class="col-md-6">
+                    <label class="form-label">
+                      Peso en el Proyecto * 
+                      <i class="fas fa-info-circle text-info ms-1" 
+                         title="Importancia del hito en el proyecto (0-100%). La suma de todos los hitos debe ser 100%"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" formControlName="peso_en_proyecto" class="form-control" 
+                             min="0" max="100" step="0.5" placeholder="25"
+                             [class.is-invalid]="formHito.get('peso_en_proyecto')?.invalid && formHito.get('peso_en_proyecto')?.touched">
+                      <span class="input-group-text">%</span>
+                    </div>
+                    <div class="form-text">Peso asignado a este hito del total del proyecto</div>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Prioridad</label>
-                    <select formControlName="prioridad" class="form-select">
-                      <option value="baja">Baja</option>
-                      <option value="media">Media</option>
-                      <option value="alta">Alta</option>
-                      <option value="critica">Crítica</option>
+                  <div class="col-md-6">
+                    <label class="form-label">Depende de (Opcional)</label>
+                    <select formControlName="hito_predecesor_id" class="form-select">
+                      <option [value]="null">Sin dependencia</option>
+                      <option *ngFor="let h of hitos" [value]="h.id">
+                        {{ h.nombre_hito }}
+                      </option>
                     </select>
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Máx. Entregas</label>
-                    <input type="number" formControlName="max_entregas_estudiante" class="form-control" 
-                           min="1" max="10">
+                    <div class="form-text">Hito que debe completarse antes de este</div>
                   </div>
                 </div>
 
-                <div class="row">
-                  <div class="col-md-6">
+                <div class="row mt-3">
+                  <div class="col-md-12">
                     <div class="form-check">
-                      <input type="checkbox" formControlName="obligatorio" class="form-check-input">
-                      <label class="form-check-label">Hito obligatorio</label>
+                      <input type="checkbox" formControlName="es_critico" class="form-check-input" id="checkCritico">
+                      <label class="form-check-label" for="checkCritico">
+                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                        <strong>Hito Crítico/Obligatorio</strong>
+                      </label>
                     </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check">
-                      <input type="checkbox" formControlName="acepta_entregas" class="form-check-input">
-                      <label class="form-check-label">Acepta entregas</label>
-                    </div>
+                    <small class="form-text text-muted d-block mt-1">
+                      Los hitos críticos son obligatorios para aprobar el proyecto. 
+                      Se resaltan con badge rojo y generan alertas automáticas.
+                    </small>
                   </div>
                 </div>
 
@@ -343,16 +345,13 @@ export class GestionHitosComponent implements OnInit {
     private fb: FormBuilder
   ) {
     this.formHito = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(HITO_CONSTRAINTS.NOMBRE_MIN_LENGTH), Validators.maxLength(HITO_CONSTRAINTS.NOMBRE_MAX_LENGTH)]],
+      nombre_hito: ['', [Validators.required, Validators.minLength(HITO_CONSTRAINTS.NOMBRE_MIN_LENGTH), Validators.maxLength(HITO_CONSTRAINTS.NOMBRE_MAX_LENGTH)]],
       descripcion: ['', [Validators.maxLength(HITO_CONSTRAINTS.DESCRIPCION_MAX_LENGTH)]],
-      fecha_inicio: ['', [Validators.required]],
       fecha_limite: ['', [Validators.required]],
-      peso_porcentual: [0, [Validators.required, Validators.min(HITO_CONSTRAINTS.PESO_MIN), Validators.max(HITO_CONSTRAINTS.PESO_MAX)]],
-      tipo: ['', [Validators.required]],
-      prioridad: ['media'],
-      obligatorio: [false],
-      acepta_entregas: [true],
-      max_entregas_estudiante: [1, [Validators.min(HITO_CONSTRAINTS.MAX_ENTREGAS_MIN), Validators.max(HITO_CONSTRAINTS.MAX_ENTREGAS_MAX)]]
+      peso_en_proyecto: [0, [Validators.required, Validators.min(HITO_CONSTRAINTS.PESO_MIN), Validators.max(HITO_CONSTRAINTS.PESO_MAX)]],
+      tipo_hito: ['', [Validators.required]],
+      es_critico: [false],
+      hito_predecesor_id: [null]
     });
   }
 
@@ -360,24 +359,31 @@ export class GestionHitosComponent implements OnInit {
     this.cargarHitos();
   }
 
-  // Carga inicial de datos
+  // Carga inicial de datos (Sistema Unificado ✅)
   cargarHitos() {
-    this.apiService.obtenerHitosCronograma(this.cronogramaId).subscribe({
+    this.apiService.getHitosCronograma(this.cronogramaId).subscribe({
       next: (response: any) => {
-        this.hitos = response.data || [];
+        // Normalizar hitos del backend para compatibilidad
+        this.hitos = (response.data || []).map((h: any) => this.apiService.normalizarHito(h));
         this.filtrarHitos();
         this.cargarEntregasParaTodosLosHitos();
       },
       error: (error: any) => {
         console.error('Error al cargar hitos:', error);
+        this.mostrarError('No se pudieron cargar los hitos del proyecto');
       }
     });
+  }
+
+  mostrarError(mensaje: string) {
+    // Implementación simple - podrías usar un servicio de toast/notificaciones
+    alert(mensaje);
   }
 
   cargarEntregasParaTodosLosHitos() {
     this.hitos.forEach(hito => {
       if (hito.acepta_entregas) {
-        this.cargarEntregasHito(hito.id);
+        this.cargarEntregasHito(hito.id.toString());
       }
     });
   }
@@ -397,7 +403,7 @@ export class GestionHitosComponent implements OnInit {
   filtrarHitos() {
     this.hitosFiltrados = this.hitos.filter(hito => {
       const cumpleFiltroEstado = !this.filtroEstado || hito.estado === this.filtroEstado;
-      const cumpleFiltroTipo = !this.filtroTipo || hito.tipo === this.filtroTipo;
+      const cumpleFiltroTipo = !this.filtroTipo || hito.tipo_hito === this.filtroTipo;
       return cumpleFiltroEstado && cumpleFiltroTipo;
     });
   }
@@ -408,16 +414,17 @@ export class GestionHitosComponent implements OnInit {
   }
 
   puedeEditarHito(hito: Hito): boolean {
-    return (this.userRole === '2' || this.userRole === '3') && hito.estado !== 'completado';
+    return (this.userRole === '2' || this.userRole === '3') && hito.estado !== 'aprobado';
   }
 
   puedeSubirEntrega(hito: Hito): boolean {
     if (!hito.acepta_entregas || this.userRole !== '1') return false; // Solo estudiantes
     
-    const entregasHito = this.obtenerEntregasHito(hito.id);
+    const entregasHito = this.obtenerEntregasHito(hito.id.toString());
     const entregasEstudiante = entregasHito.filter(e => e.estudiante_rut === this.userRut);
+    const maxEntregas = this.obtenerMaxEntregas(hito);
     
-    return entregasEstudiante.length < hito.max_entregas_estudiante && 
+    return entregasEstudiante.length < maxEntregas && 
            new Date() <= new Date(hito.fecha_limite);
   }
 
@@ -434,8 +441,13 @@ export class GestionHitosComponent implements OnInit {
     return this.entregas[hitoId] || [];
   }
 
+  obtenerMaxEntregas(hito: Hito): number {
+    // Por defecto permitir 3 entregas si no está definido
+    return 3;
+  }
+
   esHitoRetrasado(hito: Hito): boolean {
-    return new Date() > new Date(hito.fecha_limite) && hito.estado !== 'completado';
+    return new Date() > new Date(hito.fecha_limite) && hito.estado !== 'aprobado' && hito.estado !== 'entregado';
   }
 
   formatearFecha(fecha: string): string {
@@ -452,10 +464,9 @@ export class GestionHitosComponent implements OnInit {
   abrirModalCrearHito() {
     this.hitoEditando = null;
     this.formHito.reset({
-      prioridad: 'media',
-      obligatorio: false,
-      acepta_entregas: true,
-      max_entregas_estudiante: 1
+      peso_en_proyecto: 0,
+      es_critico: false,
+      hito_predecesor_id: null
     });
     this.erroresValidacion = [];
     this.mostrarModalHito = true;
@@ -464,16 +475,13 @@ export class GestionHitosComponent implements OnInit {
   editarHito(hito: Hito) {
     this.hitoEditando = hito;
     this.formHito.patchValue({
-      nombre: hito.nombre,
+      nombre_hito: hito.nombre_hito,
       descripcion: hito.descripcion,
-      fecha_inicio: this.formatearFechaParaInput(hito.fecha_inicio),
       fecha_limite: this.formatearFechaParaInput(hito.fecha_limite),
-      peso_porcentual: hito.peso_porcentual,
-      tipo: hito.tipo,
-      prioridad: hito.prioridad,
-      obligatorio: hito.obligatorio,
-      acepta_entregas: hito.acepta_entregas,
-      max_entregas_estudiante: hito.max_entregas_estudiante
+      peso_en_proyecto: hito.peso_en_proyecto,
+      tipo_hito: hito.tipo_hito,
+      es_critico: hito.es_critico,
+      hito_predecesor_id: hito.hito_predecesor_id
     });
     this.erroresValidacion = [];
     this.mostrarModalHito = true;
@@ -494,7 +502,7 @@ export class GestionHitosComponent implements OnInit {
     this.guardandoHito = true;
 
     const observable = this.hitoEditando
-      ? this.apiService.actualizarHitoCronograma(this.cronogramaId, this.hitoEditando.id, datosHito)
+      ? this.apiService.actualizarHitoCronograma(this.cronogramaId, this.hitoEditando.id.toString(), datosHito)
       : this.apiService.crearHitoCronograma(this.cronogramaId, datosHito);
 
     observable.subscribe({
@@ -522,7 +530,7 @@ export class GestionHitosComponent implements OnInit {
   eliminarHito(hito: Hito) {
     if (!confirm(`¿Está seguro de eliminar el hito "${hito.nombre}"?`)) return;
 
-    this.apiService.eliminarHitoCronograma(this.cronogramaId, hito.id).subscribe({
+    this.apiService.eliminarHitoCronograma(this.cronogramaId, hito.id.toString()).subscribe({
       next: () => {
         this.cargarHitos();
         this.hitosActualizados.emit();
@@ -570,12 +578,12 @@ export class GestionHitosComponent implements OnInit {
     this.apiService.crearEntregaHito(
       this.projectId, 
       this.cronogramaId, 
-      this.hitoSeleccionado.id, 
+      this.hitoSeleccionado.id.toString(), 
       formData
     ).subscribe({
       next: () => {
         this.cerrarModalEntrega();
-        this.cargarEntregasHito(this.hitoSeleccionado!.id);
+        this.cargarEntregasHito(this.hitoSeleccionado!.id.toString());
       },
       error: (error) => {
         console.error('Error al subir entrega:', error);

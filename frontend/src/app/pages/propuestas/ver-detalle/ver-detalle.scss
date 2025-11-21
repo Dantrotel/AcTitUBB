@@ -323,6 +323,19 @@ body {
           font-size: 0.9rem;
           font-style: italic;
         }
+        
+        .badge-creator {
+          display: inline-block;
+          margin-left: 0.5rem;
+          padding: 0.25rem 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: white;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
       }
     }
 

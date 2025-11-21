@@ -1,4 +1,7 @@
 import { ProjectService } from '../services/project.service.js';
+import { sendEntregaRealizadaEmail, sendEntregaRevisadaEmail } from '../services/email.service.js';
+import { UserModel } from '../models/user.model.js';
+import { logger } from '../config/logger.js';
 
 const createProject = async (req, res) => {
     try {
@@ -288,7 +291,7 @@ const obtenerHitosProyecto = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            hitos: hitos,
+            data: hitos,
             estadisticas: estadisticas
         });
     } catch (error) {
@@ -480,7 +483,7 @@ const obtenerDashboardProyecto = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            dashboard: dashboard
+            data: dashboard
         });
     } catch (error) {
         console.error('Error al obtener dashboard:', error);
@@ -587,11 +590,11 @@ const aprobarCronograma = async (req, res) => {
     }
 };
 
-// Crear hito en cronograma
+// Crear hito en cronograma (SISTEMA UNIFICADO)
 const crearHitoCronograma = async (req, res) => {
     try {
         const { cronogramaId } = req.params;
-        const { nombre_hito, descripcion, tipo_hito, fecha_limite } = req.body;
+        const { nombre_hito, descripcion, tipo_hito, fecha_limite, peso_en_proyecto, es_critico, hito_predecesor_id } = req.body;
         const usuario_rut = req.user.rut;
 
         if (!nombre_hito || !tipo_hito || !fecha_limite) {
@@ -606,12 +609,23 @@ const crearHitoCronograma = async (req, res) => {
             return res.status(403).json({ message: 'Solo el profesor guía puede crear hitos' });
         }
 
+        // Obtener proyecto_id del cronograma
+        const cronograma = await ProjectService.obtenerCronogramaPorId(cronogramaId);
+        if (!cronograma) {
+            return res.status(404).json({ message: 'Cronograma no encontrado' });
+        }
+
         const hitoId = await ProjectService.crearHitoCronograma({
             cronograma_id: cronogramaId,
+            proyecto_id: cronograma.proyecto_id,
             nombre_hito,
             descripcion,
             tipo_hito,
-            fecha_limite
+            fecha_limite,
+            peso_en_proyecto: peso_en_proyecto || 0,
+            es_critico: es_critico || false,
+            hito_predecesor_id: hito_predecesor_id || null,
+            creado_por_rut: usuario_rut
         });
 
         res.status(201).json({
@@ -675,6 +689,31 @@ const entregarHito = async (req, res) => {
             comentarios_estudiante
         });
 
+        // 📧 Notificar al profesor sobre la entrega
+        try {
+            const hitoInfo = await ProjectService.obtenerInfoHito(hitoId);
+            if (hitoInfo && hitoInfo.profesor_guia_rut) {
+                const profesor = await UserModel.findPersonByRut(hitoInfo.profesor_guia_rut);
+                const estudiante = await UserModel.findPersonByRut(usuario_rut);
+                
+                if (profesor && profesor.email && profesor.rol_id !== 3 && estudiante) {
+                    await sendEntregaRealizadaEmail(
+                        profesor.email,
+                        profesor.nombre,
+                        estudiante.nombre,
+                        hitoInfo.nombre_hito || 'Hito',
+                        hitoInfo.proyecto_titulo || 'Proyecto'
+                    );
+                    logger.info('Email de entrega enviado al profesor', { 
+                        hito_id: hitoId, 
+                        profesor_email: profesor.email 
+                    });
+                }
+            }
+        } catch (emailError) {
+            logger.error('Error al enviar email de entrega', { error: emailError.message });
+        }
+
         res.status(200).json({
             success: true,
             message: 'Hito entregado exitosamente',
@@ -687,7 +726,7 @@ const entregarHito = async (req, res) => {
     }
 };
 
-// Revisar hito entregado
+// Revisar hito entregado (CON AUDITORÍA)
 const revisarHito = async (req, res) => {
     try {
         const { hitoId } = req.params;
@@ -710,9 +749,35 @@ const revisarHito = async (req, res) => {
             comentarios_profesor,
             calificacion,
             estado
-        });
+        }, usuario_rut);
 
         if (success) {
+            // 📧 Notificar al estudiante sobre la revisión
+            try {
+                const hitoInfo = await ProjectService.obtenerInfoHito(hitoId);
+                if (hitoInfo && hitoInfo.estudiante_rut) {
+                    const estudiante = await UserModel.findPersonByRut(hitoInfo.estudiante_rut);
+                    
+                    if (estudiante && estudiante.email && estudiante.rol_id !== 3) {
+                        await sendEntregaRevisadaEmail(
+                            estudiante.email,
+                            estudiante.nombre,
+                            hitoInfo.nombre_hito || 'Hito',
+                            hitoInfo.proyecto_titulo || 'Proyecto',
+                            estado,
+                            comentarios_profesor
+                        );
+                        logger.info('Email de revisión enviado al estudiante', { 
+                            hito_id: hitoId, 
+                            estudiante_email: estudiante.email,
+                            revisado_por: usuario_rut
+                        });
+                    }
+                }
+            } catch (emailError) {
+                logger.error('Error al enviar email de revisión', { error: emailError.message });
+            }
+
             res.status(200).json({
                 success: true,
                 message: 'Hito revisado exitosamente'
@@ -825,7 +890,7 @@ const obtenerEstadisticasCumplimiento = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            estadisticas: estadisticas
+            data: estadisticas
         });
     } catch (error) {
         console.error('Error al obtener estadísticas:', error);

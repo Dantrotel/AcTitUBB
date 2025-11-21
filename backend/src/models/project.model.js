@@ -62,17 +62,22 @@ const getProjectById = async (projectId) => {
     return rows[0];
 };
 
-// Obtener proyectos por estudiante
+// Obtener proyectos por estudiante (usa tabla estudiantes_proyectos)
 const getProjectsByStudent = async (estudiante_rut) => {
     const query = `
         SELECT p.*, 
                prop.titulo AS titulo_propuesta,
-               GROUP_CONCAT(DISTINCT rp.nombre) AS roles_profesores
+               GROUP_CONCAT(DISTINCT rp.nombre) AS roles_profesores,
+               (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
+                FROM estudiantes_proyectos est_p
+                INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
+                WHERE est_p.proyecto_id = p.id) as estudiantes_completo
         FROM proyectos p
+        INNER JOIN estudiantes_proyectos ep_join ON p.id = ep_join.proyecto_id
         LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
         LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
         LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
-        WHERE p.estudiante_rut = ?
+        WHERE ep_join.estudiante_rut = ?
         GROUP BY p.id
         ORDER BY p.fecha_inicio DESC
     `;
@@ -207,7 +212,7 @@ const obtenerProfesoresAsignadosPropuesta = async (propuesta_id) => {
     return rows;
 };
 
-// Verificar si un usuario puede ver un proyecto específico
+// Verificar si un usuario puede ver un proyecto específico (actualizado para múltiples estudiantes)
 const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
     // Los administradores pueden ver todos los proyectos
     if (rol_usuario === 'admin' || rol_usuario === 3) {
@@ -216,14 +221,13 @@ const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
 
     const query = `
         SELECT 
-            p.id,
-            p.estudiante_rut,
-            ap.profesor_rut
+            p.id
         FROM proyectos p
         LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+        LEFT JOIN estudiantes_proyectos ep ON p.id = ep.proyecto_id
         WHERE p.id = ?
         AND (
-            p.estudiante_rut = ?  -- Es el estudiante dueño del proyecto
+            ep.estudiante_rut = ?  -- Es uno de los estudiantes del proyecto
             OR ap.profesor_rut = ? -- Es un profesor asignado al proyecto
         )
         LIMIT 1
@@ -253,7 +257,7 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
             `;
             params = [];
         } else if (rol_usuario === 'estudiante' || rol_usuario === 1) {
-            // Los estudiantes solo ven sus propios proyectos - consulta simplificada
+            // Los estudiantes ven proyectos donde son creadores o miembros del equipo
             query = `
                 SELECT p.*, 
                        u.nombre AS nombre_estudiante,
@@ -262,7 +266,9 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 FROM proyectos p
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
-                WHERE p.estudiante_rut = ?
+                INNER JOIN estudiantes_proyectos ep_join ON p.id = ep_join.proyecto_id
+                WHERE ep_join.estudiante_rut = ?
+                GROUP BY p.id
                 ORDER BY p.fecha_inicio DESC
             `;
             params = [usuario_rut];
@@ -332,6 +338,22 @@ const obtenerProyectoPorIdConPermisos = async (proyecto_id, usuario_rut, rol_usu
     }
 
     const proyecto = rows[0];
+
+    // Obtener estudiantes del proyecto
+    const queryEstudiantes = `
+        SELECT ep.estudiante_rut AS rut,
+               u.nombre,
+               u.email,
+               ep.es_creador,
+               ep.orden
+        FROM estudiantes_proyectos ep
+        INNER JOIN usuarios u ON ep.estudiante_rut = u.rut
+        WHERE ep.proyecto_id = ?
+        ORDER BY ep.orden ASC
+    `;
+    
+    const [estudiantes] = await pool.execute(queryEstudiantes, [proyecto_id]);
+    proyecto.estudiantes = estudiantes;
 
     // Obtener profesores asignados al proyecto
     const queryProfesores = `

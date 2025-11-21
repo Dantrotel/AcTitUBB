@@ -110,10 +110,21 @@
         <div class="card-content">
           <div class="info-item">
             <div class="info-label">
-              <i class="fas fa-user-graduate"></i>
-              <span>Estudiante</span>
+              <i class="fas fa-users"></i>
+              <span>{{ propuesta.estudiantes?.length > 1 ? 'Estudiantes' : 'Estudiante' }}</span>
             </div>
-            <div class="info-value">{{ propuesta.nombre_estudiante || 'No especificado' }}</div>
+            <div class="info-value">
+              <div *ngIf="propuesta.estudiantes && propuesta.estudiantes.length > 0">
+                <div *ngFor="let estudiante of propuesta.estudiantes" style="margin-bottom: 5px;">
+                  <i class="fas" [ngClass]="estudiante.es_creador ? 'fa-user-tie' : 'fa-user'"></i>
+                  {{ estudiante.nombre }} ({{ estudiante.rut }})
+                  <span class="badge-creator" *ngIf="estudiante.es_creador">Creador</span>
+                </div>
+              </div>
+              <span *ngIf="!propuesta.estudiantes || propuesta.estudiantes.length === 0">
+                {{ propuesta.nombre_estudiante || 'No especificado' }}
+              </span>
+            </div>
           </div>
           
           <div class="info-item">

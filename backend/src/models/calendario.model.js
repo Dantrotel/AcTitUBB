@@ -10,21 +10,27 @@ export const crearFechaGlobal = async ({ titulo, descripcion, fecha, tipo_fecha,
         try {
             const [resultImportante] = await pool.execute(
                 `INSERT INTO fechas_importantes (tipo_fecha, titulo, descripcion, fecha_limite, es_global, proyecto_id, habilitada, permite_extension, creado_por)
-                 VALUES (?, ?, ?, ?, TRUE, NULL, FALSE, TRUE, ?)`,
+                 VALUES (?, ?, ?, ?, TRUE, NULL, TRUE, TRUE, ?)`,
                 [tipo_fecha, titulo, descripcion, fecha, creado_por_rut]
             );
             console.log('✅ Fecha creada en fechas_importantes, ID:', resultImportante.insertId);
         } catch (error) {
             console.error('❌ Error al crear en fechas_importantes:', error);
-            // Continuar de todas formas con la creación en fechas_calendario
+            throw error; // No continuar si falla la creación principal
         }
+    }
+    
+    // Mapear tipo_fecha para fechas_calendario (que tiene diferentes valores de ENUM)
+    let tipoFechaCalendario = tipo_fecha;
+    if (tipo_fecha === 'entrega_propuesta') {
+        tipoFechaCalendario = 'entrega'; // Mapear a un valor válido del ENUM de fechas_calendario
     }
     
     // Crear siempre en fechas_calendario (para visualización)
     const [result] = await pool.execute(
         `INSERT INTO fechas_calendario (titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [titulo, descripcion, fecha, tipo_fecha, es_global || false, creado_por_rut]
+        [titulo, descripcion, fecha, tipoFechaCalendario, es_global || false, creado_por_rut]
     );
     return result.insertId;
 };

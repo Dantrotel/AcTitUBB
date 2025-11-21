@@ -11,6 +11,10 @@ import {
     obtenerEstadisticasFechas,
     puedeEditarFecha
 } from '../models/calendario.model.js';
+import { sendFechaPublicadaEmail } from '../services/email.service.js';
+import { UserModel } from '../models/user.model.js';
+import { logger } from '../config/logger.js';
+import { pool } from '../db/connectionDB.js';
 
 // ===== CONTROLADORES PARA ADMIN =====
 
@@ -72,6 +76,32 @@ export const crearFechaGlobalController = async (req, res) => {
         });
 
         console.log('✅ Fecha creada exitosamente, ID:', fechaId);
+
+        // 📧 Enviar emails a todos los profesores y estudiantes (excepto admins)
+        try {
+            const [usuarios] = await pool.query(
+                'SELECT email, nombre FROM usuarios WHERE rol_id IN (1, 2) AND email IS NOT NULL'
+            );
+            
+            if (usuarios.length > 0) {
+                const emails = usuarios.map(u => u.email);
+                await sendFechaPublicadaEmail(
+                    emails,
+                    titulo,
+                    descripcion || '',
+                    fecha,
+                    tipo_fecha
+                );
+                logger.info('Emails de fecha global enviados', { 
+                    fecha_id: fechaId, 
+                    destinatarios: emails.length 
+                });
+            }
+        } catch (emailError) {
+            logger.error('Error al enviar emails de fecha global', { error: emailError.message });
+            // No falla el proceso
+        }
+
         res.status(201).json({
             ok: true,
             message: 'Fecha global creada exitosamente',
@@ -172,6 +202,26 @@ export const crearFechaEspecificaController = async (req, res) => {
             profesor_rut,
             estudiante_rut
         });
+
+        // 📧 Enviar email al estudiante específico
+        try {
+            const estudiante = await UserModel.findPersonByRut(estudiante_rut);
+            if (estudiante && estudiante.email && estudiante.rol_id !== 3) {
+                await sendFechaPublicadaEmail(
+                    [estudiante.email],
+                    titulo,
+                    descripcion || '',
+                    fecha,
+                    tipo_fecha
+                );
+                logger.info('Email de fecha específica enviado', { 
+                    fecha_id: fechaId, 
+                    estudiante_email: estudiante.email 
+                });
+            }
+        } catch (emailError) {
+            logger.error('Error al enviar email de fecha específica', { error: emailError.message });
+        }
 
         res.status(201).json({
             ok: true,

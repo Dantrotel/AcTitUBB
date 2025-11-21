@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   standalone: true,
@@ -57,7 +58,8 @@ export class ListarPropuestasComponent implements OnInit {
 
   constructor(
     private api: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -231,19 +233,53 @@ export class ListarPropuestasComponent implements OnInit {
 
   // Métodos para determinar permisos
   private puedeEditarPropuesta(propuesta: any, userRut: string, userRole: string): boolean {
-    // Solo el creador puede editar su propuesta
-    return propuesta.estudiante_rut === userRut;
+    // Si el backend envía el flag puedeEditar, usarlo
+    if (typeof propuesta.puedeEditar === 'boolean') {
+      return propuesta.puedeEditar;
+    }
+    
+    // Verificar si es creador o miembro del equipo
+    const esCreador = propuesta.estudiante_rut === userRut;
+    const esMiembroEquipo = propuesta.estudiantes?.some((e: any) => e.rut === userRut);
+    const perteneceAlEquipo = esCreador || esMiembroEquipo;
+    
+    // Solo permitir edición en estados editables
+    const estadosEditables = ['pendiente', 'correcciones'];
+    const estadoPermiteEdicion = estadosEditables.includes(propuesta.estado_nombre);
+    
+    return perteneceAlEquipo && estadoPermiteEdicion;
   }
 
   private puedeEliminarPropuesta(propuesta: any, userRut: string, userRole: string): boolean {
-    // Solo el creador puede eliminar su propuesta
-    return propuesta.estudiante_rut === userRut;
+    // Si el backend envía el flag puedeEliminar, usarlo
+    if (typeof propuesta.puedeEliminar === 'boolean') {
+      return propuesta.puedeEliminar;
+    }
+    
+    // Verificar si es creador o miembro del equipo
+    const esCreador = propuesta.estudiante_rut === userRut;
+    const esMiembroEquipo = propuesta.estudiantes?.some((e: any) => e.rut === userRut);
+    const perteneceAlEquipo = esCreador || esMiembroEquipo;
+    
+    // Solo permitir eliminación en estados editables
+    const estadosEditables = ['pendiente', 'correcciones'];
+    const estadoPermiteEdicion = estadosEditables.includes(propuesta.estado_nombre);
+    
+    return perteneceAlEquipo && estadoPermiteEdicion;
   }
 
   private puedeVerPropuesta(propuesta: any, userRut: string, userRole: string): boolean {
     // El creador siempre puede ver su propuesta
     if (propuesta.estudiante_rut === userRut) {
       return true;
+    }
+    
+    // Los miembros del equipo pueden ver la propuesta
+    if (userRole === '1') { // Estudiante
+      const esMiembroEquipo = propuesta.estudiantes?.some((e: any) => e.rut === userRut);
+      if (esMiembroEquipo) {
+        return true;
+      }
     }
     
     // Los profesores pueden ver todas las propuestas sin asignar
@@ -371,12 +407,12 @@ export class ListarPropuestasComponent implements OnInit {
       this.api.deletePropuesta(id).subscribe({
         next: () => {
           console.log('Propuesta eliminada exitosamente');
-          alert('Propuesta eliminada exitosamente');
+          this.notificationService.success('Propuesta eliminada', 'La propuesta ha sido eliminada exitosamente');
           this.cargarPropuestas(); // Recargar la lista
         },
         error: (err) => {
           console.error('Error al eliminar propuesta:', err);
-          alert('Error al eliminar la propuesta');
+          this.notificationService.error('Error', 'No se pudo eliminar la propuesta');
         }
       });
     }
@@ -401,7 +437,7 @@ export class ListarPropuestasComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al descargar archivo:', err);
-        alert('Error al descargar el archivo');
+        this.notificationService.error('Error', 'No se pudo descargar el archivo');
       }
     });
   }

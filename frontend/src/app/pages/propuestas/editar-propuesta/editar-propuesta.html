@@ -183,10 +183,34 @@
               <option value="">Selecciona cantidad</option>
               <option value="1">1 Estudiante</option>
               <option value="2">2 Estudiantes</option>
+              <option value="3">3 Estudiantes</option>
             </select>
             <div *ngIf="editForm.submitted && !propuesta.numero_estudiantes" class="error-field">
               El número de estudiantes es obligatorio
             </div>
+          </div>
+        </div>
+        
+        <!-- Campos de Estudiantes Adicionales -->
+        <div class="estudiantes-adicionales-container" *ngIf="mostrarEstudiantesAdicionales">
+          <div class="form-group" *ngFor="let estudiante of estudiantes_adicionales; let i = index">
+            <label [for]="'estudiante_' + (i + 2)" class="form-label">
+              RUT del Estudiante {{ i + 2 }}
+              <span class="required">*</span>
+            </label>
+            <input
+              [id]="'estudiante_' + (i + 2)"
+              type="text"
+              [(ngModel)]="estudiantes_adicionales[i]"
+              [name]="'estudiante_adicional_' + i"
+              placeholder="Ej: 12345678-9"
+              required
+              class="form-input"
+              maxlength="12"
+              pattern="^\d{7,8}-[0-9kK]{1}$">
+            <small class="form-hint">
+              Formato: 12345678-9 (sin puntos)
+            </small>
           </div>
         </div>
 

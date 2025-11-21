@@ -13,8 +13,18 @@
       <p class="project-description">{{ proyecto.descripcion }}</p>
       <div class="project-meta">
         <div class="meta-item" *ngIf="userRole === '1'">
-          <i class="fas fa-user-graduate"></i>
-          <span>Estudiante: {{ proyecto.estudiante_nombre }}</span>
+          <i class="fas fa-users"></i>
+          <span>
+            <ng-container *ngIf="proyecto.estudiantes && proyecto.estudiantes.length > 0">
+              {{ proyecto.estudiantes.length > 1 ? 'Estudiantes:' : 'Estudiante:' }}
+              <span *ngFor="let estudiante of proyecto.estudiantes; let last = last">
+                {{ estudiante.nombre }}<span *ngIf="!last">, </span>
+              </span>
+            </ng-container>
+            <ng-container *ngIf="!proyecto.estudiantes || proyecto.estudiantes.length === 0">
+              Estudiante: {{ proyecto.estudiante_nombre }}
+            </ng-container>
+          </span>
         </div>
         <div class="meta-item" *ngIf="proyecto.profesor_guia">
           <i class="fas fa-user-tie"></i>

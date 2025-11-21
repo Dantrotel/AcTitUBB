@@ -53,6 +53,46 @@ export const asignarProfesorConRol = async (proyecto_id, profesor_rut, rol_profe
 };
 
 /**
+ * Asignar un profesor a un proyecto usando parámetros de objeto
+ * @param {Object} params - Parámetros de asignación
+ * @param {number} params.proyecto_id - ID del proyecto
+ * @param {string} params.profesor_rut - RUT del profesor
+ * @param {number} params.rol_profesor_id - ID del rol del profesor
+ * @param {string} params.asignado_por - Usuario que realiza la asignación
+ * @param {string} params.observaciones - Observaciones opcionales
+ * @returns {Promise<number>} - ID de la asignación creada
+ */
+export const asignarProfesorAProyecto = async ({ proyecto_id, profesor_rut, rol_profesor_id, asignado_por, observaciones = null }) => {
+  // Verificar que el profesor sea válido
+  const [profesorExists] = await pool.execute(
+    `SELECT rut FROM usuarios WHERE rut = ? AND rol_id = 2`,
+    [profesor_rut]
+  );
+  
+  if (profesorExists.length === 0) {
+    throw new Error('El usuario no es un profesor válido');
+  }
+
+  // Verificar que no exista ya una asignación activa del mismo rol
+  const [asignacionExists] = await pool.execute(
+    `SELECT id FROM asignaciones_proyectos WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE`,
+    [proyecto_id, rol_profesor_id]
+  );
+  
+  if (asignacionExists.length > 0) {
+    throw new Error('Ya existe un profesor con este rol asignado a este proyecto');
+  }
+
+  const [result] = await pool.execute(
+    `INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, activo, asignado_por, observaciones) 
+     VALUES (?, ?, ?, TRUE, ?, ?)`,
+    [proyecto_id, profesor_rut, rol_profesor_id, asignado_por ?? 'system', observaciones]
+  );
+  
+  return result.insertId;
+};
+
+/**
  * Obtener todas las asignaciones de profesores de un proyecto
  * @param {number} proyecto_id - ID del proyecto
  * @returns {Promise<Array>} - Lista de asignaciones con datos del profesor

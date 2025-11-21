@@ -13,15 +13,16 @@ import {
     obtenerEstadisticasFechasController
 } from '../controllers/calendario.controller.js';
 import { verifySession } from '../middlewares/verifySession.js';
+import { cacheMiddleware, invalidateOnMutation } from '../config/cache.js';
 
 const router = Router();
 
 
 // Crear fecha global (solo admin)
-router.post('/admin/global', verifySession, crearFechaGlobalController);
+router.post('/admin/global', verifySession, invalidateOnMutation('config'), crearFechaGlobalController);
 
 // Obtener todas las fechas globales (admin)
-router.get('/admin/globales', verifySession, obtenerFechasGlobalesController);
+router.get('/admin/globales', verifySession, cacheMiddleware('config'), obtenerFechasGlobalesController);
 
 // Obtener estadísticas de fechas (solo admin)
 router.get('/admin/estadisticas', verifySession, obtenerEstadisticasFechasController);
@@ -45,18 +46,18 @@ router.get('/estudiante/proximas', verifySession, obtenerFechasProximasEstudiant
 // ===== RUTAS GENERALES =====
 
 // Obtener fechas globales visibles para todos los usuarios (sin restricción de rol)
-router.get('/globales', verifySession, obtenerFechasGlobalesController);
+router.get('/globales', verifySession, cacheMiddleware('config'), obtenerFechasGlobalesController);
 
 // Obtener fechas próximas visibles para todos los usuarios (sin restricción de rol)
-router.get('/proximas', verifySession, obtenerFechasProximasController);
+router.get('/proximas', verifySession, cacheMiddleware('config'), obtenerFechasProximasController);
 
 // Obtener fecha por ID (con control de permisos)
-router.get('/:id', verifySession, obtenerFechaPorIdController);
+router.get('/:id', verifySession, cacheMiddleware('config'), obtenerFechaPorIdController);
 
 // Actualizar fecha (con control de permisos)
-router.put('/:id', verifySession, actualizarFechaController);
+router.put('/:id', verifySession, invalidateOnMutation('config'), actualizarFechaController);
 
 // Eliminar fecha (con control de permisos)
-router.delete('/:id', verifySession, eliminarFechaController);
+router.delete('/:id', verifySession, invalidateOnMutation('config'), eliminarFechaController);
 
 export default router;

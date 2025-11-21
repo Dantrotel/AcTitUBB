@@ -30,6 +30,320 @@ export const sendConfirmationEmail = async (email, token) => {
   await transporter.sendMail(mailOptions);
 };
 
+// ============= NOTIFICACIONES DE ASIGNACIÓN DE PROFESOR =============
+
+export const sendAsignacionProfesorEmail = async (estudianteEmail, estudianteNombre, propuestaTitulo, profesorNombre) => {
+  const mailOptions = {
+    from: `"AcTitUBB - Notificaciones" <${process.env.EMAIL_USER}>`,
+    to: estudianteEmail,
+    subject: '👨‍🏫 Profesor Asignado a tu Propuesta - AcTitUBB',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #004b8d; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #004b8d; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>👨‍🏫 Profesor Asignado</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${estudianteNombre}</strong>,</p>
+          <p>Te informamos que se ha asignado un profesor a tu propuesta de título:</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: #004b8d;">📋 ${propuestaTitulo}</h3>
+            <p><strong>Profesor Asignado:</strong> ${profesorNombre}</p>
+          </div>
+          <p>El profesor estará revisando tu propuesta y podrá contactarte para coordinar reuniones y darte seguimiento.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+// ============= NOTIFICACIONES DE ENTREGAS =============
+
+export const sendEntregaRealizadaEmail = async (profesorEmail, profesorNombre, estudianteNombre, hitoNombre, proyectoTitulo) => {
+  const mailOptions = {
+    from: `"AcTitUBB - Notificaciones" <${process.env.EMAIL_USER}>`,
+    to: profesorEmail,
+    subject: '📤 Nueva Entrega Realizada - AcTitUBB',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #28a745; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>📤 Nueva Entrega Realizada</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${profesorNombre}</strong>,</p>
+          <p>El estudiante <strong>${estudianteNombre}</strong> ha realizado una nueva entrega:</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: #28a745;">📚 ${proyectoTitulo}</h3>
+            <p><strong>Hito/Entrega:</strong> ${hitoNombre}</p>
+            <p><strong>Estudiante:</strong> ${estudianteNombre}</p>
+          </div>
+          <p>Por favor, revisa la entrega y proporciona retroalimentación al estudiante.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+export const sendEntregaRevisadaEmail = async (estudianteEmail, estudianteNombre, hitoNombre, proyectoTitulo, estado, comentarios) => {
+  const estadoColor = estado === 'aprobado' ? '#28a745' : '#dc3545';
+  const estadoTexto = estado === 'aprobado' ? '✅ Aprobada' : '❌ Requiere Correcciones';
+  
+  const mailOptions = {
+    from: `"AcTitUBB - Notificaciones" <${process.env.EMAIL_USER}>`,
+    to: estudianteEmail,
+    subject: `📋 Entrega Revisada: ${estadoTexto} - AcTitUBB`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: ${estadoColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${estadoColor}; }
+          .comentarios { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>📋 Entrega Revisada</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${estudianteNombre}</strong>,</p>
+          <p>Tu profesor ha revisado la siguiente entrega:</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: ${estadoColor};">${estadoTexto}</h3>
+            <p><strong>Proyecto:</strong> ${proyectoTitulo}</p>
+            <p><strong>Hito/Entrega:</strong> ${hitoNombre}</p>
+          </div>
+          ${comentarios ? `
+          <div class="comentarios">
+            <h4 style="margin-top: 0;">💬 Comentarios del Profesor:</h4>
+            <p>${comentarios}</p>
+          </div>
+          ` : ''}
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+// ============= NOTIFICACIONES DE FECHAS IMPORTANTES =============
+
+export const sendFechaPublicadaEmail = async (destinatarios, titulo, descripcion, fecha, tipo) => {
+  const tipoIcono = {
+    'entrega': '📤',
+    'reunion': '📅',
+    'hito': '🎯',
+    'evaluacion': '📝',
+    'otro': '📌'
+  };
+  
+  const mailOptions = {
+    from: `"AcTitUBB - Notificaciones" <${process.env.EMAIL_USER}>`,
+    to: destinatarios.join(', '),
+    subject: `${tipoIcono[tipo] || '📌'} Nueva Fecha Importante - AcTitUBB`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #6f42c1; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6f42c1; }
+          .fecha-box { background: #e9ecef; padding: 15px; text-align: center; border-radius: 5px; margin: 15px 0; }
+          .fecha { font-size: 24px; font-weight: bold; color: #6f42c1; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>${tipoIcono[tipo] || '📌'} Nueva Fecha Importante</h2>
+        </div>
+        <div class="content">
+          <p>Se ha publicado una nueva fecha importante:</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: #6f42c1;">${titulo}</h3>
+            ${descripcion ? `<p>${descripcion}</p>` : ''}
+          </div>
+          <div class="fecha-box">
+            <p style="margin: 0; font-size: 14px; color: #666;">Fecha:</p>
+            <p class="fecha">${new Date(fecha).toLocaleDateString('es-CL', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</p>
+          </div>
+          <p>Por favor, toma nota de esta fecha en tu calendario.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+// ============= NOTIFICACIONES DE REUNIONES =============
+
+export const sendSolicitudReunionEmail = async (profesorEmail, profesorNombre, estudianteNombre, proyectoTitulo, fechaPropuesta, mensaje) => {
+  const mailOptions = {
+    from: `"AcTitUBB - Notificaciones" <${process.env.EMAIL_USER}>`,
+    to: profesorEmail,
+    subject: '📅 Nueva Solicitud de Reunión - AcTitUBB',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #17a2b8; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #17a2b8; }
+          .mensaje { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>📅 Solicitud de Reunión</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${profesorNombre}</strong>,</p>
+          <p>Has recibido una solicitud de reunión de <strong>${estudianteNombre}</strong>:</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: #17a2b8;">📚 ${proyectoTitulo}</h3>
+            <p><strong>Fecha Propuesta:</strong> ${new Date(fechaPropuesta).toLocaleDateString('es-CL', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+          </div>
+          ${mensaje ? `
+          <div class="mensaje">
+            <h4 style="margin-top: 0;">💬 Mensaje del Estudiante:</h4>
+            <p>${mensaje}</p>
+          </div>
+          ` : ''}
+          <p>Por favor, ingresa a la plataforma para aceptar o rechazar esta solicitud.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+export const sendRespuestaReunionEmail = async (estudianteEmail, estudianteNombre, profesorNombre, proyectoTitulo, estado, fechaReunion, comentarios) => {
+  const estadoColor = estado === 'aceptada' ? '#28a745' : '#dc3545';
+  const estadoTexto = estado === 'aceptada' ? '✅ Aceptada' : '❌ Rechazada';
+  
+  const mailOptions = {
+    from: `"AcTitUBB - Notificaciones" <${process.env.EMAIL_USER}>`,
+    to: estudianteEmail,
+    subject: `📅 Reunión ${estadoTexto} - AcTitUBB`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: ${estadoColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${estadoColor}; }
+          .comentarios { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>📅 Respuesta a Solicitud de Reunión</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${estudianteNombre}</strong>,</p>
+          <p>El profesor <strong>${profesorNombre}</strong> ha respondido a tu solicitud de reunión:</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: ${estadoColor};">${estadoTexto}</h3>
+            <p><strong>Proyecto:</strong> ${proyectoTitulo}</p>
+            ${estado === 'aceptada' ? `
+            <p><strong>Fecha Confirmada:</strong> ${new Date(fechaReunion).toLocaleDateString('es-CL', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+            ` : ''}
+          </div>
+          ${comentarios ? `
+          <div class="comentarios">
+            <h4 style="margin-top: 0;">💬 Comentarios del Profesor:</h4>
+            <p>${comentarios}</p>
+          </div>
+          ` : ''}
+          ${estado === 'aceptada' ? 
+            '<p>¡No olvides asistir a la reunión en la fecha y hora acordadas!</p>' : 
+            '<p>Por favor, coordina una nueva fecha con tu profesor.</p>'
+          }
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
 export const sendPasswordResetEmail = async (email, nombre, passwordTemporal, rut) => {
   const loginUrl = `http://localhost:4200/login`; // URL del frontend
 

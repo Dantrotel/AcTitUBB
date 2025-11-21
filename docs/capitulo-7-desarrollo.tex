@@ -1,0 +1,114 @@
+%!TEX root = ../informe.tex
+\chapter{Desarrollo del Trabajo}\label{cap:desarrollo}
+Este capítulo detalla el proceso de construcción del sistema AcTitUBB, abarcando la evolución de su arquitectura, la estructuración del código fuente, las etapas de desarrollo funcional, los problemas enfrentados y las medidas de prueba y optimización aplicadas. Se documenta la configuración inicial del entorno, las decisiones de diseño que convergieron en la arquitectura final y la forma en que los retos técnicos moldearon la solución. Finalmente, se sintetizan los resultados y aprendizajes.
+
+\section{Diseño de Arquitectura}\label{sec:arquitectura}
+La arquitectura del sistema siguió una progresión incremental desde un prototipo básico de autenticación hacia una plataforma modular con dominios claramente definidos. La separación de responsabilidades por capas (presentación, aplicación, dominio y persistencia) permitió mantener bajo acoplamiento y favorecer la extensibilidad conforme se agregaron funcionalidades (matching de reuniones, gestión de cronogramas, documentos versionados y notificaciones).
+
+\subsection{Configuración Inicial del Entorno}\label{subsec:config-inicial}
+La fase inicial consideró la preparación de un entorno de desarrollo homogéneo para todos los colaboradores:
+\begin{itemize}
+  \item \textbf{Herramientas principales}: Node.js (versión acorde a dependencias Express 5.x), Angular CLI para scaffolding de frontend y MySQL como motor relacional.
+  \item \textbf{Gestión de dependencias}: \texttt{npm} para backend y frontend, manteniendo \texttt{package.json} separados con scripts específicos (inicio, build, test, dev con recarga).
+  \item \textbf{Variables de entorno}: archivo \texttt{.env} (no versionado) con configuración de Base de Datos (host, usuario, contraseña, nombre), secreto JWT, puertos y credenciales de correo.
+  \item \textbf{Docker Compose preliminar}: plantillas para levantar contenedores de backend, frontend y base de datos, facilitando reproducción del entorno y aislando diferencias locales.
+  \item \textbf{Colección Postman inicial}: endpoints básicos (login, obtención de propuesta, creación de proyecto) para validar conectividad y formato de respuestas JSON.
+  \item \textbf{Estructura de carpetas}: separación temprana en backend de \texttt{controllers}, \texttt{services}, \texttt{models}, \texttt{middlewares}, \texttt{routes} y \texttt{db}.
+\end{itemize}
+Los primeros commits enfocaron autenticación JWT y verificación de sesión, estableciendo el patrón de middleware antes de introducir rutas de negocio.
+
+\subsection{Arquitectura Implementación Final}\label{subsec:arquitectura-final}
+La arquitectura consolidada incorpora los siguientes elementos clave:
+\begin{itemize}
+  \item \textbf{Frontend Angular}: componentes organizados por dominio (propuestas, proyectos, calendario, documentos) y diferenciación por rol (estudiante, profesor, administrador) mediante rutas y guardas. Servicios centralizan llamadas HTTP y manejo de tokens (interceptor para \texttt{Authorization}).
+  \item \textbf{Backend Express}: routers versionados bajo \texttt{/api/v1}, cada uno delega en controlador; el controlador orquesta validaciones y llama a servicios de negocio; servicios interactúan con modelos y la capa de acceso a datos (MySQL). Middlewares transversales (auditoría, verificación JWT, subida de archivos, lista negra, rate limiting condicional) se posicionan antes de rutas protegidas.
+  \item \textbf{Persistencia MySQL}: esquema relacional único en \texttt{database.sql}, integrando tablas de propuestas, proyectos, roles, asignaciones, cronogramas, hitos, evaluaciones, fechas importantes, notificaciones, disponibilidades, solicitudes, reuniones, historial y documentos. Índices diseñados para acelerar búsquedas por estado, usuario y proyecto.
+  \item \textbf{Calendario con Matching}: módulo especializado que cruza disponibilidades capturadas y filtra solapamientos para sugerir franjas viables, formalizando luego solicitudes y reuniones confirmadas. El historial captura eventos de programación/reprogramación/cancelación.
+  \item \textbf{Gestión de Documentos}: subida con \texttt{multer} hacia \texttt{uploads/}, registro de metadatos (tipo, proyecto, versión) y estados de revisión. Integración con notificaciones para alertar revisores.
+  \item \textbf{Notificaciones y Correo}: tabla de notificaciones persistentes y disparo opcional de correos mediante \texttt{nodemailer}. La capa de servicio decide criticidad y mecanismo de aviso.
+  \item \textbf{Seguridad}: JWT firmado con secreto configurable, restricciones de CORS, \emph{rate limiting} adaptado (producción más estricto; desarrollo relajado para evitar bloqueo iterativo), verificación de rol y bloqueo de acciones no autorizadas.
+\end{itemize}
+Esta arquitectura soporta escalabilidad horizontal (backend stateless salvo archivos) y facilidad de mantenimiento gracias a la modularidad.
+
+\section{Estructura del Código}\label{sec:estructura-codigo}
+La organización del código asegura claridad entre capas, promueve reutilización y reduce duplicación. Se aplica consistencia en nomenclatura y segmentación lógica.
+
+\subsection{Backend}\label{subsec:estructura-backend}
+Estructura principal:
+\begin{verbatim}
+backend/
+  src/
+    index.js            # Bootstrap, montaje de middlewares y routers
+    controllers/        # Orquestación HTTP
+    services/           # Lógica de negocio y reglas
+    models/             # Definición de entidades y acceso a DB
+    routes/             # Definición de endpoints REST
+    middlewares/        # JWT, auditoría, subida, verificación sesión
+    db/                 # Conexión y script SQL unificado
+    uploads/            # Almacenamiento de documentos
+\end{verbatim}
+\textbf{Patrones}: controlador como adaptador (traduce request/response), servicio como \emph{application service} (aplica reglas y coordina modelos), modelo como \emph{Data Mapper} (queries parametrizadas). Middlewares encapsulan preocupaciones transversales (seguridad y auditoría). Se evita lógica de negocio en controladores, concentrándola en servicios.
+
+\textbf{Manejo de Errores}: uso de respuestas JSON uniformes y propagación controlada de excepciones. Validaciones previas (parámetros requeridos, tipos) minimizan inconsistencias en capa de datos.
+
+\textbf{Acceso a Datos}: \texttt{mysql2} con consultas preparadas y uso de índices planeados. Scripts de inicialización se ejecutan sólo cuando faltan tablas críticas, evitando reconstrucción innecesaria.
+
+\subsection{Frontend}\label{subsec:estructura-frontend}
+Estructura típica:
+\begin{verbatim}
+frontend/
+  src/
+    app/
+      components/       # Componentes atómicos y de dominio
+      pages/            # Vistas completas por funcionalidad/rol
+      services/         # Acceso API, manejo tokens y sesión
+      interceptors/     # Inserción JWT y captura errores
+      routes/           # Configuración de navegación y guards
+    assets/             # Imágenes, iconos, estilos globales
+    styles.scss         # Variables, mixins y resets
+\end{verbatim}
+Los servicios encapsulan endpoints y centralizan headers comunes; componentes consumen observables de RxJS para estado reactivo (carga, error, data). Guards de ruta verifican autenticación y rol antes de renderear vistas sensibles (gestión de proyectos, asignaciones, reuniones). Se utilizan \textbf{Angular Material} para componentes accesibles y consistentes.
+
+\textbf{Gestión de Estado}: se privilegia estado local reactivo (Subject/BehaviorSubject) frente a soluciones globales pesadas, dada la complejidad moderada del dominio. Se evita sobrecarga de librerías de gestión global hasta que la escala lo amerite.
+
+\section{Desarrollo del Software}\label{sec:desarrollo-software}
+El desarrollo se llevó a cabo en iteraciones cortas, cada una agregando funcionalidad vertical completa (backend + frontend + pruebas manuales). Se partió con autenticación y luego se integraron módulos en orden de dependencia: propuestas → proyectos → roles/asignaciones → cronogramas/hitos → calendario matching → documentos → notificaciones/auditoría.
+
+\subsection{Problemas Durante el Desarrollo}\label{subsec:problemas}
+Se registraron incidencias relevantes:
+\begin{enumerate}
+  \item \textbf{Asignación de Profesor}: validaciones de rol insuficientes impedían asignar correctamente profesores; se corrigió lógica de verificación (rol admin y disponibilidad del profesor en el proyecto).
+  \item \textbf{Columna Inexistente (\texttt{rp.codigo})}: consultas referenciaban campos no presentes tras cambios de esquema; se normalizó el acceso y se eliminaron referencias obsoletas.
+  \item \textbf{Ruta desalineada Frontend/Backend}: desajustes en prefijos (p. ej., \texttt{/projects} vs. \texttt{/proyectos}); se unificó convención \texttt{/api/v1} y se ajustaron servicios Angular.
+  \item \textbf{Calendario Matching 400}: error por ausencia de \texttt{proyecto\_id} en payload; se actualizó componente para incluir contexto y validar requerido.
+  \item \textbf{Unificación SQL}: fragmentación en múltiples scripts complicaba reproducibilidad; se consolidó en \texttt{database.sql} añadiendo tablas de historial y documentos.
+  \item \textbf{Rate Limiting en Desarrollo}: configuración estricta bloqueaba múltiples intentos legítimos durante pruebas; se implementó relajación condicional por \texttt{NODE\_ENV} y endpoint de reinicio interno.
+  \item \textbf{Tabla \texttt{documentos\_proyecto} Ausente}: al tener ya otras tablas creadas, el script inicial no se reejecutó; solución: verificación de existencia y ejecución parcial de SQL faltante.
+  \item \textbf{Consistencia de Navegación Profesor}: menú conducía a vista de creación en lugar de solicitudes recibidas; se reorganizó ruteo y se añadió indicador de estado vacío.
+\end{enumerate}
+Cada incidencia condujo a refactor localizado, evitando deuda técnica acumulada.
+
+\subsection{Pruebas, Optimización y Métricas Finales}\label{subsec:pruebas-optimizacion}
+\textbf{Pruebas}:
+\begin{itemize}
+  \item \textbf{Manual + Postman}: validación de flujos completos (login, creación propuesta, transición a proyecto, asignación profesor, disponibilidad, solicitud reunión, confirmación, subida documentos).
+  \item \textbf{Validaciones de negocio}: casos negativos (solicitud sin proyecto, asignación duplicada de rol, solapamiento de disponibilidad) para asegurar respuestas 4xx consistentes.
+  \item \textbf{Frontend}: verificación de guardas, render condicional por rol y deshabilitado de acciones no autorizadas.
+\end{itemize}
+\textbf{Optimización}:
+\begin{itemize}
+  \item Índices estratégicos en tablas de alta consulta (solicitudes, proyectos, notificaciones) para reducir latencia de lectura.
+  \item Simplificación de payloads en respuestas (omitir campos no usados en vistas) para reducir transferencia.
+  \item Cache ligero en frontend mediante memorización de datos no volátiles (roles y configuraciones).
+  \item Rate limiting adaptativo en autenticación para balancear protección y fluidez en desarrollo.
+\end{itemize}
+\textbf{Métricas cualitativas} (estimadas):
+\begin{itemize}
+  \item Tiempo de respuesta promedio en endpoints principales \(<300ms) en entorno local.
+  \item Reducción de errores 400/404 tras alineación de rutas (incidencias esporádicas sólo por datos inválidos).
+  \item Disminución de conflictos de asignación a cero tras regla de unicidad aplicada.
+\end{itemize}
+Limitaciones: ausencia de \emph{benchmarks} automatizados y pruebas unitarias formales para todos los servicios.
+
+\section{Conclusión del Capítulo}\label{sec:conclusion-cap7}
+El desarrollo de AcTitUBB consolidó una arquitectura modular y escalable, alineada a los requerimientos académicos de titulación. Las iteraciones sucesivas permitieron refinar validaciones, corregir inconsistencias de ruteo y fortalecer la persistencia con un modelo de datos integral. El proceso de enfrentar y resolver problemas (desde validaciones de rol hasta sincronización de tablas y manejo de documentos) generó una base robusta para futuras mejoras: incorporación de pruebas automatizadas, métricas cuantitativas más exhaustivas y potenciales módulos analíticos. La plataforma se encuentra estructuralmente preparada para su despliegue y evolución en contextos institucionales más amplios.

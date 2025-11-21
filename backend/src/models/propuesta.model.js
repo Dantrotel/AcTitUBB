@@ -28,10 +28,23 @@ export const crearPropuesta = async ({
         metodologia_propuesta, recursos_necesarios, bibliografia
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original,
-        modalidad, numero_estudiantes, complejidad_estimada, justificacion_complejidad,
-        duracion_estimada_semestres, area_tematica, objetivos_generales, objetivos_especificos,
-        metodologia_propuesta, recursos_necesarios, bibliografia
+        titulo, 
+        descripcion, 
+        estudiante_rut, 
+        fecha_envio, 
+        archivo ?? null, 
+        nombre_archivo_original ?? null,
+        modalidad, 
+        numero_estudiantes, 
+        complejidad_estimada, 
+        justificacion_complejidad ?? null,
+        duracion_estimada_semestres, 
+        area_tematica, 
+        objetivos_generales, 
+        objetivos_especificos,
+        metodologia_propuesta, 
+        recursos_necesarios ?? null, 
+        bibliografia ?? null
       ]
     );
     return result.insertId;
@@ -66,10 +79,20 @@ export const actualizarPropuesta = async (id, {
     metodologia_propuesta = ?, recursos_necesarios = ?, bibliografia = ?`;
     
   let params = [
-    titulo, descripcion, fecha_envio,
-    modalidad, numero_estudiantes, complejidad_estimada, justificacion_complejidad,
-    duracion_estimada_semestres, area_tematica, objetivos_generales, objetivos_especificos,
-    metodologia_propuesta, recursos_necesarios, bibliografia
+    titulo, 
+    descripcion, 
+    fecha_envio,
+    modalidad, 
+    numero_estudiantes, 
+    complejidad_estimada, 
+    justificacion_complejidad ?? null,
+    duracion_estimada_semestres, 
+    area_tematica, 
+    objetivos_generales, 
+    objetivos_especificos,
+    metodologia_propuesta, 
+    recursos_necesarios ?? null, 
+    bibliografia ?? null
   ];
   
   // Solo actualizar el archivo si se proporciona uno nuevo
@@ -90,7 +113,7 @@ export const actualizarPropuesta = async (id, {
   return result.affectedRows > 0;
 };
 
-// Nuevo método: obtener propuestas de un estudiante específico
+// Nuevo método: obtener propuestas de un estudiante específico (usa tabla estudiantes_propuestas)
 export const getPropuestasByEstudiante = async (estudiante_rut) => {
   try {
     const [rows] = await pool.execute(`
@@ -102,13 +125,18 @@ export const getPropuestasByEstudiante = async (estudiante_rut) => {
         ap.profesor_rut,
         prof.nombre as profesor_nombre,
         prof.nombre as nombre_profesor,
-        prof.email as profesor_email
+        prof.email as profesor_email,
+        (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
+         FROM estudiantes_propuestas est_p
+         INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
+         WHERE est_p.propuesta_id = p.id) as estudiantes_completo
       FROM propuestas p
+      INNER JOIN estudiantes_propuestas ep_join ON p.id = ep_join.propuesta_id
       LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
       LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
       LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
       LEFT JOIN usuarios prof ON ap.profesor_rut = prof.rut
-      WHERE p.estudiante_rut = ?
+      WHERE ep_join.estudiante_rut = ?
       ORDER BY p.fecha_envio DESC
     `, [estudiante_rut]);
     
@@ -190,7 +218,11 @@ export const obtenerPropuestaPorId = async (id) => {
       GROUP_CONCAT(DISTINCT up.rut) AS profesores_ruts,
       (SELECT up2.rut FROM asignaciones_propuestas ap2 
        INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
-       WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
+       WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut,
+      (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
+       FROM estudiantes_propuestas est_p
+       INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
+       WHERE est_p.propuesta_id = p.id) as estudiantes_completo
     FROM propuestas p
     LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN usuarios ue ON p.estudiante_rut = ue.rut
@@ -200,6 +232,19 @@ export const obtenerPropuestaPorId = async (id) => {
     GROUP BY p.id
   `, [id]);
 
+  // Obtener estudiantes como array separado
+  const [estudiantes] = await pool.execute(`
+    SELECT ep.estudiante_rut, ep.es_creador, ep.orden, u.nombre, u.email
+    FROM estudiantes_propuestas ep
+    INNER JOIN usuarios u ON ep.estudiante_rut = u.rut
+    WHERE ep.propuesta_id = ?
+    ORDER BY ep.orden ASC
+  `, [id]);
+
+  if (rows[0]) {
+    rows[0].estudiantes = estudiantes;
+  }
+
   return rows[0];
 };
 
@@ -207,12 +252,17 @@ export const obtenerPropuestasPorEstudiante = async (estudiante_rut) => {
   const [rows] = await pool.execute(`
     SELECT p.*, 
            ep.nombre AS estado,
-           GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados
+           GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
+           (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
+            FROM estudiantes_propuestas est_p
+            INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
+            WHERE est_p.propuesta_id = p.id) as estudiantes_completo
     FROM propuestas p
+    INNER JOIN estudiantes_propuestas ep_join ON p.id = ep_join.propuesta_id
     LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
     LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
-    WHERE p.estudiante_rut = ?
+    WHERE ep_join.estudiante_rut = ?
     GROUP BY p.id
     ORDER BY p.fecha_envio DESC
   `, [estudiante_rut]);

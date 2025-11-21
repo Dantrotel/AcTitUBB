@@ -455,19 +455,39 @@ export class CalendarioUnificadoComponent implements OnInit {
 
     this.apiService.get('/reuniones').subscribe({
       next: (response: any) => {
-        this.reuniones = response.data || response || [];
+        console.log('📅 Respuesta reuniones:', response);
+        
+        // Asegurar que siempre sea un array
+        if (Array.isArray(response)) {
+          this.reuniones = response;
+        } else if (response && Array.isArray(response.data)) {
+          this.reuniones = response.data;
+        } else if (response && typeof response === 'object') {
+          this.reuniones = Object.values(response);
+        } else {
+          console.warn('⚠️ Formato de respuesta inesperado:', response);
+          this.reuniones = [];
+        }
+        
         this.aplicarFiltrosReuniones();
         this.loading = false;
       },
       error: (error: any) => {
         console.error('Error al cargar reuniones:', error);
         this.error = 'Error al cargar las reuniones';
+        this.reuniones = [];
         this.loading = false;
       }
     });
   }
 
   aplicarFiltrosReuniones(): void {
+    // Asegurar que reuniones es un array válido
+    if (!Array.isArray(this.reuniones)) {
+      console.warn('⚠️ this.reuniones no es un array:', this.reuniones);
+      this.reuniones = [];
+    }
+    
     let reunionesFiltradas = [...this.reuniones];
 
     // Filtro por estado

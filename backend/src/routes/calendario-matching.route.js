@@ -4,6 +4,9 @@ import * as CalendarioMatchingModel from '../models/calendario-matching.model.js
 import * as ReunionesModel from '../models/reuniones.model.js';
 import { verifySession } from '../middlewares/verifySession.js';
 import { pool } from '../db/connectionDB.js';
+import { sendSolicitudReunionEmail } from '../services/email.service.js';
+import { UserModel } from '../models/user.model.js';
+import { logger } from '../config/logger.js';
 
 const router = express.Router();
 
@@ -435,6 +438,30 @@ router.post('/solicitudes', async (req, res) => {
         const rolFormateado = asignaciones[0].rol_nombre
             .replace(/_/g, ' ')
             .replace(/\b\w/g, l => l.toUpperCase());
+
+        // 📧 Enviar email al profesor
+        try {
+            const [proyectos] = await pool.query('SELECT titulo FROM proyectos WHERE id = ?', [proyecto_id]);
+            const profesor = await UserModel.findPersonByRut(profesor_rut);
+            const estudiante = await UserModel.findPersonByRut(user.rut);
+            
+            if (profesor && profesor.email && profesor.rol_id !== 3 && estudiante && proyectos.length > 0) {
+                await sendSolicitudReunionEmail(
+                    profesor.email,
+                    profesor.nombre,
+                    estudiante.nombre,
+                    proyectos[0].titulo,
+                    `${fecha_propuesta} ${hora_inicio_propuesta}`,
+                    motivo || ''
+                );
+                logger.info('Email de solicitud de reunión enviado', { 
+                    solicitud_id: nuevaSolicitud.id, 
+                    profesor_email: profesor.email 
+                });
+            }
+        } catch (emailError) {
+            logger.error('Error al enviar email de solicitud de reunión', { error: emailError.message });
+        }
 
         res.status(201).json({
             success: true,

@@ -1,5 +1,6 @@
 import * as PropuestasModel from '../models/propuesta.model.js';
 import { ProjectService } from './project.service.js';
+import { pool } from '../db/connectionDB.js';
 
 // Utilidad para validar RUT chileno simple
 const rutValido = (rut) => /^\d{7,8}-[\dkK]$/.test(rut);
@@ -18,8 +19,33 @@ export const crearPropuesta = async (data) => {
       throw new Error('Modalidad debe ser "desarrollo_software" o "investigacion"');
     }
 
-    if (!data.numero_estudiantes || ![1, 2].includes(data.numero_estudiantes)) {
-      throw new Error('Número de estudiantes debe ser 1 o 2');
+    if (!data.numero_estudiantes || ![1, 2, 3].includes(data.numero_estudiantes)) {
+      throw new Error('Número de estudiantes debe ser 1, 2 o 3');
+    }
+
+    // Validar estudiantes adicionales si numero_estudiantes > 1
+    if (data.numero_estudiantes > 1) {
+      if (!data.estudiantes_adicionales || data.estudiantes_adicionales.length === 0) {
+        throw new Error(`Debes agregar ${data.numero_estudiantes - 1} estudiante(s) adicional(es)`);
+      }
+      if (data.estudiantes_adicionales.length !== data.numero_estudiantes - 1) {
+        throw new Error(`Debes agregar exactamente ${data.numero_estudiantes - 1} estudiante(s) adicional(es)`);
+      }
+      // Validar que los RUTs sean válidos
+      for (const rut of data.estudiantes_adicionales) {
+        if (!rutValido(rut)) {
+          throw new Error(`El RUT ${rut} no es válido`);
+        }
+        // Validar que no sea el mismo estudiante creador
+        if (rut === data.estudiante_rut) {
+          throw new Error('No puedes agregarte a ti mismo como estudiante adicional');
+        }
+      }
+      // Validar que no haya duplicados
+      const rutSet = new Set(data.estudiantes_adicionales);
+      if (rutSet.size !== data.estudiantes_adicionales.length) {
+        throw new Error('No puedes agregar el mismo estudiante dos veces');
+      }
     }
 
     if (!data.complejidad_estimada || !['baja', 'media', 'alta'].includes(data.complejidad_estimada)) {
@@ -61,7 +87,26 @@ export const crearPropuesta = async (data) => {
       throw new Error('La fecha de envío no es válida');
     }
 
-    return await PropuestasModel.crearPropuesta(data);
+    // Crear la propuesta
+    const propuestaId = await PropuestasModel.crearPropuesta(data);
+
+    // Agregar el estudiante creador a estudiantes_propuestas
+    await pool.execute(
+      `INSERT INTO estudiantes_propuestas (propuesta_id, estudiante_rut, es_creador, orden) VALUES (?, ?, TRUE, 1)`,
+      [propuestaId, data.estudiante_rut]
+    );
+
+    // Agregar estudiantes adicionales si existen
+    if (data.estudiantes_adicionales && data.estudiantes_adicionales.length > 0) {
+      for (let i = 0; i < data.estudiantes_adicionales.length; i++) {
+        await pool.execute(
+          `INSERT INTO estudiantes_propuestas (propuesta_id, estudiante_rut, es_creador, orden) VALUES (?, ?, FALSE, ?)`,
+          [propuestaId, data.estudiantes_adicionales[i], i + 2]
+        );
+      }
+    }
+
+    return propuestaId;
   } catch (error) {
     throw error;
   }
@@ -95,7 +140,21 @@ export const getPropuestasByEstudiante = async (estudiante_rut) => {
     }
 
     const propuestas = await PropuestasModel.getPropuestasByEstudiante(estudiante_rut);
-    return propuestas || [];
+    
+    // Agregar permisos: todos los estudiantes del equipo pueden editar y eliminar
+    // Solo si la propuesta está en estado "pendiente" o "correcciones"
+    const propuestasConPermisos = propuestas.map(propuesta => {
+      const estadosEditables = ['pendiente', 'correcciones'];
+      const puedeModificar = estadosEditables.includes(propuesta.estado_nombre?.toLowerCase());
+      
+      return {
+        ...propuesta,
+        puedeEditar: puedeModificar,
+        puedeEliminar: puedeModificar
+      };
+    });
+    
+    return propuestasConPermisos || [];
   } catch (error) {
     console.error('Error en getPropuestasByEstudiante service:', error);
     throw error;
@@ -110,7 +169,22 @@ export const asignarProfesor = async (id, profesor_rut) => {
       throw new Error('El RUT del profesor no es válido');
     }
 
-    return await PropuestasModel.asignarProfesor(id, profesor_rut);
+    const success = await PropuestasModel.asignarProfesor(id, profesor_rut);
+    
+    if (success) {
+      // Obtener datos adicionales para notificación
+      const propuesta = await PropuestasModel.obtenerPropuestaPorId(id);
+      const profesor = await pool.query('SELECT nombre FROM usuarios WHERE rut = ?', [profesor_rut]);
+      
+      return {
+        success: true,
+        estudiante_rut: propuesta?.estudiante_rut,
+        titulo: propuesta?.titulo,
+        profesor_nombre: profesor[0]?.[0]?.nombre || 'Profesor'
+      };
+    }
+    
+    return null;
   } catch (error) {
     throw error;
   }
@@ -155,10 +229,11 @@ export const revisarPropuesta = async (id, data) => {
         // Actualizar la propuesta con el ID del proyecto creado
         await PropuestasModel.aprobarPropuesta(id, proyectoId);
         
-        // Transferir asignaciones de profesores de la propuesta al proyecto
-        await ProjectService.transferirAsignacionesProfesores(id, proyectoId);
-        
-        console.log(`✅ Proyecto ${proyectoId} creado exitosamente para propuesta ${id}`);
+        // ❌ NO transferir profesores automáticamente
+        // El profesor guía se asignará manualmente (por el profesor o por admin)
+        // Los otros roles (revisor, informante) se asignan al final del semestre
+        // El profesor de sala es opcional
+        console.log(`✅ Proyecto ${proyectoId} creado sin profesores. Esperando asignación manual del profesor guía.`);
         
         // Crear notificación para administradores sobre el nuevo proyecto
         try {
@@ -174,7 +249,9 @@ export const revisarPropuesta = async (id, data) => {
         return {
           success: true,
           proyecto_id: proyectoId,
-          message: 'Propuesta aprobada y proyecto creado automáticamente'
+          estudiante_rut: propuesta.estudiante_rut,
+          titulo: propuesta.titulo,
+          message: 'Propuesta aprobada y proyecto creado. Pendiente de asignación de profesor guía.'
         };
       } catch (projectError) {
         console.error('❌ Error al crear proyecto automáticamente:', projectError);
@@ -185,6 +262,8 @@ export const revisarPropuesta = async (id, data) => {
 
     return {
       success: true,
+      estudiante_rut: propuesta.estudiante_rut,
+      titulo: propuesta.titulo,
       message: 'Propuesta revisada correctamente'
     };
     
@@ -197,9 +276,34 @@ export const obtenerPropuestas = async () => {
   return await PropuestasModel.obtenerPropuestas();
 };
 
-export const obtenerPropuestaPorId = async (id) => {
+export const obtenerPropuestaPorId = async (id, userRut = null, userRole = null) => {
   if (isNaN(id)) throw new Error('ID inválido');
-  return await PropuestasModel.obtenerPropuestaPorId(id);
+  const propuesta = await PropuestasModel.obtenerPropuestaPorId(id);
+  
+  // Si se proporciona información del usuario, agregar flags de permisos
+  if (propuesta && userRut) {
+    const estadosEditables = ['pendiente', 'correcciones'];
+    const puedeEditarPorEstado = estadosEditables.includes(propuesta.estado_nombre);
+    
+    // Verificar si es creador o miembro del equipo
+    const esCreador = propuesta.estudiante_rut === userRut;
+    let esMiembroEquipo = false;
+    
+    if (!esCreador && userRole === 1) { // Solo verificar para estudiantes
+      const [rows] = await pool.execute(
+        'SELECT * FROM estudiantes_propuestas WHERE propuesta_id = ? AND estudiante_rut = ?',
+        [id, userRut]
+      );
+      esMiembroEquipo = rows.length > 0;
+    }
+    
+    const perteneceAlEquipo = esCreador || esMiembroEquipo;
+    
+    propuesta.puedeEditar = puedeEditarPorEstado && perteneceAlEquipo;
+    propuesta.puedeEliminar = puedeEditarPorEstado && perteneceAlEquipo;
+  }
+  
+  return propuesta;
 };
 
 export const eliminarPropuesta = async (id) => {
@@ -219,6 +323,17 @@ export const verificarPermisosVisualizacion = async (propuesta, userRut, userRol
   // El creador siempre puede ver su propuesta
   if (propuesta.estudiante_rut === userRut) {
     return true;
+  }
+  
+  // Verificar si el usuario es parte del equipo (estudiante adicional)
+  if (userRole === 1) { // Estudiante
+    const [rows] = await pool.execute(
+      'SELECT * FROM estudiantes_propuestas WHERE propuesta_id = ? AND estudiante_rut = ?',
+      [propuesta.id, userRut]
+    );
+    if (rows.length > 0) {
+      return true;
+    }
   }
   
   // Los profesores pueden ver todas las propuestas sin asignar
@@ -241,8 +356,18 @@ export const verificarPermisosVisualizacion = async (propuesta, userRut, userRol
 };
 
 export const verificarPermisosEdicion = async (propuesta, userRut) => {
-  // Solo el creador puede editar su propuesta
-  return propuesta.estudiante_rut === userRut;
+  // Verificar si el usuario es el creador original
+  if (propuesta.estudiante_rut === userRut) {
+    return true;
+  }
+  
+  // Verificar si el usuario es parte del equipo
+  const [rows] = await pool.execute(
+    'SELECT * FROM estudiantes_propuestas WHERE propuesta_id = ? AND estudiante_rut = ?',
+    [propuesta.id, userRut]
+  );
+  
+  return rows.length > 0;
 };
 
 /**

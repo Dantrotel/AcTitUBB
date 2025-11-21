@@ -1,0 +1,162 @@
+%!TEX root = ../informe.tex
+\chapter{Diseño del Proyecto}\label{cap:diseno}
+La presente sección documenta el diseño del sistema AcTitUBB desde las perspectivas de arquitectura de servicios, modelo de datos y diseño de interfaz. Se detallan los componentes lógicos, su interacción, las estructuras de persistencia y las decisiones de usabilidad y estilo que sustentan la experiencia de usuario. Este capítulo sirve como puente entre los requerimientos funcionales y la implementación concreta, dejando trazabilidad clara entre objetivos, entidades y vistas.
+
+\section{Descripción de los Servicios Web}\label{sec:servicios-web}
+El sistema adopta una arquitectura cliente–servidor clásica con un \textbf{frontend Angular 20} y un \textbf{backend Node.js/Express}. El backend expone una API REST bajo el prefijo \texttt{/api/v1/}, estructurada por dominios funcionales: autenticación, usuarios, propuestas, proyectos, roles/asignaciones, cronogramas e hitos, calendario con matching, documentos y notificaciones. Cada dominio se encapsula mediante: \emph{modelo} (mapeo tabla–entidad), \emph{servicio} (lógica de negocio), \emph{controlador} (adaptación HTTP) y \emph{ruta} (definición de endpoints y middlewares).
+
+\subsection*{Arquitectura Lógica}
+\begin{itemize}
+  \item \textbf{Capa de Presentación (Angular)}: componentes y páginas diferenciadas por rol (estudiante, profesor, administrador), servicios de acceso a API, interceptores (inserción JWT, manejo de errores), enrutador y guardas para proteger rutas según sesión/rol.
+  \item \textbf{Capa de Aplicación (Express)}: controladores para orquestar peticiones, aplicar validaciones de negocio y coordinar servicios. Middlewares: verificación de sesión (JWT), auditoría, control de lista negra, subida de archivos y límites de peticiones (rate limiting condicional en desarrollo).
+  \item \textbf{Capa de Dominio (Servicios)}: lógica sobre proyectos, propuestas, matching de reuniones (disponibilidades–solicitudes–confirmaciones), progresión de estados, validaciones de rol y cronogramas.
+  \item \textbf{Capa de Persistencia (MySQL)}: implementación del modelo relacional, transacciones simples y consultas optimizadas con índices compuestos.
+  \item \textbf{Servicios Transversales}: envío de correos (notificaciones críticas), gestión de documentos (\texttt{multer}), auditoría de operaciones sensibles, configuración centralizada vía variables de entorno.
+\end{itemize}
+
+\subsection*{Estilo de la API}
+Se siguen convenciones REST: verbos HTTP (GET, POST, PUT/PATCH, DELETE), códigos de estado semánticos (200, 201, 400, 401, 403, 404, 409, 422, 500) y respuestas JSON con estructuración consistente (\texttt{data}, \texttt{error}, \texttt{message}). Los recursos se administran de forma anidada cuando existe dependencia jerárquica (p. ej., hitos de un cronograma) y se adoptan filtros por query parameters para paginación y estado.
+
+\subsection*{Endpoints Principales}
+La Tabla~\ref{tab:endpoints} resume endpoints representativos. (El listado completo se mantiene en la colección Postman).
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{llp{8cm}}
+    \hline
+    \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} \\ \hline
+    POST & /api/v1/auth/login & Autenticación, emisión de JWT. \\
+    GET & /api/v1/propuestas & Listado de propuestas (filtros por estado y autor). \\
+    POST & /api/v1/propuestas & Registro de nueva propuesta del estudiante. \\
+    POST & /api/v1/proyectos & Creación de proyecto a partir de propuesta aprobada. \\
+    GET & /api/v1/projects/:id & Obtención de datos detallados de un proyecto (roles, cronograma, hitos). \\
+    POST & /api/v1/asignaciones-profesores & Asignación de profesor a proyecto con rol específico. \\
+    GET & /api/v1/calendario-matching/disponibilidades & Listado de disponibilidades (por usuario y rango temporal). \\
+    POST & /api/v1/calendario-matching/solicitudes & Registro de solicitud de reunión con validación de relación profesor–estudiante. \\
+    POST & /api/v1/calendario-matching/buscar-reunion & Proceso de matching: cruza disponibilidades y propone franja viable. \\
+    POST & /api/v1/documentos & Subida de documento asociado (propuesta, avance, final). \\
+    GET & /api/v1/notificaciones & Notificaciones activas pendientes de lectura. \\
+    DELETE & /api/v1/notificaciones/:id & Marcado/cierre de notificación. \\
+    GET & /api/v1/hitos-proyecto/:id & Detalle de hitos y su estado de cumplimiento. \\
+    \hline
+  \end{tabular}
+  \caption{Resumen representativo de endpoints REST.}
+  \label{tab:endpoints}
+\end{table}
+
+\subsection*{Seguridad y Control de Acceso}
+La autenticación se realiza con JWT (portador en \texttt{Authorization}). Las rutas protegidas aplican middleware de verificación y controles de rol (admin, profesor, estudiante) antes de delegar en controladores. Se implementa \emph{rate limiting} adaptable por entorno y políticas de CORS restrictivas. Las operaciones de creación/edición sobre recursos académicos generan entradas de auditoría.
+
+\subsection*{Gestión de Documentos}
+Los documentos se almacenan en \texttt{uploads/} con nombres sanitizados y metadatos (versión, tipo, fecha subida, estado de revisión) en la tabla \texttt{documentos\_proyecto}. El flujo cubre: subida, asociación al proyecto, revisión y potencial reemplazo con incremento de versión.
+
+\subsection*{Notificaciones}
+El módulo de notificaciones registra eventos relevantes (aprobaciones, solicitud de reunión, asignaciones) en \texttt{notificaciones\_proyecto} y dispara correo cuando la criticidad lo amerita (via \texttt{nodemailer}). El frontend agrupa notificaciones activas y permite marcado como leídas.
+
+\subsection*{Auditoría}
+Acciones críticas (cambios de rol, estado de hitos, confirmación de reuniones) se registran en la tabla correspondiente de historial o auditoría (p. ej., \texttt{historial\_reuniones}). Esto habilita trazabilidad y soporte para revisiones posteriores.
+
+\subsection*{Escalabilidad}
+La separación por capas y el uso de un diseño modular de servicios permite escalar horizontalmente el backend (stateless salvo almacenamiento de archivos). La base de datos contempla índices para consultas por estado y proyecto, y separa responsabilidad por tablas específicas para evitar sobrecarga en una única entidad.
+
+\subsection*{Mantenibilidad}
+Se promueve cohesión alta y acoplamiento bajo: cada controlador se focaliza en coordinación de un único tipo de recurso; los servicios centralizan las reglas de negocio; los middlewares encapsulan transversalidades (seguridad, auditoría, subida de archivos). Esto reduce el impacto de cambios.
+
+\subsection*{Diagrama de Proyecto (Visión)}\label{subsec:diagrama-proyecto}
+En la Figura~\ref{fig:diagrama-proyecto} se ilustra la interacción de capas y flujos principales (propuesta→proyecto→asignaciones→cronograma→reuniones/documentos). El diagrama muestra: Angular (componentes) comunicándose con controladores Express, servicios que operan sobre modelos y tablas, y módulos transversales (autenticación, notificaciones, auditoría).
+
+\begin{figure}[H]
+  \centering
+  % Placeholder: sustituir por imagen real diagrama-proyecto.pdf/png
+  \fbox{\begin{minipage}[c][5cm][c]{10cm}\centering Diagrama del Proyecto (placeholder)\\Integración de componentes y flujo de datos.\end{minipage}}
+  \caption{Diagrama general de arquitectura del proyecto.}
+  \label{fig:diagrama-proyecto}
+\end{figure}
+
+\section{Modelo de Datos}\label{sec:modelo-datos}
+El sistema utiliza un modelo \textbf{relacional estructurado} en MySQL, con normalización hasta tercera forma normal en las entidades centrales. Se aplican claves foráneas, restricciones de unicidad y \texttt{CHECK} semánticos donde corresponde. Las relaciones se organizan para reflejar claramente dependencia, cardinalidad y reglas de negocio (p. ej., un proyecto puede tener múltiples hitos y varias reuniones agendadas, pero cada asignación profesor–rol–proyecto activa es única).
+
+\subsection{Esquema de la Base de Datos}\label{subsec:esquema-bd}
+Las tablas principales incluyen:
+\begin{itemize}
+  \item \texttt{usuarios}: credenciales, identificación académica y rol base.
+  \item \texttt{roles} y \texttt{roles\_profesores}: taxonomía de roles (guía, co-guía, informante, administrador).
+  \item \texttt{propuestas} \rightarrow \texttt{proyectos}: transición tras aprobación; estado y metadatos de evolución.
+  \item \texttt{asignaciones\_proyectos}: enlace profesor–proyecto–rol con vigencia y unicidad por rol activo.
+  \item \texttt{cronogramas\_proyecto}: estructura temporal global.
+  \item \texttt{hitos\_cronograma}/\texttt{hitos\_proyecto}: definición y seguimiento de actividades planificadas vs. cumplimiento real.
+  \item \texttt{evaluaciones\_proyecto}: resultados de revisiones formales.
+  \item \texttt{fechas\_importantes}: milestones institucionales (plazos oficiales).
+  \item \texttt{notificaciones\_proyecto}: eventos comunicacionales.
+  \item \texttt{disponibilidades}, \texttt{solicitudes\_reunion}, \texttt{reuniones\_calendario}, \texttt{historial\_reuniones}: subsistema de calendarización y trazabilidad.
+  \item \texttt{documentos\_proyecto}: repositorio lógico de entregables, versiones y estados de revisión.
+\end{itemize}
+Se definen índices compuestos (p. ej., \texttt{idx\_solicitud\_profesor}, \texttt{idx\_proyecto\_estado}) para optimizar consultas frecuentes.
+
+\subsection{Entidad–Relación (Conceptual)}\label{subsec:er}
+Conceptualmente, un \emph{Proyecto} se asocia a una \emph{Propuesta} aprobada; un proyecto tiene múltiples \emph{Asignaciones} (profesores en distintos roles) y un \emph{Cronograma} con \emph{Hitos}. Los \emph{Estudiantes} generan disponibilidades y solicitudes hacia \emph{Profesores}; la interacción produce \emph{Reuniones} que generan estados y se registran en \emph{Historial}. Los \emph{Documentos} se vinculan a un \emph{Proyecto} con versión incremental y estado de revisión.
+
+\begin{figure}[H]
+  \centering
+  % Placeholder ER
+  \fbox{\begin{minipage}[c][5cm][c]{10cm}\centering Diagrama ER (placeholder)\\Entidades y relaciones principales.\end{minipage}}
+  \caption{Diagrama entidad–relación conceptual del sistema.}
+  \label{fig:er-conceptual}
+\end{figure}
+
+\subsection{Modelo Relación (Lógico)}\label{subsec:modelo-relacion}
+La transformación al modelo relacional identifica claves primarias (generalmente enteros autoincrementales) y foráneas que implementan cardinalidades:
+\begin{itemize}
+  \item (1:N) \texttt{proyectos}–\texttt{hitos\_proyecto}
+  \item (1:N) \texttt{proyectos}–\texttt{asignaciones\_proyectos}
+  \item (1:N) \texttt{proyectos}–\texttt{documentos\_proyecto}
+  \item (N:1) \texttt{solicitudes\_reunion}–\texttt{usuarios} (solicitante y destinatario)
+  \item (1:N) \texttt{reuniones\_calendario}–\texttt{historial\_reuniones}
+\end{itemize}
+Restricciones de integridad garantizan que sólo exista una asignación activa por \{proyecto, rol\} y que las disponibilidades no se solapen (validación de negocio). Los estados de proyecto/hito se representan por cadenas o enumeraciones controladas.
+
+\section{Diseño de Interfaz y Navegación}\label{sec:ui-diseno}
+El diseño de interfaz prioriza claridad de flujo y separación por rol. Se adoptan patrones de Angular Material (componentes listos y accesibilidad básica), reforzando consistencia visual. La navegación se basa en un \emph{router} que segmenta módulos funcionales y aplica guardas: estudiantes acceden a propuestas y cronograma propio; profesores a solicitudes recibidas y reuniones; administradores a paneles de gestión global.
+
+\subsection{Guías de Estilos}\label{subsec:guias-estilos}
+La guía de estilo define espaciados (unidad base de 8px), jerarquías tipográficas (títulos, subtítulos, cuerpo, notas), componentes de formulario con estados (foco, error, deshabilitado) y uso consistente de iconografía simple (material icons). Los botones primarios emplean color corporativo; secundarios y terciarios minimizan saturación visual. Los modales y diálogos se usan para confirmaciones críticas (asignación profesor, confirmación reunión).
+
+\subsection{Logotipo}\label{subsec:logotipo}
+Se hace referencia al escudo institucional \texttt{Escudo\_Universidad\_del\_Bío-Bío.png} en la portada y a \texttt{favicon.ico} para la marca en el navegador. El logotipo se presenta en la esquina superior izquierda en vistas de autenticación y panel principal, manteniendo proporción y margin estándar (16px). No se altera la paleta oficial del escudo.
+
+\subsection{Guía de Colores}\label{subsec:colores}
+La paleta se inspira en colores institucionales y accesibilidad (contraste WCAG AA):
+\begin{itemize}
+  \item \textbf{Primario}: Azul UBB (\#0D47A1) para encabezados y acciones principales.
+  \item \textbf{Secundario}: Azul medio (\#1976D2) para estados hover y resaltados.
+  \item \textbf{Neutros}: Gris claro (\#F5F5F5) fondo general; Gris medio (\#9E9E9E) textos secundarios; Gris oscuro (\#424242) texto principal.
+  \item \textbf{Énfasis}: Verde éxito (\#2E7D32) para hitos cumplidos; Amarillo aviso (\#FBC02D); Rojo error (\#C62828).
+  \item \textbf{Acciones terciarias}: Azul claro (\#64B5F6) badges y contadores.
+\end{itemize}
+Se verifica contraste mínimo 4.5:1 en texto principal sobre fondo.
+
+\subsection{Tipografía}\label{subsec:tipografia}
+La tipografía base es \textbf{Roboto} (Angular Material), jerarquizada:
+\begin{itemize}
+  \item Título página: Roboto 32px, peso 500.
+  \item Subtítulo: 24px, peso 400.
+  \item Encabezado sección: 20px, peso 500.
+  \item Cuerpo: 14–16px, peso 400.
+  \item Etiquetas y meta datos: 12px, peso 400, mayúsculas opcionales.
+\end{itemize}
+Se aplican ajustes de línea (line-height 1.4–1.6) para legibilidad y se evitan bloques extensos sin separación por párrafos.
+
+\subsection{Composición de las Interfaces}\label{subsec:composicion}
+El layout general sigue un patrón de \emph{shell} con barra superior (logo, nombre usuario, acceso rápido a notificaciones) y menú lateral contextual según rol. Las vistas se componen de:
+\begin{itemize}
+  \item \textbf{Listados}: tablas responsive para propuestas, proyectos y solicitudes; filtros por estado y búsqueda textual.
+  \item \textbf{Detalle}: panel con pestañas (información general, roles, cronograma, documentos, reuniones) permitiendo actualización incremental.
+  \item \textbf{Formularios}: validación inmediata (mensaje de error bajo campo) y deshabilitado de botón de envío hasta cumplir requisitos.
+  \item \textbf{Estados vacíos}: mensajes ilustrativos (sin solicitudes, sin documentos) para orientar la acción siguiente.
+  \item \textbf{Feedback}: snackbars para confirmaciones rápidas (guardado exitoso), diálogos para operaciones sensibles y spinners centralizados mientras se esperan datos.
+\end{itemize}
+Se aplica \emph{responsive design} para pantallas reducidas: colapsado de menú lateral, adaptación de tablas a tarjetas, y reducción de márgenes.
+
+\bigskip
+En conjunto, el diseño proporciona una plataforma coherente, escalable y centrada en la experiencia del usuario académico, reforzando trazabilidad, claridad de flujo y mantenibilidad técnica.

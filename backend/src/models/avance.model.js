@@ -145,21 +145,26 @@ export const aprobarCronogramaPorEstudiante = async (cronograma_id) => {
 
 // ============= FUNCIONES PARA HITOS DEL CRONOGRAMA =============
 
-// Crear hito en cronograma
-export const crearHitoCronograma = async ({ cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite }) => {
+// Crear hito en cronograma (SISTEMA UNIFICADO)
+export const crearHitoCronograma = async ({ cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut }) => {
     const [result] = await pool.execute(
         `INSERT INTO hitos_cronograma 
-         (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite]
+         (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, 
+          peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite,
+         peso_en_proyecto || 0, es_critico || false, hito_predecesor_id || null, creado_por_rut]
     );
     return result.insertId;
 };
 
-// Obtener hitos de un cronograma
+// Obtener hitos de un cronograma (CON NUEVOS CAMPOS)
 export const obtenerHitosCronograma = async (cronograma_id) => {
     const [rows] = await pool.execute(`
         SELECT h.*,
+               hp.nombre_hito as hito_predecesor_nombre,
+               uc.nombre as creado_por_nombre,
+               ua.nombre as actualizado_por_nombre,
                CASE 
                    WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado', 'revisado', 'aprobado') 
                    THEN 'retrasado'
@@ -171,8 +176,11 @@ export const obtenerHitosCronograma = async (cronograma_id) => {
                    ELSE 0
                END as dias_retraso_calculado
         FROM hitos_cronograma h
+        LEFT JOIN hitos_cronograma hp ON h.hito_predecesor_id = hp.id
+        LEFT JOIN usuarios uc ON h.creado_por_rut = uc.rut
+        LEFT JOIN usuarios ua ON h.actualizado_por_rut = ua.rut
         WHERE h.cronograma_id = ?
-        ORDER BY h.fecha_limite ASC
+        ORDER BY h.fecha_limite ASC, h.peso_en_proyecto DESC
     `, [cronograma_id]);
     return rows;
 };
@@ -218,15 +226,17 @@ export const entregarHito = async (hito_id, { archivo_entrega, nombre_archivo_or
     }
 };
 
-// Revisar hito entregado
-export const revisarHito = async (hito_id, { comentarios_profesor, calificacion, estado }) => {
+// Revisar hito entregado (CON AUDITORÍA)
+export const revisarHito = async (hito_id, { comentarios_profesor, calificacion, estado, actualizado_por_rut }) => {
     const [result] = await pool.execute(
         `UPDATE hitos_cronograma 
          SET comentarios_profesor = ?, 
              calificacion = ?, 
-             estado = ?
+             estado = ?,
+             actualizado_por_rut = ?,
+             updated_at = NOW()
          WHERE id = ?`,
-        [comentarios_profesor, calificacion, estado, hito_id]
+        [comentarios_profesor, calificacion, estado, actualizado_por_rut, hito_id]
     );
     return result.affectedRows > 0;
 };
@@ -338,7 +348,7 @@ export const obtenerHitosProximosVencer = async (dias_anticipacion = 3) => {
 
 // ============= FUNCIONES DE TRACKING Y ESTADÍSTICAS =============
 
-// Obtener estadísticas de cumplimiento de cronograma
+// Obtener estadísticas de cumplimiento de cronograma (CON PESOS)
 export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
     const [rows] = await pool.execute(`
         SELECT 
@@ -346,8 +356,12 @@ export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
             SUM(CASE WHEN estado IN ('entregado', 'revisado', 'aprobado') THEN 1 ELSE 0 END) as hitos_completados,
             SUM(CASE WHEN cumplido_en_fecha = TRUE THEN 1 ELSE 0 END) as hitos_a_tiempo,
             SUM(CASE WHEN estado = 'retrasado' OR dias_retraso > 0 THEN 1 ELSE 0 END) as hitos_retrasados,
+            SUM(CASE WHEN es_critico = TRUE THEN 1 ELSE 0 END) as hitos_criticos,
+            SUM(CASE WHEN es_critico = TRUE AND estado IN ('entregado', 'revisado', 'aprobado') THEN 1 ELSE 0 END) as criticos_completados,
             AVG(CASE WHEN calificacion IS NOT NULL THEN calificacion ELSE NULL END) as promedio_calificaciones,
-            AVG(CASE WHEN dias_retraso IS NOT NULL THEN dias_retraso ELSE 0 END) as promedio_dias_retraso
+            AVG(CASE WHEN dias_retraso IS NOT NULL THEN dias_retraso ELSE 0 END) as promedio_dias_retraso,
+            SUM(CASE WHEN estado IN ('entregado', 'revisado', 'aprobado') THEN peso_en_proyecto ELSE 0 END) as avance_ponderado,
+            SUM(peso_en_proyecto) as peso_total
         FROM hitos_cronograma h
         INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
         WHERE c.proyecto_id = ? AND c.activo = TRUE
@@ -357,6 +371,9 @@ export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
     if (estadisticas.total_hitos > 0) {
         estadisticas.porcentaje_cumplimiento = (estadisticas.hitos_completados / estadisticas.total_hitos) * 100;
         estadisticas.porcentaje_puntualidad = (estadisticas.hitos_a_tiempo / estadisticas.total_hitos) * 100;
+        estadisticas.porcentaje_avance_ponderado = estadisticas.peso_total > 0 
+            ? (estadisticas.avance_ponderado / estadisticas.peso_total) * 100 
+            : 0;
     }
     
     return estadisticas;

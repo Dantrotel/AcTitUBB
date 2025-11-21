@@ -1,0 +1,198 @@
+%!TEX root = ../informe.tex
+\chapter{Especificación de Requerimientos del Producto de Software}\label{cap:requerimientos}
+Este capítulo define formalmente los requerimientos del sistema AcTitUBB. Se delimitan el alcance y las fronteras del proyecto, se establecen las restricciones técnicas y se identifican los usuarios y sus objetivos. A continuación se listan los requerimientos funcionales (RF) y no funcionales (RNF), y se describen las interfaces de entrada y salida. La especificación deriva del análisis de objetivos institucionales para el proceso de titulación y de la observación de flujos disponibles en el repositorio actual del sistema (frontend Angular y backend Express + MySQL).
+
+\section{Límites del Proyecto}\label{sec:limites}
+El alcance de AcTitUBB cubre el ciclo de titulación desde la postulación de la propuesta hasta la coordinación de reuniones y la gestión de documentos finales. Se incluyen: creación y revisión de propuestas; conversión a proyectos aprobados; asignación de profesores en roles académicos; planificación (cronogramas e hitos); coordinación de reuniones mediante matching de disponibilidades; gestión de documentos asociados (propuesta, avances, entregable final) y notificaciones (internas y vía correo).\par
+\textbf{No se incluyen} en el alcance actual:
+\begin{itemize}
+  \item Evaluación semántica o automática del contenido de documentos (plagio, calidad lingüística).
+  \item Integración con LMS externo (Moodle, Canvas) ni repositorios institucionales (Dspace) para archivado permanente.
+  \item Videoconferencia en tiempo real (se asume coordinación externa a la plataforma). 
+  \item Analítica avanzada (dashboards predictivos de riesgo de atraso). 
+  \item Internacionalización (i18n) más allá de español. 
+\end{itemize}
+\textbf{Fronteras}: el sistema interactúa únicamente con servicios internos (API REST) y el servidor de correo configurado vía \texttt{nodemailer}. La persistencia se centraliza en una instancia MySQL definida y gestionada por la institución.
+
+\section{Restricciones Técnicas}\label{sec:restricciones}
+\begin{itemize}
+  \item \textbf{Plataforma Web}: Arquitectura cliente–servidor (Angular 20 + Express 5 + MySQL). 
+  \item \textbf{Base de Datos}: Modelo relacional único (script consolidado \texttt{database.sql}). No se admite, por requerimientos institucionales, el uso de NoSQL.
+  \item \textbf{Lenguajes y Frameworks}: TypeScript para frontend y partes del backend (si se tipifica), JavaScript/Node.js para lógica de servidor.
+  \item \textbf{Autenticación}: Obligatoria vía JWT (Bearer) para rutas protegidas; sesión sin estado en backend.
+  \item \textbf{Seguridad}: CORS restringido, rate limiting configurable (más estricto en producción). Uso de HTTPS exigido en despliegue.
+  \item \textbf{Servidor de Correo}: Configuración SMTP debe ser provista externamente (credenciales válidas); sin correo no se envían notificaciones externas.
+  \item \textbf{Compatibilidad Navegadores}: Últimas versiones estables de Chrome, Firefox, Edge. No se garantiza soporte para IE ni navegadores móviles antiguos.
+  \item \textbf{Almacenamiento Archivos}: Sistema de archivos local (\texttt{uploads/}); no se incluye CDN ni almacenamiento distribuido.
+  \item \textbf{Escalado}: Requerimientos de escalado horizontal limitados (carga institucional moderada); no se contempla balanceador dedicado en primera versión.
+  \item \textbf{Tiempo de Entrega}: Cronograma delimitado por periodo académico, priorizando un MVP funcional sobre optimización exhaustiva.
+\end{itemize}
+
+\section{Identificación de Usuarios}\label{sec:usuarios}
+\begin{description}
+  \item[Estudiante] Actor principal que registra propuestas, consulta estado del proyecto, gestiona cronograma personal, carga documentos y solicita reuniones con profesores.
+  \item[Profesor] Revisa propuestas en las que participa, atiende solicitudes de reunión, define disponibilidades, supervisa hitos y emite retroalimentación; puede ocupar múltiples roles (guía, co-guía, informante) según asignación.
+  \item[Administrador] Configura parámetros globales, valida asignaciones de roles, supervisa la consistencia del modelo de datos y gestiona incidencias. Puede forzar ciertos cambios de estado.
+\end{description}
+\textbf{Objetivos por usuario}:
+\begin{itemize}
+  \item Estudiante: completar entrega final de titulación dentro de plazos.
+  \item Profesor: guiar y evaluar progreso del estudiante, gestionar agenda académica.
+  \item Administrador: asegurar cumplimiento de reglamentos, integridad y trazabilidad.
+\end{itemize}
+
+\section{Requerimientos Funcionales}\label{sec:req-funcionales}
+Los requerimientos funcionales se codifican como RF-XX. Agrupados por módulos:
+\subsection*{Autenticación y Seguridad}
+\begin{itemize}
+  \item RF-01: El sistema debe permitir inicio de sesión con credenciales institucionales y emitir un JWT válido. 
+  \item RF-02: El sistema debe invalidar accesos a rutas protegidas sin token o con token expirado (respuesta 401). 
+  \item RF-03: El sistema debe aplicar controles de rol (403) cuando un usuario accede a recursos no autorizados.
+\end{itemize}
+\subsection*{Gestión de Propuestas}
+\begin{itemize}
+  \item RF-04: El estudiante debe poder registrar una propuesta con título, resumen y objetivos. 
+  \item RF-05: El estudiante debe poder editar una propuesta mientras esté en estado \texttt{Borrador}. 
+  \item RF-06: El administrador debe poder aprobar o rechazar una propuesta con observaciones.
+  \item RF-07: El sistema debe permitir listar propuestas filtradas por estado y autor.
+\end{itemize}
+\subsection*{Gestión de Proyectos}
+\begin{itemize}
+  \item RF-08: Al aprobar una propuesta, el sistema debe crear el proyecto asociado con estado inicial \texttt{En Curso}. 
+  \item RF-09: El estudiante debe visualizar información consolidada del proyecto (roles asignados, hitos, documentos). 
+  \item RF-10: El administrador debe cambiar el estado del proyecto a \texttt{Finalizado} o \texttt{Cancelado} según reglas.
+\end{itemize}
+\subsection*{Roles y Asignaciones}
+\begin{itemize}
+  \item RF-11: El sistema debe permitir asignar un profesor a un proyecto con rol específico (guía, co-guía, informante). 
+  \item RF-12: El sistema debe impedir duplicar una asignación activa con el mismo \{proyecto, rol\}. 
+  \item RF-13: El administrador debe poder remover o reemplazar asignaciones inválidas.
+\end{itemize}
+\subsection*{Cronograma e Hitos}
+\begin{itemize}
+  \item RF-14: El sistema debe permitir definir un cronograma asociado al proyecto. 
+  \item RF-15: El estudiante debe registrar hitos con fecha planificada y descripción. 
+  \item RF-16: El profesor debe actualizar el estado de cumplimiento del hito (pendiente, en revisión, aprobado). 
+  \item RF-17: El sistema debe listar hitos por proyecto con filtros por estado.
+\end{itemize}
+\subsection*{Calendario y Reuniones (Matching)}
+\begin{itemize}
+  \item RF-18: El usuario debe registrar disponibilidades de horario (fecha, hora inicio y fin). 
+  \item RF-19: El sistema debe permitir crear solicitud de reunión indicando al profesor y el proyecto. 
+  \item RF-20: El sistema debe procesar búsqueda de reunión (matching) cruzando disponibilidades y sugerir franja viable. 
+  \item RF-21: El profesor debe aceptar o rechazar la solicitud propuesta. 
+  \item RF-22: El sistema debe registrar historial de reuniones (creación, reprogramación, cancelación).
+\end{itemize}
+\subsection*{Gestión de Documentos}
+\begin{itemize}
+  \item RF-23: El estudiante debe subir documentos (propuesta final, avances, versión final) vinculados al proyecto. 
+  \item RF-24: El sistema debe almacenar metadatos del documento (tipo, versión, fecha). 
+  \item RF-25: El profesor debe revisar y cambiar estado (aprobado, requiere corrección). 
+  \item RF-26: El sistema debe permitir descargar documentos aprobados.
+\end{itemize}
+\subsection*{Notificaciones y Auditoría}
+\begin{itemize}
+  \item RF-27: El sistema debe generar notificación interna ante eventos críticos (aprobación propuesta, reunión aceptada, documento revisado). 
+  \item RF-28: El sistema debe enviar correo al destinatario según criticidad configurada. 
+  \item RF-29: El usuario debe marcar notificaciones como leídas. 
+  \item RF-30: El sistema debe mantener registros de auditoría para acciones críticas (asignación rol, confirmación reunión).
+\end{itemize}
+\subsection*{Búsqueda y Filtrado}
+\begin{itemize}
+  \item RF-31: El usuario debe filtrar listados por estado (propuestas, proyectos, hitos, solicitudes). 
+  \item RF-32: El sistema debe soportar paginación en listados extensos.
+\end{itemize}
+
+\section{Requerimientos No Funcionales}\label{sec:req-nofuncionales}
+Codificados como RNF-XX.
+\subsection*{Rendimiento}
+\begin{itemize}
+  \item RNF-01: Las respuestas de endpoints principales (login, listar propuestas, matching) deben completarse en < 500 ms en entorno estándar de laboratorio.
+  \item RNF-02: Operaciones de subida de documentos deben concluir sin bloqueo del hilo principal (manejo asíncrono). 
+\end{itemize}
+\subsection*{Seguridad}
+\begin{itemize}
+  \item RNF-03: Todo acceso a recursos protegidos debe requerir autorización JWT válida. 
+  \item RNF-04: El sistema debe limitar intentos de autenticación (rate limiting) para mitigar fuerza bruta. 
+  \item RNF-05: Los documentos deben almacenarse fuera del directorio público y referenciarse por ID interno.
+\end{itemize}
+\subsection*{Disponibilidad y Confiabilidad}
+\begin{itemize}
+  \item RNF-06: El sistema debe tolerar reinicios del backend sin pérdida de información persistente. 
+  \item RNF-07: Las operaciones críticas deben registrar auditoría para recuperación de contexto.
+\end{itemize}
+\subsection*{Escalabilidad}
+\begin{itemize}
+  \item RNF-08: La arquitectura debe permitir desplegar múltiples instancias del backend detrás de un balanceador sin requerir sesión de estado.
+\end{itemize}
+\subsection*{Mantenibilidad}
+\begin{itemize}
+  \item RNF-09: El código debe estar modularizado (servicios, controladores, modelos) para facilitar refactor. 
+  \item RNF-10: Se debe mantener un único script SQL maestro para reproducir la base de datos.
+\end{itemize}
+\subsection*{Usabilidad}
+\begin{itemize}
+  \item RNF-11: La interfaz debe proveer mensajes claros de error y estados vacíos indicando acción sugerida. 
+  \item RNF-12: Formularios deben validar campos requeridos antes de habilitar envío.
+\end{itemize}
+\subsection*{Portabilidad}
+\begin{itemize}
+  \item RNF-13: El backend debe ejecutarse en entornos Windows y Linux con mínima reconfiguración (ajuste de rutas y variables de entorno). 
+\end{itemize}
+\subsection*{Compatibilidad}
+\begin{itemize}
+  \item RNF-14: El frontend debe soportar las versiones vigentes de los principales navegadores (Chrome, Firefox, Edge) sin degradación funcional.
+\end{itemize}
+
+\section{Interfaces Externas de Entrada}\label{sec:interfaces-entrada}
+\subsection*{Formularios Web}
+\begin{itemize}
+  \item Registro de propuesta (título, objetivos, resumen). 
+  \item Registro de disponibilidad (fecha, hora inicio, hora fin). 
+  \item Subida de documentos (selección archivo, tipo documento). 
+  \item Creación de solicitud de reunión (proyecto, profesor, motivo). 
+  \item Asignación de profesor (selección rol, profesor, proyecto). 
+\end{itemize}
+\subsection*{Endpoints REST}
+Autenticación: \texttt{POST /api/v1/auth/login} (credenciales).\par
+Propuestas: \texttt{POST /api/v1/propuestas}, \texttt{GET /api/v1/propuestas?estado=...}.\par
+Proyectos: \texttt{POST /api/v1/proyectos}, \texttt{GET /api/v1/projects/:id}.\par
+Asignaciones: \texttt{POST /api/v1/asignaciones-profesores}.\par
+Calendario Matching: \texttt{POST /api/v1/calendario-matching/disponibilidades}, \texttt{POST /api/v1/calendario-matching/solicitudes}, \texttt{POST /api/v1/calendario-matching/buscar-reunion}.\par
+Documentos: \texttt{POST /api/v1/documentos}.\par
+Notificaciones: \texttt{GET /api/v1/notificaciones}.\par
+\subsection*{Cabeceras y Autenticación}
+La mayoría de las rutas requieren \texttt{Authorization: Bearer <JWT>}. Se usan cabeceras estándar (\texttt{Content-Type: application/json}), excepto subida de archivos (\texttt{multipart/form-data}).
+
+\section{Interfaces Externas de Salida}\label{sec:interfaces-salida}
+\subsection*{Respuestas JSON}
+Patrón base:
+\begin{verbatim}
+{
+  "data": { ... },
+  "message": "Descripción opcional",
+  "error": null
+}
+\end{verbatim}
+Errores:
+\begin{verbatim}
+{
+  "data": null,
+  "message": "Detalle del error",
+  "error": {
+     "code": 400,
+     "details": ["campo X requerido"]
+  }
+}
+\end{verbatim}
+\subsection*{Descarga de Documentos}
+El endpoint de documentos provee contenido binario con cabecera \texttt{Content-Disposition: attachment; filename="..."}. Se filtra acceso según rol y estado (versión aprobada).
+\subsection*{Notificaciones Internas}
+Listas en frontend con campos: id, mensaje, tipo (info, warning, critical), estado (leída/no leída), fecha. Acciones de cierre emiten actualización vía respuesta JSON. 
+\subsection*{Correos Electrónicos}
+Formato de correo: asunto (evento), cuerpo HTML simple (resumen + enlace), remitente institucional. Errores SMTP no bloquean la operación principal (se registran en auditoría).
+\subsection*{Indicadores en UI}
+Snackbars y badges (número de notificaciones no leídas) complementan salida hacia usuario, mejorando la percepción de estado.
+
+\bigskip
+Esta especificación crea una base verificable para validar la implementación existente y futuras extensiones. Cada requerimiento y restricción está vinculado a un módulo concreto, permitiendo trazabilidad hacia casos de prueba y código fuente.
