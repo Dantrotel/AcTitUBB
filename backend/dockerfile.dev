@@ -1,0 +1,20 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instalar dependencias de desarrollo
+RUN apk add --no-cache curl bash mysql-client
+
+# Copiar package files primero para aprovechar cache
+COPY package*.json ./
+
+# Exponer el volumen antes de instalar para que npm install funcione correctamente
+VOLUME /app/node_modules
+
+# Crear directorios necesarios
+RUN mkdir -p uploads/propuestas logs
+
+EXPOSE 3000
+
+# Script de inicio que instala dependencias si no existen
+CMD ["sh", "-c", "if [ ! -d node_modules ] || [ -z \"$(ls -A node_modules)\" ]; then npm install; fi && npm run dev"]

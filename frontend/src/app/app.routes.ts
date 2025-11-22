@@ -63,11 +63,9 @@ export const routes: Routes = [
   { path: 'propuestas/asignadas', component: PropuestasAsignadasComponent, canActivate: [AuthGuard] },
   { path: 'propuestas/todas', component: PropuestasTodas, canActivate: [AuthGuard] },
 
-  // Rutas del Sistema de Calendario Matching - Centralizadas
-  { path: 'calendario-matching', redirectTo: '/calendario-matching/dashboard', pathMatch: 'full' },
-  { path: 'calendario-matching/disponibilidades', component: DisponibilidadesComponent, canActivate: [AuthGuard] },
+  // Rutas del Sistema de Reuniones (sin matching automático)
+  { path: 'calendario-matching', redirectTo: '/calendario-matching/solicitudes', pathMatch: 'full' },
   { path: 'calendario-matching/solicitudes', component: SolicitudesReunionComponent, canActivate: [AuthGuard] },
-  { path: 'calendario-matching/dashboard', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
   { path: 'calendario-matching/gestion', component: GestionReunionesComponent, canActivate: [AuthGuard] },
 
   // Rutas del administrador
@@ -83,9 +81,6 @@ export const routes: Routes = [
   { path: 'admin/gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, canActivate: [AuthGuard] },
   { path: 'admin/fechas-importantes', component: FechasImportantesComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario-unificado', component: CalendarioUnificadoComponent, canActivate: [AuthGuard] },
-
-  // Rutas del profesor
-  { path: 'admin/calendario-matching', component: DashboardReunionesComponent, canActivate: [AuthGuard] },
 
   {
     path: 'profesor',
@@ -122,20 +117,10 @@ export const routes: Routes = [
         component: ProyectoCronogramaComponent,
         canActivate: [AuthGuard]
       },
-      // Rutas de Calendario Matching para Profesores
+      // Rutas de Reuniones para Profesores
       {
         path: 'calendario/disponibilidades',
         component: DisponibilidadesComponent,
-        canActivate: [AuthGuard]
-      },
-      {
-        path: 'calendario/solicitudes',
-        component: DashboardReunionesComponent,
-        canActivate: [AuthGuard]
-      },
-      {
-        path: 'calendario/dashboard',
-        component: DashboardReunionesComponent,
         canActivate: [AuthGuard]
       },
       {
@@ -174,20 +159,16 @@ export const routes: Routes = [
         component: ProyectoCronogramaComponent,
         canActivate: [AuthGuard]
       },
-      // Rutas de Calendario Matching para Estudiantes
+      // Ruta para calendario unificado (visual completo)
       {
-        path: 'calendario/disponibilidades',
-        component: DisponibilidadesComponent,
+        path: 'calendario',
+        component: CalendarioUnificadoComponent,
         canActivate: [AuthGuard]
       },
+      // Rutas de Reuniones para Estudiantes (sin disponibilidades ni matching)
       {
         path: 'calendario/solicitudes',
         component: SolicitudesReunionComponent,
-        canActivate: [AuthGuard]
-      },
-      {
-        path: 'calendario/dashboard',
-        component: DashboardReunionesComponent,
         canActivate: [AuthGuard]
       },
       {

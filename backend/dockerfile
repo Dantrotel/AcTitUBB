@@ -1,7 +1,7 @@
-# Usar imagen oficial de Node.js más liviana
-FROM node:18-alpine
+# Usar imagen oficial de Node.js LTS
+FROM node:20-alpine
 
-# Instalar dependencias del sistema necesarias para producción
+# Instalar dependencias del sistema necesarias
 RUN apk add --no-cache \
     curl \
     bash \
@@ -9,31 +9,36 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Crear usuario no-root para seguridad
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
 WORKDIR /app
 
-# Copiar archivos de dependencias y instalar
+# Copiar archivos de dependencias
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+
+# Instalar dependencias de producción
+RUN npm ci --only=production && \
+    npm cache clean --force
 
 # Copiar código fuente
-COPY . .
+COPY --chown=nodejs:nodejs . .
 
-# Crear directorio de uploads y dar permisos
-RUN mkdir -p uploads/propuestas && chown -R nodejs:nodejs /app
+# Crear directorios necesarios y dar permisos
+RUN mkdir -p uploads/propuestas logs && \
+    chown -R nodejs:nodejs /app
 
 # Cambiar al usuario no-root
 USER nodejs
 
-EXPOSE 80
+# Exponer puerto
+EXPOSE 3000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# Healthcheck mejorado
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:3000/health || exit 1
 
-# Usar comando de producción
-CMD ["npm", "start"]
+# Comando de inicio
+CMD ["node", "src/index.js"]
 
 

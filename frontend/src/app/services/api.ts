@@ -55,8 +55,36 @@ export class ApiService {
 
   // ===== MÉTODOS PARA EL CALENDARIO =====
 
-  // Obtener fechas globales (visibles para todos los roles)
+  // Obtener fechas del calendario según el rol del usuario
   getMisFechasCalendario() {
+    // Obtener rol del usuario desde el token
+    const token = localStorage.getItem('token');
+    let rol = '';
+    
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        rol = payload.rol;
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
+      }
+    }
+
+    // Estudiantes: usar endpoint específico que incluye fechas globales + específicas del profesor
+    if (rol === 'estudiante') {
+      return this.http.get(`${this.baseUrl}/calendario/estudiante/mis-fechas`, {
+        headers: this.getHeaders()
+      });
+    }
+    
+    // Profesores: usar endpoint que devuelve fechas globales + las que creó el profesor
+    if (rol === 'profesor') {
+      return this.http.get(`${this.baseUrl}/calendario/profesor/mis-fechas`, {
+        headers: this.getHeaders()
+      });
+    }
+    
+    // Admin y otros: fechas globales
     return this.http.get(`${this.baseUrl}/calendario/globales`, {
       headers: this.getHeaders()
     });

@@ -61,15 +61,21 @@ export const crearFechaEspecifica = async ({ titulo, descripcion, fecha, tipo_fe
     return result.insertId;
 };
 
-// Obtener fechas creadas por un profesor específico
+// Obtener fechas creadas por un profesor específico + fechas globales
 export const obtenerFechasPorProfesor = async (profesor_rut) => {
     const [rows] = await pool.execute(`
         SELECT fc.*, 
                ue.nombre AS nombre_estudiante,
-               ue.email AS email_estudiante
+               ue.email AS email_estudiante,
+               u.nombre AS nombre_creador,
+               CASE 
+                   WHEN fc.es_global = TRUE THEN 'Admin'
+                   ELSE 'Profesor'
+               END AS tipo_creador
         FROM fechas_calendario fc
         LEFT JOIN usuarios ue ON fc.estudiante_rut = ue.rut
-        WHERE fc.profesor_rut = ? 
+        LEFT JOIN usuarios u ON fc.creado_por_rut = u.rut
+        WHERE (fc.profesor_rut = ? OR fc.es_global = TRUE)
         AND fc.activa = TRUE
         ORDER BY fc.fecha ASC
     `, [profesor_rut]);
