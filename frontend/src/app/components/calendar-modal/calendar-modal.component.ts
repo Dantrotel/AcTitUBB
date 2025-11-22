@@ -102,10 +102,13 @@ export class CalendarModalComponent implements OnInit, OnChanges {
   fechasCalendario: any[] = []; // Fechas del backend
   loading = false;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) {
+    console.log('🟡 CalendarModal constructor - COMPONENTE CREADO');
+  }
 
   ngOnInit() {
-    console.log('CalendarModal ngOnInit - Propuestas recibidas:', this.propuestas);
+    console.log('🟢 CalendarModal ngOnInit - COMPONENTE INICIALIZADO');
+    console.log('  - Propuestas recibidas:', this.propuestas);
     this.cargarFechasCalendario();
   }
 

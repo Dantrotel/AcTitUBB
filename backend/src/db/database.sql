@@ -117,6 +117,36 @@ CREATE TABLE IF NOT EXISTS propuestas (
     FOREIGN KEY (estado_id) REFERENCES estados_propuestas(id)
 );
 
+-- Tabla para vincular múltiples estudiantes a una propuesta
+CREATE TABLE IF NOT EXISTS estudiantes_propuestas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    propuesta_id INT NOT NULL,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    es_creador BOOLEAN DEFAULT FALSE,
+    orden INT DEFAULT 1,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (propuesta_id) REFERENCES propuestas(id) ON DELETE CASCADE,
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    UNIQUE KEY unique_estudiante_propuesta (propuesta_id, estudiante_rut),
+    INDEX idx_propuesta_estudiante (propuesta_id),
+    INDEX idx_estudiante_propuestas (estudiante_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Tabla para vincular múltiples estudiantes a un proyecto
+CREATE TABLE IF NOT EXISTS estudiantes_proyectos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    es_creador BOOLEAN DEFAULT FALSE,
+    orden INT DEFAULT 1,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    UNIQUE KEY unique_estudiante_proyecto (proyecto_id, estudiante_rut),
+    INDEX idx_proyecto_estudiante (proyecto_id),
+    INDEX idx_estudiante_proyectos (estudiante_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Tabla de Roles de Profesores en Proyectos
 CREATE TABLE IF NOT EXISTS roles_profesores (
     id INT AUTO_INCREMENT PRIMARY KEY,
