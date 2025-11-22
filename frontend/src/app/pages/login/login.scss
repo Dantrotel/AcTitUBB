@@ -388,6 +388,31 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
           text-decoration: underline;
         }
       }
+
+      .forgot-password-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        
+        .link-text {
+          color: $text-light;
+          text-decoration: none;
+          font-size: 0.875rem;
+          font-weight: 400;
+          transition: all 0.3s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          
+          i {
+            font-size: 0.85rem;
+          }
+          
+          &:hover {
+            color: $ubb-blue;
+            text-decoration: underline;
+          }
+        }
+      }
     }
   }
 }

@@ -50,8 +50,17 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { 
+    path: 'forgot-password', 
+    loadComponent: () => import('./pages/forgot-password/forgot-password').then(m => m.ForgotPasswordComponent)
+  },
+  { 
     path: 'cambiar-password', 
     loadComponent: () => import('./pages/cambiar-password/cambiar-password').then(m => m.CambiarPasswordComponent)
+  },
+  { 
+    path: 'cambiar-password-obligatorio', 
+    loadComponent: () => import('./pages/cambio-password-obligatorio/cambio-password-obligatorio').then(m => m.CambioPasswordObligatorioComponent),
+    canActivate: [AuthGuard]
   },
 
   // Rutas protegidas con AuthGuard

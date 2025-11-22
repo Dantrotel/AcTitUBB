@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { validarRUT } from '../services/RutVal.service.js';
 import { addToken, isBlacklisted } from '../middlewares/blacklist.js'; 
-import { sendConfirmationEmail } from '../services/email.service.js';
+import { sendConfirmationEmail, sendPasswordResetEmail } from '../services/email.service.js';
 import { logger, logAuth } from '../config/logger.js';
 
 const register = async (req, res) => {
@@ -97,7 +97,7 @@ const login = async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        logAuth('Login exitoso', { rut: user.rut, rol_id: user.rol_id });
+        logAuth('Login exitoso', { rut: user.rut, rol_id: user.rol_id, debe_cambiar_password: user.debe_cambiar_password });
         return res.json({
             ok: true,
             message: "User logged in",
@@ -294,6 +294,114 @@ const cambiarPasswordPropia = async (req, res) => {
   }
 };
 
+// Endpoint público para solicitar reset de contraseña
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    logAuth('Solicitud de reset de contraseña', { email });
+    
+    if (!email) {
+      return res.status(400).json({ message: 'El email es requerido' })
+;
+    }
+    
+    // Buscar usuario por email
+    const user = await UserModel.findUserBasicByEmail(email);
+    if (!user) {
+      // Por seguridad, no revelamos si el usuario existe o no
+      return res.json({ 
+        message: 'Si el email existe en el sistema, recibirás un correo con instrucciones' 
+      });
+    }
+    
+    if (!user.confirmado) {
+      return res.status(400).json({ 
+        message: 'Tu cuenta aún no está confirmada. Por favor confirma tu email primero' 
+      });
+    }
+    
+    // Generar contraseña temporal aleatoria (8 caracteres)
+    const passwordTemporal = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase();
+    
+    // Hashear la contraseña temporal
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(passwordTemporal, salt);
+    
+    // Actualizar en DB y marcar debe_cambiar_password = TRUE
+    const actualizado = await UserModel.resetearPassword(user.rut, hashedPassword);
+    
+    if (actualizado) {
+      // Enviar email con contraseña temporal
+      try {
+        await sendPasswordResetEmail(user.email, user.nombre, passwordTemporal, user.rut);
+        logAuth('Contraseña temporal generada y email enviado', { rut: user.rut });
+      } catch (emailError) {
+        logger.error('Error al enviar email de reset', { error: emailError.message });
+        return res.status(500).json({ message: 'Error al enviar el correo electrónico' });
+      }
+      
+      res.json({ 
+        message: 'Se ha enviado un correo con tu contraseña temporal' 
+      });
+    } else {
+      res.status(500).json({ message: 'Error al resetear la contraseña' });
+    }
+  } catch (error) {
+    logger.error('Error en forgot password', { error: error.message });
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+// Cambiar contraseña obligatoria (después de login con contraseña temporal)
+const cambiarPasswordObligatorio = async (req, res) => {
+  try {
+    const { rut } = req; // Viene del middleware verifySession
+    const { password_nueva } = req.body;
+    
+    logAuth('Cambio de contraseña obligatoria', { rut });
+    
+    if (!password_nueva) {
+      return res.status(400).json({ message: 'La nueva contraseña es requerida' });
+    }
+    
+    // Validar que la contraseña nueva tenga al menos 6 caracteres
+    if (password_nueva.length < 6) {
+      return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+    
+    // Obtener usuario
+    const user = await UserModel.findPersonByRut(rut);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    // Verificar que el usuario tenga debe_cambiar_password = true
+    if (!user.debe_cambiar_password) {
+      return res.status(400).json({ message: 'No es necesario cambiar la contraseña' });
+    }
+    
+    // Hashear la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password_nueva, salt);
+    
+    // Actualizar contraseña y poner debe_cambiar_password = FALSE
+    const actualizado = await UserModel.cambiarPasswordPropia(rut, hashedPassword);
+    
+    if (actualizado) {
+      logAuth('Contraseña actualizada exitosamente (cambio obligatorio)', { rut });
+      res.json({ 
+        message: 'Contraseña actualizada correctamente. Ahora puedes iniciar sesión con tu nueva contraseña' 
+      });
+    } else {
+      res.status(500).json({ message: 'No se pudo actualizar la contraseña' });
+    }
+  } catch (error) {
+    logger.error('Error al cambiar contraseña obligatoria', { rut: req.rut, error: error.message });
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
 export const loginController = {
     register,
     login,
@@ -301,5 +409,7 @@ export const loginController = {
     refreshToken,
     findUserByRut,
     actualizarPerfil,
-    cambiarPasswordPropia
+    cambiarPasswordPropia,
+    forgotPassword,
+    cambiarPasswordObligatorio
 };
