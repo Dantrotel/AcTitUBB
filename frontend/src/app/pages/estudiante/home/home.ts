@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
 import { FechasLimiteProyectoComponent } from '../../../components/fechas-limite-proyecto/fechas-limite-proyecto.component';
+import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 
 
 @Component({
@@ -22,7 +23,8 @@ import { FechasLimiteProyectoComponent } from '../../../components/fechas-limite
     MatTooltipModule,
     FormsModule,
     AlertasFechasComponent,
-    FechasLimiteProyectoComponent
+    FechasLimiteProyectoComponent,
+    CalendarModalComponent
   ],
   templateUrl: './home.html',
   styleUrls: ['./home.scss']
@@ -546,7 +548,6 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   }
 
   abrirCalendario() {
-    // // // // // // // // // // // console.log('Abriendo calendario con propuestas:', this.propuestas);
     this.showCalendarModal = true;
   }
 

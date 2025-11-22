@@ -1,22 +1,25 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: mysql_actitubb
-    restart: always
+    container_name: actitubb_mysql
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: actitubb
-      MYSQL_USER: actitubb_user
-      MYSQL_PASSWORD: actitubb123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-actitubb}
+      MYSQL_USER: ${MYSQL_USER:-actitubb_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-actitubb123}
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./backend/src/db/database.sql:/docker-entrypoint-initdb.d/database.sql
+      - ./backend/src/db/database.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    command: --default-authentication-plugin=mysql_native_password --max_allowed_packet=64M
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-1234}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - actitubb_network
 
@@ -24,10 +27,10 @@ services:
     build: 
       context: ./backend
       dockerfile: dockerfile
-    container_name: backend_actitubb
-    restart: always
+    container_name: actitubb_backend
+    restart: unless-stopped
     ports:
-      - "2242:3000"
+      - "${BACKEND_PORT:-2242}:3000"
     depends_on:
       mysql:
         condition: service_healthy
@@ -37,38 +40,56 @@ services:
       - NODE_ENV=production
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_NAME=actitubb
-      - DB_USER=actitubb_user
-      - DB_PASSWORD=actitubb123
+      - DB_NAME=${MYSQL_DATABASE:-actitubb}
+      - DB_USER=${MYSQL_USER:-actitubb_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-actitubb123}
+      - PORT=3000
     volumes:
-      - ./backend/uploads:/app/uploads
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
     networks:
       - actitubb_network
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:3000/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
 
   frontend:
     build: 
       context: ./frontend
       dockerfile: dockerfile
-    container_name: frontend_actitubb
-    restart: always
+      args:
+        - NODE_ENV=production
+    container_name: actitubb_frontend
+    restart: unless-stopped
     ports:
-      - "8090:80"
+      - "${FRONTEND_PORT:-8090}:80"
     depends_on:
       backend:
         condition: service_healthy
     environment:
       - API_URL=http://backend:3000
+      - NODE_ENV=production
     networks:
       - actitubb_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 volumes:
   mysql_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local
 
 networks:
   actitubb_network:
     driver: bridge
+    name: actitubb_network

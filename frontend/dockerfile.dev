@@ -1,0 +1,22 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instalar dependencias de sistema
+RUN apk add --no-cache git python3 make g++ curl
+
+# Copiar package files primero
+COPY package*.json ./
+
+# Exponer volúmenes antes de instalar
+VOLUME /app/node_modules
+VOLUME /app/.angular
+
+EXPOSE 4200
+
+# Healthcheck para desarrollo
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+  CMD curl -f http://localhost:4200/ || exit 1
+
+# Script de inicio que instala dependencias si no existen
+CMD ["sh", "-c", "if [ ! -d node_modules ] || [ -z \"$(ls -A node_modules)\" ]; then npm install --legacy-peer-deps; fi && npm run start -- --host 0.0.0.0 --poll 1000"]
