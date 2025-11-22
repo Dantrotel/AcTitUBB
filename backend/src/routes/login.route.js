@@ -40,6 +40,18 @@ router.get('/confirm/:token', async (req, res) => {
   }
 });
 
+// Endpoint público para solicitar reset de contraseña
+router.post('/forgot-password', loginController.forgotPassword);
+
+// Endpoint para cambiar contraseña obligatoria (después de reset)
+router.put('/cambiar-password-obligatorio', verifySession, loginController.cambiarPasswordObligatorio);
+
+// Endpoint público para solicitar reset de contraseña
+router.post('/forgot-password', loginController.forgotPassword);
+
+// Endpoint para cambiar contraseña obligatoria (después de reset)
+router.put('/cambiar-password-obligatorio', verifySession, loginController.cambiarPasswordObligatorio);
+
 router.post('/logout', loginController.logout);
 router.get('/:rut', loginController.findUserByRut);
 router.put('/perfil', verifySession, validate(actualizarPerfilSchema), loginController.actualizarPerfil);

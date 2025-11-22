@@ -189,6 +189,21 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/users/refresh-token`, { refreshToken });
   }
 
+  // ===== RESET DE CONTRASEÑA =====
+
+  // Solicitar reset de contraseña (público, no requiere autenticación)
+  forgotPassword(email: string): Promise<any> {
+    return this.http.post(`${this.baseUrl}/users/forgot-password`, { email }).toPromise();
+  }
+
+  // Cambiar contraseña obligatoria después de reset
+  cambiarPasswordObligatorio(password_nueva: string): Promise<any> {
+    return this.http.put(`${this.baseUrl}/users/cambiar-password-obligatorio`, 
+      { password_nueva }, 
+      { headers: this.getHeaders() }
+    ).toPromise();
+  }
+
   getPropuestas() {
     const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/`, {

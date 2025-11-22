@@ -31,7 +31,7 @@ const createPerson = async (rut, nombre, email, password) => {
 
 const findPersonByEmail = async (email) => {
     const [rows] = await pool.execute(
-        `SELECT u.rut, u.nombre, u.email, u.password, u.rol_id, u.confirmado, r.nombre as rol_nombre
+        `SELECT u.rut, u.nombre, u.email, u.password, u.rol_id, u.confirmado, u.debe_cambiar_password, r.nombre as rol_nombre
          FROM usuarios u
          LEFT JOIN roles r ON u.rol_id = r.id
          WHERE u.email = ?`,
@@ -42,7 +42,7 @@ const findPersonByEmail = async (email) => {
 
 const findPersonByRut = async (rut) => {
     const [rows] = await pool.execute(
-        `SELECT u.rut, u.nombre, u.email, u.password, u.rol_id, u.confirmado, r.nombre as rol_nombre
+        `SELECT u.rut, u.nombre, u.email, u.password, u.rol_id, u.confirmado, u.debe_cambiar_password, r.nombre as rol_nombre
          FROM usuarios u
          LEFT JOIN roles r ON u.rol_id = r.id
          WHERE u.rut = ?`,
@@ -160,6 +160,17 @@ const obtenerUsuarioCompleto = async (rut) => {
     return rows[0];
 };
 
+// Buscar usuario básico por email para forgot password (sin password)
+const findUserBasicByEmail = async (email) => {
+    const [rows] = await pool.execute(
+        `SELECT u.rut, u.nombre, u.email, u.rol_id, u.confirmado
+         FROM usuarios u
+         WHERE u.email = ?`,
+        [email]
+    );
+    return rows[0];
+};
+
 export const UserModel = {
     createPerson,
     findPersonByEmail,
@@ -174,5 +185,6 @@ export const UserModel = {
     crearUsuarioAdmin,
     resetearPassword,
     cambiarPasswordPropia,
-    obtenerUsuarioCompleto
+    obtenerUsuarioCompleto,
+    findUserBasicByEmail
 };
