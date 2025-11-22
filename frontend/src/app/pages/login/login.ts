@@ -2,13 +2,13 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrls: ['./login.scss']
 })
@@ -61,7 +61,7 @@ login() {
       if (res.debe_cambiar_password) {
         console.log('⚠️  Usuario debe cambiar contraseña temporal');
         localStorage.setItem('debe_cambiar_password', 'true');
-        this.router.navigate(['/cambiar-password']);
+        this.router.navigate(['/cambiar-password-obligatorio']);
         return;
       }
 
