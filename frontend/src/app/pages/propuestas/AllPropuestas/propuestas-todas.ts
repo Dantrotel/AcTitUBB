@@ -177,7 +177,7 @@ export class PropuestasTodas implements OnInit {
   }
 
   volver() {
-    // Usar history.back() para volver a la página anterior sin activar guards
+    // Usar history.back() para volver a la pï¿½gina anterior sin activar guards
     window.history.back();
   }
 
