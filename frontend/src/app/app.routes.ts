@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
-import { EstudianteHomeComponent } from './pages/estudiante/home/home';
+import { EstudianteHomeComponent } from './pages/estudiante/home/estudiante-home.component';
 import { CrearPropuestaComponent } from './pages/propuestas/crear-propuesta/crear-propuesta';
 import { ListarPropuestasComponent } from './pages/propuestas/lista-propuestas/lista-propuestas';
 import { ActualizarPropuestaComponent } from './pages/propuestas/editar-propuesta/editar-propuesta';
@@ -15,7 +15,6 @@ import { HomeAdminComponent } from './pages/admin/home-admin/home-admin';
 import { GestionPropuestasComponent } from './pages/admin/gestion-propuestas/gestion-propuestas';
 import { AsignarProfesorComponent } from './pages/admin/asignar-profesor/asignar-profesor';
 import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion-usuarios';
-import { GestionProfesoresComponent } from './pages/admin/gestion-profesores/gestion-profesores';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
 import { GestionComisionComponent } from './pages/admin/gestion-comision/gestion-comision';
@@ -26,6 +25,11 @@ import { CalendarioUnificadoComponent } from './pages/admin/calendario-unificado
 import { SolicitarExtensionComponent } from './pages/estudiante/solicitar-extension/solicitar-extension.component';
 import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
 import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-importantes/fechas-importantes-profesor.component';
+
+// Super Admin Components
+import { SuperAdminHomeComponent } from './pages/super-admin/home/super-admin-home.component';
+import { GestionEstructuraComponent } from './pages/super-admin/gestion-estructura/gestion-estructura';
+import { GestionarJefesComponent } from './pages/super-admin/gestionar-jefes/gestionar-jefes';
 
 // Calendario Matching Components
 import { DisponibilidadesComponent } from './components/calendario-matching/disponibilidades.component';
@@ -77,12 +81,16 @@ export const routes: Routes = [
   { path: 'calendario-matching/solicitudes', component: SolicitudesReunionComponent, canActivate: [AuthGuard] },
   { path: 'calendario-matching/gestion', component: GestionReunionesComponent, canActivate: [AuthGuard] },
 
+  // Rutas del Super Administrador
+  { path: 'super-admin', component: SuperAdminHomeComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
+  { path: 'super-admin/gestion-estructura', component: GestionEstructuraComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
+  { path: 'super-admin/gestionar-jefes', component: GestionarJefesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
+
   // Rutas del administrador
   { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard] },
   { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard] },
   { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard] },
-  { path: 'admin/profesores', component: GestionProfesoresComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
   { path: 'admin/comision', component: GestionComisionComponent, canActivate: [AuthGuard] },
@@ -90,6 +98,11 @@ export const routes: Routes = [
   { path: 'admin/gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, canActivate: [AuthGuard] },
   { path: 'admin/fechas-importantes', component: FechasImportantesComponent, canActivate: [AuthGuard] },
   { path: 'admin/calendario-unificado', component: CalendarioUnificadoComponent, canActivate: [AuthGuard] },
+  { 
+    path: 'admin/carga-profesores', 
+    loadComponent: () => import('./pages/admin/carga-administrativa/carga-administrativa').then(m => m.CargaAdministrativaComponent),
+    canActivate: [AuthGuard] 
+  },
 
   {
     path: 'profesor',

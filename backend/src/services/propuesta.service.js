@@ -272,8 +272,8 @@ export const revisarPropuesta = async (id, data) => {
   }
 };
 
-export const obtenerPropuestas = async () => {
-  return await PropuestasModel.obtenerPropuestas();
+export const obtenerPropuestas = async (carreraFiltro = null) => {
+  return await PropuestasModel.obtenerPropuestas(carreraFiltro);
 };
 
 export const obtenerPropuestaPorId = async (id, userRut = null, userRole = null) => {

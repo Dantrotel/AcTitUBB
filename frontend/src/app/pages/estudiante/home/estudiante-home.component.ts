@@ -26,8 +26,8 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
     FechasLimiteProyectoComponent,
     CalendarModalComponent
   ],
-  templateUrl: './home.html',
-  styleUrls: ['./home.scss']
+  templateUrl: './estudiante-home.component.html',
+  styleUrls: ['./estudiante-home.component.scss']
 })
 export class EstudianteHomeComponent implements OnInit, OnDestroy {
   estudiante: any = {};
@@ -73,6 +73,13 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   errorMensaje = '';
   hasError = false;
 
+  // Dashboard data
+  dashboard: any = null;
+  loadingDashboard = false;
+
+  // Exponer Math para usar en template
+  Math = Math;
+
   // Timer para verificación periódica del token
   private tokenCheckInterval: any;
   
@@ -114,6 +121,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       this.buscarUserByRut(rut);
       this.cargarPropuestas(rut);
       this.cargarProyectos();
+      this.cargarDashboard();
     } else {
       // Fallback
       const userDataStr = localStorage.getItem('userData');
@@ -143,6 +151,21 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         this.ApiService.logout();
       }
     }, 300000); // 5 minutos
+  }
+
+  async cargarDashboard() {
+    try {
+      this.loadingDashboard = true;
+      const response = await this.ApiService.getDashboardEstudiante();
+      if (response && response.success) {
+        this.dashboard = response.data;
+        console.log('✅ Dashboard estudiante cargado:', this.dashboard);
+      }
+    } catch (error) {
+      console.error('Error al cargar dashboard:', error);
+    } finally {
+      this.loadingDashboard = false;
+    }
   }
 
   buscarUserByRut(rut: string) {

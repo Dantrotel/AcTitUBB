@@ -29,6 +29,7 @@ import { AlertasFechasComponent } from '../../../components/alertas-fechas/alert
 export class HomeProfesor implements OnInit {
   // Referencia a Math para usar en el template
   mathHelper = Math;
+  Math = Math;
   
   profesor: any = {};
   showUserMenu = false;
@@ -50,6 +51,10 @@ export class HomeProfesor implements OnInit {
   proximasFechas: any[] = [];
   proyectosRecientes: any[] = [];
   proximosHitos: any[] = [];
+  
+  // Dashboard analytics
+  dashboard: any = null;
+  loadingDashboard = false;
   
   // Propiedades para gestión de hitos
   mostrarGestionHitos = false;
@@ -100,11 +105,26 @@ export class HomeProfesor implements OnInit {
     this.cargarProyectosRecientes();
     this.cargarFechasCalendario();
     this.cargarFechasImportantesProyectos();
+    this.cargarDashboard();
     
     // Cargar hitos próximos después de cargar proyectos
     setTimeout(() => {
       this.cargarHitosProximos();
     }, 1000);
+  }
+  
+  async cargarDashboard() {
+    this.loadingDashboard = true;
+    try {
+      const response = await this.ApiService.getDashboardProfesor();
+      if (response && response.success) {
+        this.dashboard = response.data;
+      }
+    } catch (error) {
+      console.error('Error al cargar dashboard:', error);
+    } finally {
+      this.loadingDashboard = false;
+    }
   }
 
   buscarUserByRut(rut: string) {

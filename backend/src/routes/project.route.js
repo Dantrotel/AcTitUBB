@@ -53,14 +53,6 @@ routerProject.put('/:projectId/hitos/:hitoId', verifySession, ProjectController.
 // ⚠️ DEPRECATED: Completar hito (usar /hitos/:hitoId/entregar en su lugar)
 routerProject.patch('/:projectId/hitos/:hitoId/completar', verifySession, checkRole('1'), ProjectController.completarHito);
 
-// ===== RUTAS DE EVALUACIONES =====
-
-// Crear evaluación para un proyecto (solo profesores)
-routerProject.post('/:projectId/evaluaciones', verifySession, checkRole('2'), ProjectController.crearEvaluacionProyecto);
-
-// Obtener evaluaciones de un proyecto
-routerProject.get('/:projectId/evaluaciones', verifySession, ProjectController.obtenerEvaluacionesProyecto);
-
 // ===== RUTAS DE DASHBOARD =====
 
 // Obtener dashboard completo del proyecto

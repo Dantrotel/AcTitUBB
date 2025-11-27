@@ -12,6 +12,7 @@ import { AlertasFechasComponent } from '../../../components/alertas-fechas/alert
   styleUrls: ['./home-admin.scss']
 })
 export class HomeAdminComponent implements OnInit {
+  Math = Math;
   userRut = '';
   userName = '';
   userRole = '';
@@ -29,6 +30,10 @@ export class HomeAdminComponent implements OnInit {
   notificaciones: any[] = [];
   notificacionesNoLeidas = 0;
   mostrarPanelNotificaciones = false;
+  
+  // Dashboard analytics
+  dashboard: any = null;
+  loadingDashboard = false;
 
   constructor(
     private router: Router,
@@ -40,6 +45,21 @@ export class HomeAdminComponent implements OnInit {
     this.cargarEstadisticas();
     this.cargarNotificaciones();
     this.generarNotificacionesEspeciales();
+    this.cargarDashboard();
+  }
+  
+  async cargarDashboard() {
+    this.loadingDashboard = true;
+    try {
+      const response = await this.apiService.getDashboardAdmin();
+      if (response && response.success) {
+        this.dashboard = response.data;
+      }
+    } catch (error) {
+      console.error('Error al cargar dashboard:', error);
+    } finally {
+      this.loadingDashboard = false;
+    }
   }
 
   private obtenerDatosUsuario(): void {
@@ -91,10 +111,6 @@ export class HomeAdminComponent implements OnInit {
 
   irAGestionUsuarios(): void {
     this.router.navigate(['/admin/usuarios']);
-  }
-
-  irAGestionProfesores(): void {
-    this.router.navigate(['/admin/profesores']);
   }
 
   irAAsignaciones(): void {

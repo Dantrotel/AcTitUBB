@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   standalone: true,
@@ -19,6 +20,7 @@ export class VerPropuestaComponent implements OnInit {
   esAdmin = false;
   userRut = '';
   userRole = '';
+  private notificationService = inject(NotificationService);
 
   constructor(
     private api: ApiService,
@@ -138,14 +140,14 @@ export class VerPropuestaComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al descargar archivo:', err);
-        alert('Error al descargar el archivo');
+        this.notificationService.error('Error al descargar el archivo');
       }
     });
   }
 
   asignarme() {
     if (!this.propuesta || !this.esProfesor) {
-      alert('No tienes permisos para realizar esta acción');
+      this.notificationService.warning('No tienes permisos para realizar esta acción');
       return;
     }
 
@@ -163,13 +165,13 @@ export class VerPropuestaComponent implements OnInit {
     }
 
     if (!profesorRut) {
-      alert('No se encontró el RUT del profesor');
+      this.notificationService.error('No se encontró el RUT del profesor');
       return;
     }
 
     // Aquí se implementaría la lógica para asignar la propuesta al profesor
     console.log('Asignando propuesta', this.propuesta.id, 'al profesor', profesorRut);
-    alert('Funcionalidad de asignación en desarrollo');
+    this.notificationService.info('Funcionalidad de asignación en desarrollo');
   }
 
   revisarPropuesta(id: number) {
@@ -279,17 +281,24 @@ export class VerPropuestaComponent implements OnInit {
   }
 
   // Método para eliminar propuesta (solo admin)
-  eliminarPropuesta(id: number) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.')) {
+  async eliminarPropuesta(id: number) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.',
+      'Confirmar eliminación',
+      'Eliminar',
+      'Cancelar'
+    );
+    
+    if (confirmed) {
       this.api.deletePropuesta(id.toString()).subscribe({
         next: () => {
           console.log('Propuesta eliminada exitosamente');
-          alert('Propuesta eliminada exitosamente');
+          this.notificationService.success('Propuesta eliminada exitosamente');
           this.volver();
         },
         error: (err) => {
           console.error('Error al eliminar propuesta:', err);
-          alert('Error al eliminar la propuesta');
+          this.notificationService.error('Error al eliminar la propuesta');
         }
       });
     }

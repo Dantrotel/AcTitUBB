@@ -25,7 +25,8 @@
   <div class="page-header">
     <div class="header-content">
       <h1>Gestión de Usuarios</h1>
-      <p>Administra todos los usuarios del sistema</p>
+      <p *ngIf="esSuperAdmin">Administra todos los usuarios del sistema</p>
+      <p *ngIf="!esSuperAdmin">Administra los usuarios de tu carrera</p>
     </div>
     <div class="header-actions">
       <button class="btn-success" (click)="abrirModalCrear()">
@@ -36,6 +37,15 @@
         <span class="stat-number">{{ usuarios.length }}</span>
         <span class="stat-label">Total</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Alerta informativa para Admin de Carrera -->
+  <div *ngIf="!esSuperAdmin" class="info-alert">
+    <i class="fas fa-info-circle"></i>
+    <div>
+      <strong>Vista de Administrador de Carrera</strong>
+      <p>Solo puedes ver y gestionar usuarios asociados a tu carrera.</p>
     </div>
   </div>
 
@@ -60,21 +70,31 @@
     </button>
   </div>
 
-  <!-- Filtros -->
+  <!-- Filtros Avanzados -->
   <div *ngIf="!loading && !error" class="filters-section">
+    <div class="filters-header">
+      <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+      <button class="btn-link" (click)="limpiarFiltros()">
+        <i class="fas fa-times"></i> Limpiar todos
+      </button>
+    </div>
+    
     <div class="filters-grid">
+      <!-- Filtro por Rol -->
       <div class="filter-group">
-        <label for="filtroRol">Rol:</label>
+        <label for="filtroRol"><i class="fas fa-user-tag"></i> Rol:</label>
         <select id="filtroRol" [(ngModel)]="filtroRol" class="filter-select">
           <option value="">Todos los roles</option>
           <option value="estudiante">Estudiante</option>
           <option value="profesor">Profesor</option>
-          <option value="administrador">Administrador</option>
+          <option value="admin">Administrador / Jefe de Carrera</option>
+          <option value="Super Administrador">Super Administrador</option>
         </select>
       </div>
 
+      <!-- Filtro por Nombre -->
       <div class="filter-group">
-        <label for="filtroNombre">Nombre:</label>
+        <label for="filtroNombre"><i class="fas fa-signature"></i> Nombre:</label>
         <input 
           type="text" 
           id="filtroNombre" 
@@ -84,8 +104,9 @@
         >
       </div>
 
+      <!-- Filtro por RUT -->
       <div class="filter-group">
-        <label for="filtroRut">RUT:</label>
+        <label for="filtroRut"><i class="fas fa-id-card"></i> RUT:</label>
         <input 
           type="text" 
           id="filtroRut" 
@@ -95,12 +116,45 @@
         >
       </div>
 
-      <div class="filter-actions">
-        <button class="btn-secondary" (click)="limpiarFiltros()">
-          <i class="fas fa-times"></i>
-          Limpiar
-        </button>
+      <!-- Filtro por Carrera -->
+      <div class="filter-group">
+        <label for="filtroCarrera"><i class="fas fa-graduation-cap"></i> Carrera:</label>
+        <select id="filtroCarrera" [(ngModel)]="filtroCarrera" class="filter-select">
+          <option value="">Todas las carreras</option>
+          <option *ngFor="let carrera of carreras" [value]="carrera.id">
+            {{ carrera.nombre }}
+          </option>
+        </select>
       </div>
+
+      <!-- Filtro por Departamento -->
+      <div class="filter-group">
+        <label for="filtroDepartamento"><i class="fas fa-building"></i> Departamento:</label>
+        <select id="filtroDepartamento" [(ngModel)]="filtroDepartamento" class="filter-select">
+          <option value="">Todos los departamentos</option>
+          <option *ngFor="let depto of departamentos" [value]="depto.id">
+            {{ depto.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Filtro por Estado de Confirmación -->
+      <div class="filter-group">
+        <label for="filtroConfirmado"><i class="fas fa-check-circle"></i> Estado:</label>
+        <select id="filtroConfirmado" [(ngModel)]="filtroConfirmado" class="filter-select">
+          <option value="">Todos</option>
+          <option value="confirmado">Confirmados</option>
+          <option value="pendiente">Pendientes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Resumen de resultados -->
+    <div class="filter-results">
+      <span class="results-count">
+        <i class="fas fa-list"></i>
+        Mostrando <strong>{{ usuariosFiltrados.length }}</strong> de <strong>{{ usuarios.length }}</strong> usuarios
+      </span>
     </div>
   </div>
 
@@ -150,6 +204,10 @@
               <i class="fas fa-user-tag"></i>
               <span><strong>Rol:</strong> {{ usuario.rol_nombre }}</span>
             </div>
+            <div class="data-item" *ngIf="usuario.carrera_nombre">
+              <i class="fas fa-graduation-cap"></i>
+              <span><strong>Carrera:</strong> {{ usuario.carrera_nombre }}</span>
+            </div>
             <div class="data-item">
               <i class="fas fa-circle"></i>
               <span><strong>Estado:</strong> {{ usuario.confirmado ? 'Activo' : 'Inactivo' }}</span>
@@ -168,7 +226,7 @@
             Cambiar Estado
           </button>
 
-          <button class="btn-warning" (click)="abrirModalResetPassword(usuario)">
+          <button *ngIf="esSuperAdmin" class="btn-warning" (click)="abrirModalResetPassword(usuario)">
             <i class="fas fa-key"></i>
             Resetear Contraseña
           </button>
@@ -317,6 +375,7 @@
           <small>El RUT no se puede modificar</small>
         </div>
 
+        <!-- Nombre solo editable por admin y superadmin -->
         <div class="form-group">
           <label for="nombreEdit">Nombre Completo *</label>
           <input 
@@ -328,6 +387,7 @@
           >
         </div>
 
+        <!-- Email solo editable por admin y superadmin -->
         <div class="form-group">
           <label for="emailEdit">Email *</label>
           <input 
@@ -339,11 +399,59 @@
           >
         </div>
 
-        <div class="form-group">
+        <!-- Rol solo editable por superadmin -->
+        <div class="form-group" *ngIf="esSuperAdmin">
           <label for="rolEdit">Rol *</label>
           <select id="rolEdit" [(ngModel)]="usuarioEditar.rol_id" name="rol" required>
             <option [value]="rol.id" *ngFor="let rol of roles">{{ rol.nombre }}</option>
           </select>
+        </div>
+        <div class="form-group" *ngIf="!esSuperAdmin">
+          <label for="rolEdit">Rol</label>
+          <input type="text" [value]="getRolNombre(usuarioEditar.rol_id)" disabled class="input-disabled">
+        </div>
+
+        <!-- Departamento solo editable por superadmin -->
+        <div class="form-group" *ngIf="usuarioEditar?.rol_id === 2">
+          <label for="departamentoEdit">Departamento</label>
+          <select id="departamentoEdit" [(ngModel)]="usuarioEditar.departamento_id" name="departamento" [disabled]="!esSuperAdmin">
+            <option [value]="null">Sin departamento</option>
+            <option *ngFor="let depto of departamentos" [value]="depto.id">{{ depto.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Carrera solo editable por superadmin -->
+        <div class="form-group" *ngIf="usuarioEditar?.rol_id === 1">
+          <label for="carreraEdit">Carrera</label>
+          <select id="carreraEdit" [(ngModel)]="usuarioEditar.carrera_id" name="carrera" [disabled]="!esSuperAdmin">
+            <option [value]="null">Sin carrera</option>
+            <option *ngFor="let carr of carreras" [value]="carr.id">{{ carr.nombre }}</option>
+          </select>
+        </div>
+
+        <!-- Contraseña solo editable por Super Admin -->
+        <div class="form-group" *ngIf="esSuperAdmin">
+          <label for="passwordEdit">Contraseña</label>
+          <input 
+            type="password" 
+            id="passwordEdit" 
+            [(ngModel)]="usuarioEditar.password"
+            name="password"
+            placeholder="Nueva contraseña (opcional)"
+          >
+          <small>Solo el Super Admin puede cambiar la contraseña</small>
+        </div>
+        <div class="form-group" *ngIf="!esSuperAdmin">
+          <label for="passwordEdit">Contraseña</label>
+          <input 
+            type="password" 
+            id="passwordEdit" 
+            [value]="usuarioEditar.password || '********'"
+            name="password"
+            disabled
+            class="input-disabled"
+          >
+          <small>Solo el Super Admin puede cambiar la contraseña</small>
         </div>
 
         <div class="modal-actions">

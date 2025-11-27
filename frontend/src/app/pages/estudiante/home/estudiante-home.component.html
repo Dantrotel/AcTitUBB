@@ -101,6 +101,124 @@
     </div>
   </div>
 
+  <!-- Dashboard Analytics -->
+  @if (dashboard && !loadingDashboard) {
+    <div class="analytics-section">
+      <h2 class="section-title">
+        <i class="fas fa-chart-bar"></i>
+        Panel de Control
+      </h2>
+
+      <!-- Proyectos Activos -->
+      @if (dashboard.proyectos && dashboard.proyectos.length > 0) {
+        <div class="proyectos-grid">
+          @for (proyecto of dashboard.proyectos; track proyecto.id) {
+            <div class="proyecto-card" [class.urgente]="proyecto.dias_restantes <= 7">
+              <div class="proyecto-header">
+                <h3>{{ proyecto.titulo }}</h3>
+                <span class="estado-badge" [class]="'estado-' + proyecto.estado_detallado">
+                  {{ proyecto.estado }}
+                </span>
+              </div>
+              <div class="proyecto-progress">
+                <div class="progress-info">
+                  <span>Progreso</span>
+                  <span class="progress-percentage">{{ proyecto.porcentaje_avance || 0 }}%</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" [style.width.%]="proyecto.porcentaje_avance || 0"></div>
+                </div>
+              </div>
+              @if (proyecto.dias_restantes !== null) {
+                <div class="proyecto-footer">
+                  <i class="fas fa-clock"></i>
+                  @if (proyecto.dias_restantes > 0) {
+                    <span>{{ proyecto.dias_restantes }} días restantes</span>
+                  } @else if (proyecto.dias_restantes === 0) {
+                    <span class="text-warning">¡Entrega hoy!</span>
+                  } @else {
+                    <span class="text-danger">{{ Math.abs(proyecto.dias_restantes) }} días de retraso</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Próximos Hitos -->
+      @if (dashboard.proximos_hitos && dashboard.proximos_hitos.length > 0) {
+        <div class="hitos-section">
+          <h3 class="subsection-title">
+            <i class="fas fa-flag-checkered"></i>
+            Próximos Hitos
+          </h3>
+          <div class="hitos-list">
+            @for (hito of dashboard.proximos_hitos; track hito.id) {
+              <div class="hito-item" [class.proximo]="hito.dias_restantes <= 3">
+                <div class="hito-icon">
+                  <i class="fas fa-circle" [class.text-warning]="hito.estado === 'en_progreso'" [class.text-muted]="hito.estado === 'pendiente'"></i>
+                </div>
+                <div class="hito-content">
+                  <h4>{{ hito.nombre_hito }}</h4>
+                  <p class="hito-proyecto">{{ hito.proyecto_titulo }}</p>
+                  <div class="hito-meta">
+                    <span class="hito-fecha">
+                      <i class="fas fa-calendar"></i>
+                      {{ hito.fecha_limite | date:'dd MMM yyyy' }}
+                    </span>
+                    @if (hito.dias_restantes <= 3) {
+                      <span class="badge badge-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{ hito.dias_restantes }} días
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="hito-progress-mini">
+                  <span>{{ hito.porcentaje_avance || 0 }}%</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Avances Pendientes -->
+      @if (dashboard.avances_pendientes && dashboard.avances_pendientes.length > 0) {
+        <div class="avances-section">
+          <h3 class="subsection-title">
+            <i class="fas fa-tasks"></i>
+            Avances Pendientes
+          </h3>
+          <div class="avances-list">
+            @for (avance of dashboard.avances_pendientes; track avance.id) {
+              <div class="avance-item" [class.con-comentarios]="avance.estado_revision === 'con_comentarios'">
+                <div class="avance-icon">
+                  @if (avance.estado_revision === 'con_comentarios') {
+                    <i class="fas fa-comment-dots text-info"></i>
+                  } @else {
+                    <i class="fas fa-hourglass-half text-warning"></i>
+                  }
+                </div>
+                <div class="avance-content">
+                  <h4>{{ avance.titulo }}</h4>
+                  <p class="avance-proyecto">{{ avance.proyecto_titulo }}</p>
+                  <span class="avance-fecha">Enviado: {{ avance.fecha_envio | date:'dd MMM yyyy' }}</span>
+                </div>
+                @if (avance.estado_revision === 'con_comentarios') {
+                  <span class="badge badge-info">Con comentarios</span>
+                } @else {
+                  <span class="badge badge-secondary">En revisión</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
   <!-- Dashboard Cards -->
   <div class="dashboard-grid" [class.loading]="loadingPropuestas || loadingEstudiante || loadingProyectos">
     <div class="dashboard-card primary-card" (click)="navegarAProyecto()">
