@@ -1,0 +1,50 @@
+% Añadidos: Requerimientos relacionados con la interfaz por rol
+
+\section{Requerimientos Funcionales Adicionales}
+
+A continuación se agregan requerimientos funcionales relacionados con el comportamiento de la interfaz de usuario (UI) y la autorización visual, manteniendo el mismo estilo y redacción del documento original.
+
+\begin{longtable}{|>{\centering\arraybackslash}m{2.5cm}|m{11cm}|}
+\caption{Requerimientos Funcionales Adicionales - Interfaz por Rol}
+\label{tab:requerimientos_funcionales_ui_roles} \\
+\hline \textbf{ID} & \textbf{El sistema debe...} \\ \hline
+\endfirsthead
+
+\hline \textbf{ID} & \textbf{El sistema debe...} \\ \hline
+\endhead
+
+RF-33 & Mostrar y habilitar únicamente las opciones, acciones y campos pertinentes al rol del usuario autenticado. Especificaciones: (a) El Super Admin (rol id 4) visualiza y puede editar todos los campos y acciones del sistema (gestión completa de usuarios, estructura, contenidos y configuración); (b) El Administrador (rol id 3) puede gestionar usuarios y contenidos asignados pero no modificar contraseñas de otros administradores ni cambiar permisos de Super Admin; (c) El Profesor (rol id 2) accede a vistas donde puede ver y editar recursos relacionados con sus asignaciones (hitos, documentos y reuniones) sin poder acceder a la administración global; (d) El Estudiante (rol id 1) solo ve y modifica sus propias propuestas, archivos y solicitudes. Todos los cambios de visibilidad y habilitación deben ser implementados tanto en frontend como en backend (control de vistas y control de autorización en endpoints) y documentados. \\ \hline
+
+RF-34 & El sistema debe proporcionar mensajes aclaratorios y accesibles cuando una acción o campo esté oculto o deshabilitado por motivos de permisos, indicando el motivo (por ejemplo: "Acceso reservado a administradores"). Estos mensajes deben ser localizables y registrados en el historial de auditoría cuando la interfaz impida una operación por falta de permisos. \\ \hline
+
+\end{longtable}
+
+\section{Requerimientos No Funcionales Adicionales}
+
+Se añade un RNF breve que especifica requisitos de usabilidad y accesibilidad para la UI por rol.
+
+\subsection{RNF 04: Usabilidad y Accesibilidad de la Interfaz por Rol}
+
+\begin{longtable}{|p{3cm}|p{10cm}|}
+\caption{Especificación RNF 04} \\
+\hline
+\textbf{Descripción} & La interfaz debe adaptarse según el rol del usuario, manteniendo principios de usabilidad y accesibilidad (WCAG 2.1 AA). Las vistas deberán cargar en menos de 1.5 segundos en condiciones normales, y las interacciones relacionadas con permisos deberán devolver retroalimentación inmediata y comprensible. Se deberá garantizar compatibilidad con lectores de pantalla y navegación por teclado en las vistas críticas de gestión. \\
+\hline
+\end{longtable}
+
+\vspace{0.4cm}
+
+\begin{longtable}{|l|c|p{8cm}|}
+\hline
+	extbf{Atributo} & \textbf{Aplica} & \textbf{Especificación} \\ \hline
+Adecuación Funcional &  & La UI por rol asegura que solo las funciones visibles correspondan a las capacidades y restricciones del sistema; las acciones visibles deben corresponder a endpoints y permisos implementados en backend. \\ \hline
+Eficiencia de Desempeño & X & Vistas críticas y paneles por rol deben cargarse en menos de 1.5 segundos en condiciones normales; las interacciones relacionadas con permisos deben devolver respuesta inmediata y no bloquear la experiencia de usuario. \\ \hline
+Compatibilidad & X & La interfaz será compatible con navegadores modernos (Chrome, Edge, Firefox) y con herramientas de accesibilidad (lectores de pantalla), además de mantener degradado aceptable en navegadores móviles. \\ \hline
+Usabilidad & X & Diseño claro por rol, feedback contextual y mensajes cuando opciones estén deshabilitadas; navegación coherente y accesible por teclado. \\ \hline
+Fiabilidad & X & Comportamiento consistente bajo condiciones normales y picos de uso; manejo robusto de errores y estados de permiso incorrectos. \\ \hline
+Seguridad & X & Control de visibilidad y habilitación para minimizar exposición de información; mensajes y controles no deben filtrar datos sensibles. \\ \hline
+Mantenibilidad & X & Implementación modular y documentada facilita actualización de reglas de visibilidad por rol y pruebas automatizadas. \\ \hline
+Portabilidad &  &  \\ \hline
+\end{longtable}
+
+% Fin de los añadidos

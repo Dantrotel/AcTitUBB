@@ -1,0 +1,179 @@
+<div class="carga-administrativa-container">
+  <div class="page-header">
+    <h1 class="page-title">
+      <i class="fas fa-chart-bar"></i>
+      Carga Administrativa de Profesores
+    </h1>
+    <p class="page-description">
+      Visualización de la distribución de proyectos por profesor y rol
+    </p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Cargando información...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-message">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ error() }}
+    </div>
+  } @else {
+    <!-- Estadísticas Generales -->
+    @if (estadisticas()) {
+      <div class="estadisticas-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-chalkboard-teacher"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas()!.total_profesores }}</h3>
+            <p>Total Profesores</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-project-diagram"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas()!.total_proyectos_activos }}</h3>
+            <p>Proyectos Activos</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas()!.promedio_proyectos_profesor.toFixed(1) || '0.0' }}</h3>
+            <p>Promedio por Profesor</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <i class="fas fa-arrow-up"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas()!.max_proyectos_profesor }}</h3>
+            <p>Carga Máxima</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tabla de Profesores -->
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fas fa-table"></i> Detalle de Carga por Profesor</h2>
+        <div class="legend">
+          <span class="legend-item sin-carga">Sin carga</span>
+          <span class="legend-item carga-baja">Carga baja (1-2)</span>
+          <span class="legend-item carga-media">Carga media (3-5)</span>
+          <span class="legend-item carga-alta">Carga alta (6+)</span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="carga-table">
+          <thead>
+            <tr>
+              <th>Profesor</th>
+              <th>Email</th>
+              <th class="text-center">
+                <i class="fas fa-user-tie" title="Profesor Guía"></i>
+                Guía
+              </th>
+              <th class="text-center">
+                <i class="fas fa-file-signature" title="Profesor Informante"></i>
+                Informante
+              </th>
+              <th class="text-center">
+                <i class="fas fa-search" title="Profesor Revisor"></i>
+                Revisor
+              </th>
+              <th class="text-center">
+                <i class="fas fa-users" title="Profesor Co-Guía"></i>
+                Co-Guía
+              </th>
+              <th class="text-center">
+                <i class="fas fa-chalkboard" title="Profesor de Sala"></i>
+                Sala
+              </th>
+              <th class="text-center">
+                <i class="fas fa-edit" title="Profesor Corrector"></i>
+                Corrector
+              </th>
+              <th class="text-center total-col">
+                <i class="fas fa-calculator"></i>
+                Total
+              </th>
+              <th class="text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (profesor of profesores(); track profesor.rut) {
+              <tr>
+                <td class="profesor-nombre">
+                  <i class="fas fa-user-circle"></i>
+                  {{ profesor.nombre }}
+                </td>
+                <td class="profesor-email">{{ profesor.email }}</td>
+                <td class="text-center">
+                  <span class="badge" [class.badge-active]="profesor.proyectos_guia > 0">
+                    {{ profesor.proyectos_guia }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [class.badge-active]="profesor.proyectos_informante > 0">
+                    {{ profesor.proyectos_informante }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [class.badge-active]="profesor.proyectos_revisor > 0">
+                    {{ profesor.proyectos_revisor }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [class.badge-active]="profesor.proyectos_coguia > 0">
+                    {{ profesor.proyectos_coguia }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [class.badge-active]="profesor.proyectos_sala > 0">
+                    {{ profesor.proyectos_sala }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge" [class.badge-active]="profesor.proyectos_corrector > 0">
+                    {{ profesor.proyectos_corrector }}
+                  </span>
+                </td>
+                <td class="text-center total-col">
+                  <span class="badge-total">
+                    {{ profesor.total_proyectos }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="nivel-badge" [class]="obtenerNivelCarga(profesor.total_proyectos)">
+                    {{ obtenerTextoNivel(profesor.total_proyectos) }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="10" class="empty-state">
+                  <i class="fas fa-inbox"></i>
+                  <p>No hay profesores registrados</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

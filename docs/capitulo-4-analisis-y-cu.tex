@@ -1,0 +1,659 @@
+\section{Introducción}
+
+Este capítulo presenta el análisis funcional del sistema AcTitUBB mediante el enfoque de casos de uso, siguiendo la notación estándar del Lenguaje Unificado de Modelado (UML) \cite{uml_spec2017}. El análisis incluye la identificación de actores del sistema, la especificación de historias de usuario desde perspectivas ágiles, y la descripción detallada de los casos de uso críticos para el negocio.
+
+El capítulo se estructura en las siguientes secciones:
+
+\begin{itemize}
+    \item \textbf{Historias de usuario:} Capturan las necesidades específicas desde la perspectiva de cada tipo de usuario (estudiante, profesor, administrador), siguiendo el formato ágil que facilita la comprensión de requisitos funcionales y su posterior validación.
+    
+    \item \textbf{Identificación de actores:} Define los roles que interactúan con el sistema, detallando sus responsabilidades organizacionales, nivel de conocimientos técnicos requeridos y privilegios de acceso según su función institucional.
+    
+    \item \textbf{Diagramas de casos de uso:} Modelan visualmente las interacciones principales entre actores y sistema, organizados por módulos funcionales (gestión de propuestas, autenticación, gestión de archivos).
+    
+    \item \textbf{Especificaciones detalladas:} Describen el flujo normal y alternativo de los casos de uso más críticos para el negocio, estableciendo precondiciones, postcondiciones y criterios de aceptación para cada funcionalidad.
+\end{itemize}
+
+La metodología utilizada combina el enfoque estructurado de UML para casos de uso \cite{uml_spec2017} con historias de usuario ágiles, proporcionando así una especificación completa que sirve tanto para el desarrollo técnico como para la validación con usuarios finales.
+
+
+\section{Historias de Usuario}
+
+Las historias de usuario describen las funcionalidades del sistema desde la perspectiva del usuario final, siguiendo el formato estándar: \textit{``Como [rol], quiero [acción] para [beneficio]''}. Cada historia incluye criterios de aceptación específicos que permiten su validación mediante pruebas funcionales. Las historias se organizan según los tres roles principales del sistema: Estudiante, Profesor y Administrador.
+
+\subsection{Historias de Usuario - Estudiante}
+
+El rol de Estudiante corresponde a los usuarios que crean y gestionan propuestas de título. Las siguientes historias capturan sus necesidades principales:
+
+\textbf{HU-01:} Como estudiante de la UBB, quiero registrarme en el sistema con mi correo institucional para poder crear y gestionar mis propuestas de título.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item El sistema valida dominio \texttt{@alumnos.ubiobio.cl}.
+    \item Envía confirmación por email.
+    \item Asigna rol de estudiante automáticamente.
+\end{itemize}
+
+\textbf{HU-02:} Como estudiante autenticado, quiero crear una nueva propuesta de título para someter mi proyecto a revisión institucional.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Formulario completo con título, descripción, fecha de envío.
+    \item Carga opcional de archivos PDF/DOCX.
+    \item Estado inicial ``Pendiente de revisión''.
+\end{itemize}
+
+\textbf{HU-03:} Como estudiante, quiero consultar el estado actual de mis propuestas para conocer el progreso del proceso de revisión.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Vista de todas mis propuestas con estado actual.
+    \item Fecha de última actualización.
+    \item Comentarios del profesor si existen.
+\end{itemize}
+
+\textbf{HU-04:} Como estudiante, quiero recibir notificaciones automáticas para estar informado sobre cambios en mis propuestas.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Emails automáticos cuando se asigna profesor.
+    \item Notificación al cambiar estado o agregar comentarios.
+\end{itemize}
+
+\textbf{HU-05:} Como estudiante, quiero descargar archivos de revisión para acceder a la retroalimentación detallada de mi profesor.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Enlaces de descarga disponibles cuando el profesor adjunta archivos de revisión.
+\end{itemize}
+
+\subsection*{Profesor}
+
+\textbf{HU-06:} Como profesor de la UBB, quiero registrarme con mi correo institucional para acceder a las funciones de revisión.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Validación de dominio \texttt{@ubiobio.cl}.
+    \item Confirmación por email.
+    \item Asignación automática de rol profesor.
+\end{itemize}
+
+\textbf{HU-07:} Como profesor revisor, quiero visualizar las propuestas asignadas a mí para gestionar mi carga de trabajo de revisiones.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Lista filtrada solo con mis asignaciones.
+    \item Información completa de cada propuesta.
+    \item Archivos descargables.
+\end{itemize}
+
+\textbf{HU-08:} Como profesor revisor, quiero agregar comentarios detallados a las propuestas para proporcionar retroalimentación constructiva al estudiante.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Editor de texto.
+    \item Posibilidad de adjuntar archivos.
+    \item Guardado automático.
+    \item Notificación al estudiante.
+\end{itemize}
+
+\textbf{HU-09:} Como profesor revisor, quiero aprobar o rechazar propuestas para completar el proceso de evaluación.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Solo disponible después de agregar comentarios.
+    \item Cambio de estado irreversible.
+    \item Notificaciones automáticas.
+\end{itemize}
+
+\textbf{HU-10:} Como profesor, quiero acceder al historial de mis revisiones para mantener seguimiento de mi actividad académica.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Lista histórica de todas las propuestas revisadas.
+    \item Fechas y estados finales.
+\end{itemize}
+
+\subsection*{Administrador}
+
+\textbf{HU-11:} Como administrador del sistema, quiero gestionar usuarios registrados para mantener la integridad del sistema.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item CRUD completo de usuarios.
+    \item Activación/desactivación de cuentas.
+    \item Reseteo de contraseñas.
+\end{itemize}
+
+\textbf{HU-12:} Como administrador, quiero asignar profesores a propuestas para distribuir equitativamente la carga de revisiones.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Lista de propuestas pendientes.
+    \item Selección de profesores disponibles.
+    \item Registro de asignación con timestamp.
+\end{itemize}
+
+\textbf{HU-13:} Como administrador, quiero visualizar estadísticas del sistema para monitorear el rendimiento y uso de la plataforma.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Dashboard con métricas de propuestas por estado.
+    \item Usuarios activos.
+    \item Tiempo promedio de revisión.
+\end{itemize}
+
+\textbf{HU-14:} Como administrador, quiero configurar parámetros del sistema para adaptarlo a las necesidades institucionales.
+
+\textbf{Criterios de aceptación:}
+\begin{itemize}
+    \item Configuración de tamaños de archivo.
+    \item Formatos permitidos.
+    \item Plantillas de notificaciones.
+\end{itemize}
+
+\section{Actores de casos de uso}
+
+Los actores que interactúan con el sistema se detallan en la Tabla 13.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ | m{2.7cm} | m{3.0cm} | m{3.0cm} | m{3.0cm} | m{3.0cm} | }
+\hline
+\textbf{Actor} & \textbf{Cargo(s)} & \textbf{Funciones en la organización} & \textbf{Nivel de conocimientos técnicos requeridos} & \textbf{Nivel de privilegio en el sistema} \\ \hline
+\textbf{Estudiante} & Estudiante de pregrado UBB & Desarrollar y defender proyecto de título para obtener grado académico & Básico – Uso de navegador web, carga de archivos, formularios & Restringido – Solo acceso a sus propias propuestas \\ \hline
+\textbf{Profesor} & Académico UBB, Profesor guía, Profesor revisor & Revisar, evaluar y aprobar propuestas de título de estudiantes asignados & Intermedio – Uso de plataformas web, gestión de archivos digitales & Medio – Acceso a propuestas asignadas, funciones de revisión \\ \hline
+\textbf{Administrador} & Jefe de carrera, Coordinador académico & Gestionar proceso de títulos, asignar profesores, supervisar flujo académico & Avanzado – Administración de sistemas, configuración de parámetros & Alto – Acceso completo al sistema, gestión de usuarios y configuraciones \\ \hline
+\textbf{Sistema de Email} & Servidor SMTP institucional & Envío automático de notificaciones y confirmaciones a usuarios & No aplica – Sistema automatizado & No aplica – Actor secundario \\ \hline
+\end{tabular}
+\caption{Actores del Sistema AcTitUBB}
+\end{table}
+
+\section{Diagramas y Especificación de casos de uso}
+
+Incluya más de 1 diagrama para que quede claro el modelo.
+Diagrama(s) de CU
+\\
+\textbf{Intercalar imagen con sus tablas de descripción}
+\begin{figure}[H]
+    \centering
+    \IfFileExists{figures/caso_de_uso_gestion_propuestas.png}{%
+        \includegraphics[scale=0.5]{figures/caso_de_uso_gestion_propuestas.png}%
+    }{%
+        \fbox{\parbox{0.8\linewidth}{\centering \textbf{Figura pendiente:} caso_de_uso_gestion_propuestas.png}}%
+    }
+    \caption{Diagrama de Casos de Uso - Propuestas}
+    \label{fig:cu_propuestas}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \IfFileExists{figures/usuarios.png}{%
+        \includegraphics[scale=0.5]{figures/usuarios.png}%
+    }{%
+        \fbox{\parbox{0.8\linewidth}{\centering \textbf{Figura pendiente:} usuarios.png}}%
+    }
+    \caption{Diagrama de Casos de Uso - Usuarios}
+    \label{fig:cu_usuarios}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \IfFileExists{figures/caso_de_uso_gestion_archivos.png}{%
+        \includegraphics[scale=0.5]{figures/caso_de_uso_gestion_archivos.png}%
+    }{%
+        \fbox{\parbox{0.8\linewidth}{\centering \textbf{Figura pendiente:} caso_de_uso_gestion_archivos.png}}%
+    }
+    \caption{Diagrama de Casos de Uso - Gestión de Archivos}
+    \label{fig:cu_archivos}
+\end{figure}
+
+Liste los CU que están en su (s) diagramas destacando cuales serán detallados.
+Considerando funcionalidad RELEVANTE del negocio especifique con la tabla sólo los CU relacionados. Para los CU restantes sólo incluya una descripción y precondiciones.
+
+\section{Especificaciones Detalladas de Casos de Uso}
+
+\subsection{CU\_01: Registrar Usuario}
+
+\textbf{Precondiciones:} El usuario debe tener un correo electrónico institucional válido (@alumnos.ubiobio.cl o @ubiobio.cl) y acceso a internet.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{1.1)} El usuario accede a la página de registro del sistema. & \textbf{1)} El sistema despliega formulario de registro con campos: RUT, nombre completo, email, contraseña. \\
+        \hline
+        \textbf{1.2)} El usuario completa todos los campos requeridos con su información personal y correo institucional. & \textbf{3)} El sistema valida formato de RUT, email institucional y fortaleza de contraseña. Si la validación es correcta se llama al proceso "CU\_03: Confirmar Cuenta". \\
+        \hline
+        \textbf{1.3)} El usuario confirma el registro y acepta términos de uso. & \textbf{5)} El sistema asigna rol automáticamente según dominio del email, crea cuenta en estado "no confirmada" y envía email de confirmación. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{1.2a)} El usuario ingresa email no institucional o datos con formato inválido. & \textbf{3.2a)} El sistema muestra errores específicos y mantiene datos válidos ingresados. \\
+        \hline
+        \textbf{1.3a)} El usuario ya existe en el sistema. & \textbf{5.3a)} El sistema informa que el usuario existe y ofrece opción de recuperar contraseña. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} El usuario queda registrado en estado "no confirmada" y recibe email con enlace de activación.
+
+\subsection{CU\_02: Autenticar Usuario}
+
+\textbf{Precondiciones:} El usuario debe estar registrado en el sistema y su cuenta debe estar confirmada.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{2.1)} El usuario accede a la página de inicio de sesión e ingresa sus credenciales. & \textbf{1)} El sistema despliega formulario de login con campos email/RUT y contraseña. \\
+        \hline
+        \textbf{2.2)} El usuario completa credenciales y selecciona "Iniciar Sesión". & \textbf{3)} El sistema valida credenciales contra la base de datos y verifica estado de confirmación de cuenta. \\
+        \hline
+        \textbf{2.3)} El usuario es redirigido al dashboard correspondiente a su rol. & \textbf{5)} El sistema genera token JWT, establece sesión y redirige según rol (estudiante/profesor/administrador). \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{2.2a)} El usuario ingresa credenciales incorrectas. & \textbf{3.2a)} El sistema muestra error de credenciales inválidas sin especificar cuál campo es incorrecto. \\
+        \hline
+        \textbf{2.2b)} La cuenta no está confirmada. & \textbf{3.2b)} El sistema informa que debe confirmar cuenta y ofrece reenvío de email. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} El usuario queda autenticado con sesión activa y token JWT válido.
+
+\subsection{CU\_03: Confirmar Cuenta}
+
+\textbf{Precondiciones:} El usuario debe estar registrado y haber recibido email de confirmación con enlace válido.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{3.1)} El usuario hace clic en el enlace de confirmación recibido por email. & \textbf{1)} El sistema valida el token de confirmación y verifica que no haya expirado. \\
+        \hline
+        \textbf{3.2)} El usuario confirma la activación de su cuenta. & \textbf{3)} El sistema actualiza estado de cuenta a "confirmada" y habilita acceso completo. \\
+        \hline
+        \textbf{3.3)} El usuario es redirigido a la página de login. & \textbf{5)} El sistema muestra mensaje de confirmación exitosa y llama a "CU\_13: Enviar Notificaciones" de bienvenida. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{3.1a)} El enlace de confirmación ha expirado o es inválido. & \textbf{1.1a)} El sistema muestra error y ofrece opción de reenviar email de confirmación. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La cuenta queda activada y el usuario puede iniciar sesión normalmente.
+
+\subsection{CU\_04: Crear Propuesta}
+
+\textbf{Precondiciones:} El usuario debe estar registrado como estudiante, logueado y con cuenta confirmada.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{4.1)} El estudiante accede al módulo de propuestas y selecciona "Nueva Propuesta". & \textbf{1)} El sistema despliega formulario de creación con campos obligatorios: título, descripción, fecha de envío. \\
+        \hline
+        \textbf{4.2)} El estudiante completa información requerida y opcionalmente adjunta archivo PDF/DOCX. & \textbf{3)} El sistema valida campos obligatorios y formato de archivo. Si es correcto llama a "CU\_06: Gestionar Archivos". \\
+        \hline
+        \textbf{4.3)} El estudiante confirma la creación de la propuesta. & \textbf{5)} El sistema asigna ID único, guarda en estado "Pendiente de revisión" y llama a "CU\_13: Enviar Notificaciones". \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{4.2a)} El estudiante adjunta archivo en formato no válido o muy grande. & \textbf{3.2a)} El sistema rechaza archivo y muestra formatos/tamaños permitidos. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La propuesta se crea en estado "Pendiente de revisión" y se notifica al administrador.
+
+\subsection{CU\_05: Consultar Estado Propuesta}
+
+\textbf{Precondiciones:} El usuario debe estar logueado y tener permisos para acceder a la propuesta según su rol.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{5.1)} El usuario accede al módulo de consultas y selecciona una propuesta. & \textbf{1)} El sistema filtra propuestas según rol: estudiante ve propias, profesor asignadas, admin todas. \\
+        \hline
+        \textbf{5.2)} El usuario visualiza detalles, estado actual y comentarios disponibles. & \textbf{3)} El sistema muestra información según permisos del rol y historial de cambios. \\
+        \hline
+        \textbf{5.3)} El usuario descarga archivos disponibles según sus permisos. & \textbf{5)} El sistema permite descarga de archivos autorizados y llama a "CU\_06: Gestionar Archivos". \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{5.1a)} El usuario no tiene propuestas disponibles. & \textbf{1.1a)} El sistema muestra mensaje informativo de ausencia de propuestas. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} El usuario obtiene información actualizada y la consulta se registra en el log del sistema.
+
+\subsection{CU\_06: Gestionar Archivos}
+
+\textbf{Precondiciones:} El usuario debe estar autenticado y tener permisos para la operación de archivo solicitada.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{6.1)} El usuario selecciona operación de archivo: cargar, descargar o eliminar. & \textbf{1)} El sistema verifica permisos del usuario para la operación solicitada. \\
+        \hline
+        \textbf{6.2)} El usuario ejecuta la operación con el archivo seleccionado. & \textbf{3)} El sistema valida formato, tamaño y contenido del archivo. Ejecuta operación solicitada. \\
+        \hline
+        \textbf{6.3)} El usuario confirma que la operación se completó correctamente. & \textbf{5)} El sistema actualiza referencias en base de datos y registra operación en log de auditoría. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{6.2a)} El archivo no cumple con las validaciones establecidas. & \textbf{3.2a)} El sistema rechaza operación y muestra detalles específicos del error. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La operación de archivo se completa y queda registrada en el historial del sistema.
+
+\subsection{CU\_07: Asignar Profesor}
+
+\textbf{Precondiciones:} El usuario debe ser administrador logueado y debe existir propuesta en estado "Pendiente de revisión".
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{7.1)} El administrador accede a gestión de propuestas y selecciona una pendiente. & \textbf{1)} El sistema muestra lista de propuestas pendientes con información básica. \\
+        \hline
+        \textbf{7.2)} El administrador visualiza detalles y selecciona "Asignar Profesor". & \textbf{3)} El sistema muestra lista de profesores disponibles con carga actual de trabajo. \\
+        \hline
+        \textbf{7.3)} El administrador selecciona profesor(es) y confirma asignación. & \textbf{5)} El sistema registra asignación con timestamp y llama a "CU\_13: Enviar Notificaciones". \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{7.3a)} El profesor seleccionado tiene sobrecarga de trabajo. & \textbf{5.3a)} El sistema advierte sobre sobrecarga pero permite confirmar asignación. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La asignación se registra y se notifica a profesor y estudiante automáticamente.
+
+\subsection{CU\_08: Revisar Propuesta}
+
+\textbf{Precondiciones:} El usuario debe ser profesor logueado con propuestas asignadas para revisión.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{8.1)} El profesor accede a propuestas asignadas y selecciona una para revisar. & \textbf{1)} El sistema muestra lista de propuestas asignadas con estado actual. \\
+        \hline
+        \textbf{8.2)} El profesor revisa contenido y redacta comentarios detallados. & \textbf{3)} El sistema proporciona acceso a archivos y editor para comentarios. \\
+        \hline
+        \textbf{8.3)} El profesor adjunta archivos de retroalimentación y guarda revisión. & \textbf{5)} El sistema valida archivos, llama a "CU\_06: Gestionar Archivos" y "CU\_13: Enviar Notificaciones". \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{8.3a)} Error al guardar revisión por problema técnico. & \textbf{5.3a)} El sistema mantiene borrador de comentarios y permite reintento. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} Los comentarios se almacenan y el estudiante recibe notificación de nueva revisión.
+
+\subsection{CU\_09: Aprobar/Rechazar Propuesta}
+
+\textbf{Precondiciones:} El usuario debe ser profesor asignado, estar logueado, y la propuesta debe tener revisiones previas.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{9.1)} El profesor accede a propuesta revisada y selecciona "Decisión Final". & \textbf{1)} El sistema verifica comentarios previos y muestra opciones: Aprobar/Rechazar. \\
+        \hline
+        \textbf{9.2)} El profesor selecciona decisión y confirma que es irreversible. & \textbf{3)} El sistema solicita confirmación adicional advirtiendo sobre irreversibilidad. \\
+        \hline
+        \textbf{9.3)} El profesor confirma definitivamente la decisión. & \textbf{5)} El sistema actualiza estado final, crea proyecto si aprobada, y llama a "CU\_13: Enviar Notificaciones". \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{9.1a)} La propuesta no tiene comentarios de revisión. & \textbf{1.1a)} El sistema impide decisión y redirige a "CU\_08: Revisar Propuesta". \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La propuesta tiene estado final, se bloquea para edición y todos los actores reciben notificaciones.
+
+\subsection{CU\_10: Gestionar Usuarios}
+
+\textbf{Precondiciones:} El usuario debe ser administrador autenticado con permisos de gestión de usuarios.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{10.1)} El administrador accede al módulo de gestión de usuarios. & \textbf{1)} El sistema muestra lista de usuarios con filtros por rol y estado. \\
+        \hline
+        \textbf{10.2)} El administrador selecciona operación: crear, editar, activar o desactivar usuario. & \textbf{3)} El sistema despliega formulario correspondiente o solicita confirmación para la acción. \\
+        \hline
+        \textbf{10.3)} El administrador completa datos requeridos y confirma operación. & \textbf{5)} El sistema ejecuta operación, actualiza base de datos y llama a "CU\_13: Enviar Notificaciones" si corresponde. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{10.3a)} Los datos ingresados son inválidos o el usuario ya existe. & \textbf{5.3a)} El sistema muestra errores específicos y mantiene datos válidos. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La operación de gestión se completa y se registra en el log de auditoría del sistema.
+
+\subsection{CU\_11: Ver Estadísticas}
+
+\textbf{Precondiciones:} El usuario debe ser administrador autenticado con acceso al dashboard administrativo.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{11.1)} El administrador accede al módulo de estadísticas y reportes. & \textbf{1)} El sistema genera dashboard con métricas actualizadas: propuestas por estado, usuarios activos, tiempo promedio de revisión. \\
+        \hline
+        \textbf{11.2)} El administrador selecciona filtros de fecha o tipo de reporte específico. & \textbf{3)} El sistema aplica filtros y regenera estadísticas según criterios seleccionados. \\
+        \hline
+        \textbf{11.3)} El administrador exporta reportes o consulta detalles específicos. & \textbf{5)} El sistema genera archivo exportable o muestra vista detallada de métricas solicitadas. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{11.2a)} No existen datos para los filtros seleccionados. & \textbf{3.2a)} El sistema informa ausencia de datos y sugiere ajustar criterios de búsqueda. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} El administrador obtiene información estadística actualizada y la consulta se registra.
+
+\subsection{CU\_12: Configurar Sistema}
+
+\textbf{Precondiciones:} El usuario debe ser administrador con permisos de configuración del sistema.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{12.1)} El administrador accede al módulo de configuración del sistema. & \textbf{1)} El sistema muestra panel de configuraciones: archivos permitidos, tamaños máximos, plantillas de email. \\
+        \hline
+        \textbf{12.2)} El administrador modifica parámetros según necesidades institucionales. & \textbf{3)} El sistema valida nuevos valores y muestra vista previa de cambios. \\
+        \hline
+        \textbf{12.3)} El administrador confirma aplicación de nueva configuración. & \textbf{5)} El sistema aplica cambios, actualiza configuración global y registra modificaciones en log de auditoría. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{12.2a)} Los valores de configuración son inválidos o incompatibles. & \textbf{3.2a)} El sistema rechaza cambios y muestra restricciones específicas. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} La nueva configuración queda activa para todo el sistema y se registra el cambio.
+
+\subsection{CU\_13: Enviar Notificaciones}
+
+\textbf{Precondiciones:} Debe existir una acción en el sistema que requiera notificación y configuración SMTP válida.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{13.1)} El sistema detecta evento que requiere notificación (asignación, cambio de estado, nueva revisión). & \textbf{1)} El sistema identifica usuarios a notificar según tipo de evento y roles involucrados. \\
+        \hline
+        \textbf{13.2)} El sistema genera contenido personalizado del mensaje según plantilla correspondiente. & \textbf{3)} El sistema aplica plantilla específica e incluye datos relevantes del evento. \\
+        \hline
+        \textbf{13.3)} El sistema envía notificación por email y registra en sistema interno. & \textbf{5)} El sistema utiliza servidor SMTP configurado y registra éxito/fallo del envío en log. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{7cm}|p{7cm}|}
+        \hline
+        \textbf{Actor} & \textbf{Aplicación} \\
+        \hline
+        \textbf{13.3a)} Falla el envío de email por problema de conectividad o configuración SMTP. & \textbf{5.3a)} El sistema registra fallo, programa reintento automático y mantiene notificación en cola. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\textbf{Post condiciones:} Las notificaciones se envían exitosamente o quedan programadas para reintento, y se registra en log del sistema.

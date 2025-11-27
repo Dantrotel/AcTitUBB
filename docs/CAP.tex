@@ -1,0 +1,238 @@
+% Archivo CAP.tex
+% Contenedor para el Capítulo 4 (Análisis y Casos de Uso)
+% Incluye el contenido original del capítulo y plantillas adicionales (trazabilidad, HU/CU)
+
+\clearpage
+% --- Capítulo 4: Análisis y Casos de Uso ---
+\input{capitulo-4-analisis-y-cu.tex}
+
+% --- Matriz de Trazabilidad HU -> RF -> CU ---
+\section*{Matriz de Trazabilidad}
+\begin{longtable}{|p{3.5cm}|p{3.5cm}|p{6cm}|}
+\hline
+\textbf{Historia de Usuario (HU)} & \textbf{Requisito Funcional (RF)} & \textbf{Casos de Uso (CU) relacionados} \\
+\hline
+% Ejemplo:
+HU-01 & RF-01 & CU\_01 \\
+\hline
+% Rellene la tabla según correspondencia entre HUs, RFs y CUs
+\end{longtable}
+
+% --- Estado de Implementación (ejemplo) ---
+\section*{Estado de Implementación de HUs}
+\begin{itemize}
+    \item \textbf{HU-01:} Implementado (módulo de registro frontend y endpoint `/users/register` en backend).
+    \item \textbf{HU-02:} Implementado (formularios de creación de propuestas en frontend y endpoint `/propuestas` en backend).
+    \item \textbf{HU-03:} Implementado (lista de propuestas y consultas por estado disponible).
+    \item \textbf{HU-04:} Implementado parcialmente (servicio de notificaciones por email disponible; revisar colas/reintentos).
+    \item \textbf{HU-05:} Implementado (descarga de archivos mediante endpoints protegidos y `uploads/`).
+    \item \textbf{HU-06..HU-14:} Revisar según la tabla de trazabilidad.
+\end{itemize}
+
+% Notas:
+% - Renombrar las imágenes en `docs/figures/` a los nombres usados arriba o subir las imágenes nuevas.
+% - Si prefiere que haga la generación automática de la tabla de trazabilidad y un mapeo HU->archivos, indíquelo y procederé a extraerlo del repo.
+
+% ----------------------------
+% SuperAdmin: HUs y CUs
+% ----------------------------
+\section*{SuperAdmin: Historias de Usuario y Casos de Uso}
+\subsection*{Historias de Usuario - SuperAdmin}
+	extbf{HU-S1:} Como SuperAdmin, quiero crear, editar y eliminar cuentas de administrador y asignar roles globales para mantener control institucional.
+\begin{itemize}
+    \item Criterios de aceptación: CRUD para administradores disponible en UI; operaciones registradas en auditoría; posibilidad de reasignar permisos.
+\end{itemize}
+
+	extbf{HU-S2:} Como SuperAdmin, quiero configurar la estructura académica global (departamentos, carreras y relaciones) y parámetros del sistema para adaptar la plataforma a políticas institucionales.
+\begin{itemize}
+    \item Criterios de aceptación: Panel de configuración con validaciones; cambios propagados a filtros y asignaciones; cambios logueados.
+\end{itemize}
+
+	extbf{HU-S3:} Como SuperAdmin, quiero ejecutar migraciones y ajustes masivos (scripts SQL o seeds) con preview y rollback para administrar cambios de datos con seguridad.
+\begin{itemize}
+    \item Criterios de aceptación: Interfaz/endpoint para cargar scripts con validación de seguridad; logs de ejecución; opción de rollback cuando sea posible.
+\end{itemize}
+
+	extbf{HU-S4:} Como SuperAdmin, quiero acceder a logs y auditoría global para investigar incidentes y cumplir con políticas de trazabilidad.
+\begin{itemize}
+    \item Criterios de aceptación: Búsqueda por usuario/acción/fecha; export a CSV; permisos restringidos únicamente a SuperAdmin.
+\end{itemize}
+
+	extbf{HU-S5:} Como SuperAdmin, quiero ejecutar operaciones de emergencia (reintentos de colas, limpieza de jobs fallidos, reenvío de notificaciones) para resolver problemas operativos críticos.
+\begin{itemize}
+    \item Criterios de aceptación: Acciones protegidas por confirmación; logs y trazabilidad de quién ejecutó la acción.
+\end{itemize}
+
+\subsection{CU\_S01: Gestionar Administradores}
+
+	extbf{Precondiciones:} El usuario debe ser SuperAdmin autenticado.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{1.1)} El SuperAdmin accede al módulo de gestión de administradores. & \textbf{1)} El sistema despliega lista de administradores con opciones: crear, editar, desactivar. \\
+		\hline
+			extbf{1.2)} El SuperAdmin crea o edita datos de un administrador y asigna roles. & \textbf{3)} El sistema valida datos, crea/actualiza la cuenta y envía notificación por email si corresponde. \\
+		\hline
+			extbf{1.3)} El SuperAdmin elimina o desactiva una cuenta de administrador. & \textbf{5)} El sistema marca cuenta como inactiva o elimina según política y registra la acción en auditoría. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{1.2a)} Datos ingresados inválidos o conflicto de email/RUT. & \textbf{3.2a)} El sistema muestra errores específicos y no realiza la operación hasta corregirlos. \\
+		\hline
+			extbf{1.3a)} Se intenta eliminar el último SuperAdmin disponible. & \textbf{5.3a)} El sistema impide la operación y sugiere reasignar privilegios antes de eliminar. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Post condiciones:} La cuenta queda creada/actualizada/eliminada y la operación queda registrada en el log de auditoría.
+
+\subsection{CU\_S02: Configurar Estructura Académica Global}
+
+	extbf{Precondiciones:} El usuario debe ser SuperAdmin autenticado.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{2.1)} El SuperAdmin accede al panel de estructura académica. & \textbf{1)} El sistema muestra departamentos, carreras y relaciones actuales con opción de editar. \\
+		\hline
+			extbf{2.2)} El SuperAdmin añade/modifica relaciones entre departamentos y carreras. & \textbf{3)} El sistema valida consistencia referencial y aplica los cambios en el modelo de datos. \\
+		\hline
+			extbf{2.3)} El SuperAdmin confirma los cambios. & \textbf{5)} El sistema propaga cambios a filtros y asignaciones y registra la operación. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{2.2a)} La relación introducida genera conflicto (p. ej. carrera sin departamento). & \textbf{3.2a)} El sistema informa el conflicto y no aplica el cambio hasta resolver la inconsistencia. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Post condiciones:} La estructura académica queda actualizada y los cambios se registran en auditoría.
+
+\subsection{CU\_S03: Ejecutar Migraci\'on de Datos}
+
+	extbf{Precondiciones:} El SuperAdmin debe estar autenticado y existir backup previo de la base de datos.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{3.1)} El SuperAdmin sube script o selecciona migraci\'on predefinida y solicita preview. & \textbf{1)} El sistema valida el script y muestra un preview/impacto estimado (consultas afectadas, tablas). \\
+		\hline
+			extbf{3.2)} El SuperAdmin confirma la ejecuci\'on de la migraci\'on. & \textbf{3)} El sistema ejecuta el script en modo transaccional (si aplica) y registra resultados por paso. \\
+		\hline
+			extbf{3.3)} Finalizada la ejecuci\'on, el SuperAdmin revisa el resultado. & \textbf{5)} El sistema confirma la aplicaci\'on o realiza rollback en caso de error y genera reporte de ejecuci\'on. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{3.2a)} Durante la ejecuci\'on ocurre error en paso crítico. & \textbf{3.2a)} El sistema retrocede (rollback) si est\'a disponible, registra el error y notifica al SuperAdmin. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Post condiciones:} La migraci\'on queda aplicada correctamente o revertida; se genera un log detallado y un reporte.
+
+\subsection{CU\_S04: Ver Logs y Auditor\'ia}
+
+	extbf{Precondiciones:} El usuario debe ser SuperAdmin autenticado.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{4.1)} El SuperAdmin accede al panel de auditor\'ia y logs. & \textbf{1)} El sistema muestra filtros (usuario, acci\'on, fecha, recurso) y resultados paginados. \\
+		\hline
+			extbf{4.2)} El SuperAdmin aplica filtros y selecciona un registro para ver detalles. & \textbf{3)} El sistema muestra detalle del evento y opciones para exportar. \\
+		\hline
+			extbf{4.3)} El SuperAdmin exporta un segmento de logs. & \textbf{5)} El sistema genera archivo exportable (CSV) y registra la operaci\'on. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicación} \\
+		\hline
+			extbf{4.1a)} No hay registros que coincidan con los filtros seleccionados. & \textbf{3.2a)} El sistema informa la ausencia de datos y sugiere ampliar criterios de b\'usqueda. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Post condiciones:} El SuperAdmin obtiene el segmento solicitado y la consulta queda registrada en auditor\'ia.
+
+\subsection{CU\_S05: Operaciones de Emergencia}
+
+	extbf{Precondiciones:} El usuario debe ser SuperAdmin autenticado y confirmar expl\'icitamente la operaci\'on.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicaci\'on} \\
+		\hline
+			extbf{5.1)} El SuperAdmin accede al panel de operaciones de emergencia. & \textbf{1)} El sistema despliega acciones disponibles: reintentar colas, limpiar jobs fallidos, reenv\'io masivo de notificaciones. \\
+		\hline
+			extbf{5.2)} El SuperAdmin selecciona una operaci\'on y la confirma. & \textbf{3)} El sistema ejecuta la acci\'on en segundo plano, muestra estado inicial y registra la solicitud. \\
+		\hline
+			extbf{5.3)} El SuperAdmin revisa el resultado de la operaci\'on. & \textbf{5)} El sistema presenta resultado (éxito/fracaso) y almacena registro en auditor\'ia. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Flujo de eventos alternativos}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|p{7cm}|p{7cm}|}
+		\hline
+			extbf{Actor} & \textbf{Aplicaci\'on} \\
+		\hline
+			extbf{5.2a)} La operaci\'on falla o genera errores no recuperables. & \textbf{3.2a)} El sistema registra el error, notifica al SuperAdmin y sugiere pasos de mitigaci\'on manual. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+	extbf{Post condiciones:} La operaci\'on de emergencia queda ejecutada (o documentada como fallo) y la acci\'on queda registrada en auditor\'ia.
+
+

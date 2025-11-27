@@ -1,0 +1,516 @@
+.gestionar-jefes-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+  
+  .header-content {
+    h1 {
+      font-size: 2rem;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      
+      i {
+        color: #3498db;
+      }
+    }
+    
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 1rem;
+    }
+  }
+}
+
+// Alertas
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: slideDown 0.3s ease;
+  
+  i {
+    font-size: 1.25rem;
+  }
+  
+  &.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    
+    i {
+      color: #28a745;
+    }
+  }
+  
+  &.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    
+    i {
+      color: #dc3545;
+    }
+  }
+}
+
+// Loader
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  
+  .loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+  }
+  
+  p {
+    margin-top: 1rem;
+    color: #7f8c8d;
+  }
+}
+
+// Error
+.error-container {
+  text-align: center;
+  padding: 3rem;
+  
+  i {
+    font-size: 3rem;
+    color: #e74c3c;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    color: #7f8c8d;
+    margin-bottom: 1.5rem;
+  }
+}
+
+// Grid de carreras
+.carreras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.carrera-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+  
+  .carrera-header {
+    margin-bottom: 1.5rem;
+    
+    .carrera-info {
+      h3 {
+        font-size: 1.25rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+      }
+      
+      .codigo-badge {
+        display: inline-block;
+        background: #3498db;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      
+      .facultad-nombre {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        
+        i {
+          color: #95a5a6;
+        }
+      }
+    }
+  }
+  
+  .jefe-info {
+    border-top: 1px solid #ecf0f1;
+    border-bottom: 1px solid #ecf0f1;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+    
+    .jefe-actual {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      
+      .jefe-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+      
+      .jefe-datos {
+        flex: 1;
+        
+        .jefe-nombre {
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 0.25rem;
+        }
+        
+        .jefe-email,
+        .jefe-rut {
+          font-size: 0.875rem;
+          color: #7f8c8d;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.25rem;
+          
+          i {
+            width: 16px;
+            color: #95a5a6;
+          }
+        }
+      }
+    }
+    
+    .sin-jefe {
+      text-align: center;
+      padding: 1rem;
+      color: #95a5a6;
+      
+      i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+      }
+      
+      p {
+        margin: 0;
+        font-style: italic;
+      }
+    }
+  }
+  
+  .carrera-actions {
+    display: flex;
+    gap: 0.75rem;
+    
+    button {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+    
+    .btn-primary {
+      background: #3498db;
+      color: white;
+      
+      &:hover:not(:disabled) {
+        background: #2980b9;
+        transform: translateY(-1px);
+      }
+    }
+    
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+      
+      &:hover:not(:disabled) {
+        background: #c0392b;
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+// Empty state
+.empty-state {
+  text-align: center;
+  padding: 4rem;
+  color: #95a5a6;
+  
+  i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  p {
+    font-size: 1.125rem;
+  }
+}
+
+// Modal
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #ecf0f1;
+    
+    h2 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0;
+      
+      i {
+        color: #3498db;
+      }
+    }
+    
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #95a5a6;
+      cursor: pointer;
+      padding: 0.5rem;
+      
+      &:hover {
+        color: #2c3e50;
+      }
+    }
+  }
+  
+  .modal-body {
+    padding: 1.5rem;
+    
+    .carrera-selected {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      
+      p {
+        margin: 0.5rem 0;
+        color: #2c3e50;
+        
+        strong {
+          color: #34495e;
+        }
+      }
+      
+      .jefe-actual-info {
+        color: #7f8c8d;
+        font-style: italic;
+        border-top: 1px solid #dee2e6;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+      }
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+      
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+      }
+      
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #ecf0f1;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+        
+        &:focus {
+          outline: none;
+          border-color: #3498db;
+        }
+      }
+      
+      .form-hint {
+        display: block;
+        margin-top: 0.5rem;
+        color: #7f8c8d;
+        font-size: 0.875rem;
+        font-style: italic;
+      }
+    }
+  }
+  
+  .modal-footer {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid #ecf0f1;
+    
+    button {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+    
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+      
+      &:hover:not(:disabled) {
+        background: #7f8c8d;
+      }
+    }
+    
+    .btn-primary {
+      background: #3498db;
+      color: white;
+      
+      &:hover:not(:disabled) {
+        background: #2980b9;
+      }
+    }
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .gestionar-jefes-container {
+    padding: 1rem;
+  }
+  
+  .carreras-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .carrera-card {
+    .carrera-actions {
+      flex-direction: column;
+    }
+  }
+  
+  .modal-content {
+    width: 95%;
+    
+    .modal-footer {
+      flex-direction: column;
+    }
+  }
+}

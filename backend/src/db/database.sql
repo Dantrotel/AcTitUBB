@@ -280,47 +280,6 @@ CREATE TABLE IF NOT EXISTS hitos_proyecto (
     INDEX idx_tipo_estado (tipo_hito, estado)
 );
 
--- Tabla de Evaluaciones del Proyecto
-CREATE TABLE IF NOT EXISTS evaluaciones_proyecto (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
-    hito_id INT NULL, -- Puede estar asociado a un hito específico
-    tipo_evaluacion ENUM('avance_mensual', 'entrega_parcial', 'revision_semestral', 'evaluacion_final', 'defensa_oral', 'otra') NOT NULL,
-    titulo VARCHAR(255) NOT NULL,
-    descripcion TEXT,
-    
-    -- Calificaciones detalladas
-    nota_aspecto_tecnico DECIMAL(3,1) NULL CHECK (nota_aspecto_tecnico >= 1.0 AND nota_aspecto_tecnico <= 7.0),
-    nota_metodologia DECIMAL(3,1) NULL CHECK (nota_metodologia >= 1.0 AND nota_metodologia <= 7.0),
-    nota_documentacion DECIMAL(3,1) NULL CHECK (nota_documentacion >= 1.0 AND nota_documentacion <= 7.0),
-    nota_presentacion DECIMAL(3,1) NULL CHECK (nota_presentacion >= 1.0 AND nota_presentacion <= 7.0),
-    nota_global DECIMAL(3,1) NULL CHECK (nota_global >= 1.0 AND nota_global <= 7.0),
-    
-    -- Retroalimentación
-    fortalezas TEXT NULL,
-    debilidades TEXT NULL,
-    recomendaciones TEXT NULL,
-    comentarios_generales TEXT NULL,
-    
-    -- Control de fechas
-    fecha_evaluacion DATE NOT NULL,
-    fecha_limite DATE NULL,
-    
-    -- Evaluador
-    profesor_evaluador_rut VARCHAR(10) NOT NULL,
-    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (hito_id) REFERENCES hitos_proyecto(id) ON DELETE SET NULL,
-    FOREIGN KEY (profesor_evaluador_rut) REFERENCES usuarios(rut),
-    
-    INDEX idx_proyecto_fecha (proyecto_id, fecha_evaluacion),
-    INDEX idx_tipo_fecha (tipo_evaluacion, fecha_evaluacion),
-    INDEX idx_profesor_fecha (profesor_evaluador_rut, fecha_evaluacion)
-);
-
 -- Tabla de Avances del Proyecto
 CREATE TABLE IF NOT EXISTS avances (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -363,7 +322,7 @@ CREATE TABLE IF NOT EXISTS fechas_calendario (
 CREATE TABLE IF NOT EXISTS fechas_importantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NULL, -- NULL para fechas globales de propuestas
-    tipo_fecha ENUM('entrega_propuesta', 'entrega', 'reunion', 'evaluacion', 'hito', 'deadline', 'presentacion', 'entrega_avance', 'entrega_final', 'defensa', 'revision', 'otro') DEFAULT 'otro',
+    tipo_fecha ENUM('entrega_propuesta', 'entrega', 'reunion', 'hito', 'deadline', 'presentacion', 'entrega_avance', 'entrega_final', 'defensa', 'revision', 'otro') DEFAULT 'otro',
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
     fecha_limite DATE NOT NULL,
@@ -424,7 +383,7 @@ CREATE TABLE IF NOT EXISTS hitos_cronograma (
     proyecto_id INT NOT NULL,
     nombre_hito VARCHAR(255) NOT NULL,
     descripcion TEXT NULL,
-    tipo_hito ENUM('entrega_documento', 'revision_avance', 'reunion_seguimiento', 'evaluacion', 'defensa') NOT NULL,
+    tipo_hito ENUM('entrega_documento', 'revision_avance', 'reunion_seguimiento', 'defensa') NOT NULL,
     
     -- Fechas
     fecha_limite DATE NOT NULL,
@@ -509,7 +468,7 @@ CREATE TABLE IF NOT EXISTS configuracion_alertas (
     alertas_entregas BOOLEAN DEFAULT TRUE,
     alertas_reuniones BOOLEAN DEFAULT TRUE,
     alertas_retrasos BOOLEAN DEFAULT TRUE,
-    alertas_evaluaciones BOOLEAN DEFAULT TRUE,
+    alertas_hitos BOOLEAN DEFAULT TRUE,
     
     -- Configuración de envío
     enviar_email_estudiante BOOLEAN DEFAULT TRUE,
@@ -650,7 +609,7 @@ CREATE INDEX idx_proyectos_porcentaje_avance ON proyectos(porcentaje_avance);
 CREATE INDEX idx_proyectos_activo ON proyectos(activo);
 CREATE INDEX idx_hitos_proyecto_estado ON hitos_proyecto(proyecto_id, estado);
 CREATE INDEX idx_hitos_fecha_objetivo ON hitos_proyecto(fecha_objetivo);
-CREATE INDEX idx_evaluaciones_proyecto ON evaluaciones_proyecto(proyecto_id);
+
 
 -- ===== SISTEMA DE CALENDARIO CON MATCHING AUTOMÁTICO =====
 
@@ -904,6 +863,344 @@ CREATE TABLE IF NOT EXISTS historial_extensiones (
     INDEX idx_historial_fecha (fecha_accion)
 );
 
--- ===== BASE DE DATOS LIMPIA CREADA =====
-SELECT 'Base de datos creada exitosamente - Solo usuarios básicos y estructura de tablas' as status;
+-- ============================================
+-- ESTRUCTURA ACADÉMICA: FACULTADES, DEPARTAMENTOS, CARRERAS
+-- ============================================
+
+-- Convertir tablas a UTF8MB4 para compatibilidad
+SET FOREIGN_KEY_CHECKS = 0;
+ALTER TABLE usuarios CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE propuestas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE asignaciones_proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE asignaciones_propuestas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE estudiantes_propuestas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE estudiantes_proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE avances CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE hitos_cronograma CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE hitos_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE fechas_importantes CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE fechas_calendario CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE cronogramas_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE notificaciones_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE configuracion_alertas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE historial_asignaciones CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE reuniones CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE participantes_reuniones CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE disponibilidades CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE solicitudes_reunion CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE reuniones_calendario CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE historial_reuniones CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE bloqueos_horarios CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE configuracion_matching CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE comision_evaluadora CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE solicitudes_extension CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Agregar rol de Super Administrador
+INSERT INTO roles (id, nombre, descripcion) 
+VALUES (4, 'Super Administrador', 'Administrador principal del sistema con acceso total')
+ON DUPLICATE KEY UPDATE nombre = 'Super Administrador', descripcion = 'Administrador principal del sistema con acceso total';
+
+-- Actualizar descripción del rol Admin (Jefe de Carrera)
+UPDATE roles 
+SET descripcion = 'Jefe de Carrera - Administrador de una carrera específica' 
+WHERE id = 3 AND nombre = 'admin';
+
+-- Tabla de Facultades
+CREATE TABLE IF NOT EXISTS facultades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL UNIQUE,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    descripcion TEXT,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    ubicacion VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_codigo (codigo),
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Departamentos
+CREATE TABLE IF NOT EXISTS departamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    facultad_id INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    descripcion TEXT,
+    jefe_departamento_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del profesor que es jefe de departamento',
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    ubicacion VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (facultad_id) REFERENCES facultades(id) ON DELETE RESTRICT,
+    INDEX idx_facultad (facultad_id),
+    INDEX idx_codigo (codigo),
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Carreras
+CREATE TABLE IF NOT EXISTS carreras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    facultad_id INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    titulo_profesional VARCHAR(255) NOT NULL COMMENT 'Ej: Ingeniero Civil en Informática',
+    grado_academico VARCHAR(100) COMMENT 'Ej: Licenciado en Ciencias de la Ingeniería',
+    duracion_semestres INT NOT NULL DEFAULT 10,
+    jefe_carrera_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del profesor que es jefe de carrera (Admin)',
+    descripcion TEXT,
+    modalidad ENUM('presencial', 'semipresencial', 'online') DEFAULT 'presencial',
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (facultad_id) REFERENCES facultades(id) ON DELETE RESTRICT,
+    INDEX idx_facultad (facultad_id),
+    INDEX idx_codigo (codigo),
+    INDEX idx_jefe_carrera (jefe_carrera_rut),
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Profesores-Departamentos (relación N:M)
+CREATE TABLE IF NOT EXISTS profesores_departamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    departamento_id INT NOT NULL,
+    es_principal BOOLEAN DEFAULT FALSE COMMENT 'Indica si es su departamento principal',
+    fecha_ingreso DATE,
+    fecha_salida DATE NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (departamento_id) REFERENCES departamentos(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_profesor_departamento (profesor_rut, departamento_id),
+    INDEX idx_profesor (profesor_rut),
+    INDEX idx_departamento (departamento_id),
+    INDEX idx_principal (es_principal)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Estudiantes-Carreras (relación N:M)
+CREATE TABLE IF NOT EXISTS estudiantes_carreras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    carrera_id INT NOT NULL,
+    ano_ingreso INT NOT NULL,
+    semestre_actual INT DEFAULT 1,
+    estado_estudiante ENUM('regular', 'congelado', 'egresado', 'retirado', 'titulado') DEFAULT 'regular',
+    fecha_ingreso DATE NOT NULL,
+    fecha_egreso DATE NULL,
+    fecha_titulacion DATE NULL,
+    promedio_acumulado DECIMAL(3,2) NULL,
+    creditos_aprobados INT DEFAULT 0,
+    es_carrera_principal BOOLEAN DEFAULT TRUE COMMENT 'Para estudiantes con doble titulación',
+    observaciones TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (carrera_id) REFERENCES carreras(id) ON DELETE RESTRICT,
+    UNIQUE KEY unique_estudiante_carrera (estudiante_rut, carrera_id),
+    INDEX idx_estudiante (estudiante_rut),
+    INDEX idx_carrera (carrera_id),
+    INDEX idx_ano_ingreso (ano_ingreso),
+    INDEX idx_estado (estado_estudiante)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Departamentos-Carreras (relación N:M directa)
+CREATE TABLE IF NOT EXISTS departamentos_carreras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    departamento_id INT NOT NULL,
+    carrera_id INT NOT NULL,
+    es_principal BOOLEAN DEFAULT FALSE COMMENT 'Indica si es el departamento principal de la carrera',
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (departamento_id) REFERENCES departamentos(id) ON DELETE CASCADE,
+    FOREIGN KEY (carrera_id) REFERENCES carreras(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_departamento_carrera (departamento_id, carrera_id),
+    INDEX idx_departamento (departamento_id, activo),
+    INDEX idx_carrera (carrera_id, activo),
+    INDEX idx_principal (es_principal, activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Agregar foreign keys condicionales
+SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'departamentos' AND CONSTRAINT_NAME = 'fk_departamentos_jefe');
+SET @sql = IF(@fk_exists = 0, 
+    'ALTER TABLE departamentos ADD CONSTRAINT fk_departamentos_jefe FOREIGN KEY (jefe_departamento_rut) REFERENCES usuarios(rut) ON DELETE SET NULL',
+    'SELECT ''FK fk_departamentos_jefe ya existe'' AS message');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'carreras' AND CONSTRAINT_NAME = 'fk_carreras_jefe');
+SET @sql = IF(@fk_exists = 0, 
+    'ALTER TABLE carreras ADD CONSTRAINT fk_carreras_jefe FOREIGN KEY (jefe_carrera_rut) REFERENCES usuarios(rut) ON DELETE SET NULL',
+    'SELECT ''FK fk_carreras_jefe ya existe'' AS message');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Insertar datos de ejemplo: Facultades
+INSERT INTO facultades (nombre, codigo, descripcion, email) VALUES
+('Facultad de Ciencias', 'FCIEN', 'Facultad dedicada a las ciencias básicas y aplicadas', 'ciencias@ubiobio.cl'),
+('Facultad de Ingeniería', 'FING', 'Facultad de Ingeniería y tecnología', 'ingenieria@ubiobio.cl'),
+('Facultad de Ciencias Empresariales', 'FCEE', 'Facultad de administración y economía', 'empresariales@ubiobio.cl'),
+('Facultad de Educación y Humanidades', 'FEDHU', 'Facultad de educación, artes y humanidades', 'educacion@ubiobio.cl')
+ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+
+-- Insertar datos de ejemplo: Departamentos
+INSERT INTO departamentos (facultad_id, nombre, codigo, descripcion, email) VALUES
+(2, 'Departamento de Ciencias de la Computación y Tecnologías de Información', 'DCCTI', 'Departamento de Computación e Informática', 'dccti@ubiobio.cl'),
+(2, 'Departamento de Ingeniería Civil y Ambiental', 'DICA', 'Departamento de Ingeniería Civil', 'dica@ubiobio.cl'),
+(2, 'Departamento de Ingeniería Eléctrica y Electrónica', 'DIEE', 'Departamento de Ingeniería Eléctrica', 'diee@ubiobio.cl'),
+(2, 'Departamento de Ingeniería Industrial', 'DII', 'Departamento de Ingeniería Industrial', 'dii@ubiobio.cl'),
+(1, 'Departamento de Matemática', 'DMAT', 'Departamento de Matemática', 'dmat@ubiobio.cl'),
+(1, 'Departamento de Física', 'DFIS', 'Departamento de Física', 'dfis@ubiobio.cl'),
+(1, 'Departamento de Química', 'DQUIM', 'Departamento de Química', 'dquim@ubiobio.cl'),
+(3, 'Departamento de Gestión Empresarial', 'DGE', 'Departamento de Administración', 'dge@ubiobio.cl'),
+(3, 'Departamento de Economía y Finanzas', 'DEF', 'Departamento de Economía', 'def@ubiobio.cl')
+ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+
+-- Insertar datos de ejemplo: Carreras
+INSERT INTO carreras (facultad_id, nombre, codigo, titulo_profesional, grado_academico, duracion_semestres) VALUES
+(2, 'Ingeniería Civil en Informática', 'ICINF', 'Ingeniero Civil en Informática', 'Licenciado en Ciencias de la Ingeniería', 12),
+(2, 'Ingeniería de Ejecución en Computación e Informática', 'IECCI', 'Ingeniero de Ejecución en Computación e Informática', 'No aplica', 8),
+(2, 'Ingeniería Civil Industrial', 'ICIND', 'Ingeniero Civil Industrial', 'Licenciado en Ciencias de la Ingeniería', 12),
+(2, 'Ingeniería Civil Eléctrica', 'ICELEC', 'Ingeniero Civil Eléctrico', 'Licenciado en Ciencias de la Ingeniería', 12),
+(2, 'Ingeniería Civil', 'ICCIV', 'Ingeniero Civil', 'Licenciado en Ciencias de la Ingeniería', 12),
+(1, 'Pedagogía en Matemática', 'PEDMAT', 'Profesor de Educación Media en Matemática', 'Licenciado en Educación', 10),
+(3, 'Ingeniería Comercial', 'INGCOM', 'Ingeniero Comercial', 'Licenciado en Ciencias de la Administración', 10),
+(3, 'Contador Público y Auditor', 'CPA', 'Contador Público y Auditor', 'Licenciado en Contabilidad y Auditoría', 10)
+ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+
+-- Insertar relaciones departamentos-carreras
+INSERT IGNORE INTO departamentos_carreras (departamento_id, carrera_id, es_principal, activo) VALUES
+-- Ingeniería Civil en Informática
+(1, 1, TRUE, TRUE),  -- DCCTI es principal
+(5, 1, FALSE, TRUE), -- Matemática da servicio
+(6, 1, FALSE, TRUE), -- Física da servicio
+-- Ingeniería de Ejecución en Computación
+(1, 2, TRUE, TRUE),  -- DCCTI es principal
+(5, 2, FALSE, TRUE), -- Matemática da servicio
+(6, 2, FALSE, TRUE), -- Física da servicio
+-- Ingeniería Civil Industrial
+(4, 3, TRUE, TRUE),  -- DII es principal
+(5, 3, FALSE, TRUE), -- Matemática da servicio
+(9, 3, FALSE, TRUE), -- Economía da servicio
+-- Ingeniería Civil Eléctrica
+(3, 4, TRUE, TRUE),  -- DIEE es principal
+(5, 4, FALSE, TRUE), -- Matemática da servicio
+(6, 4, FALSE, TRUE), -- Física da servicio
+-- Ingeniería Civil
+(2, 5, TRUE, TRUE),  -- DICA es principal
+(5, 5, FALSE, TRUE), -- Matemática da servicio
+(6, 5, FALSE, TRUE), -- Física da servicio
+-- Pedagogía en Matemática
+(5, 6, TRUE, TRUE),  -- Matemática es principal
+-- Ingeniería Comercial
+(8, 7, TRUE, TRUE),  -- DGE es principal
+(9, 7, FALSE, TRUE), -- Economía da servicio
+(5, 7, FALSE, TRUE), -- Matemática da servicio
+-- Contador Público y Auditor
+(8, 8, TRUE, TRUE),  -- DGE es principal
+(9, 8, FALSE, TRUE); -- Economía da servicio
+
+-- Crear Super Administrador (contraseña: admin123)
+INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado, debe_cambiar_password)
+VALUES 
+('11111111-1', 'Super Administrador Sistema', 'superadmin@ubiobio.cl', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 4, 1, 0)
+ON DUPLICATE KEY UPDATE rol_id = 4;
+
+-- Vistas útiles
+CREATE OR REPLACE VIEW vista_profesores_departamentos AS
+SELECT 
+    u.rut,
+    u.nombre AS profesor_nombre,
+    u.email,
+    d.nombre AS departamento_nombre,
+    d.codigo AS departamento_codigo,
+    f.nombre AS facultad_nombre,
+    pd.es_principal,
+    pd.activo
+FROM usuarios u
+INNER JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut
+INNER JOIN departamentos d ON pd.departamento_id = d.id
+INNER JOIN facultades f ON d.facultad_id = f.id
+WHERE u.rol_id = 2 AND pd.activo = TRUE;
+
+CREATE OR REPLACE VIEW vista_estudiantes_carreras AS
+SELECT 
+    u.rut,
+    u.nombre AS estudiante_nombre,
+    u.email,
+    c.nombre AS carrera_nombre,
+    c.codigo AS carrera_codigo,
+    c.titulo_profesional,
+    f.nombre AS facultad_nombre,
+    ec.ano_ingreso,
+    ec.semestre_actual,
+    ec.estado_estudiante,
+    ec.promedio_acumulado,
+    ec.es_carrera_principal
+FROM usuarios u
+INNER JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut
+INNER JOIN carreras c ON ec.carrera_id = c.id
+INNER JOIN facultades f ON c.facultad_id = f.id
+WHERE u.rol_id = 1;
+
+CREATE OR REPLACE VIEW vista_jefes_carrera AS
+SELECT 
+    u.rut,
+    u.nombre AS jefe_nombre,
+    u.email,
+    c.nombre AS carrera_nombre,
+    c.codigo AS carrera_codigo,
+    f.nombre AS facultad_nombre
+FROM usuarios u
+INNER JOIN carreras c ON u.rut = c.jefe_carrera_rut
+INNER JOIN facultades f ON c.facultad_id = f.id
+WHERE u.rol_id = 3;
+
+CREATE OR REPLACE VIEW vista_departamentos_por_carrera AS
+SELECT 
+    c.id AS carrera_id,
+    c.nombre AS carrera_nombre,
+    c.codigo AS carrera_codigo,
+    d.id AS departamento_id,
+    d.nombre AS departamento_nombre,
+    d.codigo AS departamento_codigo,
+    dc.es_principal,
+    f.nombre AS facultad_nombre
+FROM departamentos_carreras dc
+INNER JOIN carreras c ON dc.carrera_id = c.id
+INNER JOIN departamentos d ON dc.departamento_id = d.id
+INNER JOIN facultades f ON d.facultad_id = f.id
+WHERE dc.activo = TRUE
+ORDER BY c.nombre, dc.es_principal DESC, d.nombre;
+
+CREATE OR REPLACE VIEW vista_carreras_por_departamento AS
+SELECT 
+    d.id AS departamento_id,
+    d.nombre AS departamento_nombre,
+    d.codigo AS departamento_codigo,
+    c.id AS carrera_id,
+    c.nombre AS carrera_nombre,
+    c.codigo AS carrera_codigo,
+    dc.es_principal,
+    f.nombre AS facultad_nombre
+FROM departamentos_carreras dc
+INNER JOIN departamentos d ON dc.departamento_id = d.id
+INNER JOIN carreras c ON dc.carrera_id = c.id
+INNER JOIN facultades f ON c.facultad_id = f.id
+WHERE dc.activo = TRUE
+ORDER BY d.nombre, dc.es_principal DESC, c.nombre;
+
+-- ===== BASE DE DATOS CREADA EXITOSAMENTE =====
+SELECT 'Base de datos AcTitUBB creada exitosamente con estructura académica completa' as status;
 

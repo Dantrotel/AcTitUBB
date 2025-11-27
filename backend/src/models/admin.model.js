@@ -87,35 +87,93 @@ export const obtenerAsignacionPorId = async (id) => {
 
 /**
  * Obtiene estadísticas de propuestas
+ * @param {number|null} carrera_id - ID de la carrera para filtrar (null para todas)
  * @returns {Promise<Object>} Estadísticas de propuestas
  */
-export const obtenerEstadisticasPropuestas = async () => {
-  const [propuestasStats] = await pool.execute(`
+export const obtenerEstadisticasPropuestas = async (carrera_id = null) => {
+  let query = `
     SELECT 
       COUNT(*) as total_propuestas,
-      SUM(CASE WHEN estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'Pendiente') THEN 1 ELSE 0 END) as propuestas_pendientes,
-      SUM(CASE WHEN estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'En Revisión') THEN 1 ELSE 0 END) as propuestas_en_revision,
-      SUM(CASE WHEN estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'Aprobada') THEN 1 ELSE 0 END) as propuestas_aprobadas
-    FROM propuestas
-  `);
+      SUM(CASE WHEN p.estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'Pendiente') THEN 1 ELSE 0 END) as propuestas_pendientes,
+      SUM(CASE WHEN p.estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'En Revisión') THEN 1 ELSE 0 END) as propuestas_en_revision,
+      SUM(CASE WHEN p.estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'Aprobada') THEN 1 ELSE 0 END) as propuestas_aprobadas
+    FROM propuestas p
+  `;
   
+  const params = [];
+  
+  if (carrera_id) {
+    query += `
+    INNER JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.fecha_fin IS NULL
+    WHERE ec.carrera_id = ?
+    `;
+    params.push(carrera_id);
+  }
+  
+  const [propuestasStats] = await pool.execute(query, params);
   return propuestasStats[0];
 };
 
 /**
  * Obtiene estadísticas de usuarios
+ * @param {number|null} carrera_id - ID de la carrera para filtrar estudiantes (null para todas)
  * @returns {Promise<Object>} Estadísticas de usuarios
  */
-export const obtenerEstadisticasUsuarios = async () => {
-  const [usuariosStats] = await pool.execute(`
-    SELECT 
-      COUNT(*) as total_usuarios,
-      SUM(CASE WHEN rol_id = (SELECT id FROM roles WHERE nombre = 'estudiante') THEN 1 ELSE 0 END) as total_estudiantes,
-      SUM(CASE WHEN rol_id = (SELECT id FROM roles WHERE nombre = 'profesor') THEN 1 ELSE 0 END) as total_profesores
-    FROM usuarios
-  `);
+export const obtenerEstadisticasUsuarios = async (carrera_id = null) => {
+  let queryEstudiantes = `
+    SELECT COUNT(*) as total_estudiantes
+    FROM usuarios u
+    WHERE u.rol_id = (SELECT id FROM roles WHERE nombre = 'estudiante')
+  `;
   
-  return usuariosStats[0];
+  const paramsEstudiantes = [];
+  
+  if (carrera_id) {
+    queryEstudiantes += `
+    AND EXISTS (
+      SELECT 1 FROM estudiantes_carreras ec 
+      WHERE ec.estudiante_rut = u.rut 
+      AND ec.carrera_id = ? 
+      AND ec.fecha_fin IS NULL
+    )`;
+    paramsEstudiantes.push(carrera_id);
+  }
+  
+  // Profesores: filtrar por departamento de la carrera si aplica
+  let queryProfesores = `
+    SELECT COUNT(*) as total_profesores
+    FROM usuarios u
+    WHERE u.rol_id = (SELECT id FROM roles WHERE nombre = 'profesor')
+  `;
+  
+  const paramsProfesores = [];
+  
+  if (carrera_id) {
+    queryProfesores += `
+    AND EXISTS (
+      SELECT 1 FROM profesores_departamentos pd
+      INNER JOIN departamentos d ON pd.departamento_id = d.id
+      INNER JOIN carreras c ON d.facultad_id = c.facultad_id
+      WHERE pd.profesor_rut = u.rut 
+      AND pd.fecha_salida IS NULL
+      AND c.id = ?
+    )`;
+    paramsProfesores.push(carrera_id);
+  }
+  
+  const [[estudiantesResult], [profesoresResult]] = await Promise.all([
+    pool.execute(queryEstudiantes, paramsEstudiantes),
+    pool.execute(queryProfesores, paramsProfesores)
+  ]);
+  
+  const total_estudiantes = estudiantesResult[0].total_estudiantes;
+  const total_profesores = profesoresResult[0].total_profesores;
+  
+  return {
+    total_usuarios: total_estudiantes + total_profesores,
+    total_estudiantes,
+    total_profesores
+  };
 };
 
 /**
@@ -133,12 +191,13 @@ export const obtenerEstadisticasAsignaciones = async () => {
 
 /**
  * Obtiene todas las estadísticas del sistema
+ * @param {number|null} carrera_id - ID de la carrera para filtrar (null para todas)
  * @returns {Promise<Object>} Objeto con todas las estadísticas
  */
-export const obtenerEstadisticasCompletas = async () => {
+export const obtenerEstadisticasCompletas = async (carrera_id = null) => {
   const [propuestas, usuarios, asignaciones] = await Promise.all([
-    obtenerEstadisticasPropuestas(),
-    obtenerEstadisticasUsuarios(),
+    obtenerEstadisticasPropuestas(carrera_id),
+    obtenerEstadisticasUsuarios(carrera_id),
     obtenerEstadisticasAsignaciones()
   ]);
   

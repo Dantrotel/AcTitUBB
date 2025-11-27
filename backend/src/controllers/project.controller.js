@@ -380,10 +380,11 @@ const completarHito = async (req, res) => {
     }
 };
 
-// ========== CONTROLADORES DE EVALUACIONES ==========
+// ========== CONTROLADORES DE PERMISOS ==========
 
-// Crear evaluación de proyecto
-const crearEvaluacionProyecto = async (req, res) => {
+// Verificar permisos de modificación (eliminado código de evaluaciones)
+// Este espacio puede usarse para futuros controladores
+const verificarPermisosModificacion = async (req, res) => {
     try {
         const { projectId } = req.params;
         const usuario_rut = req.user?.rut;
@@ -393,64 +394,14 @@ const crearEvaluacionProyecto = async (req, res) => {
             return res.status(401).json({ message: 'Usuario no autenticado' });
         }
 
-        // Solo profesores pueden crear evaluaciones
-        if (rol_usuario !== 'profesor') {
-            return res.status(403).json({ message: 'Solo profesores pueden crear evaluaciones' });
-        }
-
-        // Verificar que el profesor está asignado al proyecto
-        const puedeEvaluar = await ProjectService.puedeEvaluarProyecto(projectId, usuario_rut);
-        if (!puedeEvaluar) {
-            return res.status(403).json({ message: 'No estás asignado a este proyecto' });
-        }
-
-        const evaluacionData = {
-            ...req.body,
-            proyecto_id: projectId,
-            profesor_evaluador_rut: usuario_rut
-        };
-
-        const evaluacionId = await ProjectService.crearEvaluacionProyecto(evaluacionData);
-
-        res.status(201).json({
-            success: true,
-            message: 'Evaluación creada exitosamente',
-            evaluacion_id: evaluacionId
-        });
-    } catch (error) {
-        console.error('Error al crear evaluación:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-// Obtener evaluaciones de un proyecto
-const obtenerEvaluacionesProyecto = async (req, res) => {
-    try {
-        const { projectId } = req.params;
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol;
-
-        if (!usuario_rut || !rol_usuario) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
-        }
-
-        // Verificar permisos para ver el proyecto
-        const puedeVer = await ProjectService.puedeVerProyecto(projectId, usuario_rut, rol_usuario);
-        if (!puedeVer) {
-            return res.status(403).json({ message: 'No tienes permisos para ver este proyecto' });
-        }
-
-        const evaluaciones = await ProjectService.obtenerEvaluacionesProyecto(projectId);
-
+        const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
+        
         res.status(200).json({
             success: true,
-            evaluaciones: evaluaciones
+            puedeModificar: puedeModificar
         });
     } catch (error) {
-        console.error('Error al obtener evaluaciones:', error);
+        console.error('Error al verificar permisos de modificación:', error);
         res.status(500).json({
             success: false,
             message: error.message
@@ -913,12 +864,11 @@ export const ProjectController = {
     actualizarHitoProyecto,
     completarHito,
     
-    // Gestión de evaluaciones
-    crearEvaluacionProyecto,
-    obtenerEvaluacionesProyecto,
-    
     // Dashboard
     obtenerDashboardProyecto,
+    
+    // Permisos
+    verificarPermisosModificacion,
     
     // Sistema de cronogramas y entregas
     crearCronograma,

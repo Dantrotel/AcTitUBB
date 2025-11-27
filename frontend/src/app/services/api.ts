@@ -204,6 +204,38 @@ export class ApiService {
     ).toPromise();
   }
 
+  // ===== CARGA ADMINISTRATIVA =====
+  
+  // Obtener carga administrativa de todos los profesores (accesible para todos)
+  obtenerCargaProfesores(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/carga-profesores`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
+  // ===== DASHBOARDS =====
+  
+  // Dashboard Estudiante
+  getDashboardEstudiante(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/dashboard/estudiante`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
+  // Dashboard Profesor
+  getDashboardProfesor(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/dashboard/profesor`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
+  // Dashboard Admin
+  getDashboardAdmin(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/dashboard/admin`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
   getPropuestas() {
     const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/`, {
@@ -331,6 +363,12 @@ export class ApiService {
     });
   }
 
+  getRoles() {
+    return this.http.get(`${this.baseUrl}/admin/roles`, {
+      headers: this.getHeaders()
+    });
+  }
+
   getDetalleUsuario(rut: string) {
     return this.http.get(`${this.baseUrl}/admin/usuarios/${rut}`, {
       headers: this.getHeaders()
@@ -387,11 +425,11 @@ export class ApiService {
     });
   }
 
-  // Gestión de profesores
+  // Gestión de profesores (ahora a través de usuarios)
   getProfesores() {
-    return this.http.get(`${this.baseUrl}/admin/profesores`, {
-      headers: this.getHeaders()
-    });
+    // Obtener todos los usuarios y filtrar profesores en el cliente
+    // Nota: La gestión de profesores ahora se hace a través de /admin/usuarios
+    return this.getUsuarios();
   }
 
   getPropuestasAsignadasAProfesor(rut: string) {
@@ -605,8 +643,7 @@ export class ApiService {
     const mapa: { [key: string]: string } = {
       'entregable': 'entrega_documento',
       'revision': 'revision_avance',
-      'presentacion': 'evaluacion',
-      'evaluacion': 'evaluacion',
+      'presentacion': 'defensa',
       'documento': 'entrega_documento',
       'codigo': 'entrega_documento',
       'reunion': 'reunion_seguimiento'
@@ -642,45 +679,7 @@ export class ApiService {
     return 'baja';
   }
 
-  // Gestión de evaluaciones
-  getEvaluacionesProyecto(id: string) {
-    return this.http.get(`${this.baseUrl}/projects/${id}/evaluaciones`, {
-      headers: this.getHeaders()
-    });
-  }
 
-  crearEvaluacionProyecto(id: string, data: any) {
-    return this.http.post(`${this.baseUrl}/projects/${id}/evaluaciones`, data, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Métodos mejorados para evaluaciones
-  actualizarEvaluacionProyecto(proyectoId: string, evaluacionId: string, data: any) {
-    return this.http.put(`${this.baseUrl}/projects/${proyectoId}/evaluaciones/${evaluacionId}`, data, {
-      headers: this.getHeaders()
-    });
-  }
-
-  eliminarEvaluacionProyecto(proyectoId: string, evaluacionId: string) {
-    return this.http.delete(`${this.baseUrl}/projects/${proyectoId}/evaluaciones/${evaluacionId}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Evaluaciones por profesor
-  getEvaluacionesProfesor() {
-    return this.http.get(`${this.baseUrl}/projects/evaluaciones/profesor`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Estadísticas de evaluaciones
-  getEstadisticasEvaluaciones() {
-    return this.http.get(`${this.baseUrl}/projects/evaluaciones/estadisticas`, {
-      headers: this.getHeaders()
-    });
-  }
 
   // ===== MÉTODOS ESPECÍFICOS PARA PROFESORES =====
   
@@ -1158,6 +1157,233 @@ export class ApiService {
 
   eliminarBloqueo(id: string) {
     return this.http.delete(`${this.baseUrl}/calendario-matching/bloqueos/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== MÉTODOS DE ESTRUCTURA ACADÉMICA =====
+
+  // FACULTADES
+  getFacultades(activas?: boolean, facultadId?: number) {
+    let url = `${this.baseUrl}/estructura/facultades`;
+    const params: string[] = [];
+    if (activas !== undefined) params.push(`activas=${activas}`);
+    if (facultadId) params.push(`facultad_id=${facultadId}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
+
+  getFacultadById(id: number) {
+    return this.http.get(`${this.baseUrl}/estructura/facultades/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  createFacultad(data: any) {
+    return this.http.post(`${this.baseUrl}/estructura/facultades`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  updateFacultad(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/estructura/facultades/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteFacultad(id: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/facultades/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getEstadisticasFacultad(id: number) {
+    return this.http.get(`${this.baseUrl}/estructura/facultades/${id}/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // DEPARTAMENTOS
+  getDepartamentos(activos?: boolean, facultadId?: number) {
+    let url = `${this.baseUrl}/estructura/departamentos`;
+    const params: string[] = [];
+    if (activos !== undefined) params.push(`activos=${activos}`);
+    if (facultadId) params.push(`facultad_id=${facultadId}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
+
+  getDepartamentoById(id: number) {
+    return this.http.get(`${this.baseUrl}/estructura/departamentos/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  createDepartamento(data: any) {
+    return this.http.post(`${this.baseUrl}/estructura/departamentos`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  updateDepartamento(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/estructura/departamentos/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteDepartamento(id: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/departamentos/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  asignarProfesorDepartamento(departamentoId: number, data: { profesor_rut: string, es_principal?: boolean }) {
+    return this.http.post(`${this.baseUrl}/estructura/departamentos/${departamentoId}/profesores`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  removerProfesorDepartamento(departamentoId: number, profesorRut: string) {
+    return this.http.delete(`${this.baseUrl}/estructura/departamentos/${departamentoId}/profesores/${profesorRut}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getProfesoresDepartamento(departamentoId: number, soloActivos?: boolean) {
+    let url = `${this.baseUrl}/estructura/departamentos/${departamentoId}/profesores`;
+    if (soloActivos !== undefined) url += `?activos=${soloActivos}`;
+    
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
+
+  asignarJefeDepartamento(departamentoId: number, profesorRut: string) {
+    return this.http.put(`${this.baseUrl}/estructura/departamentos/${departamentoId}/jefe`, { profesor_rut: profesorRut }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // CARRERAS
+  getCarreras(activas?: boolean, facultadId?: number) {
+    let url = `${this.baseUrl}/estructura/carreras`;
+    const params: string[] = [];
+    if (activas !== undefined) params.push(`activas=${activas}`);
+    if (facultadId) params.push(`facultad_id=${facultadId}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
+
+  getCarreraById(id: number) {
+    return this.http.get(`${this.baseUrl}/estructura/carreras/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  createCarrera(data: any) {
+    return this.http.post(`${this.baseUrl}/estructura/carreras`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  updateCarrera(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/estructura/carreras/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteCarrera(id: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/carreras/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  asignarJefeCarrera(carreraId: number, profesorRut: string) {
+    return this.http.post(`${this.baseUrl}/estructura/carreras/${carreraId}/jefe`, { profesor_rut: profesorRut }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  removerJefeCarrera(carreraId: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/carreras/${carreraId}/jefe`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  asignarEstudianteCarrera(carreraId: number, data: any) {
+    return this.http.post(`${this.baseUrl}/estructura/carreras/${carreraId}/estudiantes`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getEstudiantesCarrera(carreraId: number, estado?: string) {
+    let url = `${this.baseUrl}/estructura/carreras/${carreraId}/estudiantes`;
+    if (estado) url += `?estado=${estado}`;
+    
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
+
+  getPropuestasPendientesCarrera(carreraId: number) {
+    return this.http.get(`${this.baseUrl}/estructura/carreras/${carreraId}/propuestas-pendientes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getEstadisticasCarrera(carreraId: number) {
+    return this.http.get(`${this.baseUrl}/estructura/carreras/${carreraId}/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== GESTIÓN DE DEPARTAMENTOS Y CARRERAS =====
+  
+  obtenerDepartamentos() {
+    return this.http.get(`${this.baseUrl}/admin/departamentos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  obtenerCarreras() {
+    return this.http.get(`${this.baseUrl}/admin/carreras`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  obtenerDepartamentosDeCarrera(carreraId: number) {
+    return this.http.get(`${this.baseUrl}/admin/carreras/${carreraId}/departamentos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  obtenerCarrerasDeDepartamento(departamentoId: number) {
+    return this.http.get(`${this.baseUrl}/admin/departamentos/${departamentoId}/carreras`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== GESTIÓN DE RELACIONES DEPARTAMENTOS-CARRERAS =====
+  
+  obtenerRelacionesDepartamentosCarreras() {
+    return this.http.get(`${this.baseUrl}/admin/departamentos-carreras`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearRelacionDepartamentoCarrera(data: { departamento_id: number, carrera_id: number, es_principal: boolean }) {
+    return this.http.post(`${this.baseUrl}/admin/departamentos-carreras`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  actualizarRelacionDepartamentoCarrera(id: number, data: { es_principal?: boolean, activo?: boolean }) {
+    return this.http.put(`${this.baseUrl}/admin/departamentos-carreras/${id}`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  eliminarRelacionDepartamentoCarrera(id: number) {
+    return this.http.delete(`${this.baseUrl}/admin/departamentos-carreras/${id}`, {
       headers: this.getHeaders()
     });
   }

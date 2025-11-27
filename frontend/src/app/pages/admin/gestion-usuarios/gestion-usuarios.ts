@@ -19,6 +19,10 @@ export class GestionUsuariosComponent implements OnInit {
   filtroRol = '';
   filtroNombre = '';
   filtroRut = '';
+  filtroCarrera = '';
+  filtroDepartamento = '';
+  filtroEstado = '';  // 'activo', 'inactivo', 'todos'
+  filtroConfirmado = '';  // 'confirmado', 'pendiente', 'todos'
 
   // Modales
   mostrarModalCrear = false;
@@ -38,23 +42,115 @@ export class GestionUsuariosComponent implements OnInit {
 
   usuarioEditar: any = null;
   usuarioEliminar: any = null;
+  usuarioActual: any = null;
   passwordTemporal = '';
   procesando = false;
 
-  roles = [
-    { id: 1, nombre: 'Estudiante' },
-    { id: 2, nombre: 'Profesor' },
-    { id: 3, nombre: 'Administrador' }
-  ];
+  roles: any[] = [];
+  departamentos: any[] = [];
+  carreras: any[] = [];
+
+  // Helper method para obtener nombre del rol
+  getRolNombre(rolId: number): string {
+    const rol = this.roles.find(r => r.id === rolId);
+    return rol ? rol.nombre : '';
+  }
+  esSuperAdmin: boolean = false;
 
   constructor(
     private router: Router,
     private apiService: ApiService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.cargarUsuarios();
+    this.cargarRoles();
+    this.cargarDepartamentos();
+    this.cargarCarreras();
+    this.verificarSuperAdmin();
   }
+
+  cargarRoles() {
+    this.apiService.getRoles().subscribe({
+      next: (data: any) => {
+        console.log('✅ Roles cargados desde API:', data);
+        // Manejar si la respuesta es un objeto con propiedad 'roles' o directamente un array
+        if (Array.isArray(data)) {
+          this.roles = data;
+        } else if (data && Array.isArray(data.roles)) {
+          this.roles = data.roles;
+        } else {
+          this.roles = [];
+        }
+        console.log('📋 Roles finales:', this.roles);
+      },
+      error: (err) => {
+        console.error('❌ Error al cargar roles:', err);
+        // Fallback con roles básicos si falla la carga
+        this.roles = [
+          { id: 1, nombre: 'estudiante' },
+          { id: 2, nombre: 'profesor' },
+          { id: 3, nombre: 'admin' },
+          { id: 4, nombre: 'Super Administrador' }
+        ];
+        console.log('📋 Usando roles fallback:', this.roles);
+      }
+    });
+  }
+
+  cargarDepartamentos() {
+    this.apiService.getDepartamentos(true).subscribe({
+      next: (data: any) => {
+        // Manejar si la respuesta es un objeto con propiedad 'departamentos' o directamente un array
+        if (Array.isArray(data)) {
+          this.departamentos = data;
+        } else if (data && Array.isArray(data.departamentos)) {
+          this.departamentos = data.departamentos;
+        } else {
+          this.departamentos = [];
+        }
+      },
+      error: () => {
+        this.departamentos = [];
+      }
+    });
+  }
+
+  cargarCarreras() {
+    this.apiService.getCarreras(true).subscribe({
+      next: (data: any) => {
+        // Manejar si la respuesta es un objeto con propiedad 'carreras' o directamente un array
+        if (Array.isArray(data)) {
+          this.carreras = data;
+        } else if (data && Array.isArray(data.carreras)) {
+          this.carreras = data.carreras;
+        } else {
+          this.carreras = [];
+        }
+      },
+      error: () => {
+        this.carreras = [];
+      }
+    });
+  }
+
+  verificarSuperAdmin() {
+    // Intentar obtener de 'userData' primero, luego 'usuario' como fallback
+    const userDataStr = localStorage.getItem('userData') || localStorage.getItem('usuario') || '{}';
+    this.usuarioActual = JSON.parse(userDataStr);
+    
+    console.log('👤 Usuario actual desde localStorage:', this.usuarioActual);
+    console.log('🔑 rol_id del usuario:', this.usuarioActual.rol_id);
+    console.log('🔑 Tipo de rol_id:', typeof this.usuarioActual.rol_id);
+    
+    // Comparación robusta que maneja tanto string como number
+    const rolId = parseInt(this.usuarioActual.rol_id);
+    this.esSuperAdmin = rolId === 4;
+    
+    console.log('✅ Es Super Admin:', this.esSuperAdmin);
+  }
+  // Constructor and lifecycle method
+  // Only one constructor and one ngOnInit allowed
 
   // Método público para cargar usuarios
   cargarUsuarios(): void {
@@ -80,41 +176,70 @@ export class GestionUsuariosComponent implements OnInit {
     return new Date();
   }
 
-  // Filtros
+  // Filtros avanzados
   get usuariosFiltrados(): any[] {
     let filtrados = this.usuarios;
 
+    // Filtro por rol
     if (this.filtroRol) {
       filtrados = filtrados.filter(u => 
         u.rol_nombre?.toLowerCase().includes(this.filtroRol.toLowerCase())
       );
     }
 
+    // Filtro por nombre
     if (this.filtroNombre) {
       filtrados = filtrados.filter(u => 
         u.nombre?.toLowerCase().includes(this.filtroNombre.toLowerCase())
       );
     }
 
+    // Filtro por RUT
     if (this.filtroRut) {
       filtrados = filtrados.filter(u => 
         u.rut?.includes(this.filtroRut)
       );
     }
 
+    // Filtro por carrera
+    if (this.filtroCarrera) {
+      filtrados = filtrados.filter(u => 
+        u.carrera_id?.toString() === this.filtroCarrera
+      );
+    }
+
+    // Filtro por departamento
+    if (this.filtroDepartamento) {
+      filtrados = filtrados.filter(u => 
+        u.departamento_id?.toString() === this.filtroDepartamento
+      );
+    }
+
+    // Filtro por estado de confirmación
+    if (this.filtroConfirmado === 'confirmado') {
+      filtrados = filtrados.filter(u => u.confirmado === true || u.confirmado === 1);
+    } else if (this.filtroConfirmado === 'pendiente') {
+      filtrados = filtrados.filter(u => u.confirmado === false || u.confirmado === 0);
+    }
+
     return filtrados;
+  }
+
+  // Limpiar todos los filtros
+  limpiarFiltros(): void {
+    this.filtroRol = '';
+    this.filtroNombre = '';
+    this.filtroRut = '';
+    this.filtroCarrera = '';
+    this.filtroDepartamento = '';
+    this.filtroEstado = '';
+    this.filtroConfirmado = '';
   }
 
   // Navegación
   volver() {
-    // Usar history.back() para volver a la p�gina anterior sin activar guards
+    // Usar history.back() para volver a la página anterior sin activar guards
     window.history.back();
-  }
-
-  limpiarFiltros() {
-    this.filtroRol = '';
-    this.filtroNombre = '';
-    this.filtroRut = '';
   }
 
   // ===== MODAL CREAR USUARIO =====
@@ -157,6 +282,20 @@ export class GestionUsuariosComponent implements OnInit {
   // ===== MODAL EDITAR USUARIO =====
   abrirModalEditar(usuario: any) {
     this.usuarioEditar = { ...usuario };
+    // Preselección de departamento/carrera
+    if (this.usuarioEditar.rol_id === 2) {
+      this.usuarioEditar.departamento_id = this.usuarioEditar.departamento_id || null;
+    }
+    if (this.usuarioEditar.rol_id === 1) {
+      this.usuarioEditar.carrera_id = this.usuarioEditar.carrera_id || null;
+    }
+    
+    // Debug logs
+    console.log('🔍 Modal Editar - Usuario:', this.usuarioEditar);
+    console.log('🔍 Es Super Admin:', this.esSuperAdmin);
+    console.log('🔍 Roles disponibles:', this.roles);
+    console.log('🔍 Carreras disponibles:', this.carreras);
+    
     this.mostrarModalEditar = true;
   }
 
@@ -171,13 +310,32 @@ export class GestionUsuariosComponent implements OnInit {
     this.procesando = true;
     this.error = '';
 
-    this.apiService.actualizarUsuario(this.usuarioEditar.rut, {
+    const payload: any = {
       nombre: this.usuarioEditar.nombre,
       email: this.usuarioEditar.email
-    }).subscribe({
+    };
+    
+    // Solo Super Admin puede cambiar rol, departamento y carrera
+    if (this.esSuperAdmin) {
+      // Agregar departamento si es profesor (rol 2)
+      if (this.usuarioEditar.rol_id === 2) {
+        payload.departamento_id = this.usuarioEditar.departamento_id;
+      }
+      // Agregar carrera si es estudiante (rol 1)
+      if (this.usuarioEditar.rol_id === 1) {
+        payload.carrera_id = this.usuarioEditar.carrera_id;
+      }
+      // Cambiar password si se proporcionó
+      if (this.usuarioEditar.password) {
+        payload.password = this.usuarioEditar.password;
+      }
+    }
+    
+    this.apiService.actualizarUsuario(this.usuarioEditar.rut, payload).subscribe({
       next: () => {
-        // Cambiar rol si fue modificado
-        if (this.usuarioEditar.rol_id !== this.usuarios.find(u => u.rut === this.usuarioEditar.rut)?.rol_id) {
+        // Cambiar rol si fue modificado (solo Super Admin)
+        const usuarioOriginal = this.usuarios.find(u => u.rut === this.usuarioEditar.rut);
+        if (this.esSuperAdmin && this.usuarioEditar.rol_id !== usuarioOriginal?.rol_id) {
           this.apiService.cambiarRolUsuario(this.usuarioEditar.rut, this.usuarioEditar.rol_id).subscribe({
             next: () => {
               this.mensaje = 'Usuario actualizado exitosamente';

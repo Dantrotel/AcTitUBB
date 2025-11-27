@@ -180,7 +180,7 @@ export class GestionPropuestasComponent implements OnInit {
   abrirModalEvaluaciones(propuesta: any) {
     this.propuestaSeleccionada = propuesta;
     this.mostrarModalEvaluacion = true;
-    this.cargarEvaluaciones();
+    // Las evaluaciones fueron eliminadas del sistema
   }
 
   cerrarModalEvaluacion() {
@@ -190,61 +190,16 @@ export class GestionPropuestasComponent implements OnInit {
     this.limpiarFormularioEvaluacion();
   }
 
-  cargarEvaluaciones() {
-    if (!this.propuestaSeleccionada?.id) return;
+  // Las evaluaciones fueron eliminadas del sistema
+  // cargarEvaluaciones() {
+  //   if (!this.propuestaSeleccionada?.id) return;
+  //   // Método deshabilitado
+  // }
 
-    this.apiService.getEvaluacionesProyecto(this.propuestaSeleccionada.id.toString()).subscribe({
-      next: (data: any) => {
-        this.evaluaciones = data;
-      },
-      error: (err) => {
-        console.error('Error al cargar evaluaciones:', err);
-        this.error = 'Error al cargar evaluaciones';
-      }
-    });
-  }
-
-  crearEvaluacion() {
-    if (!this.propuestaSeleccionada?.id) return;
-
-    const evaluacionData = {
-      ...this.evaluacionForm,
-      nota: parseFloat(this.evaluacionForm.nota),
-      fecha: new Date(this.evaluacionForm.fecha).toISOString()
-    };
-
-    if (this.editandoEvaluacion && this.evaluacionEditId) {
-      // Actualizar evaluación existente
-      this.apiService.actualizarEvaluacionProyecto(
-        this.propuestaSeleccionada.id.toString(),
-        this.evaluacionEditId,
-        evaluacionData
-      ).subscribe({
-        next: () => {
-          this.cargarEvaluaciones();
-          this.limpiarFormularioEvaluacion();
-          this.editandoEvaluacion = false;
-          this.evaluacionEditId = null;
-        },
-        error: (err) => {
-          console.error('Error al actualizar evaluación:', err);
-          this.error = 'Error al actualizar evaluación';
-        }
-      });
-    } else {
-      // Crear nueva evaluación
-      this.apiService.crearEvaluacionProyecto(this.propuestaSeleccionada.id.toString(), evaluacionData).subscribe({
-        next: () => {
-          this.cargarEvaluaciones();
-          this.limpiarFormularioEvaluacion();
-        },
-        error: (err) => {
-          console.error('Error al crear evaluación:', err);
-          this.error = 'Error al crear evaluación';
-        }
-      });
-    }
-  }
+  // Las evaluaciones fueron eliminadas del sistema
+  // crearEvaluacion() {
+  //   Método deshabilitado
+  // }
 
   editarEvaluacion(evaluacion: any) {
     this.evaluacionForm = {
@@ -263,24 +218,10 @@ export class GestionPropuestasComponent implements OnInit {
     this.evaluacionEditId = evaluacion.id;
   }
 
-  eliminarEvaluacion(evaluacionId: string) {
-    if (!this.propuestaSeleccionada?.id) return;
-    
-    if (confirm('¿Estás seguro de eliminar esta evaluación?')) {
-      this.apiService.eliminarEvaluacionProyecto(
-        this.propuestaSeleccionada.id.toString(),
-        evaluacionId
-      ).subscribe({
-        next: () => {
-          this.cargarEvaluaciones();
-        },
-        error: (err) => {
-          console.error('Error al eliminar evaluación:', err);
-          this.error = 'Error al eliminar evaluación';
-        }
-      });
-    }
-  }
+  // Las evaluaciones fueron eliminadas del sistema
+  // eliminarEvaluacion(evaluacionId: string) {
+  //   Método deshabilitado
+  // }
 
   limpiarFormularioEvaluacion() {
     this.evaluacionForm = {

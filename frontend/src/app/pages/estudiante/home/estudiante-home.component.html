@@ -1,0 +1,747 @@
+<!-- Navbar con acciones rápidas -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="navegar('propuestas/crear')" >
+      <i class="fas fa-plus-circle"></i>
+      <span>Crear Propuesta</span>
+    </div>
+    
+    <div class="action-item" (click)="navegar('propuestas/listar-propuesta')" >
+      <i class="fas fa-list-alt"></i>
+      <span>Mis Propuestas</span>
+    </div>
+
+    <!-- Menú de Reuniones -->
+    <div class="action-item calendario-menu" (click)="toggleCalendarioMenu()">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Reuniones</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showCalendarioMenu">
+        <div class="dropdown-item" (click)="navegar('estudiante/calendario/solicitudes')">
+          <i class="fas fa-handshake"></i>
+          <span>Reservar Reunión</span>
+        </div>
+        <div class="dropdown-item" (click)="navegar('estudiante/calendario/gestion')">
+          <i class="fas fa-calendar-check"></i>
+          <span>Mis Reuniones</span>
+        </div>
+        <div class="dropdown-item" (click)="abrirCalendario(); $event.stopPropagation()">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Ver Calendario</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="action-item user-menu" (click)="toggleUserMenu()" >
+      <i class="fas fa-user-circle"></i>
+      <span>{{estudiante.nombre || 'Estudiante'}}</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showUserMenu">
+        <div class="dropdown-item" (click)="navegar('perfil')">
+          <i class="fas fa-user"></i>
+          <span>Mi Perfil</span>
+        </div>
+        <div class="dropdown-item" (click)="cerrarSesion()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Mensaje de error -->
+  <div class="error-banner" *ngIf="hasError">
+    <div class="error-content">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>{{ errorMensaje }}</span>
+      <div class="error-actions">
+        <button class="btn-retry" (click)="recargarDatos()">
+          <i class="fas fa-redo"></i>
+          Reintentar
+        </button>
+        <button class="btn-close" (click)="ocultarError()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Componente de Alertas de Fechas Importantes -->
+  <app-alertas-fechas [maximoAlertas]="5" [autoRefresh]="true"></app-alertas-fechas>
+
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1>¡Bienvenido, {{estudiante.nombre || 'Estudiante'}}!</h1>
+      <p class="status-text">
+        <i class="fas fa-info-circle"></i>
+        Estado actual: <span class="status-badge" [ngClass]="getEstadoClass()">{{ getEstadoTexto() }}</span>
+      </p>
+    </div>
+    
+    <div class="welcome-illustration">
+      <i class="fas fa-rocket"></i>
+    </div>
+  </div>
+
+  <!-- Indicador de carga -->
+  <div class="loading-overlay" *ngIf="loadingPropuestas || loadingEstudiante || loadingProyectos">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>{{ loadingEstudiante ? 'Cargando perfil...' : loadingProyectos ? 'Cargando proyecto...' : 'Cargando propuestas...' }}</p>
+    </div>
+  </div>
+
+  <!-- Dashboard Analytics -->
+  @if (dashboard && !loadingDashboard) {
+    <div class="analytics-section">
+      <h2 class="section-title">
+        <i class="fas fa-chart-bar"></i>
+        Panel de Control
+      </h2>
+
+      <!-- Proyectos Activos -->
+      @if (dashboard.proyectos && dashboard.proyectos.length > 0) {
+        <div class="proyectos-grid">
+          @for (proyecto of dashboard.proyectos; track proyecto.id) {
+            <div class="proyecto-card" [class.urgente]="proyecto.dias_restantes <= 7">
+              <div class="proyecto-header">
+                <h3>{{ proyecto.titulo }}</h3>
+                <span class="estado-badge" [class]="'estado-' + proyecto.estado_detallado">
+                  {{ proyecto.estado }}
+                </span>
+              </div>
+              <div class="proyecto-progress">
+                <div class="progress-info">
+                  <span>Progreso</span>
+                  <span class="progress-percentage">{{ proyecto.porcentaje_avance || 0 }}%</span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" [style.width.%]="proyecto.porcentaje_avance || 0"></div>
+                </div>
+              </div>
+              @if (proyecto.dias_restantes !== null) {
+                <div class="proyecto-footer">
+                  <i class="fas fa-clock"></i>
+                  @if (proyecto.dias_restantes > 0) {
+                    <span>{{ proyecto.dias_restantes }} días restantes</span>
+                  } @else if (proyecto.dias_restantes === 0) {
+                    <span class="text-warning">¡Entrega hoy!</span>
+                  } @else {
+                    <span class="text-danger">{{ Math.abs(proyecto.dias_restantes) }} días de retraso</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Próximos Hitos -->
+      @if (dashboard.proximos_hitos && dashboard.proximos_hitos.length > 0) {
+        <div class="hitos-section">
+          <h3 class="subsection-title">
+            <i class="fas fa-flag-checkered"></i>
+            Próximos Hitos
+          </h3>
+          <div class="hitos-list">
+            @for (hito of dashboard.proximos_hitos; track hito.id) {
+              <div class="hito-item" [class.proximo]="hito.dias_restantes <= 3">
+                <div class="hito-icon">
+                  <i class="fas fa-circle" [class.text-warning]="hito.estado === 'en_progreso'" [class.text-muted]="hito.estado === 'pendiente'"></i>
+                </div>
+                <div class="hito-content">
+                  <h4>{{ hito.nombre_hito }}</h4>
+                  <p class="hito-proyecto">{{ hito.proyecto_titulo }}</p>
+                  <div class="hito-meta">
+                    <span class="hito-fecha">
+                      <i class="fas fa-calendar"></i>
+                      {{ hito.fecha_limite | date:'dd MMM yyyy' }}
+                    </span>
+                    @if (hito.dias_restantes <= 3) {
+                      <span class="badge badge-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{ hito.dias_restantes }} días
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="hito-progress-mini">
+                  <span>{{ hito.porcentaje_avance || 0 }}%</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Avances Pendientes -->
+      @if (dashboard.avances_pendientes && dashboard.avances_pendientes.length > 0) {
+        <div class="avances-section">
+          <h3 class="subsection-title">
+            <i class="fas fa-tasks"></i>
+            Avances Pendientes
+          </h3>
+          <div class="avances-list">
+            @for (avance of dashboard.avances_pendientes; track avance.id) {
+              <div class="avance-item" [class.con-comentarios]="avance.estado_revision === 'con_comentarios'">
+                <div class="avance-icon">
+                  @if (avance.estado_revision === 'con_comentarios') {
+                    <i class="fas fa-comment-dots text-info"></i>
+                  } @else {
+                    <i class="fas fa-hourglass-half text-warning"></i>
+                  }
+                </div>
+                <div class="avance-content">
+                  <h4>{{ avance.titulo }}</h4>
+                  <p class="avance-proyecto">{{ avance.proyecto_titulo }}</p>
+                  <span class="avance-fecha">Enviado: {{ avance.fecha_envio | date:'dd MMM yyyy' }}</span>
+                </div>
+                @if (avance.estado_revision === 'con_comentarios') {
+                  <span class="badge badge-info">Con comentarios</span>
+                } @else {
+                  <span class="badge badge-secondary">En revisión</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Dashboard Cards -->
+  <div class="dashboard-grid" [class.loading]="loadingPropuestas || loadingEstudiante || loadingProyectos">
+    <div class="dashboard-card primary-card" (click)="navegarAProyecto()">
+      <div class="card-icon">
+        <i class="fas fa-project-diagram" *ngIf="proyectoActivo"></i>
+        <i class="fas fa-clipboard-check" *ngIf="!proyectoActivo"></i>
+      </div>
+      <div class="card-content">
+        <h3>{{ proyectoActivo ? 'Mi Proyecto' : 'Última Revisión' }}</h3>
+        <p *ngIf="proyectoActivo">
+          <strong>{{ proyectoActivo.titulo }}</strong><br>
+          Estado: {{ proyectoActivo.estado || 'En desarrollo' }}
+        </p>
+        <p *ngIf="!proyectoActivo && ultimaPropuesta">
+          Enviada el {{ultimaPropuesta.fecha_envio | date:'dd MMM'}}, 
+          {{getEstadoTextoCard()}}
+        </p>
+        <p *ngIf="!proyectoActivo && !ultimaPropuesta">No hay propuestas enviadas</p>
+        <button class="btn-primary">
+          <i class="fas fa-eye"></i>
+          {{ proyectoActivo ? 'Ver proyecto' : (ultimaPropuesta ? 'Ver detalles' : 'Crear primera propuesta') }}
+        </button>
+      </div>
+    </div>
+    
+    <div class="dashboard-card secondary-card" (click)="navegar('propuestas/listar-propuesta')">
+      <div class="card-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="card-content">
+        <h3>Progreso del Proyecto</h3>
+        <p>{{obtenerFaseProyecto()}}</p>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="progresoProyecto"></div>
+        </div>
+        <span class="progress-text">{{progresoProyecto}}% Completado</span>
+      </div>
+    </div>
+
+    <!-- Card de Hitos (solo cuando hay proyecto activo) -->
+    <div class="dashboard-card info-card" *ngIf="proyectoActivo" (click)="abrirModalHitos()">
+      <div class="card-icon">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="card-content">
+        <h3>Hitos del Proyecto</h3>
+        <div class="hitos-summary">
+          <div class="hito-stat">
+            <span class="hito-number">{{ proyectoActivo.hitos_completados || 0 }}</span>
+            <span class="hito-label">Completados</span>
+          </div>
+          <div class="hito-stat">
+            <span class="hito-number">{{ proyectoActivo.hitos_total || 0 }}</span>
+            <span class="hito-label">Total</span>
+          </div>
+        </div>
+        <div class="hitos-progress">
+          <div class="hitos-bar">
+            <div class="hitos-fill" [style.width.%]="proyectoActivo.hitos_total > 0 ? (proyectoActivo.hitos_completados / proyectoActivo.hitos_total * 100) : 0"></div>
+          </div>
+        </div>
+        <button class="btn-info">
+          <i class="fas fa-list"></i>
+          Gestionar Hitos
+        </button>
+      </div>
+    </div>
+    
+    <div class="dashboard-card accent-card" (click)="abrirCalendario()">
+      <div class="card-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="card-content">
+        <h3>próximas fechas de Fechas</h3>
+        <div class="date-item" *ngFor="let fecha of proximasFechas">
+          <i [class]="fecha.icono"></i>
+          <span>{{fecha.titulo}}: {{fecha.fecha | date:'dd MMM'}}</span>
+        </div>
+        <div class="date-item" *ngIf="proximasFechas.length === 0">
+          <i class="fas fa-info-circle"></i>
+          <span>No hay fechas programadas</span>
+        </div>
+        <button class="btn-secondary" (click)="abrirCalendario(); $event.stopPropagation()">
+          <i class="fas fa-calendar"></i>
+          Ver Calendario
+        </button>
+      </div>
+    </div>
+    
+    <div class="dashboard-card action-card" (click)="navegar('propuestas/crear')">
+      <div class="card-icon">
+        <i class="fas fa-plus"></i>
+      </div>
+      <div class="card-content">
+        <h3>Crear Nueva Propuesta</h3>
+        <p>Inicia una nueva propuesta para tu proyecto de título</p>
+        <button class="btn-secondary">
+          <i class="fas fa-arrow-right"></i>
+          Comenzar
+        </button>
+      </div>
+    </div>
+
+    <!-- Card de Evaluaciones (solo cuando hay proyecto activo) -->
+    <div class="dashboard-card evaluation-card" *ngIf="proyectoActivo" (click)="navegarAProyecto()">
+      <div class="card-icon">
+        <i class="fas fa-star"></i>
+      </div>
+      <div class="card-content">
+        <h3>Evaluaciones</h3>
+        <div class="evaluaciones-summary">
+          <div class="eval-stat">
+            <span class="eval-number">{{ proyectoActivo.evaluaciones_total || 0 }}</span>
+            <span class="eval-label">Total</span>
+          </div>
+          <div class="eval-stat" *ngIf="proyectoActivo.promedio_evaluaciones">
+            <span class="eval-number">{{ proyectoActivo.promedio_evaluaciones | number:'1.1-1' }}</span>
+            <span class="eval-label">Promedio</span>
+          </div>
+        </div>
+        <button class="btn-warning">
+          <i class="fas fa-chart-bar"></i>
+          Ver Evaluaciones
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información extendida del proyecto (solo cuando hay proyecto activo) -->
+  <div class="proyecto-extendido" *ngIf="proyectoActivo">
+    <div class="proyecto-card">
+      <div class="card-header">
+        <i class="fas fa-project-diagram"></i>
+        <h3>Dashboard del Proyecto</h3>
+      </div>
+      <div class="card-content">
+        <div class="proyecto-info-grid">
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-calendar-start"></i>
+            </div>
+            <div class="info-details">
+              <h4>Fecha de Inicio</h4>
+              <p>{{ proyectoActivo.fecha_inicio ? (proyectoActivo.fecha_inicio | date:'dd/MM/yyyy') : 'No definida' }}</p>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-flag-checkered"></i>
+            </div>
+            <div class="info-details">
+              <h4>Estado General</h4>
+              <p>{{ proyectoActivo.estado || 'En desarrollo' }}</p>
+            </div>
+          </div>
+          
+          <div class="info-item" *ngIf="proyectoActivo.descripcion">
+            <div class="info-icon">
+              <i class="fas fa-align-left"></i>
+            </div>
+            <div class="info-details">
+              <h4>Descripción</h4>
+              <p>{{ proyectoActivo.descripcion }}</p>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-percentage"></i>
+            </div>
+            <div class="info-details">
+              <h4>Progreso General</h4>
+              <div class="progreso-detallado">
+                <div class="progreso-bar-extended">
+                  <div class="progreso-fill-extended" [style.width.%]="progresoProyecto"></div>
+                </div>
+                <span class="progreso-text-extended">{{ progresoProyecto }}% completado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="proyecto-acciones">
+          <button class="btn-primary" (click)="abrirModalHitos()">
+            <i class="fas fa-tasks"></i>
+            Gestionar Hitos
+          </button>
+          <button class="btn-info" (click)="navegarAProyecto()">
+            <i class="fas fa-external-link-alt"></i>
+            Ver Proyecto Completo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información del profesor asignado -->
+  <div class="profesor-info" *ngIf="ultimaPropuesta">
+    <div class="profesor-card">
+      <div class="card-header">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <h3>Profesor Asignado</h3>
+      </div>
+      <div class="card-content">
+        <div class="profesor-details" *ngIf="ultimaPropuesta.nombre_profesor">
+          <div class="profesor-avatar">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <div class="profesor-info-text">
+            <h4>{{ ultimaPropuesta.nombre_profesor }}</h4>
+            <p>{{ ultimaPropuesta.profesor_email || 'Email no disponible' }}</p>
+            <span class="rut-badge">{{ ultimaPropuesta.profesor_rut }}</span>
+          </div>
+        </div>
+        <div class="no-profesor" *ngIf="!ultimaPropuesta.nombre_profesor">
+          <div class="no-profesor-icon">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="no-profesor-text">
+            <h4>Sin profesor asignado</h4>
+            <p>Tu propuesta está pendiente de asignación</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fechas importantes con límites de entrega (componente integrado) -->
+  <app-fechas-limite-proyecto 
+    *ngIf="proyectoActivo" 
+    [proyectoId]="proyectoActivo.id">
+  </app-fechas-limite-proyecto>
+
+  <!-- Sección de estadísticas rápidas -->
+  <div class="stats-section">
+    <h2>Resumen de Actividad</h2>
+    <div class="stats-grid">
+      <div class="stat-item" (click)="navegar('propuestas/listar-propuesta')">
+        <div class="stat-number">{{estadisticas.totalPropuestas}}</div>
+        <div class="stat-label">Propuestas Enviadas</div>
+      </div>
+      <div class="stat-item" (click)="navegar('propuestas/listar-propuesta')">
+        <div class="stat-number">{{estadisticas.enRevision}}</div>
+        <div class="stat-label">En Revisión</div>
+      </div>
+      <div class="stat-item" (click)="navegar('propuestas/listar-propuesta')">
+        <div class="stat-number">{{estadisticas.aprobadas}}</div>
+        <div class="stat-label">Aprobadas</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">{{estadisticas.diasRestantes}}</div>
+        <div class="stat-label">Días Restantes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
+  </div>
+</footer>
+
+<!-- Modal del Calendario -->
+<app-calendar-modal 
+  *ngIf="showCalendarModal"
+  [propuestas]="propuestas"
+  (close)="cerrarCalendario()">
+</app-calendar-modal>
+
+<!-- Modal de Hitos del Proyecto -->
+<div class="modal-overlay" *ngIf="showHitosModal" (click)="cerrarModalHitos()">
+  <div class="hitos-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fas fa-tasks"></i>
+        <h2>Hitos del Proyecto</h2>
+        <span class="proyecto-nombre" *ngIf="proyectoActivo">{{ proyectoActivo.titulo }}</span>
+      </div>
+      <button class="btn-close" (click)="cerrarModalHitos()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Indicador de carga -->
+      <div class="loading-hitos" *ngIf="loadingHitos">
+        <div class="spinner"></div>
+        <p>Cargando hitos del proyecto...</p>
+      </div>
+
+      <!-- Lista de hitos -->
+      <div class="hitos-lista" *ngIf="!loadingHitos">
+        <div class="hitos-stats" *ngIf="hitosProyecto.length > 0">
+          <div class="stat-item">
+            <span class="stat-number">{{ getHitosCompletados() }}</span>
+            <span class="stat-label">Completados</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ hitosProyecto.length }}</span>
+            <span class="stat-label">Total</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">{{ getHitosRetrasados() }}</span>
+            <span class="stat-label">Retrasados</span>
+          </div>
+        </div>
+
+        <div class="hito-item" *ngFor="let hito of hitosProyecto" [class]="getClaseEstadoHito(hito)">
+          <div class="hito-header">
+            <div class="hito-info">
+              <h4>{{ hito.titulo || hito.nombre_hito }}</h4>
+              <p class="hito-descripcion" *ngIf="hito.descripcion">{{ hito.descripcion }}</p>
+            </div>
+            <div class="hito-estado">
+              <span class="estado-badge" [class]="getClaseEstadoHito(hito)">
+                {{ getEstadoHitoCompleto(hito) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="hito-detalles">
+            <div class="hito-fecha">
+              <i class="fas fa-calendar-alt"></i>
+              <span>Fecha límite: {{ hito.fecha_limite | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="hito-tiempo" [class]="estaVencido(hito.fecha_limite) ? 'tiempo-vencido' : 'tiempo-normal'">
+              <i class="fas fa-clock"></i>
+              <span>{{ getTextoTiempoHito(hito.fecha_limite) }}</span>
+            </div>
+            <div class="hito-tipo" *ngIf="hito.tipo_hito">
+              <i class="fas fa-tag"></i>
+              <span>{{ hito.tipo_hito }}</span>
+            </div>
+          </div>
+
+          <!-- Información de entrega -->
+          <div class="hito-entrega-info" *ngIf="hito.entregado">
+            <div class="entrega-header">
+              <i class="fas fa-upload"></i>
+              <strong>Información de Entrega</strong>
+            </div>
+            <div class="entrega-detalles">
+              <div class="entrega-item">
+                <span><strong>Fecha:</strong> {{ hito.fecha_entrega | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="entrega-item" *ngIf="hito.archivo_nombre">
+                <span><strong>Archivo:</strong> {{ hito.archivo_nombre }}</span>
+              </div>
+              <div class="entrega-item" *ngIf="hito.comentarios_entrega">
+                <span><strong>Comentarios:</strong> {{ hito.comentarios_entrega }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información de revisión -->
+          <div class="hito-revision-info" *ngIf="hito.revisado">
+            <div class="revision-header">
+              <i class="fas fa-search"></i>
+              <strong>Revisión del Profesor</strong>
+            </div>
+            <div class="revision-detalles">
+              <div class="revision-item">
+                <span><strong>Fecha de revisión:</strong> {{ hito.fecha_revision | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="revision-item" *ngIf="hito.calificacion">
+                <span><strong>Calificación:</strong> {{ hito.calificacion }}/10</span>
+              </div>
+              <div class="revision-item" *ngIf="hito.comentarios_revision">
+                <span><strong>Comentarios:</strong></span>
+                <p class="comentarios-profesor">{{ hito.comentarios_revision }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones del hito -->
+          <div class="hito-acciones">
+            <button 
+              *ngIf="puedeEntregarHito(hito)" 
+              class="btn-primary btn-entregar"
+              (click)="abrirModalEntregarHito(hito)">
+              <i class="fas fa-upload"></i>
+              Entregar Hito
+            </button>
+            
+            <button 
+              *ngIf="!hito.entregado && !puedeEntregarHito(hito)" 
+              class="btn-completar"
+              (click)="completarHitoEstudiante(hito)"
+              [disabled]="loadingHitos">
+              <i class="fas fa-check"></i>
+              Marcar Completado
+            </button>
+
+            <div class="hito-estado-info" *ngIf="hito.entregado && !hito.revisado">
+              <i class="fas fa-clock"></i>
+              <span>Esperando revisión del profesor</span>
+            </div>
+
+            <div class="hito-estado-info" *ngIf="estaVencido(hito.fecha_limite) && !hito.entregado">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>Este hito está vencido</span>
+            </div>
+
+            <div class="hito-completado" *ngIf="hito.completado">
+              <i class="fas fa-check-circle"></i>
+              <span>Completado el {{ hito.fecha_completado | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-hitos" *ngIf="hitosProyecto.length === 0">
+          <div class="no-hitos-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h3>No hay hitos definidos</h3>
+          <p>Tu profesor aún no ha creado hitos para este proyecto.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalHitos()">
+        <i class="fas fa-arrow-left"></i>
+        Volver al dashboard
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para entregar hito -->
+<div class="modal-overlay" *ngIf="showModalEntregarHito" (click)="cerrarModalEntregarHito()">
+  <div class="modal-content modal-hito" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-upload"></i> Entregar Hito</h2>
+      <button class="btn-close" (click)="cerrarModalEntregarHito()">×</button>
+    </div>
+
+    <div class="modal-body" *ngIf="hitoSeleccionado">
+      <div class="hito-info-entrega">
+        <h3>{{ hitoSeleccionado.titulo || hitoSeleccionado.nombre_hito }}</h3>
+        <p class="descripcion" *ngIf="hitoSeleccionado.descripcion">{{ hitoSeleccionado.descripcion }}</p>
+        
+        <div class="fecha-limite">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Fecha límite: {{ hitoSeleccionado.fecha_limite | date:'dd/MM/yyyy HH:mm' }}</span>
+          <span class="tiempo-restante" [class]="estaVencido(hitoSeleccionado.fecha_limite) ? 'tiempo-vencido' : 'tiempo-normal'">
+            ({{ getTextoTiempoHito(hitoSeleccionado.fecha_limite) }})
+          </span>
+        </div>
+      </div>
+
+      <form class="form-entrega-hito" (ngSubmit)="entregarHitoCompleto()">
+        <!-- Archivo adjunto -->
+        <div class="form-group">
+          <label for="archivoHito">
+            <i class="fas fa-paperclip"></i>
+            Archivo (Requerido)
+          </label>
+          <div class="archivo-upload">
+            <input 
+              type="file" 
+              id="archivoHito"
+              (change)="onArchivoHitoSelected($event)"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar"
+              required>
+            <div class="archivo-info" *ngIf="archivoHitoSeleccionado">
+              <i class="fas fa-file"></i>
+              <span>{{ archivoHitoSeleccionado.name }}</span>
+              <small>({{ formatFileSize(archivoHitoSeleccionado.size) }})</small>
+            </div>
+          </div>
+          <small class="help-text">
+            Formatos permitidos: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR (Máx. 10MB)
+          </small>
+        </div>
+
+        <!-- Comentarios -->
+        <div class="form-group">
+          <label for="comentariosEntrega">
+            <i class="fas fa-comment"></i>
+            Comentarios de Entrega
+          </label>
+          <textarea 
+            id="comentariosEntrega"
+            [(ngModel)]="comentariosEntregaHito"
+            name="comentariosEntrega"
+            rows="4"
+            placeholder="Añade comentarios sobre tu entrega (opcional)"
+            maxlength="500"></textarea>
+          <small class="char-count">{{ comentariosEntregaHito.length || 0 }}/500</small>
+        </div>
+
+        <!-- Validaciones -->
+        <div class="validaciones-entrega" *ngIf="erroresValidacionHito.length > 0">
+          <div class="error-item" *ngFor="let error of erroresValidacionHito">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>{{ error }}</span>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="form-actions">
+          <button 
+            type="button" 
+            class="btn-secondary"
+            (click)="cerrarModalEntregarHito()">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+          
+          <button 
+            type="submit" 
+            class="btn-primary"
+            [disabled]="!validarEntregaHito() || loadingEntrega">
+            <i class="fas fa-spinner fa-spin" *ngIf="loadingEntrega"></i>
+            <i class="fas fa-upload" *ngIf="!loadingEntrega"></i>
+            {{ loadingEntrega ? 'Entregando...' : 'Entregar Hito' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

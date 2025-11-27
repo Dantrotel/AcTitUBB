@@ -282,8 +282,7 @@ export class CalendarioUnificadoComponent implements OnInit {
       'entrega_avance': 'fa-tasks',
       'entrega_parcial': 'fa-file-alt',
       'entrega_final': 'fa-file-invoice',
-      // Evaluaciones
-      'evaluacion': 'fa-clipboard-check',
+
       'revision': 'fa-search',
       'presentacion': 'fa-presentation',
       'defensa': 'fa-chalkboard-teacher',
