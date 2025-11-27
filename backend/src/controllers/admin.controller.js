@@ -9,7 +9,26 @@ import * as AdminModel from '../models/admin.model.js';
 // ===== GESTIÓN DE USUARIOS =====
 export const obtenerTodosLosUsuarios = async (req, res) => {
   try {
+    const { rol_id, carrera_administrada_id } = req.user || {};
+    
+    console.log('📋 Obteniendo usuarios - Usuario:', {
+      rut: req.user?.rut,
+      rol_id: rol_id,
+      carrera_administrada_id: carrera_administrada_id
+    });
+    
+    // Si es Admin de Carrera (rol 3), filtrar usuarios por su carrera
+    if (rol_id === 3 && carrera_administrada_id) {
+      console.log(`🔍 Admin de Carrera - Filtrando por carrera_id: ${carrera_administrada_id}`);
+      const usuarios = await UserModel.obtenerUsuariosPorCarrera(carrera_administrada_id);
+      console.log(`✅ Usuarios filtrados: ${usuarios.length}`);
+      return res.json(usuarios);
+    }
+    
+    // Super Admin (rol 4) ve todos los usuarios
+    console.log('🔓 Super Admin o sin carrera asignada - Mostrando todos los usuarios');
     const usuarios = await UserModel.findpersonAll();
+    console.log(`✅ Total usuarios: ${usuarios.length}`);
     res.json(usuarios);
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
@@ -20,9 +39,23 @@ export const obtenerTodosLosUsuarios = async (req, res) => {
 export const actualizarUsuario = async (req, res) => {
   try {
     const { rut } = req.params;
-    const { nombre, email } = req.body;
+    const { nombre, email, departamento_id, carrera_id, password } = req.body;
     
-    const actualizado = await UserModel.actualizarUsuario(rut, { nombre, email });
+    // Construir objeto de actualización solo con campos proporcionados
+    const datosActualizar = { nombre, email };
+    
+    // Solo agregar campos opcionales si están presentes
+    if (departamento_id !== undefined) {
+      datosActualizar.departamento_id = departamento_id;
+    }
+    if (carrera_id !== undefined) {
+      datosActualizar.carrera_id = carrera_id;
+    }
+    if (password) {
+      datosActualizar.password = password;
+    }
+    
+    const actualizado = await UserModel.actualizarUsuario(rut, datosActualizar);
     
     if (actualizado) {
       res.json({ message: 'Usuario actualizado correctamente' });
@@ -239,15 +272,7 @@ export const obtenerDetalleUsuario = async (req, res) => {
 };
 
 // ===== GESTIÓN DE PROFESORES =====
-export const obtenerTodosLosProfesores = async (req, res) => {
-  try {
-    const profesores = await UserModel.obtenerUsuariosPorRol('profesor');
-    res.json(profesores);
-  } catch (error) {
-    console.error('Error al obtener profesores:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
+// Nota: La gestión de profesores ahora se realiza a través de la gestión de usuarios
 
 export const obtenerPropuestasAsignadasAProfesor = async (req, res) => {
   try {
@@ -329,10 +354,62 @@ export const eliminarAsignacion = async (req, res) => {
 // ===== ESTADÍSTICAS =====
 export const obtenerEstadisticas = async (req, res) => {
   try {
-    const estadisticas = await AdminModel.obtenerEstadisticasCompletas();
+    const { rol_id, carrera_id } = req.user || {};
+    
+    // Si es admin/jefe de carrera (rol 3), filtrar por su carrera
+    // Si es super admin (rol 4), ver estadísticas globales
+    const carreraFiltro = (rol_id === 3 && carrera_id) ? carrera_id : null;
+    
+    const estadisticas = await AdminModel.obtenerEstadisticasCompletas(carreraFiltro);
+    
+    console.log(`🔍 Estadísticas (rol ${rol_id}, carrera ${carreraFiltro || 'todas'}):`, estadisticas);
+    
     res.json(estadisticas);
   } catch (error) {
     console.error('Error al obtener estadísticas:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+// ===== CARGA ADMINISTRATIVA DE PROFESORES =====
+import { obtenerCargaProfesores, obtenerEstadisticasCarga } from '../models/project.model.js';
+
+/**
+ * Obtener la carga administrativa de todos los profesores
+ * Muestra cuántos proyectos tiene cada profesor por rol
+ * Visible para todos los usuarios (admin, profesores, estudiantes)
+ */
+export const obtenerCargaAdministrativa = async (req, res) => {
+  try {
+    const { rol_id, carrera_id } = req.user || {};
+    
+    // Si es admin/jefe de carrera (rol 3), filtrar por su carrera
+    // Si es super admin (rol 4), ver todos los profesores
+    const carreraFiltro = (rol_id === 3 && carrera_id) ? carrera_id : null;
+    
+    // Obtener carga de profesores (filtrada si aplica)
+    const cargaProfesores = await obtenerCargaProfesores(carreraFiltro);
+    
+    // Obtener estadísticas (filtradas si aplica)
+    const estadisticas = await obtenerEstadisticasCarga(carreraFiltro);
+    
+    console.log(`🔍 Carga administrativa (rol ${rol_id}, carrera ${carreraFiltro || 'todas'}): ${cargaProfesores.length} profesores`);
+    
+    res.json({
+      profesores: cargaProfesores,
+      estadisticas: estadisticas || {
+        total_profesores: 0,
+        total_proyectos_activos: 0,
+        promedio_proyectos_profesor: 0,
+        max_proyectos_profesor: 0,
+        min_proyectos_profesor: 0
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener carga administrativa:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener carga administrativa',
+      error: error.message 
+    });
   }
 }; 

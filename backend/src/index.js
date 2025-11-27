@@ -19,6 +19,8 @@ import extensionRouter from './routes/extension.route.js';
 import reunionesRouter from './routes/reuniones.route.js';
 import fechasLimiteRouter from './routes/fechas-limite.route.js';
 import periodoPropuestasRouter from './routes/periodo-propuestas.route.js';
+import dashboardRouter from './routes/dashboard.route.js';
+import estructuraRouter from './routes/estructura-academica.route.js';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 
@@ -129,6 +131,11 @@ app.use('/api/v1/propuestas', routerProp);
 app.use('/api/v1/', downloadRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/calendario', calendarioRouter);
+
+// Ruta de carga administrativa accesible para todos los usuarios autenticados
+import { verifySession } from './middlewares/verifySession.js';
+import { obtenerCargaAdministrativa } from './controllers/admin.controller.js';
+app.get('/api/v1/carga-profesores', verifySession, obtenerCargaAdministrativa);
 app.use('/api/v1/fechas-importantes', fechasImportantesRouter);
 app.use('/api/v1/asignaciones-profesores', asignacionesProfesoresRouter);
 app.use('/api/v1/calendario-matching', calendarioMatchingRouter);
@@ -139,6 +146,8 @@ app.use('/api/v1/extensiones', extensionRouter);
 app.use('/api/v1/reuniones', reunionesRouter);
 app.use('/api/v1/fechas-limite', fechasLimiteRouter);
 app.use('/api/v1/periodo-propuestas', periodoPropuestasRouter);
+app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/estructura', estructuraRouter);
 
 
 

@@ -126,7 +126,7 @@ export class GestionCalendarioComponent implements OnInit {
     const tipos: { [key: string]: string } = {
       'entrega': 'Entrega',
       'reunion': 'Reunión',
-      'evaluacion': 'Evaluación',
+
       'hito': 'Hito',
       'deadline': 'Fecha límite',
       'presentacion': 'Presentación',

@@ -51,8 +51,12 @@ export class AsignarProfesorComponent implements OnInit {
   private cargarProfesores(): void {
     this.apiService.getProfesores().subscribe({
       next: (data: any) => {
-        this.profesores = data;
-        console.log('Profesores cargados:', data);
+        const usuarios = Array.isArray(data) ? data : [];
+        // Filtrar solo profesores (rol_nombre = 'profesor' o rol_id = 2)
+        this.profesores = usuarios.filter((u: any) => 
+          u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2
+        );
+        console.log('Profesores cargados:', this.profesores);
       },
       error: (err) => {
         console.error('Error al cargar profesores:', err);
@@ -114,7 +118,7 @@ export class AsignarProfesorComponent implements OnInit {
   }
 
   volver() {
-    // Usar history.back() para volver a la página anterior sin activar guards
+    // Usar history.back() para volver a la pï¿½gina anterior sin activar guards
     window.history.back();
   }
 

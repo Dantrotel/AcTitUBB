@@ -476,12 +476,23 @@ export const revisarPropuesta = async (req, res) => {
 
 export const obtenerPropuestas = async (req, res) => {
   try {
-    const propuestas = await PropuestasService.obtenerPropuestas();
-     console.log('propuestas obtenidas: ', propuestas );
+    const { rol_id, carrera_id } = req.user || {};
+    
+    console.log('🔍 obtenerPropuestas - req.user:', req.user);
+    console.log('🔍 obtenerPropuestas - rol_id:', rol_id, 'carrera_id:', carrera_id);
+    
+    // Si es admin/jefe de carrera (rol 3), filtrar por su carrera
+    // Si es super admin (rol 4) o no tiene carrera, ver todas las propuestas
+    const carreraFiltro = (rol_id === 3 && carrera_id) ? carrera_id : null;
+    
+    console.log('🔍 obtenerPropuestas - carreraFiltro:', carreraFiltro);
+    
+    const propuestas = await PropuestasService.obtenerPropuestas(carreraFiltro);
+    console.log(`✅ Propuestas obtenidas (rol ${rol_id}, carrera ${carreraFiltro || 'todas'}):`, propuestas.length);
     return res.json(propuestas);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('❌ Error en obtenerPropuestas:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
 

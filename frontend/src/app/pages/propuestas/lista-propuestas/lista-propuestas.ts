@@ -402,8 +402,15 @@ export class ListarPropuestasComponent implements OnInit {
     this.router.navigate(['/propuestas/revisar', id]);
   }
 
-  eliminarPropuesta(id: string) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.')) {
+  async eliminarPropuesta(id: string) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.',
+      'Confirmar eliminación',
+      'Eliminar',
+      'Cancelar'
+    );
+    
+    if (confirmed) {
       this.api.deletePropuesta(id).subscribe({
         next: () => {
           console.log('Propuesta eliminada exitosamente');

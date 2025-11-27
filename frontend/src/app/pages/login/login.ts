@@ -71,7 +71,8 @@ login() {
         const rutasPorRol: { [key: string]: string } = {
         '1': '/estudiante',
         '2': '/profesor',
-        '3': '/admin'
+        '3': '/admin',
+        '4': '/super-admin'
       };
 
       if (rutasPorRol[rolId.toString()]) {

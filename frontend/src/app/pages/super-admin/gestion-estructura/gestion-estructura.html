@@ -1,0 +1,612 @@
+<div class="gestion-estructura-container">
+  <div class="header">
+    <h1><i class="fas fa-sitemap"></i> Gestión de Estructura Académica</h1>
+    <a routerLink="/super-admin" class="btn-back">
+      <i class="fas fa-arrow-left"></i> Volver
+    </a>
+  </div>
+
+  @if (mensaje()) {
+    <div class="alert" [ngClass]="tipoMensaje() === 'success' ? 'alert-success' : 'alert-error'">
+      <i class="fas" [ngClass]="tipoMensaje() === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'"></i>
+      {{ mensaje() }}
+    </div>
+  }
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab" 
+      [class.active]="tabActiva() === 'facultades'" 
+      (click)="cambiarTab('facultades')">
+      <i class="fas fa-university"></i> Facultades
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="tabActiva() === 'departamentos'" 
+      (click)="cambiarTab('departamentos')">
+      <i class="fas fa-building"></i> Departamentos
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="tabActiva() === 'carreras'" 
+      (click)="cambiarTab('carreras')">
+      <i class="fas fa-graduation-cap"></i> Carreras
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="tabActiva() === 'relaciones'" 
+      (click)="cambiarTab('relaciones')">
+      <i class="fas fa-link"></i> Relaciones Dept-Carrera
+    </button>
+  </div>
+
+  <!-- Contenido Facultades -->
+  @if (tabActiva() === 'facultades') {
+    <div class="content-section">
+      <div class="section-header">
+        <h2><i class="fas fa-university"></i> Facultades</h2>
+        <button class="btn-primary" (click)="abrirModalFacultad()">
+          <i class="fas fa-plus"></i> Nueva Facultad
+        </button>
+      </div>
+
+      @if (cargando()) {
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+      } @else {
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (facultad of facultades(); track facultad.id) {
+                <tr>
+                  <td>{{ facultad.codigo }}</td>
+                  <td>{{ facultad.nombre }}</td>
+                  <td>{{ facultad.email || 'N/A' }}</td>
+                  <td>{{ facultad.telefono || 'N/A' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-success]="facultad.activo" [class.badge-danger]="!facultad.activo">
+                      {{ facultad.activo ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn-edit" (click)="abrirModalFacultad(facultad)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete" (click)="eliminarFacultad(facultad.id)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty">No hay facultades registradas</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Contenido Departamentos -->
+  @if (tabActiva() === 'departamentos') {
+    <div class="content-section">
+      <div class="section-header">
+        <h2><i class="fas fa-building"></i> Departamentos</h2>
+        <button class="btn-primary" (click)="abrirModalDepartamento()">
+          <i class="fas fa-plus"></i> Nuevo Departamento
+        </button>
+      </div>
+
+      @if (cargando()) {
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+      } @else {
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Facultad</th>
+                <th>Jefe</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (depto of departamentos(); track depto.id) {
+                <tr>
+                  <td>{{ depto.codigo }}</td>
+                  <td>{{ depto.nombre }}</td>
+                  <td>{{ depto.facultad_nombre }}</td>
+                  <td>{{ depto.jefe_nombre || 'Sin asignar' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-success]="depto.activo" [class.badge-danger]="!depto.activo">
+                      {{ depto.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn-edit" (click)="abrirModalDepartamento(depto)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete" (click)="eliminarDepartamento(depto.id)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty">No hay departamentos registrados</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Contenido Carreras -->
+  @if (tabActiva() === 'carreras') {
+    <div class="content-section">
+      <div class="section-header">
+        <h2><i class="fas fa-graduation-cap"></i> Carreras</h2>
+        <button class="btn-primary" (click)="abrirModalCarrera()">
+          <i class="fas fa-plus"></i> Nueva Carrera
+        </button>
+      </div>
+
+      @if (cargando()) {
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+      } @else {
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Facultad</th>
+                <th>Duración</th>
+                <th>Jefe Carrera</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (carrera of carreras(); track carrera.id) {
+                <tr>
+                  <td>{{ carrera.codigo }}</td>
+                  <td>{{ carrera.nombre }}</td>
+                  <td>{{ carrera.facultad_nombre }}</td>
+                  <td>{{ carrera.duracion_semestres }} semestres</td>
+                  <td>{{ carrera.jefe_carrera_nombre || 'Sin asignar' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-success]="carrera.activo" [class.badge-danger]="!carrera.activo">
+                      {{ carrera.activo ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn-edit" (click)="abrirModalCarrera(carrera)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete" (click)="eliminarCarrera(carrera.id)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="empty">No hay carreras registradas</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal Facultad -->
+  @if (modalFacultadAbierto()) {
+    <div class="modal-overlay" (click)="cerrarModalFacultad()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ modoEdicion() ? 'Editar Facultad' : 'Nueva Facultad' }}</h3>
+          <button class="btn-close" (click)="cerrarModalFacultad()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Código <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="facultadForm().codigo" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Nombre <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="facultadForm().nombre" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea [(ngModel)]="facultadForm().descripcion" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" [(ngModel)]="facultadForm().email" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" [(ngModel)]="facultadForm().telefono" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Ubicación</label>
+            <input type="text" [(ngModel)]="facultadForm().ubicacion" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="facultadForm().activo">
+              Facultad activa
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cerrarModalFacultad()">Cancelar</button>
+          <button class="btn-primary" (click)="guardarFacultad()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Departamento (similar estructura) -->
+  @if (modalDepartamentoAbierto()) {
+    <div class="modal-overlay" (click)="cerrarModalDepartamento()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ modoEdicion() ? 'Editar Departamento' : 'Nuevo Departamento' }}</h3>
+          <button class="btn-close" (click)="cerrarModalDepartamento()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Facultad <span class="required">*</span></label>
+            <select [(ngModel)]="departamentoForm().facultad_id" class="form-control" required>
+              <option [value]="undefined">Seleccione una facultad</option>
+              @for (facultad of facultades(); track facultad.id) {
+                <option [value]="facultad.id">{{ facultad.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Código <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="departamentoForm().codigo" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Nombre <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="departamentoForm().nombre" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea [(ngModel)]="departamentoForm().descripcion" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" [(ngModel)]="departamentoForm().email" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" [(ngModel)]="departamentoForm().telefono" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="departamentoForm().activo">
+              Departamento activo
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cerrarModalDepartamento()">Cancelar</button>
+          <button class="btn-primary" (click)="guardarDepartamento()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Carrera -->
+  @if (modalCarreraAbierto()) {
+    <div class="modal-overlay" (click)="cerrarModalCarrera()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ modoEdicion() ? 'Editar Carrera' : 'Nueva Carrera' }}</h3>
+          <button class="btn-close" (click)="cerrarModalCarrera()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Facultad <span class="required">*</span></label>
+            <select [(ngModel)]="carreraForm().facultad_id" class="form-control" required>
+              <option [value]="undefined">Seleccione una facultad</option>
+              @for (facultad of facultades(); track facultad.id) {
+                <option [value]="facultad.id">{{ facultad.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Código <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="carreraForm().codigo" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Duración (semestres) <span class="required">*</span></label>
+              <input type="number" [(ngModel)]="carreraForm().duracion_semestres" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Nombre <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="carreraForm().nombre" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Título Profesional <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="carreraForm().titulo_profesional" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Grado Académico</label>
+            <input type="text" [(ngModel)]="carreraForm().grado_academico" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea [(ngModel)]="carreraForm().descripcion" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Modalidad <span class="required">*</span></label>
+            <select [(ngModel)]="carreraForm().modalidad" class="form-control" required>
+              <option value="presencial">Presencial</option>
+              <option value="semipresencial">Semipresencial</option>
+              <option value="online">Online</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="carreraForm().activo">
+              Carrera activa
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cerrarModalCarrera()">Cancelar</button>
+          <button class="btn-primary" (click)="guardarCarrera()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Contenido Relaciones Departamentos-Carreras -->
+  @if (tabActiva() === 'relaciones') {
+    <div class="content-section">
+      <div class="section-header">
+        <h2><i class="fas fa-link"></i> Relaciones Departamentos-Carreras</h2>
+        <button class="btn-primary" (click)="abrirModalRelacion()">
+          <i class="fas fa-plus"></i> Nueva Relación
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-container">
+        <div class="filtros">
+          <div class="filtro-grupo">
+            <label>Buscar Carrera:</label>
+            <input 
+              type="text" 
+              [ngModel]="filtroCarrera()"
+              (ngModelChange)="filtroCarrera.set($event)"
+              placeholder="Nombre o código..."
+              class="input-filtro">
+          </div>
+
+          <div class="filtro-grupo">
+            <label>Buscar Departamento:</label>
+            <input 
+              type="text" 
+              [ngModel]="filtroDepartamento()"
+              (ngModelChange)="filtroDepartamento.set($event)"
+              placeholder="Nombre o código..."
+              class="input-filtro">
+          </div>
+
+          <div class="filtro-grupo">
+            <label>Tipo:</label>
+            <select 
+              [ngModel]="filtroTipo()"
+              (ngModelChange)="filtroTipo.set($event)"
+              class="select-filtro">
+              <option value="">Todos</option>
+              <option value="principal">Principal</option>
+              <option value="servicio">Servicio</option>
+            </select>
+          </div>
+
+          <button (click)="limpiarFiltrosRelaciones()" class="btn-limpiar">
+            Limpiar Filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- Contador -->
+      <div class="contador">
+        Mostrando {{ relacionesFiltradas.length }} de {{ relaciones().length }} relaciones
+      </div>
+
+      @if (cargando()) {
+        <div class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+      } @else {
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Carrera</th>
+                <th>Departamento</th>
+                <th>Tipo</th>
+                <th>Facultad</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (relacion of relacionesFiltradas; track relacion.id) {
+                <tr [class.inactivo]="!relacion.activo">
+                  <td>
+                    <div class="cell-content">
+                      <strong>{{ relacion.carrera_nombre }}</strong>
+                      <small>{{ relacion.carrera_codigo }}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="cell-content">
+                      <strong>{{ relacion.departamento_nombre }}</strong>
+                      <small>{{ relacion.departamento_codigo }}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="relacion.es_principal ? 'badge-principal' : 'badge-servicio'">
+                      {{ relacion.es_principal ? 'Principal' : 'Servicio' }}
+                    </span>
+                  </td>
+                  <td>{{ relacion.facultad_nombre }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="relacion.activo ? 'badge-activo' : 'badge-inactivo'">
+                      {{ relacion.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <button 
+                        class="btn-icon btn-edit" 
+                        (click)="abrirModalRelacion(relacion)"
+                        title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button 
+                        class="btn-icon" 
+                        [ngClass]="relacion.activo ? 'btn-warning' : 'btn-success'"
+                        (click)="toggleActivoRelacion(relacion)"
+                        [title]="relacion.activo ? 'Desactivar' : 'Activar'">
+                        <i class="fas" [ngClass]="relacion.activo ? 'fa-lock' : 'fa-lock-open'"></i>
+                      </button>
+                      <button 
+                        class="btn-icon btn-delete" 
+                        (click)="eliminarRelacion(relacion.id)"
+                        title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="text-center">No se encontraron relaciones</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal Relación -->
+  @if (modalRelacionAbierto()) {
+    <div class="modal-overlay" (click)="cerrarModalRelacion()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modoEdicion() ? 'Editar Relación' : 'Nueva Relación' }}</h2>
+          <button class="btn-close" (click)="cerrarModalRelacion()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Carrera <span class="required">*</span></label>
+            <select 
+              [(ngModel)]="relacionForm().carrera_id"
+              [disabled]="modoEdicion()"
+              class="form-control">
+              <option [ngValue]="null">Seleccione una carrera</option>
+              @for (carrera of carreras(); track carrera.id) {
+                <option [ngValue]="carrera.id">
+                  {{ carrera.nombre }} ({{ carrera.codigo }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Departamento <span class="required">*</span></label>
+            <select 
+              [(ngModel)]="relacionForm().departamento_id"
+              [disabled]="modoEdicion()"
+              class="form-control">
+              <option [ngValue]="null">Seleccione un departamento</option>
+              @for (dept of departamentos(); track dept.id) {
+                <option [ngValue]="dept.id">
+                  {{ dept.nombre }} ({{ dept.codigo }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="relacionForm().es_principal">
+              Es departamento principal de la carrera
+            </label>
+            <small class="help-text">
+              Marque esta opción si este es el departamento principal de la carrera
+            </small>
+          </div>
+
+          @if (modoEdicion()) {
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="relacionForm().activo">
+                Relación activa
+              </label>
+            </div>
+          }
+
+          <div class="info-box">
+            <strong><i class="fas fa-info-circle"></i> Información:</strong>
+            <ul>
+              <li>Cada carrera debe tener al menos un departamento principal</li>
+              <li>Un departamento puede dar servicio a múltiples carreras</li>
+              <li>Los profesores de estos departamentos serán visibles para el Admin de la carrera</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cerrarModalRelacion()">Cancelar</button>
+          <button 
+            class="btn-primary" 
+            (click)="guardarRelacion()"
+            [disabled]="!relacionForm().departamento_id || !relacionForm().carrera_id">
+            {{ modoEdicion() ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -172,7 +172,7 @@ export const sendFechaPublicadaEmail = async (destinatarios, titulo, descripcion
     'entrega': '📤',
     'reunion': '📅',
     'hito': '🎯',
-    'evaluacion': '📝',
+
     'otro': '📌'
   };
   

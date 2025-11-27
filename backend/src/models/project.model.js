@@ -502,53 +502,7 @@ const obtenerEstadisticasHitos = async (proyecto_id) => {
     }
 };
 
-// ========== GESTIÓN DE EVALUACIONES ==========
 
-// Crear evaluación de proyecto
-const crearEvaluacionProyecto = async (evaluacionData) => {
-    const { 
-        proyecto_id, hito_id, tipo_evaluacion, titulo, descripcion,
-        nota_aspecto_tecnico, nota_metodologia, nota_documentacion, nota_presentacion, nota_global,
-        fortalezas, debilidades, recomendaciones, comentarios_generales,
-        fecha_evaluacion, fecha_limite, profesor_evaluador_rut
-    } = evaluacionData;
-    
-    const query = `
-        INSERT INTO evaluaciones_proyecto (
-            proyecto_id, hito_id, tipo_evaluacion, titulo, descripcion,
-            nota_aspecto_tecnico, nota_metodologia, nota_documentacion, nota_presentacion, nota_global,
-            fortalezas, debilidades, recomendaciones, comentarios_generales,
-            fecha_evaluacion, fecha_limite, profesor_evaluador_rut
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const [result] = await pool.execute(query, [
-        proyecto_id, hito_id, tipo_evaluacion, titulo, descripcion,
-        nota_aspecto_tecnico, nota_metodologia, nota_documentacion, nota_presentacion, nota_global,
-        fortalezas, debilidades, recomendaciones, comentarios_generales,
-        fecha_evaluacion, fecha_limite, profesor_evaluador_rut
-    ]);
-    
-    return result.insertId;
-};
-
-// Obtener evaluaciones de un proyecto
-const obtenerEvaluacionesProyecto = async (proyecto_id) => {
-    const query = `
-        SELECT e.*, 
-               h.nombre AS hito_nombre,
-               u.nombre AS evaluador_nombre
-        FROM evaluaciones_proyecto e
-        LEFT JOIN hitos_proyecto h ON e.hito_id = h.id
-        LEFT JOIN usuarios u ON e.profesor_evaluador_rut = u.rut
-        WHERE e.proyecto_id = ?
-        ORDER BY e.fecha_evaluacion DESC
-    `;
-    
-    const [rows] = await pool.execute(query, [proyecto_id]);
-    return rows;
-};
 
 // Actualizar progreso del proyecto basado en hitos
 const actualizarProgresoProyecto = async (proyecto_id) => {
@@ -673,10 +627,6 @@ export const ProjectModel = {
     completarHito,
     obtenerEstadisticasHitos,
     
-    // Gestión de evaluaciones
-    crearEvaluacionProyecto,
-    obtenerEvaluacionesProyecto,
-    
     // Gestión de progreso
     actualizarProgresoProyecto,
     obtenerDashboardProyecto
@@ -728,5 +678,105 @@ const obtenerProfesoresProyecto = async (proyecto_id) => {
     }
 };
 
+/**
+ * Obtener carga administrativa de todos los profesores
+ * Cuenta proyectos activos por rol (Guía, Informante, Revisor, etc.)
+ * @returns {Promise<Array>} - Lista de profesores con su carga por rol
+ */
+const obtenerCargaProfesores = async (carrera_id = null) => {
+    try {
+        let query = `
+            SELECT 
+                u.rut,
+                u.nombre,
+                u.email,
+                -- Conteo por rol específico
+                SUM(CASE WHEN rp.nombre = 'Profesor Guía' THEN 1 ELSE 0 END) as proyectos_guia,
+                SUM(CASE WHEN rp.nombre = 'Profesor Informante' THEN 1 ELSE 0 END) as proyectos_informante,
+                SUM(CASE WHEN rp.nombre = 'Profesor Revisor' THEN 1 ELSE 0 END) as proyectos_revisor,
+                SUM(CASE WHEN rp.nombre = 'Profesor Co-Guía' THEN 1 ELSE 0 END) as proyectos_coguia,
+                SUM(CASE WHEN rp.nombre = 'Profesor de Sala' THEN 1 ELSE 0 END) as proyectos_sala,
+                SUM(CASE WHEN rp.nombre = 'Profesor Corrector' THEN 1 ELSE 0 END) as proyectos_corrector,
+                COUNT(ap.id) as total_proyectos
+            FROM usuarios u
+            LEFT JOIN asignaciones_proyectos ap ON u.rut = ap.profesor_rut AND ap.activo = TRUE
+            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            LEFT JOIN proyectos p ON ap.proyecto_id = p.id AND p.activo = TRUE
+        `;
+        
+        const params = [];
+        
+        // Filtrar por profesores del departamento de la carrera si se especifica carrera_id
+        if (carrera_id) {
+            query += `
+            INNER JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.fecha_salida IS NULL
+            INNER JOIN departamentos d ON pd.departamento_id = d.id
+            INNER JOIN carreras c ON d.facultad_id = c.facultad_id
+            WHERE u.rol_id = 2 AND c.id = ?  -- Solo profesores del departamento de la carrera
+            `;
+            params.push(carrera_id);
+        } else {
+            query += ` WHERE u.rol_id = 2  -- Solo profesores `;
+        }
+        
+        query += `
+            GROUP BY u.rut, u.nombre, u.email
+            ORDER BY total_proyectos DESC, u.nombre ASC
+        `;
+        
+        const [rows] = await pool.execute(query, params);
+        return rows;
+    } catch (error) {
+        console.error('Error al obtener carga de profesores:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener estadísticas generales de carga administrativa
+ * @param {number|null} carrera_id - ID de la carrera para filtrar (null para todas)
+ * @returns {Promise<Object>} - Estadísticas globales o por carrera
+ */
+const obtenerEstadisticasCarga = async (carrera_id = null) => {
+    try {
+        let query = `
+            SELECT 
+                COUNT(DISTINCT u.rut) as total_profesores,
+                COUNT(DISTINCT ap.proyecto_id) as total_proyectos_activos,
+                AVG(proyectos_por_profesor.total) as promedio_proyectos_profesor,
+                MAX(proyectos_por_profesor.total) as max_proyectos_profesor,
+                MIN(proyectos_por_profesor.total) as min_proyectos_profesor
+            FROM usuarios u
+            LEFT JOIN (
+                SELECT profesor_rut, COUNT(*) as total
+                FROM asignaciones_proyectos
+                WHERE activo = TRUE
+                GROUP BY profesor_rut
+            ) as proyectos_por_profesor ON u.rut = proyectos_por_profesor.profesor_rut
+            LEFT JOIN asignaciones_proyectos ap ON u.rut = ap.profesor_rut AND ap.activo = TRUE
+        `;
+        
+        const params = [];
+        
+        if (carrera_id) {
+            query += `
+            INNER JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.fecha_salida IS NULL
+            INNER JOIN departamentos d ON pd.departamento_id = d.id
+            INNER JOIN carreras c ON d.facultad_id = c.facultad_id
+            WHERE u.rol_id = 2 AND c.id = ?
+            `;
+            params.push(carrera_id);
+        } else {
+            query += ` WHERE u.rol_id = 2 `;
+        }
+        
+        const [rows] = await pool.execute(query, params);
+        return rows[0];
+    } catch (error) {
+        console.error('Error al obtener estadísticas de carga:', error);
+        throw error;
+    }
+};
+
 // Exportar también las nuevas funciones
-export { actualizarEstadoProyecto, obtenerProfesoresProyecto };
+export { actualizarEstadoProyecto, obtenerProfesoresProyecto, obtenerCargaProfesores, obtenerEstadisticasCarga };

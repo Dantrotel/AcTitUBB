@@ -478,39 +478,6 @@ const obtenerEstadisticasHitos = async (proyecto_id) => {
     return await ProjectModel.obtenerEstadisticasHitos(proyecto_id);
 };
 
-// ========== SERVICIOS DE EVALUACIONES ==========
-
-/**
- * Crear evaluación de proyecto con validaciones
- * @param {Object} evaluacionData - Datos de la evaluación
- * @returns {Promise<number>} - ID de la evaluación creada
- */
-const crearEvaluacionProyecto = async (evaluacionData) => {
-    // Validaciones de negocio
-    if (!evaluacionData.titulo || !evaluacionData.tipo_evaluacion || !evaluacionData.fecha_evaluacion) {
-        throw new Error('Título, tipo de evaluación y fecha son obligatorios');
-    }
-
-    // Validar notas si se proporcionan
-    const notas = ['nota_aspecto_tecnico', 'nota_metodologia', 'nota_documentacion', 'nota_presentacion', 'nota_global'];
-    for (const nota of notas) {
-        if (evaluacionData[nota] && (evaluacionData[nota] < 1.0 || evaluacionData[nota] > 7.0)) {
-            throw new Error(`La ${nota} debe estar entre 1.0 y 7.0`);
-        }
-    }
-
-    return await ProjectModel.crearEvaluacionProyecto(evaluacionData);
-};
-
-/**
- * Obtener evaluaciones de un proyecto
- * @param {number} proyecto_id - ID del proyecto
- * @returns {Promise<Array>} - Lista de evaluaciones
- */
-const obtenerEvaluacionesProyecto = async (proyecto_id) => {
-    return await ProjectModel.obtenerEvaluacionesProyecto(proyecto_id);
-};
-
 // ========== SERVICIOS DE PERMISOS ==========
 
 /**
@@ -806,10 +773,6 @@ export const ProjectService = {
     actualizarHitoProyecto,
     completarHito,
     obtenerEstadisticasHitos,
-    
-    // Nuevas funciones de evaluaciones
-    crearEvaluacionProyecto,
-    obtenerEvaluacionesProyecto,
     
     // Nuevas funciones de permisos y progreso
     puedeModificarProyecto,

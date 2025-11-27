@@ -83,22 +83,53 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        // Si el usuario es admin/jefe de carrera (rol 3), obtener su carrera asignada
+        let carreraInfo = null;
+        if (user.rol_id === 3) {
+            const { obtenerCarreraPorJefeRut } = await import('../models/carrera.model.js');
+            carreraInfo = await obtenerCarreraPorJefeRut(user.rut);
+        }
+
         // Access token con tiempo de vida más razonable (4 horas)
+        const tokenPayload = { 
+            rut: user.rut, 
+            rol_id: user.rol_id, 
+            type: 'access'
+        };
+        
+        // Agregar carrera_id si es jefe de carrera
+        if (carreraInfo) {
+            tokenPayload.carrera_id = carreraInfo.id;
+            tokenPayload.es_jefe_carrera = true;
+        }
+        
         const accessToken = jwt.sign(
-            { rut: user.rut, rol_id: user.rol_id, type: 'access' },
+            tokenPayload,
             process.env.JWT_SECRET,
             { expiresIn: '4h' }
         );
 
         // Refresh token con tiempo de vida largo (7 días)
+        const refreshTokenPayload = { 
+            rut: user.rut, 
+            rol_id: user.rol_id, 
+            type: 'refresh'
+        };
+        
+        if (carreraInfo) {
+            refreshTokenPayload.carrera_id = carreraInfo.id;
+            refreshTokenPayload.es_jefe_carrera = true;
+        }
+        
         const refreshToken = jwt.sign(
-            { rut: user.rut, rol_id: user.rol_id, type: 'refresh' },
+            refreshTokenPayload,
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        logAuth('Login exitoso', { rut: user.rut, rol_id: user.rol_id, debe_cambiar_password: user.debe_cambiar_password });
-        return res.json({
+        logAuth('Login exitoso', { rut: user.rut, rol_id: user.rol_id, debe_cambiar_password: user.debe_cambiar_password, carrera_id: carreraInfo?.id });
+        
+        const responseData = {
             ok: true,
             message: "User logged in",
             user: user.email,
@@ -108,8 +139,17 @@ const login = async (req, res) => {
             token: accessToken,
             refreshToken: refreshToken,
             expiresIn: '4h',
-            debe_cambiar_password: user.debe_cambiar_password || false  // Flag para forzar cambio de contraseña
-        });
+            debe_cambiar_password: user.debe_cambiar_password || false
+        };
+        
+        // Agregar info de carrera si es jefe de carrera
+        if (carreraInfo) {
+            responseData.carrera_id = carreraInfo.id;
+            responseData.carrera_nombre = carreraInfo.nombre;
+            responseData.es_jefe_carrera = true;
+        }
+        
+        return res.json(responseData);
 
     } catch (error) {
         logger.error('Error en login', { error: error.message, stack: error.stack });
@@ -183,9 +223,27 @@ const refreshToken = async (req, res) => {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
 
-      // Generar nuevo access token
+      // Si el usuario es admin/jefe de carrera (rol 3), obtener su carrera asignada
+      let carreraInfo = null;
+      if (user.rol_id === 3) {
+        const { obtenerCarreraPorJefeRut } = await import('../models/carrera.model.js');
+        carreraInfo = await obtenerCarreraPorJefeRut(user.rut);
+      }
+
+      // Generar nuevo access token con carrera_id si aplica
+      const tokenPayload = { 
+        rut: user.rut, 
+        rol_id: user.rol_id, 
+        type: 'access'
+      };
+      
+      if (carreraInfo) {
+        tokenPayload.carrera_id = carreraInfo.id;
+        tokenPayload.es_jefe_carrera = true;
+      }
+      
       const newAccessToken = jwt.sign(
-        { rut: user.rut, rol_id: user.rol_id, type: 'access' },
+        tokenPayload,
         process.env.JWT_SECRET,
         { expiresIn: '4h' }
       );

@@ -122,7 +122,11 @@ export class AsignacionesComponent implements OnInit {
   cargarProfesores() {
     this.apiService.getProfesores().subscribe({
       next: (data: any) => {
-        this.profesores = data || [];
+        const usuarios = Array.isArray(data) ? data : [];
+        // Filtrar solo profesores (rol_nombre = 'profesor' o rol_id = 2)
+        this.profesores = usuarios.filter((u: any) => 
+          u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2
+        );
       },
       error: (err) => {
         console.error('Error cargando profesores:', err);

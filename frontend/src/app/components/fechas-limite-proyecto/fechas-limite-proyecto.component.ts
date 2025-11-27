@@ -114,7 +114,6 @@ export class FechasLimiteProyectoComponent implements OnInit {
       'presentacion': 'Presentación',
       'defensa': 'Defensa',
       'revision': 'Revisión',
-      'evaluacion': 'Evaluación',
       'hito': 'Hito',
       'deadline': 'Fecha Límite',
       'otro': 'Otro'

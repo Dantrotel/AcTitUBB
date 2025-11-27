@@ -185,27 +185,49 @@ export const aprobarPropuesta = async (id, proyecto_id) => {
   return result.affectedRows > 0;
 };
 
-export const obtenerPropuestas = async () => {
-  const [rows] = await pool.execute(`
-    SELECT p.*, 
-           ep.nombre AS estado,
-           u.nombre AS nombre_estudiante,
-           GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
-           (SELECT up2.nombre FROM asignaciones_propuestas ap2 
-            INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
-            WHERE ap2.propuesta_id = p.id LIMIT 1) AS nombre_profesor,
-           (SELECT up2.rut FROM asignaciones_propuestas ap2 
-            INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
-            WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
-    FROM propuestas p
-    LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
-    LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
-    LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
-    LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
-    GROUP BY p.id
-    ORDER BY p.fecha_envio DESC
-  `);
-  return rows;
+export const obtenerPropuestas = async (carrera_id = null) => {
+  try {
+    let query = `
+      SELECT p.*, 
+             ep.nombre AS estado,
+             u.nombre AS nombre_estudiante,
+             c.nombre AS nombre_carrera,
+             c.codigo AS codigo_carrera,
+             GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
+             (SELECT up2.nombre FROM asignaciones_propuestas ap2 
+              INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+              WHERE ap2.propuesta_id = p.id LIMIT 1) AS nombre_profesor,
+             (SELECT up2.rut FROM asignaciones_propuestas ap2 
+              INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+              WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
+      FROM propuestas p
+      LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
+      LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+      LEFT JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut
+      LEFT JOIN carreras c ON ec.carrera_id = c.id
+      LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
+      LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
+    `;
+    
+    const params = [];
+    
+    // Si se proporciona carrera_id, filtrar por esa carrera
+    if (carrera_id) {
+      query += ` WHERE ec.carrera_id = ?`;
+      params.push(carrera_id);
+    }
+    
+    query += `
+      GROUP BY p.id, ep.nombre, u.nombre, c.nombre, c.codigo
+      ORDER BY p.fecha_envio DESC
+    `;
+    
+    const [rows] = await pool.execute(query, params);
+    return rows;
+  } catch (error) {
+    console.error('Error en obtenerPropuestas:', error);
+    throw error;
+  }
 };
 
 export const obtenerPropuestaPorId = async (id) => {

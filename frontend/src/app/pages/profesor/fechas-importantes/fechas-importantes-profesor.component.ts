@@ -33,7 +33,7 @@ export class FechasImportantesProfesorComponent implements OnInit {
     { value: 'revision', label: 'Revisión de Documento' },
     { value: 'presentacion', label: 'Presentación' },
     { value: 'reunion', label: 'Reunión de Seguimiento' },
-    { value: 'evaluacion', label: 'Evaluación' },
+
     { value: 'defensa', label: 'Defensa de Tesis' }
   ];
 
@@ -273,7 +273,7 @@ export class FechasImportantesProfesorComponent implements OnInit {
       'revision': 'fas fa-search',
       'presentacion': 'fas fa-presentation',
       'reunion': 'fas fa-users',
-      'evaluacion': 'fas fa-clipboard-check',
+
       'defensa': 'fas fa-graduation-cap'
     };
     return iconos[tipo as keyof typeof iconos] || 'fas fa-calendar-alt';

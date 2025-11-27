@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { isBlacklisted } from './blacklist.js'; // ajusta la ruta según tu proyecto
+import { pool } from '../db/connectionDB.js';
 
 const verifySession = async (req, res, next) => {
   console.log('🔍 verifySession - Método:', req.method, 'URL:', req.url);
@@ -45,24 +46,59 @@ const verifySession = async (req, res, next) => {
     const roleMap = {
       1: 'estudiante',
       2: 'profesor', 
-      3: 'admin'
+      3: 'admin',
+      4: 'superadmin'
     };
     
     req.rut = rut; 
     req.rol_id = rol_id;
     
+    // Obtener información adicional del usuario desde la BD
+    let carrera_administrada_id = null;
+    let nombre = 'Usuario';
+    
+    try {
+      // Obtener nombre del usuario
+      const [userRows] = await pool.execute(
+        'SELECT nombre FROM usuarios WHERE rut = ?',
+        [rut]
+      );
+      
+      if (userRows.length > 0) {
+        nombre = userRows[0].nombre;
+      }
+      
+      // Si es Admin (rol 3), buscar la carrera que administra
+      if (rol_id === 3) {
+        const [carreraRows] = await pool.execute(
+          'SELECT id FROM carreras WHERE jefe_carrera_rut = ? LIMIT 1',
+          [rut]
+        );
+        
+        if (carreraRows.length > 0) {
+          carrera_administrada_id = carreraRows[0].id;
+        }
+      }
+    } catch (dbError) {
+      console.error('⚠️  Error al obtener datos adicionales del usuario:', dbError);
+      // Continuar sin estos datos, no es crítico
+    }
+    
     // Crear objeto user para compatibilidad con controladores
     req.user = {
       rut: rut,
-      role_id: rol_id,
+      rol_id: rol_id,
+      role_id: rol_id, // Mantener ambos por compatibilidad
       rol: roleMap[rol_id] || 'unknown',
-      nombre: 'Usuario' // Placeholder, podrías obtener el nombre real de la BD
+      nombre: nombre,
+      carrera_administrada_id: carrera_administrada_id
     };
     
     console.log('🔐 Usuario autenticado:', {
       rut: req.user.rut,
-      role_id: req.user.role_id,
-      rol: req.user.rol
+      rol_id: req.user.rol_id,
+      rol: req.user.rol,
+      carrera_administrada_id: req.user.carrera_administrada_id
     });
     
     next();
@@ -90,6 +126,7 @@ const verifySession = async (req, res, next) => {
 };
 
 // Middleware genérico con mensajes personalizados según rol esperado
+// Soporta múltiples roles separados por coma: checkRole('3,4') permite Admin o Super Admin
 export const checkRole = (...rolesPermitidos) => {
   return (req, res, next) => {
     if (!req.rol_id) {
@@ -97,18 +134,21 @@ export const checkRole = (...rolesPermitidos) => {
     }
 
     const rolStr = String(req.rol_id);
+    
+    // Expandir roles que contienen comas (ej: '3,4' → ['3', '4'])
+    const rolesExpandidos = rolesPermitidos.flatMap(rol => rol.split(','));
 
-    if (rolesPermitidos.includes(rolStr)) {
+    if (rolesExpandidos.includes(rolStr)) {
       return next();
     }
 
     // Mensajes personalizados por rol esperado
     let mensaje = "Acceso denegado";
 
-    if (rolesPermitidos.includes('1')) mensaje = "jota denied";         // Admin
-    if (rolesPermitidos.includes('2')) mensaje = "holamundo denied";    // Student
-    if (rolesPermitidos.includes('3')) mensaje = "gaga denied";         // Teacher
-    if (rolesPermitidos.includes('4')) mensaje = "taili denied";        // Head of career
+    if (rolesExpandidos.includes('1')) mensaje = "Acceso solo para estudiantes";
+    if (rolesExpandidos.includes('2')) mensaje = "Acceso solo para profesores";
+    if (rolesExpandidos.includes('3')) mensaje = "Acceso solo para administradores";
+    if (rolesExpandidos.includes('4')) mensaje = "Acceso solo para super administrador";
 
     return res.status(403).json({ message: mensaje });
   };

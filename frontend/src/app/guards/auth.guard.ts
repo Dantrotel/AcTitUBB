@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, ActivatedRouteSnapshot, Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +24,20 @@ export class AuthGuard implements CanActivate {
     localStorage.removeItem('userData');
   }
 
-  canActivate(): boolean {
+  private getUserRole(): number | null {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.rol_id;
+    } catch (error) {
+      console.error('Error al extraer rol del token:', error);
+      return null;
+    }
+  }
+
+  canActivate(route: ActivatedRouteSnapshot): boolean {
     const token = localStorage.getItem('token');
     
     if (!token) {
@@ -38,6 +51,24 @@ export class AuthGuard implements CanActivate {
       this.clearAuthData();
       this.router.navigate(['/login']);
       return false;
+    }
+
+    // Verificar roles si están especificados en la ruta
+    const requiredRoles = route.data['requiredRoles'] as number[] | undefined;
+    if (requiredRoles && requiredRoles.length > 0) {
+      const userRole = this.getUserRole();
+      
+      if (userRole === null) {
+        console.warn('No se pudo determinar el rol del usuario');
+        this.router.navigate(['/login']);
+        return false;
+      }
+
+      if (!requiredRoles.includes(userRole)) {
+        console.warn(`Acceso denegado. Rol requerido: ${requiredRoles}, rol actual: ${userRole}`);
+        this.router.navigate(['/acceso-denegado']);
+        return false;
+      }
     }
 
     return true;

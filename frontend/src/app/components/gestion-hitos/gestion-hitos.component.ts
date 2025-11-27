@@ -37,7 +37,6 @@ import {
             <option value="entregable">Entregables</option>
             <option value="revision">Revisiones</option>
             <option value="presentacion">Presentaciones</option>
-            <option value="evaluacion">Evaluaciones</option>
           </select>
         </div>
         <button 

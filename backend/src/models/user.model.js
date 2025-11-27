@@ -53,9 +53,25 @@ const findPersonByRut = async (rut) => {
 
 const findpersonAll = async () => {
     const [rows] = await pool.execute(`
-        SELECT u.rut, u.nombre, u.email, u.confirmado, r.nombre as rol_nombre
+        SELECT 
+            u.rut, 
+            u.nombre, 
+            u.email, 
+            u.confirmado, 
+            u.rol_id,
+            r.nombre as rol_nombre,
+            ec.carrera_id,
+            c.nombre as carrera_nombre,
+            c.codigo as carrera_codigo,
+            pd.departamento_id,
+            d.nombre as departamento_nombre,
+            d.codigo as departamento_codigo
         FROM usuarios u
         LEFT JOIN roles r ON u.rol_id = r.id
+        LEFT JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut AND ec.es_carrera_principal = TRUE
+        LEFT JOIN carreras c ON ec.carrera_id = c.id
+        LEFT JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.es_principal = TRUE AND pd.activo = TRUE
+        LEFT JOIN departamentos d ON pd.departamento_id = d.id
         ORDER BY u.nombre
     `);
     return rows;
@@ -69,7 +85,7 @@ const confirmarCuentaPorEmail = async (email) =>{
 
 const obtenerUsuariosPorRol = async (rolNombre) => {
     const [rows] = await pool.execute(`
-        SELECT u.rut, u.nombre, u.email, u.confirmado
+        SELECT u.rut, u.nombre, u.email, u.rol_id, u.confirmado
         FROM usuarios u
         INNER JOIN roles r ON u.rol_id = r.id
         WHERE r.nombre = ?
@@ -78,11 +94,136 @@ const obtenerUsuariosPorRol = async (rolNombre) => {
     return rows;
 };
 
-const actualizarUsuario = async (rut, { nombre, email }) => {
-    const [result] = await pool.execute(
-        `UPDATE usuarios SET nombre = ?, email = ?, updated_at = NOW() WHERE rut = ?`,
-        [nombre, email, rut]
-    );
+const obtenerUsuariosPorCarrera = async (carreraId) => {
+    console.log(`🔍 obtenerUsuariosPorCarrera - Filtrando por carrera_id: ${carreraId}`);
+    
+    const [rows] = await pool.execute(`
+        SELECT DISTINCT 
+            u.rut, 
+            u.nombre, 
+            u.email, 
+            u.confirmado, 
+            u.rol_id,
+            r.nombre as rol_nombre,
+            ec.carrera_id,
+            c.nombre as carrera_nombre,
+            c.codigo as carrera_codigo,
+            pd.departamento_id,
+            d.nombre as departamento_nombre,
+            d.codigo as departamento_codigo
+        FROM usuarios u
+        LEFT JOIN roles r ON u.rol_id = r.id
+        LEFT JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut AND ec.es_carrera_principal = TRUE
+        LEFT JOIN carreras c ON ec.carrera_id = c.id
+        LEFT JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.es_principal = TRUE AND pd.activo = TRUE
+        LEFT JOIN departamentos d ON pd.departamento_id = d.id
+        WHERE (
+            -- Estudiantes de la carrera
+            (u.rol_id = 1 AND ec.carrera_id = ?)
+            OR
+            -- Profesores cuyos departamentos están asociados a esta carrera (relación directa)
+            (u.rol_id = 2 AND pd.departamento_id IN (
+                SELECT departamento_id 
+                FROM departamentos_carreras 
+                WHERE carrera_id = ? AND activo = TRUE
+            ))
+            OR
+            -- Admins que son jefes de la misma carrera
+            (u.rol_id = 3 AND u.rut IN (SELECT jefe_carrera_rut FROM carreras WHERE id = ?))
+            OR
+            -- Super Admin siempre visible
+            u.rol_id = 4
+        )
+        ORDER BY u.nombre
+    `, [carreraId, carreraId, carreraId]);
+    
+    console.log(`✅ obtenerUsuariosPorCarrera - Encontrados ${rows.length} usuarios`);
+    return rows;
+};
+
+const actualizarUsuario = async (rut, datos) => {
+    const { nombre, email, departamento_id, carrera_id, password } = datos;
+    
+    // Construir la consulta dinámicamente según los campos proporcionados
+    const campos = [];
+    const valores = [];
+    
+    if (nombre !== undefined) {
+        campos.push('nombre = ?');
+        valores.push(nombre);
+    }
+    if (email !== undefined) {
+        campos.push('email = ?');
+        valores.push(email);
+    }
+    if (password !== undefined) {
+        campos.push('password = ?');
+        valores.push(password);
+    }
+    
+    // Siempre actualizar updated_at
+    campos.push('updated_at = NOW()');
+    
+    // Agregar rut al final para el WHERE
+    valores.push(rut);
+    
+    const query = `UPDATE usuarios SET ${campos.join(', ')} WHERE rut = ?`;
+    const [result] = await pool.execute(query, valores);
+    
+    // Actualizar carrera si es estudiante (tabla estudiantes_carreras)
+    if (carrera_id !== undefined) {
+        // Primero verificar si ya existe una relación
+        const [existing] = await pool.execute(
+            'SELECT id FROM estudiantes_carreras WHERE estudiante_rut = ? AND es_carrera_principal = TRUE',
+            [rut]
+        );
+        
+        if (existing.length > 0) {
+            // Actualizar la carrera existente
+            await pool.execute(
+                'UPDATE estudiantes_carreras SET carrera_id = ?, updated_at = NOW() WHERE estudiante_rut = ? AND es_carrera_principal = TRUE',
+                [carrera_id, rut]
+            );
+        } else if (carrera_id !== null) {
+            // Crear nueva relación
+            await pool.execute(
+                'INSERT INTO estudiantes_carreras (estudiante_rut, carrera_id, ano_ingreso, fecha_ingreso, es_carrera_principal) VALUES (?, ?, YEAR(NOW()), NOW(), TRUE)',
+                [rut, carrera_id]
+            );
+        }
+    }
+    
+    // Actualizar departamento si es profesor (tabla profesores_departamentos)
+    if (departamento_id !== undefined) {
+        // Primero desactivar todos los departamentos actuales
+        await pool.execute(
+            'UPDATE profesores_departamentos SET activo = FALSE WHERE profesor_rut = ?',
+            [rut]
+        );
+        
+        if (departamento_id !== null) {
+            // Verificar si ya existe la relación
+            const [existing] = await pool.execute(
+                'SELECT id FROM profesores_departamentos WHERE profesor_rut = ? AND departamento_id = ?',
+                [rut, departamento_id]
+            );
+            
+            if (existing.length > 0) {
+                // Reactivar la relación existente
+                await pool.execute(
+                    'UPDATE profesores_departamentos SET activo = TRUE, es_principal = TRUE WHERE profesor_rut = ? AND departamento_id = ?',
+                    [rut, departamento_id]
+                );
+            } else {
+                // Crear nueva relación
+                await pool.execute(
+                    'INSERT INTO profesores_departamentos (profesor_rut, departamento_id, es_principal, activo, fecha_ingreso) VALUES (?, ?, TRUE, TRUE, NOW())',
+                    [rut, departamento_id]
+                );
+            }
+        }
+    }
+    
     return result.affectedRows > 0;
 };
 
@@ -178,6 +319,7 @@ export const UserModel = {
     findpersonAll,
     confirmarCuentaPorEmail,
     obtenerUsuariosPorRol,
+    obtenerUsuariosPorCarrera,
     actualizarUsuario,
     eliminarUsuario,
     cambiarEstadoUsuario,
