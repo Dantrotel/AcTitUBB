@@ -9,19 +9,27 @@ import * as AdminModel from '../models/admin.model.js';
 // ===== GESTIÓN DE USUARIOS =====
 export const obtenerTodosLosUsuarios = async (req, res) => {
   try {
-    const { rol_id, carrera_administrada_id } = req.user || {};
+    const { rol_id, carreras_administradas } = req.user || {};
     
     console.log('📋 Obteniendo usuarios - Usuario:', {
       rut: req.user?.rut,
       rol_id: rol_id,
-      carrera_administrada_id: carrera_administrada_id
+      carreras_administradas: carreras_administradas
     });
     
-    // Si es Admin de Carrera (rol 3), filtrar usuarios por su carrera
-    if (rol_id === 3 && carrera_administrada_id) {
-      console.log(`🔍 Admin de Carrera - Filtrando por carrera_id: ${carrera_administrada_id}`);
-      const usuarios = await UserModel.obtenerUsuariosPorCarrera(carrera_administrada_id);
-      console.log(`✅ Usuarios filtrados: ${usuarios.length}`);
+    // Si es Admin de Carrera (rol 3), filtrar usuarios por TODAS sus carreras
+    // Solo mostrar estudiantes (rol 1) y profesores (rol 2), excluir admins (rol 3) y super admins (rol 4)
+    if (rol_id === 3 && carreras_administradas && carreras_administradas.length > 0) {
+      console.log(`🔍 Admin de Carrera - Filtrando por carreras: ${carreras_administradas.join(', ')}`);
+      const usuarios = await UserModel.obtenerUsuariosPorCarreras(carreras_administradas);
+      console.log(`✅ Usuarios filtrados (solo estudiantes y profesores): ${usuarios.length}`);
+      
+      // Verificar que no haya admins o super admins en los resultados
+      const adminsEncontrados = usuarios.filter(u => u.rol_id === 3 || u.rol_id === 4);
+      if (adminsEncontrados.length > 0) {
+        console.warn(`⚠️ ADVERTENCIA: Se encontraron ${adminsEncontrados.length} admins/super admins en los resultados:`, adminsEncontrados.map(u => ({ rut: u.rut, nombre: u.nombre, rol_id: u.rol_id })));
+      }
+      
       return res.json(usuarios);
     }
     

@@ -2,11 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
-import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AlertasFechasComponent],
+  imports: [CommonModule],
   selector: 'home-admin',
   templateUrl: './home-admin.html',
   styleUrls: ['./home-admin.scss']
@@ -24,12 +23,12 @@ export class HomeAdminComponent implements OnInit {
     totalEstudiantes: 0,
     totalProfesores: 0
   };
-  loading = true;
 
   // Sistema de notificaciones
   notificaciones: any[] = [];
   notificacionesNoLeidas = 0;
   mostrarPanelNotificaciones = false;
+  showUserMenu = false;
   
   // Dashboard analytics
   dashboard: any = null;
@@ -42,10 +41,9 @@ export class HomeAdminComponent implements OnInit {
 
   ngOnInit() {
     this.obtenerDatosUsuario();
-    this.cargarEstadisticas();
+    this.cargarDashboard(); // Dashboard unificado con todas las estadísticas
     this.cargarNotificaciones();
     this.generarNotificacionesEspeciales();
-    this.cargarDashboard();
   }
   
   async cargarDashboard() {
@@ -82,27 +80,28 @@ export class HomeAdminComponent implements OnInit {
     }
   }
 
-  private cargarEstadisticas(): void {
-    this.loading = true;
-    
-    this.apiService.getEstadisticas().subscribe({
-      next: (data: any) => {
-        this.estadisticas = {
-          totalPropuestas: data.propuestas.total_propuestas || 0,
-          propuestasPendientes: data.propuestas.propuestas_pendientes || 0,
-          propuestasEnRevision: data.propuestas.propuestas_en_revision || 0,
-          propuestasAprobadas: data.propuestas.propuestas_aprobadas || 0,
-          totalEstudiantes: data.usuarios.total_estudiantes || 0,
-          totalProfesores: data.usuarios.total_profesores || 0
-        };
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar estadísticas:', error);
-        this.loading = false;
-      }
-    });
-  }
+  // DEPRECATED: Ahora se usa el dashboard unificado
+  // private cargarEstadisticas(): void {
+  //   this.loading = true;
+  //   
+  //   this.apiService.getEstadisticas().subscribe({
+  //     next: (data: any) => {
+  //       this.estadisticas = {
+  //         totalPropuestas: data.propuestas.total_propuestas || 0,
+  //         propuestasPendientes: data.propuestas.propuestas_pendientes || 0,
+  //         propuestasEnRevision: data.propuestas.propuestas_en_revision || 0,
+  //         propuestasAprobadas: data.propuestas.propuestas_aprobadas || 0,
+  //         totalEstudiantes: data.usuarios.total_estudiantes || 0,
+  //         totalProfesores: data.usuarios.total_profesores || 0
+  //       };
+  //       this.loading = false;
+  //     },
+  //     error: (error) => {
+  //       console.error('Error al cargar estadísticas:', error);
+  //       this.loading = false;
+  //     }
+  //   });
+  // }
 
   // Navegación a diferentes secciones
   irAGestionPropuestas(): void {
@@ -195,7 +194,7 @@ export class HomeAdminComponent implements OnInit {
         mensaje: 'Recuerda revisar los reportes mensuales y actualizar estadísticas',
         fecha: new Date(),
         leida: false,
-        accion: () => this.cargarEstadisticas()
+        accion: () => this.cargarDashboard()
       });
     }
 
@@ -216,6 +215,16 @@ export class HomeAdminComponent implements OnInit {
 
   togglePanelNotificaciones(): void {
     this.mostrarPanelNotificaciones = !this.mostrarPanelNotificaciones;
+    if (this.mostrarPanelNotificaciones) {
+      this.showUserMenu = false;
+    }
+  }
+
+  toggleUserMenu(): void {
+    this.showUserMenu = !this.showUserMenu;
+    if (this.showUserMenu) {
+      this.mostrarPanelNotificaciones = false;
+    }
   }
 
   marcarComoLeida(notificacion: any): void {

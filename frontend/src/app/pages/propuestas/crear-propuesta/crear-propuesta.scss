@@ -1,13 +1,19 @@
-// Variables de colores UBB
+// Variables de colores UBB (unificadas)
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
-$accent-color: #00a8ff;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
 $success-color: #28a745;
 $warning-color: #ffc107;
-$danger-color: #dc3545;
-$light-color: #f8f9fa;
-$dark-color: #343a40;
-$white-color: #ffffff;
+$accent-color: #00a8ff;
 
 // Gradientes UBB
 $primary-gradient: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);

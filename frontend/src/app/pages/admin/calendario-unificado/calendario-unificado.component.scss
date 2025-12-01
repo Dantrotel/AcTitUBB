@@ -1,16 +1,25 @@
 @use "sass:color";
 
-// ===== COLORES INSTITUCIONALES UBB =====
+// ===== COLORES INSTITUCIONALES UBB (UNIFICADOS) =====
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
-$accent-color: #ff6b35;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
 $success-color: #28a745;
 $warning-color: #ffc107;
-$danger-color: #dc3545;
+$accent-color: #00a8ff;
 $info-color: #17a2b8;
-$light-gray: #f8f9fa;
-$dark-gray: #343a40;
-$border-color: #e9ecef;
+$light-gray: $light-color;
+$dark-gray: $dark-color;
+$border-color: $gray-color;
 $text-muted: #6c757d;
 
 // ===== CONTENEDOR PRINCIPAL =====
@@ -1253,6 +1262,422 @@ $text-muted: #6c757d;
   }
 }
 
+// ===== SECCIÓN DE TODAS LAS FECHAS DE PROPUESTAS =====
+.todas-fechas-propuestas-section {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .section-subtitle {
+    font-size: 1.3rem;
+    color: $dark-gray;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    i {
+      color: $primary-color;
+    }
+  }
+
+  .empty-message {
+    text-align: center;
+    padding: 3rem;
+    color: $text-muted;
+
+    i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: $border-color;
+    }
+
+    p {
+      margin: 0.5rem 0;
+    }
+
+    .btn-secondary {
+      margin-top: 1rem;
+    }
+  }
+}
+
+.fechas-propuestas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.fecha-propuesta-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 4px solid $primary-color;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .fecha-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    .fecha-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .fecha-info {
+      flex: 1;
+
+      h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        color: $dark-gray;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: $text-muted;
+      }
+    }
+
+    .fecha-estado-badge {
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+
+      &.badge-activo {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      &.badge-vencido {
+        background: #e5e7eb;
+        color: #4b5563;
+      }
+
+      &.badge-cerrado {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+    }
+  }
+
+  .fecha-detalles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .detalle-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+
+      i {
+        width: 20px;
+        color: $primary-color;
+      }
+
+      .text-success {
+        color: $success-color;
+        font-weight: 600;
+      }
+
+      .text-warning {
+        color: $warning-color;
+        font-weight: 600;
+      }
+
+      .text-danger {
+        color: $danger-color;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// ===== BOTONES DE ACCIÓN EN TARJETAS DE PROPUESTAS =====
+.fecha-acciones {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border-color;
+
+  .btn-sm {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 0.9rem;
+    }
+
+    &.btn-secondary {
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 75, 141, 0.4);
+      }
+    }
+
+    &.btn-danger {
+      background: linear-gradient(135deg, $danger-color 0%, color.adjust($danger-color, $lightness: -10%) 100%);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+}
+
+// ===== ESTILOS ADICIONALES PARA MODALES =====
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+
+  &.modal-small {
+    max-width: 450px;
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &.modal-header-danger {
+      background: linear-gradient(135deg, $danger-color 0%, color.adjust($danger-color, $lightness: -10%) 100%);
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 2rem;
+
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        i {
+          color: $primary-color;
+        }
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid $border-color;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.1);
+        }
+      }
+
+      textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        font-weight: 500;
+
+        input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+        }
+      }
+    }
+
+    .fecha-info-eliminar {
+      background: $light-gray;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      text-align: center;
+
+      strong {
+        display: block;
+        font-size: 1.1rem;
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+      }
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .warning-text {
+      color: $danger-color;
+      font-weight: 500;
+    }
+  }
+
+  .modal-actions {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid $border-color;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &.btn-secondary {
+        background: #6c757d;
+        color: white;
+
+        &:hover {
+          background: #5a6268;
+          transform: translateY(-2px);
+        }
+      }
+
+      &.btn-primary {
+        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+        color: white;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 75, 141, 0.4);
+        }
+      }
+
+      &.btn-danger {
+        background: linear-gradient(135deg, $danger-color 0%, color.adjust($danger-color, $lightness: -10%) 100%);
+        color: white;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 // ===== RESPONSIVE =====
 @media (max-width: 768px) {
   .navbar {
@@ -1330,6 +1755,35 @@ $text-muted: #6c757d;
 
     .modal-actions {
       flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .fechas-propuestas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fecha-acciones {
+    flex-direction: column;
+
+    .btn-sm {
+      width: 100%;
+    }
+  }
+
+  .modal-container {
+    width: 95%;
+    max-height: 95vh;
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-actions {
+      flex-direction: column;
 
       button {
         width: 100%;

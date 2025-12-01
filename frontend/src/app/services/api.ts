@@ -1215,6 +1215,11 @@ export class ApiService {
     return this.http.get(url, { headers: this.getHeaders() });
   }
 
+  // Método público para obtener departamentos sin autenticación (para registro)
+  getDepartamentosPublicos() {
+    return this.http.get(`${this.baseUrl}/estructura/departamentos/public`);
+  }
+
   getDepartamentoById(id: number) {
     return this.http.get(`${this.baseUrl}/estructura/departamentos/${id}`, {
       headers: this.getHeaders()
@@ -1273,6 +1278,11 @@ export class ApiService {
     if (params.length > 0) url += `?${params.join('&')}`;
     
     return this.http.get(url, { headers: this.getHeaders() });
+  }
+
+  // Método público para obtener carreras sin autenticación (para registro)
+  getCarrerasPublicas() {
+    return this.http.get(`${this.baseUrl}/estructura/carreras/public`);
   }
 
   getCarreraById(id: number) {

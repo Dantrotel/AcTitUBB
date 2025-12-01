@@ -296,6 +296,32 @@ const obtenerPropuestasPendientes = async (req, res) => {
     }
 };
 
+// ========== MÉTODOS PÚBLICOS (SIN AUTENTICACIÓN) PARA REGISTRO ==========
+
+// Obtener carreras activas para registro público
+const obtenerCarrerasPublicas = async (req, res) => {
+    try {
+        // Solo devolver carreras activas
+        const carreras = await CarreraModel.obtenerCarreras(true);
+        res.json({ success: true, carreras });
+    } catch (error) {
+        console.error('Error al obtener carreras públicas:', error);
+        res.status(500).json({ success: false, message: 'Error al obtener carreras' });
+    }
+};
+
+// Obtener departamentos activos para registro público
+const obtenerDepartamentosPublicos = async (req, res) => {
+    try {
+        // Solo devolver departamentos activos
+        const departamentos = await DepartamentoModel.obtenerDepartamentos(true);
+        res.json({ success: true, departamentos });
+    } catch (error) {
+        console.error('Error al obtener departamentos públicos:', error);
+        res.status(500).json({ success: false, message: 'Error al obtener departamentos' });
+    }
+};
+
 export {
     // Facultades
     obtenerFacultades,
@@ -323,5 +349,9 @@ export {
     asignarEstudianteCarrera,
     obtenerEstudiantesCarrera,
     obtenerEstadisticasCarrera,
-    obtenerPropuestasPendientes
+    obtenerPropuestasPendientes,
+    
+    // Métodos públicos (sin autenticación) para registro
+    obtenerCarrerasPublicas,
+    obtenerDepartamentosPublicos
 };
