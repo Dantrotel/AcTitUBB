@@ -174,6 +174,92 @@
         </div>
       </div>
 
+      <!-- Todas las Fechas Importantes -->
+      <div class="fechas-importantes-section">
+        <h3 class="section-title">
+          <i class="fas fa-calendar-alt"></i>
+          Todos los Períodos Publicados
+        </h3>
+        
+        <!-- Mensaje si no hay fechas -->
+        <div class="empty-state" *ngIf="todasLasFechas.length === 0">
+          <i class="fas fa-calendar-times"></i>
+          <p>No hay períodos publicados actualmente.</p>
+          <p class="text-muted">Crea fechas globales desde el Calendario Global para que aparezcan aquí.</p>
+          <button class="btn btn-primary" (click)="irACalendario()">
+            <i class="fas fa-calendar-plus"></i>
+            Ir al Calendario Global
+          </button>
+        </div>
+        
+        <div class="fechas-grid" *ngIf="todasLasFechas.length > 0">
+          <div *ngFor="let fecha of todasLasFechas" 
+               class="fecha-card"
+               [ngClass]="'estado-' + getEstadoFecha(fecha.fecha_limite, fecha.habilitada)">
+            <div class="fecha-header">
+              <div class="fecha-icon">
+                <i [class]="getTipoFechaIcon(fecha.tipo_fecha)"></i>
+              </div>
+              <div class="fecha-info">
+                <h4>{{ fecha.titulo }}</h4>
+                <span class="fecha-tipo">{{ getTipoFechaLabel(fecha.tipo_fecha) }}</span>
+              </div>
+              <div class="fecha-estado-badge" [ngClass]="'badge-' + getEstadoFecha(fecha.fecha_limite, fecha.habilitada)">
+                <span *ngIf="getEstadoFecha(fecha.fecha_limite, fecha.habilitada) === 'activo'">Activo</span>
+                <span *ngIf="getEstadoFecha(fecha.fecha_limite, fecha.habilitada) === 'proximo'">Próximo</span>
+                <span *ngIf="getEstadoFecha(fecha.fecha_limite, fecha.habilitada) === 'urgente'">¡Urgente!</span>
+                <span *ngIf="getEstadoFecha(fecha.fecha_limite, fecha.habilitada) === 'hoy'">¡HOY!</span>
+                <span *ngIf="getEstadoFecha(fecha.fecha_limite, fecha.habilitada) === 'vencido'">Vencido</span>
+                <span *ngIf="getEstadoFecha(fecha.fecha_limite, fecha.habilitada) === 'cerrado'">Cerrado</span>
+              </div>
+            </div>
+            
+            <div class="fecha-body">
+              <p class="fecha-descripcion" *ngIf="fecha.descripcion">{{ fecha.descripcion }}</p>
+              
+              <div class="fecha-detalles">
+                <div class="detalle-item">
+                  <i class="fas fa-calendar-day"></i>
+                  <span><strong>Fecha límite:</strong> {{ formatearFecha(fecha.fecha_limite) }}</span>
+                </div>
+                
+                <div class="detalle-item">
+                  <i class="fas fa-hourglass-half"></i>
+                  <span><strong>Días restantes:</strong> 
+                    <span [ngClass]="{
+                      'text-success': calcularDiasRestantes(fecha.fecha_limite) > 7,
+                      'text-warning': calcularDiasRestantes(fecha.fecha_limite) > 0 && calcularDiasRestantes(fecha.fecha_limite) <= 7,
+                      'text-danger': calcularDiasRestantes(fecha.fecha_limite) <= 0
+                    }">
+                      {{ calcularDiasRestantes(fecha.fecha_limite) > 0 ? calcularDiasRestantes(fecha.fecha_limite) + ' días' : 
+                         calcularDiasRestantes(fecha.fecha_limite) === 0 ? 'Vence HOY' : 
+                         'Vencido hace ' + Math.abs(calcularDiasRestantes(fecha.fecha_limite)) + ' días' }}
+                    </span>
+                  </span>
+                </div>
+                
+                <div class="detalle-item">
+                  <i [class]="fecha.habilitada ? 'fas fa-check-circle text-success' : 'fas fa-times-circle text-danger'"></i>
+                  <span><strong>Estado:</strong> {{ fecha.habilitada ? 'Habilitado' : 'Deshabilitado' }}</span>
+                </div>
+              </div>
+              
+              <!-- Botones de Acción -->
+              <div class="fecha-acciones">
+                <button class="btn btn-secondary btn-sm" (click)="abrirModalEditar(fecha)" title="Editar fecha">
+                  <i class="fas fa-edit"></i>
+                  Editar
+                </button>
+                <button class="btn btn-danger btn-sm" (click)="confirmarEliminar(fecha)" title="Eliminar fecha">
+                  <i class="fas fa-trash-alt"></i>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Instrucciones -->
       <div class="instrucciones-card">
         <h3>
@@ -209,6 +295,123 @@
           <p>📅 Mantén fechas claras y comunícalas en el calendario institucional.</p>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Edición -->
+<div class="modal-overlay" *ngIf="mostrarModalEditar" (click)="cerrarModalEditar()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-edit"></i>
+        Editar Fecha de Entrega
+      </h3>
+      <button class="btn-close" (click)="cerrarModalEditar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="edit-titulo">
+          <i class="fas fa-heading"></i>
+          Título *
+        </label>
+        <input 
+          type="text" 
+          id="edit-titulo"
+          class="form-control"
+          [(ngModel)]="fechaEditar.titulo"
+          placeholder="Ej: Entrega de Propuestas Semestre 1"
+          required>
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-descripcion">
+          <i class="fas fa-align-left"></i>
+          Descripción
+        </label>
+        <textarea 
+          id="edit-descripcion"
+          class="form-control"
+          [(ngModel)]="fechaEditar.descripcion"
+          rows="3"
+          placeholder="Descripción opcional de la fecha"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="edit-fecha">
+          <i class="fas fa-calendar-day"></i>
+          Fecha Límite *
+        </label>
+        <input 
+          type="date" 
+          id="edit-fecha"
+          class="form-control"
+          [(ngModel)]="fechaEditar.fecha_limite"
+          required>
+      </div>
+      
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="fechaEditar.habilitada">
+          <span>Fecha habilitada (los estudiantes pueden crear propuestas)</span>
+        </label>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModalEditar()" [disabled]="guardando">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+      <button class="btn btn-primary" (click)="guardarEdicion()" [disabled]="guardando || !fechaEditar.titulo || !fechaEditar.fecha_limite">
+        <i [class]="guardando ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
+        {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal-overlay" *ngIf="mostrarModalEliminar" (click)="cancelarEliminar()">
+  <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header modal-header-danger">
+      <h3>
+        <i class="fas fa-exclamation-triangle"></i>
+        Confirmar Eliminación
+      </h3>
+      <button class="btn-close" (click)="cancelarEliminar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="text-center">
+        ¿Estás seguro de que deseas eliminar esta fecha?
+      </p>
+      <div class="fecha-eliminar-info">
+        <strong>{{ fechaEliminar?.titulo }}</strong>
+        <p>Fecha: {{ formatearFecha(fechaEliminar?.fecha_limite) }}</p>
+      </div>
+      <p class="text-danger text-center">
+        <i class="fas fa-exclamation-circle"></i>
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancelarEliminar()" [disabled]="eliminando">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+      <button class="btn btn-danger" (click)="eliminarFecha()" [disabled]="eliminando">
+        <i [class]="eliminando ? 'fas fa-spinner fa-spin' : 'fas fa-trash-alt'"></i>
+        {{ eliminando ? 'Eliminando...' : 'Eliminar' }}
+      </button>
     </div>
   </div>
 </div>

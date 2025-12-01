@@ -10,6 +10,48 @@ const router = Router();
 // ===== RUTAS PARA FECHAS IMPORTANTES =====
 
 /**
+ * GET /fechas-importantes/globales
+ * Obtener todas las fechas importantes globales relacionadas con entregas
+ */
+router.get('/globales', verifySession, async (req, res) => {
+    try {
+        console.log('🔍 Consultando TODAS las fechas globales (sin filtros)...');
+        const [fechas] = await pool.execute(
+            `SELECT 
+                id,
+                titulo,
+                descripcion,
+                tipo_fecha,
+                fecha as fecha_limite,
+                habilitada,
+                permite_extension,
+                requiere_entrega,
+                es_global,
+                creado_por_rut as creado_por,
+                created_at,
+                updated_at
+             FROM fechas 
+             WHERE es_global = TRUE 
+             ORDER BY fecha ASC`
+        );
+        
+        console.log(`✅ Encontradas ${fechas.length} fechas globales (TODAS, sin filtros)`);
+        console.log('📋 Fechas:', fechas);
+        
+        res.json({
+            success: true,
+            fechas: fechas
+        });
+    } catch (error) {
+        console.error('❌ Error al obtener fechas globales:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+/**
  * GET /fechas-importantes/admin/todas
  * Obtener todas las fechas importantes de todos los proyectos (solo admin)
  */
@@ -128,36 +170,65 @@ router.post('/', verifySession, async (req, res) => {
 router.put('/:fecha_id', verifySession, async (req, res) => {
     try {
         const { fecha_id } = req.params;
-        const { titulo, descripcion, fecha_limite, tipo_fecha } = req.body;
+        const { titulo, descripcion, fecha_limite, tipo_fecha, habilitada } = req.body;
+        
+        console.log(`📝 Actualizando fecha importante ID: ${fecha_id}`);
+        console.log('📋 Datos recibidos:', { titulo, descripcion, fecha_limite, tipo_fecha, habilitada });
         
         // Verificar que la fecha existe
         const fecha = await fechasImportantesModel.obtenerFechaImportantePorId(parseInt(fecha_id));
         if (!fecha) {
+            console.log(`❌ Fecha ID ${fecha_id} no encontrada`);
             return res.status(404).json({
                 success: false,
                 message: 'Fecha importante no encontrada'
             });
         }
         
+        console.log('✅ Fecha encontrada:', fecha);
+        
         // Verificar permisos
-        if (req.user.role_id !== 3) { // No es admin
-            const puedeVer = await ProjectService.puedeVerProyecto(fecha.proyecto_id, req.user.rut, req.user.role_id);
-            if (!puedeVer) {
+        // Si es una fecha global (es_global=true y proyecto_id=null), solo admin (rol 3) o super admin (rol 4) pueden modificarla
+        if (fecha.es_global && !fecha.proyecto_id) {
+            if (req.user.rol_id !== 3 && req.user.rol_id !== 4) {
+                console.log(`❌ Usuario con rol ${req.user.rol_id} no tiene permisos para modificar fechas globales`);
                 return res.status(403).json({
                     success: false,
-                    message: 'No tienes permisos para modificar fechas de este proyecto'
+                    message: 'Solo los administradores pueden modificar fechas globales'
                 });
+            }
+        } else if (fecha.proyecto_id) {
+            // Si es una fecha de proyecto, verificar permisos del proyecto
+            if (req.user.rol_id !== 3 && req.user.rol_id !== 4) {
+                const puedeVer = await ProjectService.puedeVerProyecto(fecha.proyecto_id, req.user.rut, req.user.rol_id);
+                if (!puedeVer) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permisos para modificar fechas de este proyecto'
+                    });
+                }
             }
         }
         
-        const actualizado = await fechasImportantesModel.actualizarFechaImportante(parseInt(fecha_id), {
+        // Preparar datos para actualizar
+        const datosActualizar = {
             titulo,
             descripcion,
             fecha_limite,
             tipo_fecha
-        });
+        };
+        
+        // Si se proporciona el campo habilitada, incluirlo
+        if (habilitada !== undefined) {
+            datosActualizar.habilitada = habilitada;
+        }
+        
+        console.log('💾 Actualizando con datos:', datosActualizar);
+        
+        const actualizado = await fechasImportantesModel.actualizarFechaImportante(parseInt(fecha_id), datosActualizar);
         
         if (!actualizado) {
+            console.log('❌ No se pudo actualizar la fecha');
             return res.status(400).json({
                 success: false,
                 message: 'No se pudo actualizar la fecha importante'
@@ -165,6 +236,7 @@ router.put('/:fecha_id', verifySession, async (req, res) => {
         }
         
         const fechaActualizada = await fechasImportantesModel.obtenerFechaImportantePorId(parseInt(fecha_id));
+        console.log('✅ Fecha actualizada exitosamente:', fechaActualizada);
         
         res.json({
             success: true,
@@ -172,10 +244,11 @@ router.put('/:fecha_id', verifySession, async (req, res) => {
             data: fechaActualizada
         });
     } catch (error) {
-        console.error('Error al actualizar fecha importante:', error);
+        console.error('❌ Error al actualizar fecha importante:', error);
         res.status(500).json({
             success: false,
-            message: 'Error interno del servidor'
+            message: 'Error interno del servidor',
+            error: error.message
         });
     }
 });
@@ -452,26 +525,27 @@ router.get('/admin/calendario-general', verifySession, async (req, res) => {
         const [fechasCompletas] = await pool.execute(`
             SELECT 
                 fi.*,
+                fi.fecha as fecha_limite,
                 p.titulo as titulo_proyecto,
                 p.estudiante_rut,
                 u.nombre as nombre_estudiante,
                 u.email as email_estudiante,
                 CASE 
-                    WHEN fi.fecha_limite < CURDATE() AND fi.completada = FALSE THEN 'vencida'
-                    WHEN fi.fecha_limite = CURDATE() AND fi.completada = FALSE THEN 'hoy'
-                    WHEN fi.fecha_limite > CURDATE() AND fi.completada = FALSE THEN 'pendiente'
+                    WHEN fi.fecha < CURDATE() AND fi.completada = FALSE THEN 'vencida'
+                    WHEN fi.fecha = CURDATE() AND fi.completada = FALSE THEN 'hoy'
+                    WHEN fi.fecha > CURDATE() AND fi.completada = FALSE THEN 'pendiente'
                     WHEN fi.completada = TRUE THEN 'completada'
                 END as estado,
-                DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes,
+                DATEDIFF(fi.fecha, CURDATE()) as dias_restantes,
                 GROUP_CONCAT(CONCAT(u_prof.nombre, ' (', rp.nombre, ')') SEPARATOR ', ') as profesores_asignados
-            FROM fechas_importantes fi
+            FROM fechas fi
             INNER JOIN proyectos p ON fi.proyecto_id = p.id
             INNER JOIN usuarios u ON p.estudiante_rut = u.rut
             LEFT JOIN asignaciones_proyectos a ON p.id = a.proyecto_id AND a.activo = TRUE
             LEFT JOIN usuarios u_prof ON a.profesor_rut = u_prof.rut
             LEFT JOIN roles_profesores rp ON a.rol_profesor_id = rp.id
             GROUP BY fi.id
-            ORDER BY fi.fecha_limite ASC
+            ORDER BY fi.fecha ASC
         `);
         
         // Agrupar por tipo de fecha

@@ -63,11 +63,12 @@ export class GestionUsuariosComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Verificar primero si es super admin antes de cargar usuarios
+    this.verificarSuperAdmin();
     this.cargarUsuarios();
     this.cargarRoles();
     this.cargarDepartamentos();
     this.cargarCarreras();
-    this.verificarSuperAdmin();
   }
 
   cargarRoles() {
@@ -103,7 +104,7 @@ export class GestionUsuariosComponent implements OnInit {
       next: (data: any) => {
         // Manejar si la respuesta es un objeto con propiedad 'departamentos' o directamente un array
         if (Array.isArray(data)) {
-          this.departamentos = data;
+        this.departamentos = data;
         } else if (data && Array.isArray(data.departamentos)) {
           this.departamentos = data.departamentos;
         } else {
@@ -121,7 +122,7 @@ export class GestionUsuariosComponent implements OnInit {
       next: (data: any) => {
         // Manejar si la respuesta es un objeto con propiedad 'carreras' o directamente un array
         if (Array.isArray(data)) {
-          this.carreras = data;
+        this.carreras = data;
         } else if (data && Array.isArray(data.carreras)) {
           this.carreras = data.carreras;
         } else {
@@ -159,9 +160,19 @@ export class GestionUsuariosComponent implements OnInit {
 
     this.apiService.getUsuarios().subscribe({
       next: (data: any) => {
-        this.usuarios = data;
+        // Si no es super admin, filtrar para excluir admins (rol 3) y super admins (rol 4)
+        if (!this.esSuperAdmin) {
+          this.usuarios = (data || []).filter((u: any) => {
+            const rolId = parseInt(u.rol_id || u.rol || '0');
+            // Solo incluir estudiantes (1) y profesores (2)
+            return rolId === 1 || rolId === 2;
+          });
+          console.log('Usuarios cargados (filtrados - solo estudiantes y profesores):', this.usuarios.length);
+        } else {
+          this.usuarios = data;
+          console.log('Usuarios cargados (Super Admin - todos):', this.usuarios.length);
+        }
         this.loading = false;
-        console.log('Usuarios cargados:', data);
       },
       error: (err) => {
         this.error = 'Error al cargar los usuarios';
@@ -282,13 +293,13 @@ export class GestionUsuariosComponent implements OnInit {
   // ===== MODAL EDITAR USUARIO =====
   abrirModalEditar(usuario: any) {
     this.usuarioEditar = { ...usuario };
-    // Preselección de departamento/carrera
-    if (this.usuarioEditar.rol_id === 2) {
-      this.usuarioEditar.departamento_id = this.usuarioEditar.departamento_id || null;
-    }
-    if (this.usuarioEditar.rol_id === 1) {
-      this.usuarioEditar.carrera_id = this.usuarioEditar.carrera_id || null;
-    }
+      // Preselección de departamento/carrera
+      if (this.usuarioEditar.rol_id === 2) {
+        this.usuarioEditar.departamento_id = this.usuarioEditar.departamento_id || null;
+      }
+      if (this.usuarioEditar.rol_id === 1) {
+        this.usuarioEditar.carrera_id = this.usuarioEditar.carrera_id || null;
+      }
     
     // Debug logs
     console.log('🔍 Modal Editar - Usuario:', this.usuarioEditar);
@@ -318,17 +329,17 @@ export class GestionUsuariosComponent implements OnInit {
     // Solo Super Admin puede cambiar rol, departamento y carrera
     if (this.esSuperAdmin) {
       // Agregar departamento si es profesor (rol 2)
-      if (this.usuarioEditar.rol_id === 2) {
-        payload.departamento_id = this.usuarioEditar.departamento_id;
-      }
+    if (this.usuarioEditar.rol_id === 2) {
+      payload.departamento_id = this.usuarioEditar.departamento_id;
+    }
       // Agregar carrera si es estudiante (rol 1)
-      if (this.usuarioEditar.rol_id === 1) {
-        payload.carrera_id = this.usuarioEditar.carrera_id;
-      }
+    if (this.usuarioEditar.rol_id === 1) {
+      payload.carrera_id = this.usuarioEditar.carrera_id;
+    }
       // Cambiar password si se proporcionó
       if (this.usuarioEditar.password) {
-        payload.password = this.usuarioEditar.password;
-      }
+      payload.password = this.usuarioEditar.password;
+    }
     }
     
     this.apiService.actualizarUsuario(this.usuarioEditar.rut, payload).subscribe({

@@ -112,12 +112,13 @@ const obtenerUsuariosPorCarrera = async (carreraId) => {
             d.nombre as departamento_nombre,
             d.codigo as departamento_codigo
         FROM usuarios u
-        LEFT JOIN roles r ON u.rol_id = r.id
+        INNER JOIN roles r ON u.rol_id = r.id
         LEFT JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut AND ec.es_carrera_principal = TRUE
         LEFT JOIN carreras c ON ec.carrera_id = c.id
         LEFT JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.es_principal = TRUE AND pd.activo = TRUE
         LEFT JOIN departamentos d ON pd.departamento_id = d.id
-        WHERE (
+        WHERE u.rol_id IN (1, 2)  -- Solo estudiantes (1) y profesores (2)
+        AND (
             -- Estudiantes de la carrera
             (u.rol_id = 1 AND ec.carrera_id = ?)
             OR
@@ -127,17 +128,59 @@ const obtenerUsuariosPorCarrera = async (carreraId) => {
                 FROM departamentos_carreras 
                 WHERE carrera_id = ? AND activo = TRUE
             ))
-            OR
-            -- Admins que son jefes de la misma carrera
-            (u.rol_id = 3 AND u.rut IN (SELECT jefe_carrera_rut FROM carreras WHERE id = ?))
-            OR
-            -- Super Admin siempre visible
-            u.rol_id = 4
         )
         ORDER BY u.nombre
-    `, [carreraId, carreraId, carreraId]);
+    `, [carreraId, carreraId]);
     
     console.log(`✅ obtenerUsuariosPorCarrera - Encontrados ${rows.length} usuarios`);
+    return rows;
+};
+
+const obtenerUsuariosPorCarreras = async (carreraIds) => {
+    console.log(`🔍 obtenerUsuariosPorCarreras - Filtrando por carreras: ${carreraIds.join(', ')}`);
+    
+    if (!carreraIds || carreraIds.length === 0) {
+        return [];
+    }
+    
+    const placeholders = carreraIds.map(() => '?').join(',');
+    
+    const [rows] = await pool.execute(`
+        SELECT DISTINCT 
+            u.rut, 
+            u.nombre, 
+            u.email, 
+            u.confirmado, 
+            u.rol_id,
+            r.nombre as rol_nombre,
+            ec.carrera_id,
+            c.nombre as carrera_nombre,
+            c.codigo as carrera_codigo,
+            pd.departamento_id,
+            d.nombre as departamento_nombre,
+            d.codigo as departamento_codigo
+        FROM usuarios u
+        INNER JOIN roles r ON u.rol_id = r.id
+        LEFT JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut AND ec.es_carrera_principal = TRUE
+        LEFT JOIN carreras c ON ec.carrera_id = c.id
+        LEFT JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.es_principal = TRUE AND pd.activo = TRUE
+        LEFT JOIN departamentos d ON pd.departamento_id = d.id
+        WHERE u.rol_id IN (1, 2)  -- Solo estudiantes (1) y profesores (2)
+        AND (
+            -- Estudiantes de alguna de las carreras
+            (u.rol_id = 1 AND ec.carrera_id IN (${placeholders}))
+            OR
+            -- Profesores cuyos departamentos están asociados a alguna de estas carreras
+            (u.rol_id = 2 AND pd.departamento_id IN (
+                SELECT departamento_id 
+                FROM departamentos_carreras 
+                WHERE carrera_id IN (${placeholders}) AND activo = TRUE
+            ))
+        )
+        ORDER BY u.nombre
+    `, [...carreraIds, ...carreraIds]);
+    
+    console.log(`✅ obtenerUsuariosPorCarreras - Encontrados ${rows.length} usuarios`);
     return rows;
 };
 
@@ -213,7 +256,7 @@ const actualizarUsuario = async (rut, datos) => {
                 await pool.execute(
                     'UPDATE profesores_departamentos SET activo = TRUE, es_principal = TRUE WHERE profesor_rut = ? AND departamento_id = ?',
                     [rut, departamento_id]
-                );
+    );
             } else {
                 // Crear nueva relación
                 await pool.execute(
@@ -328,5 +371,6 @@ export const UserModel = {
     resetearPassword,
     cambiarPasswordPropia,
     obtenerUsuarioCompleto,
-    findUserBasicByEmail
+    findUserBasicByEmail,
+    obtenerUsuariosPorCarreras
 };

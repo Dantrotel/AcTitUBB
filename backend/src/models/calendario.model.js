@@ -1,282 +1,377 @@
 import { pool } from '../db/connectionDB.js';
 
-// ===== FECHAS GLOBALES (ADMIN) =====
+// ============================================
+// MODELO UNIFICADO DE FECHAS
+// ============================================
+// Usa la tabla 'fechas' que reemplaza a fechas_calendario y fechas_importantes
+
+// ===== CREAR FECHAS =====
 
 // Crear una fecha global (solo admin)
 export const crearFechaGlobal = async ({ titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut }) => {
-    // Si es_global está marcado y es tipo entrega_propuesta, crear TAMBIÉN en fechas_importantes
-    if (es_global && tipo_fecha === 'entrega_propuesta') {
-        console.log('📋 Creando fecha de entrega_propuesta en fechas_importantes (para control de período)...');
-        try {
-            const [resultImportante] = await pool.execute(
-                `INSERT INTO fechas_importantes (tipo_fecha, titulo, descripcion, fecha_limite, es_global, proyecto_id, habilitada, permite_extension, creado_por)
-                 VALUES (?, ?, ?, ?, TRUE, NULL, TRUE, TRUE, ?)`,
-                [tipo_fecha, titulo, descripcion, fecha, creado_por_rut]
-            );
-            console.log('✅ Fecha creada en fechas_importantes, ID:', resultImportante.insertId);
-        } catch (error) {
-            console.error('❌ Error al crear en fechas_importantes:', error);
-            throw error; // No continuar si falla la creación principal
-        }
-    }
+    console.log('📋 Creando fecha global en tabla unificada...');
     
-    // Mapear tipo_fecha para fechas_calendario (que tiene diferentes valores de ENUM)
-    let tipoFechaCalendario = tipo_fecha;
-    if (tipo_fecha === 'entrega_propuesta') {
-        tipoFechaCalendario = 'entrega'; // Mapear a un valor válido del ENUM de fechas_calendario
-    }
+    // Determinar valores por defecto según el tipo de fecha
+    const habilitada = tipo_fecha === 'entrega_propuesta' ? true : true;
+    const permite_extension = tipo_fecha === 'entrega_propuesta' ? true : true;
+    const requiere_entrega = ['entrega', 'entrega_propuesta', 'entrega_avance', 'entrega_final'].includes(tipo_fecha);
     
-    // Crear siempre en fechas_calendario (para visualización)
     const [result] = await pool.execute(
-        `INSERT INTO fechas_calendario (titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [titulo, descripcion, fecha, tipoFechaCalendario, es_global || false, creado_por_rut]
+        `INSERT INTO fechas (
+            titulo, descripcion, fecha, tipo_fecha, es_global, 
+            creado_por_rut, habilitada, permite_extension, requiere_entrega,
+            activa
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+        [titulo, descripcion, fecha, tipo_fecha, es_global || false, creado_por_rut, habilitada, permite_extension, requiere_entrega]
     );
+    
+    console.log('✅ Fecha creada en tabla unificada, ID:', result.insertId);
     return result.insertId;
 };
 
-// Obtener todas las fechas globales
-export const obtenerFechasGlobales = async () => {
-    const [rows] = await pool.execute(`
-        SELECT fc.*, 
-               u.nombre AS nombre_creador
-        FROM fechas_calendario fc
-        LEFT JOIN usuarios u ON fc.creado_por_rut = u.rut
-        WHERE fc.es_global = TRUE 
-        AND fc.activa = TRUE
-        ORDER BY fc.fecha ASC
-    `);
-    return rows;
-};
-
-// ===== FECHAS ESPECÍFICAS (PROFESOR) =====
-
-// Crear una fecha específica para un estudiante (profesor)
-export const crearFechaEspecifica = async ({ titulo, descripcion, fecha, tipo_fecha, profesor_rut, estudiante_rut }) => {
+// Crear fecha específica de profesor
+export const crearFechaProfesor = async ({ titulo, descripcion, fecha, tipo_fecha, profesor_rut, estudiante_rut }) => {
     const [result] = await pool.execute(
-        `INSERT INTO fechas_calendario (titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut, profesor_rut, estudiante_rut)
-         VALUES (?, ?, ?, ?, FALSE, ?, ?, ?)`,
+        `INSERT INTO fechas (
+            titulo, descripcion, fecha, tipo_fecha, 
+            es_global, creado_por_rut, profesor_rut, estudiante_rut,
+            activa, habilitada
+        ) VALUES (?, ?, ?, ?, FALSE, ?, ?, ?, TRUE, TRUE)`,
         [titulo, descripcion, fecha, tipo_fecha, profesor_rut, profesor_rut, estudiante_rut]
     );
     return result.insertId;
 };
 
-// Obtener fechas creadas por un profesor específico + fechas globales
-export const obtenerFechasPorProfesor = async (profesor_rut) => {
+// ===== OBTENER FECHAS =====
+
+// Obtener todas las fechas globales
+export const obtenerFechasGlobales = async () => {
     const [rows] = await pool.execute(`
-        SELECT fc.*, 
-               ue.nombre AS nombre_estudiante,
-               ue.email AS email_estudiante,
-               u.nombre AS nombre_creador,
-               CASE 
-                   WHEN fc.es_global = TRUE THEN 'Admin'
-                   ELSE 'Profesor'
-               END AS tipo_creador
-        FROM fechas_calendario fc
-        LEFT JOIN usuarios ue ON fc.estudiante_rut = ue.rut
-        LEFT JOIN usuarios u ON fc.creado_por_rut = u.rut
-        WHERE (fc.profesor_rut = ? OR fc.es_global = TRUE)
-        AND fc.activa = TRUE
-        ORDER BY fc.fecha ASC
-    `, [profesor_rut]);
+        SELECT f.*, 
+               u.nombre AS nombre_creador
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        WHERE f.es_global = TRUE 
+        AND f.activa = TRUE
+        ORDER BY f.fecha ASC
+    `);
     return rows;
 };
 
-// ===== FECHAS PARA ESTUDIANTES =====
-
-// Obtener todas las fechas visibles para un estudiante específico
-export const obtenerFechasParaEstudiante = async (estudiante_rut) => {
-    // Obtener el profesor asignado al estudiante
-    const [asignacionRows] = await pool.execute(`
-        SELECT DISTINCT ap.profesor_rut
-        FROM asignaciones_propuestas ap
-        INNER JOIN propuestas p ON ap.propuesta_id = p.id
-        WHERE p.estudiante_rut = ?
-        AND ap.fecha_asignacion = (
-            SELECT MAX(ap2.fecha_asignacion)
-            FROM asignaciones_propuestas ap2
-            INNER JOIN propuestas p2 ON ap2.propuesta_id = p2.id
-            WHERE p2.estudiante_rut = ?
-        )
-        LIMIT 1
-    `, [estudiante_rut, estudiante_rut]);
-    
-    const profesor_rut = asignacionRows.length > 0 ? asignacionRows[0].profesor_rut : null;
-    
-    // Consulta principal: fechas globales + fechas específicas del profesor asignado
-    const query = `
-        SELECT fc.*, 
+// Obtener fechas próximas (globales visibles para todos)
+export const obtenerFechasProximas = async (limite = 10) => {
+    const [rows] = await pool.execute(`
+        SELECT f.*, 
                u.nombre AS nombre_creador,
-               CASE 
-                   WHEN fc.es_global = TRUE THEN 'Admin'
-                   ELSE 'Profesor'
-               END AS tipo_creador
-        FROM fechas_calendario fc
-        LEFT JOIN usuarios u ON fc.creado_por_rut = u.rut
-        WHERE fc.activa = TRUE
-        AND (
-            fc.es_global = TRUE 
-            OR (fc.profesor_rut = ? AND fc.estudiante_rut = ?)
-        )
-        ORDER BY fc.fecha ASC
-    `;
-    
-    const [rows] = await pool.execute(query, [profesor_rut, estudiante_rut]);
+               DATEDIFF(f.fecha, CURDATE()) AS dias_restantes
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        WHERE f.es_global = TRUE 
+        AND f.activa = TRUE
+        AND f.fecha >= CURDATE()
+        ORDER BY f.fecha ASC
+        LIMIT ?
+    `, [limite]);
     return rows;
 };
 
-// ===== OPERACIONES GENERALES =====
-
-// Obtener fecha por ID
+// Obtener fecha por ID (busca en la tabla unificada)
 export const obtenerFechaPorId = async (fecha_id) => {
+    console.log(`🔍 Buscando fecha con ID: ${fecha_id}`);
+
     const [rows] = await pool.execute(`
-        SELECT fc.*, 
+        SELECT f.*, 
                u.nombre AS nombre_creador,
                ue.nombre AS nombre_estudiante,
                up.nombre AS nombre_profesor
-        FROM fechas_calendario fc
-        LEFT JOIN usuarios u ON fc.creado_por_rut = u.rut
-        LEFT JOIN usuarios ue ON fc.estudiante_rut = ue.rut
-        LEFT JOIN usuarios up ON fc.profesor_rut = up.rut
-        WHERE fc.id = ?
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        LEFT JOIN usuarios ue ON f.estudiante_rut = ue.rut
+        LEFT JOIN usuarios up ON f.profesor_rut = up.rut
+        WHERE f.id = ?
     `, [fecha_id]);
+    
+    if (rows.length > 0) {
+        console.log(`✅ Fecha encontrada`);
     return rows[0];
-};
-
-// Actualizar fecha
-export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, tipo_fecha }) => {
-    const [result] = await pool.execute(
-        `UPDATE fechas_calendario 
-         SET titulo = ?, descripcion = ?, fecha = ?, tipo_fecha = ?, updated_at = NOW() 
-         WHERE id = ?`,
-        [titulo, descripcion, fecha, tipo_fecha, fecha_id]
-    );
-    return result.affectedRows > 0;
-};
-
-// Eliminar fecha (marcar como inactiva)
-export const eliminarFecha = async (fecha_id) => {
-    // Primero obtener información de la fecha para saber si es una fecha global de propuestas
-    const [fechas] = await pool.execute(
-        `SELECT tipo_fecha, es_global, titulo, fecha FROM fechas_calendario WHERE id = ?`,
-        [fecha_id]
-    );
-
-    if (fechas.length === 0) {
-        return false;
-    }
-
-    const fecha = fechas[0];
-
-    // Soft delete en fechas_calendario
-    const [result] = await pool.execute(
-        `UPDATE fechas_calendario SET activa = FALSE WHERE id = ?`,
-        [fecha_id]
-    );
-
-    // Si es una fecha de entrega_propuesta con es_global=TRUE, también eliminar de fechas_importantes
-    if (fecha.tipo_fecha === 'entrega_propuesta' && fecha.es_global) {
-        console.log('🗑️  Eliminando fecha de propuestas de fechas_importantes...');
-        
-        await pool.execute(
-            `DELETE FROM fechas_importantes 
-             WHERE tipo_fecha = 'entrega_propuesta' 
-             AND es_global = TRUE 
-             AND proyecto_id IS NULL
-             AND titulo = ?
-             AND DATE(fecha_limite) = DATE(?)`,
-            [fecha.titulo, fecha.fecha]
-        );
-        
-        console.log('✅ Fecha eliminada de ambas tablas');
-    }
-
-    return result.affectedRows > 0;
-};
-
-// Obtener fechas próximas - Fechas globales del administrador visibles para todos
-export const obtenerFechasProximas = async (estudiante_rut, limite = 5) => {
-    console.log('🔍 Debug obtenerFechasProximas - INICIO:');
-    console.log('  - estudiante_rut:', estudiante_rut, '(tipo:', typeof estudiante_rut, ')');
-    console.log('  - limite:', limite, '(tipo:', typeof limite, ')');
-    
-    // Validar parámetros de entrada
-    if (!estudiante_rut) {
-        console.error('❌ Error: estudiante_rut es requerido');
-        return [];
     }
     
-    // Convertir límite a número y validar
-    limite = parseInt(limite);
-    if (isNaN(limite) || limite <= 0) {
-        console.warn('⚠️  Warning: limite inválido, usando valor por defecto');
-        limite = 5;
-    }
-    
-    try {
-        // Query para obtener TODAS las fechas globales del administrador
-        // Las fechas globales son visibles para todos los usuarios
-        const query = `
-            SELECT 
-                id, titulo, descripcion, fecha, tipo_fecha, es_global,
-                creado_por_rut,
-                'Admin' AS nombre_creador,
-                'Admin' AS tipo_creador,
-                DATEDIFF(fecha, CURDATE()) AS dias_restantes
-            FROM fechas_calendario 
-            WHERE es_global = 1
-            AND activa = 1
-            AND fecha >= CURDATE()
-            ORDER BY fecha ASC 
-            LIMIT ?`;
-        
-        console.log('  - Ejecutando query para fechas globales del admin con limite:', limite);
-        
-        const [rows] = await pool.execute(query, [limite]);
-        console.log('✅ Fechas globales obtenidas:', rows.length);
-        
-        if (rows.length > 0) {
-            console.log('  - Fechas encontradas:', rows.map(r => ({ titulo: r.titulo, fecha: r.fecha })));
-        } else {
-            console.log('ℹ️  No hay fechas globales del administrador');
-        }
-        
+    console.log(`❌ Fecha ${fecha_id} no encontrada`);
+    return null;
+};
+
+// Obtener fechas de un proyecto específico
+export const obtenerFechasProyecto = async (proyecto_id) => {
+    const [rows] = await pool.execute(`
+        SELECT f.*, 
+               u.nombre AS nombre_creador
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        WHERE f.proyecto_id = ?
+        AND f.activa = TRUE
+        ORDER BY f.fecha ASC
+    `, [proyecto_id]);
+    return rows;
+};
+
+// Obtener fechas específicas de un profesor
+export const obtenerFechasProfesor = async (profesor_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT f.*, 
+               u.nombre AS nombre_creador,
+               ue.nombre AS nombre_estudiante
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        LEFT JOIN usuarios ue ON f.estudiante_rut = ue.rut
+        WHERE (f.profesor_rut = ? OR f.creado_por_rut = ? OR f.es_global = TRUE)
+        AND f.activa = TRUE
+        ORDER BY f.fecha ASC
+    `, [profesor_rut, profesor_rut]);
+    return rows;
+};
+
+// Obtener fechas de un estudiante
+export const obtenerFechasEstudiante = async (estudiante_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT f.*, 
+               u.nombre AS nombre_creador,
+               up.nombre AS nombre_profesor
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        LEFT JOIN usuarios up ON f.profesor_rut = up.rut
+        WHERE (f.estudiante_rut = ? OR f.es_global = TRUE)
+        AND f.activa = TRUE
+        ORDER BY f.fecha ASC
+    `, [estudiante_rut]);
         return rows;
-        
-    } catch (error) {
-        console.error('❌ Error obteniendo fechas globales:', error.message);
-        console.warn('  - Devolviendo array vacío como fallback');
-        return [];
-    }
 };
 
-// Obtener estadísticas de fechas para admin
+// Alias para compatibilidad con controladores existentes
+export const crearFechaEspecifica = crearFechaProfesor;
+export const obtenerFechasPorProfesor = obtenerFechasProfesor;
+export const obtenerFechasParaEstudiante = obtenerFechasEstudiante;
+
+// Obtener estadísticas de fechas
 export const obtenerEstadisticasFechas = async () => {
     const [rows] = await pool.execute(`
         SELECT 
             COUNT(*) as total_fechas,
             SUM(CASE WHEN es_global = TRUE THEN 1 ELSE 0 END) as fechas_globales,
             SUM(CASE WHEN es_global = FALSE THEN 1 ELSE 0 END) as fechas_especificas,
-            SUM(CASE WHEN fecha >= CURDATE() THEN 1 ELSE 0 END) as fechas_futuras,
-            SUM(CASE WHEN fecha < CURDATE() THEN 1 ELSE 0 END) as fechas_pasadas
-        FROM fechas_calendario
+            SUM(CASE WHEN fecha >= CURDATE() AND activa = TRUE THEN 1 ELSE 0 END) as fechas_proximas,
+            SUM(CASE WHEN fecha < CURDATE() AND activa = TRUE THEN 1 ELSE 0 END) as fechas_pasadas,
+            SUM(CASE WHEN completada = TRUE THEN 1 ELSE 0 END) as fechas_completadas
+        FROM fechas
         WHERE activa = TRUE
     `);
     return rows[0];
 };
 
-// Verificar si un usuario puede editar una fecha
+// ===== ACTUALIZAR FECHAS =====
+
+export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, tipo_fecha, habilitada, es_global }) => {
+    console.log(`💾 Actualizando fecha ID: ${fecha_id}`);
+    console.log(`📋 Datos a actualizar:`, { titulo, descripcion, fecha, tipo_fecha, habilitada, es_global });
+    
+    // Construir query dinámicamente según los campos disponibles
+    let campos = [];
+    let valores = [];
+    
+    if (titulo !== undefined) {
+        campos.push('titulo = ?');
+        valores.push(titulo);
+    }
+    if (descripcion !== undefined) {
+        campos.push('descripcion = ?');
+        valores.push(descripcion);
+    }
+    if (fecha !== undefined) {
+        campos.push('fecha = ?');
+        valores.push(fecha);
+    }
+    if (tipo_fecha !== undefined) {
+        campos.push('tipo_fecha = ?');
+        valores.push(tipo_fecha);
+    }
+    if (habilitada !== undefined) {
+        campos.push('habilitada = ?');
+        valores.push(habilitada);
+    }
+    if (es_global !== undefined) {
+        campos.push('es_global = ?');
+        valores.push(es_global);
+    }
+    
+    if (campos.length === 0) {
+        console.log('⚠️  No hay campos para actualizar');
+        return false;
+    }
+    
+    campos.push('updated_at = NOW()');
+    valores.push(fecha_id);
+    
+    const [result] = await pool.execute(
+        `UPDATE fechas SET ${campos.join(', ')} WHERE id = ?`,
+        valores
+    );
+    
+    const updated = result.affectedRows > 0;
+    console.log(`✅ Actualizado: ${updated}`);
+    return updated;
+};
+
+// ===== ELIMINAR FECHAS =====
+
+export const eliminarFecha = async (fecha_id) => {
+    console.log(`🗑️  Eliminando fecha con ID: ${fecha_id}`);
+    
+    // Verificar que la fecha existe
+    const fecha = await obtenerFechaPorId(fecha_id);
+    
+    if (!fecha) {
+        console.log(`❌ Fecha ${fecha_id} no encontrada`);
+        return false;
+    }
+    
+    console.log(`📋 Datos de la fecha:`, { titulo: fecha.titulo, tipo_fecha: fecha.tipo_fecha, es_global: fecha.es_global });
+    
+    // Eliminar directamente (hard delete)
+    const [result] = await pool.execute(
+        `DELETE FROM fechas WHERE id = ?`,
+        [fecha_id]
+    );
+    
+    const deleted = result.affectedRows > 0;
+    console.log(`✅ Eliminada: ${deleted}`);
+    
+    return deleted;
+};
+
+// Soft delete (marcar como inactiva)
+export const desactivarFecha = async (fecha_id) => {
+    const [result] = await pool.execute(
+        `UPDATE fechas SET activa = FALSE, updated_at = NOW() WHERE id = ?`,
+        [fecha_id]
+    );
+    return result.affectedRows > 0;
+};
+
+// ===== VALIDACIONES Y PERMISOS =====
+
 export const puedeEditarFecha = async (fecha_id, usuario_rut, rol_usuario) => {
     const fecha = await obtenerFechaPorId(fecha_id);
-    if (!fecha) return false;
+    if (!fecha) {
+        console.log(`❌ Fecha ${fecha_id} no encontrada para validar permisos`);
+        return false;
+    }
     
-    // Admin puede editar cualquier fecha
-    if (rol_usuario === 'admin') return true;
+    console.log(`🔐 Validando permisos para editar fecha ${fecha_id}:`);
+    console.log(`   - Usuario RUT: ${usuario_rut}`);
+    console.log(`   - Rol usuario: ${rol_usuario}`);
+    console.log(`   - Fecha es_global: ${fecha.es_global}`);
+    console.log(`   - Fecha creado_por: ${fecha.creado_por_rut}`);
     
-    // Profesor solo puede editar sus propias fechas específicas
-    if (rol_usuario === 'profesor' && !fecha.es_global && fecha.creado_por_rut === usuario_rut) {
+    // Admin (rol 'admin' o rol_id 3) puede editar cualquier fecha
+    if (rol_usuario === 'admin' || rol_usuario === 3 || rol_usuario === '3') {
+        console.log('✅ Permiso concedido: Usuario es Admin');
         return true;
     }
     
+    // Super Admin (rol_id 4) puede editar cualquier fecha
+    if (rol_usuario === 4 || rol_usuario === '4') {
+        console.log('✅ Permiso concedido: Usuario es Super Admin');
+        return true;
+    }
+    
+    // Profesor solo puede editar sus propias fechas específicas
+    if ((rol_usuario === 'profesor' || rol_usuario === 2 || rol_usuario === '2') && 
+        !fecha.es_global && 
+        fecha.creado_por_rut === usuario_rut) {
+        console.log('✅ Permiso concedido: Profesor editando su propia fecha');
+        return true;
+    }
+    
+    console.log('❌ Permiso denegado: No cumple ninguna condición');
     return false;
+};
+
+// ===== FUNCIONES ESPECÍFICAS PARA FECHAS IMPORTANTES =====
+
+// Obtener fechas importantes globales (para control de períodos)
+export const obtenerFechasImportantesGlobales = async () => {
+    const [rows] = await pool.execute(`
+        SELECT f.*,
+               u.nombre AS nombre_creador,
+               DATEDIFF(f.fecha, CURDATE()) AS dias_restantes
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        WHERE f.es_global = TRUE
+        AND f.proyecto_id IS NULL
+        AND f.activa = TRUE
+        ORDER BY f.fecha ASC
+    `);
+    return rows;
+};
+
+// Obtener período de propuestas activo
+export const obtenerPeriodoPropuestasActivo = async () => {
+    const [rows] = await pool.execute(`
+        SELECT f.*,
+               DATEDIFF(f.fecha, CURDATE()) AS dias_restantes
+        FROM fechas f
+        WHERE f.tipo_fecha = 'entrega_propuesta'
+        AND f.es_global = TRUE
+        AND f.proyecto_id IS NULL
+        AND f.habilitada = TRUE
+        AND f.activa = TRUE
+        AND f.fecha >= CURDATE()
+        ORDER BY f.fecha ASC
+        LIMIT 1
+    `);
+    return rows[0] || null;
+};
+
+// Habilitar/Deshabilitar período
+export const cambiarEstadoPeriodo = async (fecha_id, habilitada) => {
+    const [result] = await pool.execute(
+        `UPDATE fechas SET habilitada = ?, updated_at = NOW() WHERE id = ?`,
+        [habilitada, fecha_id]
+    );
+    return result.affectedRows > 0;
+};
+
+// Deshabilitar períodos vencidos automáticamente
+export const deshabilitarPeriodosVencidos = async () => {
+    const [result] = await pool.execute(`
+        UPDATE fechas 
+        SET habilitada = FALSE, updated_at = NOW()
+        WHERE tipo_fecha = 'entrega_propuesta'
+        AND es_global = TRUE
+        AND habilitada = TRUE
+        AND fecha < CURDATE()
+    `);
+    return result.affectedRows;
+};
+
+export default {
+    crearFechaGlobal,
+    crearFechaProfesor,
+    crearFechaEspecifica,
+    obtenerFechasGlobales,
+    obtenerFechasProximas,
+    obtenerFechaPorId,
+    obtenerFechasProyecto,
+    obtenerFechasProfesor,
+    obtenerFechasPorProfesor,
+    obtenerFechasEstudiante,
+    obtenerFechasParaEstudiante,
+    obtenerEstadisticasFechas,
+    actualizarFecha,
+    eliminarFecha,
+    desactivarFecha,
+    puedeEditarFecha,
+    obtenerFechasImportantesGlobales,
+    obtenerPeriodoPropuestasActivo,
+    cambiarEstadoPeriodo,
+    deshabilitarPeriodosVencidos
 };

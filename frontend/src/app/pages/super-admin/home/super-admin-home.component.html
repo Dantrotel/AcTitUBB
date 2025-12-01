@@ -1,23 +1,28 @@
-<div class="super-admin-container">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-content">
-      <h1><i class="fas fa-user-shield"></i> Panel de Super Administrador</h1>
-      <p>Gestión completa del sistema académico</p>
-    </div>
-    <div class="header-actions">
-      @if (userData()) {
-        <div class="user-info">
-          <i class="fas fa-user-circle"></i>
-          <span>{{ userData()?.nombre }}</span>
+<!-- Navbar del super administrador -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <!-- Menú de usuario -->
+    <div class="action-item user-menu" (click)="toggleUserMenu()">
+      <i class="fas fa-user-circle"></i>
+      <span>{{ userData()?.nombre || 'Super Administrador' }}</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showUserMenu()">
+        <div class="dropdown-item" (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
         </div>
-      }
-      <button class="btn-logout" (click)="logout()">
-        <i class="fas fa-sign-out-alt"></i>
-        Cerrar Sesión
-      </button>
+      </div>
     </div>
   </div>
+</nav>
+
+<div class="super-admin-container">
 
   <!-- Dashboard de estadísticas GLOBALES -->
   @if (loading()) {
@@ -263,7 +268,7 @@
         <p>Asignar profesores a proyectos</p>
       </a>
 
-      <a routerLink="/admin/calendario" class="action-card">
+      <a routerLink="/admin/calendario-unificado" class="action-card">
         <div class="action-icon">
           <i class="fas fa-calendar-alt"></i>
         </div>

@@ -98,7 +98,7 @@ export const obtenerSolicitudesPorProyecto = async (proyectoId, estado = null) =
                 DATEDIFF(se.fecha_solicitada, se.fecha_original) as dias_solicitados
             FROM solicitudes_extension se
             INNER JOIN usuarios u ON se.solicitante_rut = u.rut
-            LEFT JOIN fechas_importantes fi ON se.fecha_importante_id = fi.id
+            LEFT JOIN fechas fi ON se.fecha_importante_id = fi.id
             LEFT JOIN usuarios admin ON se.aprobado_por = admin.rut
             WHERE se.proyecto_id = ?
         `;
@@ -139,7 +139,7 @@ export const obtenerSolicitudesPendientes = async () => {
             FROM solicitudes_extension se
             INNER JOIN proyectos p ON se.proyecto_id = p.id
             INNER JOIN usuarios u ON se.solicitante_rut = u.rut
-            LEFT JOIN fechas_importantes fi ON se.fecha_importante_id = fi.id
+            LEFT JOIN fechas fi ON se.fecha_importante_id = fi.id
             WHERE se.estado IN ('pendiente', 'en_revision')
             ORDER BY se.created_at ASC
         `);
@@ -229,8 +229,8 @@ export const aprobarSolicitud = async (solicitudId, aprobadoPor, comentarios = n
         // Si es una fecha importante, actualizar la fecha límite
         if (solicitud[0].fecha_importante_id) {
             await connection.query(`
-                UPDATE fechas_importantes 
-                SET fecha_limite = ?,
+                UPDATE fechas 
+                SET fecha = ?,
                     observaciones = CONCAT(
                         IFNULL(observaciones, ''), 
                         '\nExtensión aprobada el ', CURRENT_TIMESTAMP,

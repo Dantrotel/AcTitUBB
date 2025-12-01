@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
-import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
 
 @Component({
   selector: 'app-home-profesor',
@@ -20,8 +19,7 @@ import { AlertasFechasComponent } from '../../../components/alertas-fechas/alert
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    CalendarModalComponent,
-    AlertasFechasComponent
+    CalendarModalComponent
   ],
   templateUrl: './home-profesor.html',
   styleUrls: ['./home-profesor.scss']

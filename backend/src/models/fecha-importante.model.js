@@ -3,8 +3,8 @@ import { pool } from '../db/connectionDB.js';
 // Crear una nueva fecha importante
 export const crearFechaImportante = async ({ proyecto_id, tipo_fecha, titulo, descripcion, fecha_limite }) => {
     const [result] = await pool.execute(
-        `INSERT INTO fechas_importantes (proyecto_id, tipo_fecha, titulo, descripcion, fecha_limite)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO fechas (proyecto_id, tipo_fecha, titulo, descripcion, fecha, creado_por_rut, es_global, activa, habilitada)
+         VALUES (?, ?, ?, ?, ?, 'SYSTEM', FALSE, TRUE, TRUE)`,
         [proyecto_id, tipo_fecha, titulo, descripcion, fecha_limite]
     );
     return result.insertId;
@@ -14,9 +14,9 @@ export const crearFechaImportante = async ({ proyecto_id, tipo_fecha, titulo, de
 export const obtenerFechasPorProyecto = async (proyecto_id) => {
     const [rows] = await pool.execute(`
         SELECT *
-        FROM fechas_importantes
+        FROM fechas
         WHERE proyecto_id = ?
-        ORDER BY fecha_limite ASC
+        ORDER BY fecha ASC
     `, [proyecto_id]);
     return rows;
 };
@@ -25,7 +25,7 @@ export const obtenerFechasPorProyecto = async (proyecto_id) => {
 export const obtenerFechaPorId = async (fecha_id) => {
     const [rows] = await pool.execute(`
         SELECT fi.*, p.titulo AS titulo_proyecto
-        FROM fechas_importantes fi
+        FROM fechas fi
         LEFT JOIN proyectos p ON fi.proyecto_id = p.id
         WHERE fi.id = ?
     `, [fecha_id]);
@@ -35,8 +35,8 @@ export const obtenerFechaPorId = async (fecha_id) => {
 // Actualizar fecha importante
 export const actualizarFechaImportante = async (fecha_id, { titulo, descripcion, fecha_limite, fecha_realizada, completada }) => {
     const [result] = await pool.execute(
-        `UPDATE fechas_importantes 
-         SET titulo = ?, descripcion = ?, fecha_limite = ?, fecha_realizada = ?, completada = ?, updated_at = NOW() 
+        `UPDATE fechas 
+         SET titulo = ?, descripcion = ?, fecha = ?, fecha_realizada = ?, completada = ?, updated_at = NOW() 
          WHERE id = ?`,
         [titulo, descripcion, fecha_limite, fecha_realizada, completada, fecha_id]
     );
@@ -46,7 +46,7 @@ export const actualizarFechaImportante = async (fecha_id, { titulo, descripcion,
 // Marcar fecha como completada
 export const marcarFechaCompletada = async (fecha_id, fecha_realizada) => {
     const [result] = await pool.execute(
-        `UPDATE fechas_importantes 
+        `UPDATE fechas 
          SET completada = TRUE, fecha_realizada = ?, updated_at = NOW() 
          WHERE id = ?`,
         [fecha_realizada, fecha_id]
@@ -56,7 +56,7 @@ export const marcarFechaCompletada = async (fecha_id, fecha_realizada) => {
 
 // Eliminar fecha importante
 export const eliminarFechaImportante = async (fecha_id) => {
-    const [result] = await pool.execute(`DELETE FROM fechas_importantes WHERE id = ?`, [fecha_id]);
+    const [result] = await pool.execute(`DELETE FROM fechas WHERE id = ?`, [fecha_id]);
     return result.affectedRows > 0;
 };
 
@@ -64,12 +64,12 @@ export const eliminarFechaImportante = async (fecha_id) => {
 export const obtenerFechasProximas = async (proyecto_id) => {
     const [rows] = await pool.execute(`
         SELECT *
-        FROM fechas_importantes
+        FROM fechas
         WHERE proyecto_id = ? 
-        AND fecha_limite >= CURDATE() 
-        AND fecha_limite <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+        AND fecha >= CURDATE() 
+        AND fecha <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
         AND completada = FALSE
-        ORDER BY fecha_limite ASC
+        ORDER BY fecha ASC
     `, [proyecto_id]);
     return rows;
 };
@@ -78,11 +78,11 @@ export const obtenerFechasProximas = async (proyecto_id) => {
 export const obtenerFechasVencidas = async (proyecto_id) => {
     const [rows] = await pool.execute(`
         SELECT *
-        FROM fechas_importantes
+        FROM fechas
         WHERE proyecto_id = ? 
-        AND fecha_limite < CURDATE()
+        AND fecha < CURDATE()
         AND completada = FALSE
-        ORDER BY fecha_limite DESC
+        ORDER BY fecha DESC
     `, [proyecto_id]);
     return rows;
 };
@@ -91,9 +91,9 @@ export const obtenerFechasVencidas = async (proyecto_id) => {
 export const obtenerFechasPorTipo = async (proyecto_id, tipo_fecha) => {
     const [rows] = await pool.execute(`
         SELECT *
-        FROM fechas_importantes
+        FROM fechas
         WHERE proyecto_id = ? AND tipo_fecha = ?
-        ORDER BY fecha_limite ASC
+        ORDER BY fecha ASC
     `, [proyecto_id, tipo_fecha]);
     return rows;
 };

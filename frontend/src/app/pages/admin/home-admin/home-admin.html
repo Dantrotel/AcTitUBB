@@ -1,23 +1,21 @@
 <!-- Navbar del administrador -->
-<nav class="admin-navbar">
+<nav class="navbar">
   <div class="navbar-brand">
-    <i class="fas fa-shield-alt"></i>
-    <span>AcTitUBB - Administración</span>
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
   </div>
   
-  <div class="navbar-user">
-    <!-- Panel de notificaciones -->
-    <div class="notifications-wrapper">
-      <button class="notifications-btn" (click)="togglePanelNotificaciones()">
+  <div class="navbar-actions">
+    <!-- Notificaciones -->
+    <div class="action-item notifications-menu" (click)="togglePanelNotificaciones()">
         <i class="fas fa-bell"></i>
         <span *ngIf="notificacionesNoLeidas > 0" class="notification-badge">{{ notificacionesNoLeidas }}</span>
-      </button>
       
       <!-- Panel desplegable de notificaciones -->
-      <div *ngIf="mostrarPanelNotificaciones" class="notifications-panel">
+      <div *ngIf="mostrarPanelNotificaciones" class="dropdown-menu notifications-dropdown show">
         <div class="panel-header">
           <h3>Notificaciones</h3>
-          <button class="btn-small" (click)="marcarTodasComoLeidas()" *ngIf="notificacionesNoLeidas > 0">
+          <button class="btn-small" (click)="marcarTodasComoLeidas(); $event.stopPropagation()" *ngIf="notificacionesNoLeidas > 0">
             Marcar todas como leídas
           </button>
         </div>
@@ -26,7 +24,7 @@
           <div *ngFor="let notificacion of notificaciones" 
                class="notification-item" 
                [class.no-leida]="!notificacion.leida"
-               (click)="marcarComoLeida(notificacion)">
+               (click)="marcarComoLeida(notificacion); $event.stopPropagation()">
             <div class="notification-icon" [style.color]="obtenerColorNotificacion(notificacion.tipo)">
               <i [class]="obtenerIconoNotificacion(notificacion.tipo)"></i>
             </div>
@@ -48,22 +46,24 @@
       </div>
     </div>
 
-    <div class="user-info">
-      <i class="fas fa-user-cog"></i>
+    <!-- Menú de usuario -->
+    <div class="action-item user-menu" (click)="toggleUserMenu()">
+      <i class="fas fa-user-circle"></i>
       <span>{{ userName || 'Administrador' }}</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showUserMenu">
+        <div class="dropdown-item" (click)="cerrarSesion()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
     </div>
-    <button class="btn-logout" (click)="cerrarSesion()">
-      <i class="fas fa-sign-out-alt"></i>
-      Cerrar Sesión
-    </button>
   </div>
 </nav>
 
 <!-- Contenido principal -->
 <div class="main-container">
-  <!-- Componente de Alertas Críticas (solo alertas hoy y vencidas) -->
-  <app-alertas-fechas [maximoAlertas]="20" [autoRefresh]="true"></app-alertas-fechas>
-
   <!-- Header con bienvenida -->
   <div class="welcome-header">
     <div class="welcome-content">
@@ -76,28 +76,30 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
+  <div *ngIf="loadingDashboard" class="loading-state">
     <div class="loading-spinner">
       <i class="fas fa-spinner fa-spin"></i>
     </div>
     <p>Cargando estadísticas del sistema...</p>
   </div>
 
-  <!-- Dashboard de estadísticas -->
-  <div *ngIf="!loading" class="stats-dashboard">
-    <h2 class="section-title">
+  <!-- Dashboard de Estadísticas Unificado -->
+  @if (dashboard && !loadingDashboard) {
+    <div class="analytics-section">
+      <div class="section-title">
       <i class="fas fa-chart-bar"></i>
-      Estadísticas del Sistema
-    </h2>
+        <h2>Estadísticas del Sistema</h2>
+      </div>
     
-    <div class="stats-grid">
+      <!-- Métricas Principales de Propuestas -->
+      <div class="stats-grid-propuestas">
       <!-- Total de Propuestas -->
       <div class="stat-card primary">
         <div class="stat-icon">
           <i class="fas fa-file-alt"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ estadisticas.totalPropuestas }}</h3>
+            <h3>{{ dashboard.metricas_generales?.total_propuestas || 0 }}</h3>
           <p>Total de Propuestas</p>
         </div>
       </div>
@@ -108,7 +110,7 @@
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ estadisticas.propuestasPendientes }}</h3>
+            <h3>{{ dashboard.metricas_generales?.propuestas_pendientes || 0 }}</h3>
           <p>Pendientes</p>
         </div>
       </div>
@@ -119,7 +121,7 @@
           <i class="fas fa-search"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ estadisticas.propuestasEnRevision }}</h3>
+            <h3>{{ dashboard.metricas_generales?.propuestas_en_revision || 0 }}</h3>
           <p>En Revisión</p>
         </div>
       </div>
@@ -130,19 +132,10 @@
           <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ estadisticas.propuestasAprobadas }}</h3>
+            <h3>{{ dashboard.metricas_generales?.propuestas_aprobadas || 0 }}</h3>
           <p>Aprobadas</p>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Dashboard Analytics Section -->
-  @if (dashboard && !loadingDashboard) {
-    <div class="analytics-section">
-      <div class="section-title">
-        <i class="fas fa-chart-pie"></i>
-        <h2>Analytics del Sistema</h2>
       </div>
 
       <!-- Métricas Generales -->
@@ -180,16 +173,6 @@
             <div class="metrica-content">
               <h4>{{ dashboard.metricas_generales?.total_proyectos_activos || 0 }}</h4>
               <p>Proyectos Activos</p>
-            </div>
-          </div>
-          
-          <div class="metrica-card aprobadas">
-            <div class="metrica-icon">
-              <i class="fas fa-check-double"></i>
-            </div>
-            <div class="metrica-content">
-              <h4>{{ dashboard.metricas_generales?.propuestas_aprobadas || 0 }}</h4>
-              <p>Propuestas Aprobadas</p>
             </div>
           </div>
           

@@ -1,36 +1,49 @@
-// Variables de colores institucionales
+// Variables de colores UBB (unificadas)
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
-$accent-color: #ff6b35;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
 $success-color: #28a745;
 $warning-color: #ffc107;
-$danger-color: #dc3545;
+$accent-color: #00a8ff;
 $info-color: #17a2b8;
-$light-gray: #f8f9fa;
-$dark-gray: #343a40;
+$light-gray: $light-color;
+$dark-gray: $dark-color;
 
-// Navbar del administrador
-.admin-navbar {
-  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-  padding: 1rem 2rem;
+// Navbar unificado (mismo estilo en todas las vistas)
+.navbar {
+  background: $white-color;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 20px rgba(0, 75, 141, 0.3);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  height: 70px;
 
   .navbar-brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: white;
     font-size: 1.5rem;
     font-weight: 700;
+    color: $primary-color;
 
     i {
-      font-size: 1.75rem;
+      color: $secondary-color;
+      margin-right: 0.5rem;
+      font-size: 1.8rem;
     }
   }
 

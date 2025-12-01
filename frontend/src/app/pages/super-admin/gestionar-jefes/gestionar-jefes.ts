@@ -60,13 +60,17 @@ export class GestionarJefesComponent implements OnInit {
         });
       }),
       new Promise<Profesor[]>((resolve, reject) => {
-        // Obtener todos los usuarios y filtrar solo profesores (rol_id = 2)
+        // Obtener todos los usuarios y filtrar profesores y jefes de carrera (rol_id = 2 o 3)
         this.apiService.getUsuarios().subscribe({
           next: (data: any) => {
             const usuarios = Array.isArray(data) ? data : [];
-            // Filtrar solo profesores (rol_nombre = 'profesor' o rol_id = 2)
+            // Filtrar profesores (rol_id = 2) y admins/jefes de carrera (rol_id = 3)
+            // para permitir que un profesor sea jefe de múltiples carreras
             const profesores = usuarios.filter((u: any) => 
-              u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2
+              u.rol_nombre?.toLowerCase() === 'profesor' || 
+              u.rol_nombre?.toLowerCase() === 'admin' ||
+              u.rol_id === 2 || 
+              u.rol_id === 3
             );
             resolve(profesores);
           },

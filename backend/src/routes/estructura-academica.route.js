@@ -30,6 +30,8 @@ router.get('/facultades/:id/estadisticas', verifySession, EstructuraController.o
 // RUTAS DE DEPARTAMENTOS
 // ============================================
 
+// Obtener todos los departamentos (público para registro de profesores)
+router.get('/departamentos/public', EstructuraController.obtenerDepartamentosPublicos);
 // Obtener todos los departamentos
 router.get('/departamentos', verifySession, EstructuraController.obtenerDepartamentos);
 
@@ -53,6 +55,7 @@ router.get('/departamentos/:id/profesores', verifySession, EstructuraController.
 // ============================================
 
 // Obtener todas las carreras (público para registro de estudiantes)
+router.get('/carreras/public', EstructuraController.obtenerCarrerasPublicas);
 router.get('/carreras', verifySession, EstructuraController.obtenerCarreras);
 
 // Obtener carrera por ID
