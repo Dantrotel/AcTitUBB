@@ -7,7 +7,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
-import { AlertasFechasComponent } from '../../../components/alertas-fechas/alertas-fechas.component';
 import { FechasLimiteProyectoComponent } from '../../../components/fechas-limite-proyecto/fechas-limite-proyecto.component';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 
@@ -22,7 +21,6 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
     MatButtonModule,
     MatTooltipModule,
     FormsModule,
-    AlertasFechasComponent,
     FechasLimiteProyectoComponent,
     CalendarModalComponent
   ],

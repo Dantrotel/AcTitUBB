@@ -1,14 +1,23 @@
-// Variables de colores institucionales
+// Variables de colores UBB (unificadas)
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
-$accent-color: #ff6b35;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
 $success-color: #28a745;
 $warning-color: #ffc107;
-$danger-color: #dc3545;
+$accent-color: #00a8ff;
 $info-color: #17a2b8;
-$light-gray: #f8f9fa;
-$dark-gray: #343a40;
-$border-color: #e9ecef;
+$light-gray: $light-color;
+$dark-gray: $dark-color;
+$border-color: $gray-color;
 $text-muted: #6c757d;
 
 // Contenedor principal

@@ -44,15 +44,20 @@ export const crearFechaGlobalController = async (req, res) => {
             });
         }
 
-        // Verificar que el usuario sea admin
-        console.log('  - Rol del usuario:', req.user.rol);
-        if (req.user.rol !== 'admin') {
-            console.error('❌ Usuario no es admin, rol:', req.user.rol);
+        // Verificar que el usuario sea admin o super admin
+        const rolUsuario = req.user.rol_id || req.user.rol;
+        const esAdmin = rolUsuario === 3 || req.user.rol === 'admin';
+        const esSuperAdmin = rolUsuario === 4 || req.user.rol === 'superadmin';
+        
+        console.log('  - Rol del usuario:', req.user.rol, 'rol_id:', req.user.rol_id);
+        if (!esAdmin && !esSuperAdmin) {
+            console.error('❌ Usuario no es admin ni super admin, rol:', req.user.rol);
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden crear fechas globales',
                 debug: {
                     rolRecibido: req.user.rol,
-                    rolEsperado: 'admin'
+                    rolIdRecibido: req.user.rol_id,
+                    rolEsperado: 'admin o superadmin'
                 }
             });
         }
@@ -116,6 +121,30 @@ export const crearFechaGlobalController = async (req, res) => {
 // Obtener todas las fechas globales
 export const obtenerFechasGlobalesController = async (req, res) => {
     try {
+        const rolUsuario = req.user?.rol_id || req.user?.rol;
+        const esSuperAdmin = rolUsuario === 4 || req.user?.rol === 'superadmin';
+        
+        // Si es super admin, obtener TODAS las fechas globales creadas por admins (rol 3) y super admins (rol 4)
+        // Esto asegura que el super admin vea todas las fechas que publican los admins de todas las carreras
+        if (esSuperAdmin) {
+            console.log('🔓 Super Admin - Obteniendo TODAS las fechas globales de todos los admins');
+            const [fechas] = await pool.execute(`
+                SELECT f.*, 
+                       u.nombre AS nombre_creador,
+                       u.rol_id AS creador_rol_id,
+                       u.rut AS creador_rut
+                FROM fechas f
+                LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+                WHERE f.es_global = TRUE 
+                AND f.activa = TRUE
+                AND (u.rol_id = 3 OR u.rol_id = 4)  -- Fechas creadas por admins (rol 3) o super admins (rol 4)
+                ORDER BY f.fecha ASC
+            `);
+            console.log(`✅ Super Admin - Encontradas ${fechas.length} fechas globales de todos los admins`);
+            return res.json(fechas);
+        }
+        
+        // Para admin normal, obtener todas las fechas globales (sin filtro de creador)
         const fechas = await obtenerFechasGlobales();
         res.json(fechas);
     } catch (error) {
@@ -124,7 +153,7 @@ export const obtenerFechasGlobalesController = async (req, res) => {
     }
 };
 
-// Obtener estadísticas de fechas (solo admin)
+// Obtener estadísticas de fechas (admin y super admin)
 export const obtenerEstadisticasFechasController = async (req, res) => {
     try {
         // Validar autenticación
@@ -134,7 +163,9 @@ export const obtenerEstadisticasFechasController = async (req, res) => {
             });
         }
 
-        if (req.user.rol !== 'admin') {
+        // Permitir acceso a admin (rol 3) y super admin (rol 4)
+        const rolUsuario = req.user.rol_id || req.user.rol;
+        if (rolUsuario !== 3 && rolUsuario !== 4 && req.user.rol !== 'admin' && req.user.rol !== 'superadmin') {
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden ver las estadísticas' 
             });
@@ -393,9 +424,13 @@ export const obtenerFechaPorIdController = async (req, res) => {
 export const actualizarFechaController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { titulo, descripcion, fecha, tipo_fecha } = req.body;
+        const { titulo, descripcion, fecha, fecha_limite, tipo_fecha, habilitada, es_global } = req.body;
         const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol;
+        const rol_usuario = req.user?.rol || req.user?.rol_id; // Usar rol o rol_id
+
+        console.log(`📝 Actualizando fecha calendario ID: ${id}`);
+        console.log('📋 Datos recibidos:', { titulo, descripcion, fecha, fecha_limite, tipo_fecha, habilitada, es_global });
+        console.log('👤 Usuario:', { rut: usuario_rut, rol: rol_usuario, user: req.user });
 
         // Validar autenticación
         if (!req.user || !usuario_rut) {
@@ -412,14 +447,15 @@ export const actualizarFechaController = async (req, res) => {
         }
 
         // Validar campos requeridos
-        if (!titulo || !fecha || !tipo_fecha) {
+        const fechaParaValidar = fecha || fecha_limite;
+        if (!titulo || !fechaParaValidar) {
             return res.status(400).json({ 
-                message: 'Faltan campos requeridos: titulo, fecha, tipo_fecha' 
+                message: 'Faltan campos requeridos: titulo, fecha' 
             });
         }
 
         // Validar formato de fecha
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaParaValidar)) {
             return res.status(400).json({ 
                 message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
             });
@@ -433,12 +469,20 @@ export const actualizarFechaController = async (req, res) => {
             });
         }
 
-        const actualizada = await actualizarFecha(id, {
+        // Preparar datos para actualizar
+        const datosActualizar = {
             titulo,
             descripcion,
-            fecha,
-            tipo_fecha
-        });
+            fecha: fechaParaValidar,
+            tipo_fecha,
+            habilitada,
+            es_global
+        };
+
+        console.log('💾 Actualizando fecha con:', datosActualizar);
+
+        // El modelo ahora maneja todo en la tabla unificada 'fechas'
+        const actualizada = await actualizarFecha(id, datosActualizar);
 
         if (actualizada) {
             res.json({ 
@@ -449,8 +493,8 @@ export const actualizarFechaController = async (req, res) => {
             res.status(404).json({ message: 'Fecha no encontrada' });
         }
     } catch (error) {
-        console.error('Error al actualizar fecha:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        console.error('❌ Error al actualizar fecha:', error);
+        res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
 

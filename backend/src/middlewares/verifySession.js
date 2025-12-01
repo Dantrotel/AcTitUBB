@@ -55,6 +55,7 @@ const verifySession = async (req, res, next) => {
     
     // Obtener información adicional del usuario desde la BD
     let carrera_administrada_id = null;
+    let carreras_administradas = [];
     let nombre = 'Usuario';
     
     try {
@@ -68,15 +69,16 @@ const verifySession = async (req, res, next) => {
         nombre = userRows[0].nombre;
       }
       
-      // Si es Admin (rol 3), buscar la carrera que administra
+      // Si es Admin (rol 3), buscar TODAS las carreras que administra
       if (rol_id === 3) {
         const [carreraRows] = await pool.execute(
-          'SELECT id FROM carreras WHERE jefe_carrera_rut = ? LIMIT 1',
+          'SELECT carrera_id FROM jefes_carreras WHERE profesor_rut = ? AND activo = TRUE',
           [rut]
         );
         
         if (carreraRows.length > 0) {
-          carrera_administrada_id = carreraRows[0].id;
+          carreras_administradas = carreraRows.map(row => row.carrera_id);
+          carrera_administrada_id = carreras_administradas[0]; // Primera carrera por compatibilidad
         }
       }
     } catch (dbError) {
@@ -91,7 +93,8 @@ const verifySession = async (req, res, next) => {
       role_id: rol_id, // Mantener ambos por compatibilidad
       rol: roleMap[rol_id] || 'unknown',
       nombre: nombre,
-      carrera_administrada_id: carrera_administrada_id
+      carrera_administrada_id: carrera_administrada_id, // Primera carrera (retrocompatibilidad)
+      carreras_administradas: carreras_administradas // NUEVO: Array con todas las carreras
     };
     
     console.log('🔐 Usuario autenticado:', {
@@ -125,21 +128,56 @@ const verifySession = async (req, res, next) => {
   }
 };
 
+// Helper para verificar si un rol tiene acceso a otro rol
+// Super Admin (4) puede acceder a todo
+// Admin (3) puede acceder a rutas de profesores (2) y estudiantes (1)
+const puedeAcceder = (rolUsuario, rolRequerido) => {
+  // Super Admin puede acceder a todo
+  if (rolUsuario === 4) {
+    return true;
+  }
+  
+  // Admin puede acceder a rutas de profesores y estudiantes
+  if (rolUsuario === 3) {
+    return rolRequerido === 1 || rolRequerido === 2 || rolRequerido === 3;
+  }
+  
+  // Usuario normal solo puede acceder a su propio rol
+  return rolUsuario === rolRequerido;
+};
+
 // Middleware genérico con mensajes personalizados según rol esperado
 // Soporta múltiples roles separados por coma: checkRole('3,4') permite Admin o Super Admin
+// Super Admin (4) siempre tiene acceso
+// Admin (3) puede acceder a rutas de profesores (2) y estudiantes (1)
 export const checkRole = (...rolesPermitidos) => {
   return (req, res, next) => {
     if (!req.rol_id) {
       return res.status(403).json({ message: "Sin rol definido" });
     }
 
-    const rolStr = String(req.rol_id);
+    const rolUsuario = Number(req.rol_id);
+    
+    // Super Admin siempre tiene acceso
+    if (rolUsuario === 4) {
+      return next();
+    }
     
     // Expandir roles que contienen comas (ej: '3,4' → ['3', '4'])
     const rolesExpandidos = rolesPermitidos.flatMap(rol => rol.split(','));
 
+    // Verificar si el rol del usuario está en los permitidos
+    const rolStr = String(rolUsuario);
     if (rolesExpandidos.includes(rolStr)) {
       return next();
+    }
+
+    // Verificar permisos especiales: Admin puede acceder a rutas de profesores y estudiantes
+    for (const rolPermitido of rolesExpandidos) {
+      const rolRequerido = Number(rolPermitido);
+      if (puedeAcceder(rolUsuario, rolRequerido)) {
+        return next();
+      }
     }
 
     // Mensajes personalizados por rol esperado

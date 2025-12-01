@@ -22,8 +22,8 @@ export const generarAlertasAutomaticas = async () => {
                 p.estudiante_rut,
                 u.nombre as nombre_estudiante,
                 u.email as email_estudiante,
-                DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes
-            FROM fechas_importantes fi
+                DATEDIFF(fi.fecha, CURDATE()) as dias_restantes
+            FROM fechas fi
             INNER JOIN proyectos p ON fi.proyecto_id = p.id
             INNER JOIN usuarios u ON p.estudiante_rut = u.rut
             WHERE fi.completada = FALSE
@@ -165,11 +165,11 @@ export const obtenerAlertasUsuario = async (rut, rol_id) => {
                 SELECT 
                     n.*,
                     fi.titulo as fecha_titulo,
-                    fi.fecha_limite,
+                    fi.fecha as fecha_limite,
                     fi.tipo_fecha,
-                    DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes
+                    DATEDIFF(fi.fecha, CURDATE()) as dias_restantes
                 FROM notificaciones_proyecto n
-                LEFT JOIN fechas_importantes fi ON n.proyecto_id = fi.proyecto_id
+                LEFT JOIN fechas fi ON n.proyecto_id = fi.proyecto_id
                 WHERE n.destinatario_rut = ?
                 AND n.tipo_notificacion IN ('alerta_30_dias', 'alerta_10_dias', 'alerta_hoy', 'alerta_vencida')
                 AND n.leida = FALSE
@@ -183,16 +183,16 @@ export const obtenerAlertasUsuario = async (rut, rol_id) => {
                 SELECT DISTINCT
                     n.*,
                     fi.titulo as fecha_titulo,
-                    fi.fecha_limite,
+                    fi.fecha as fecha_limite,
                     fi.tipo_fecha,
                     p.titulo as titulo_proyecto,
                     p.estudiante_rut,
                     u.nombre as nombre_estudiante,
-                    DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes
+                    DATEDIFF(fi.fecha, CURDATE()) as dias_restantes
                 FROM notificaciones_proyecto n
                 INNER JOIN proyectos p ON n.proyecto_id = p.id
                 INNER JOIN asignaciones_proyectos a ON p.id = a.proyecto_id
-                LEFT JOIN fechas_importantes fi ON n.proyecto_id = fi.proyecto_id
+                LEFT JOIN fechas fi ON n.proyecto_id = fi.proyecto_id
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 WHERE a.profesor_rut = ?
                 AND a.activo = TRUE
@@ -208,15 +208,15 @@ export const obtenerAlertasUsuario = async (rut, rol_id) => {
                 SELECT 
                     n.*,
                     fi.titulo as fecha_titulo,
-                    fi.fecha_limite,
+                    fi.fecha as fecha_limite,
                     fi.tipo_fecha,
                     p.titulo as titulo_proyecto,
                     p.estudiante_rut,
                     u.nombre as nombre_estudiante,
-                    DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes
+                    DATEDIFF(fi.fecha, CURDATE()) as dias_restantes
                 FROM notificaciones_proyecto n
                 INNER JOIN proyectos p ON n.proyecto_id = p.id
-                LEFT JOIN fechas_importantes fi ON n.proyecto_id = fi.proyecto_id
+                LEFT JOIN fechas fi ON n.proyecto_id = fi.proyecto_id
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 WHERE n.tipo_notificacion IN ('alerta_hoy', 'alerta_vencida')
                 AND n.leida = FALSE
@@ -245,11 +245,11 @@ export const obtenerResumenAlertasProyecto = async (proyecto_id) => {
         const [fechas] = await pool.execute(`
             SELECT 
                 COUNT(*) as total_fechas,
-                SUM(CASE WHEN completada = FALSE AND fecha_limite < CURDATE() THEN 1 ELSE 0 END) as vencidas,
-                SUM(CASE WHEN completada = FALSE AND DATEDIFF(fecha_limite, CURDATE()) BETWEEN 0 AND 10 THEN 1 ELSE 0 END) as proximas_10_dias,
-                SUM(CASE WHEN completada = FALSE AND DATEDIFF(fecha_limite, CURDATE()) BETWEEN 11 AND 30 THEN 1 ELSE 0 END) as proximas_30_dias,
+                SUM(CASE WHEN completada = FALSE AND fecha < CURDATE() THEN 1 ELSE 0 END) as vencidas,
+                SUM(CASE WHEN completada = FALSE AND DATEDIFF(fecha, CURDATE()) BETWEEN 0 AND 10 THEN 1 ELSE 0 END) as proximas_10_dias,
+                SUM(CASE WHEN completada = FALSE AND DATEDIFF(fecha, CURDATE()) BETWEEN 11 AND 30 THEN 1 ELSE 0 END) as proximas_30_dias,
                 SUM(CASE WHEN completada = TRUE THEN 1 ELSE 0 END) as completadas
-            FROM fechas_importantes
+            FROM fechas
             WHERE proyecto_id = ?
         `, [proyecto_id]);
 

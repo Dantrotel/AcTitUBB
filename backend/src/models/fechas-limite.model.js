@@ -14,13 +14,13 @@ export const verificarPermisoSubida = async (fechaImportanteId, estudianteRut) =
                 fi.id,
                 fi.proyecto_id,
                 fi.titulo,
-                fi.fecha_limite,
+                fi.fecha as fecha_limite,
                 fi.permite_extension,
                 fi.requiere_entrega,
                 fi.completada,
                 p.estudiante_rut,
-                DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes
-            FROM fechas_importantes fi
+                DATEDIFF(fi.fecha, CURDATE()) as dias_restantes
+            FROM fechas fi
             INNER JOIN proyectos p ON fi.proyecto_id = p.id
             WHERE fi.id = ? AND p.estudiante_rut = ?
         `, [fechaImportanteId, estudianteRut]);
@@ -151,7 +151,7 @@ export const verificarPermisoExtension = async (fechaImportanteId, proyectoId) =
                 fecha_limite,
                 permite_extension,
                 completada
-            FROM fechas_importantes
+            FROM fechas
             WHERE id = ? AND proyecto_id = ?
         `, [fechaImportanteId, proyectoId]);
 
@@ -221,22 +221,22 @@ export const obtenerEstadoFechasProyecto = async (proyectoId, estudianteRut) => 
                 fi.tipo_fecha,
                 fi.titulo,
                 fi.descripcion,
-                fi.fecha_limite,
+                fi.fecha as fecha_limite,
                 fi.permite_extension,
                 fi.requiere_entrega,
                 fi.completada,
                 fi.creado_por,
                 u.nombre as creado_por_nombre,
-                DATEDIFF(fi.fecha_limite, CURDATE()) as dias_restantes,
+                DATEDIFF(fi.fecha, CURDATE()) as dias_restantes,
                 CASE 
                     WHEN fi.completada = TRUE THEN 'completada'
-                    WHEN DATEDIFF(fi.fecha_limite, CURDATE()) >= 0 THEN 'vigente'
+                    WHEN DATEDIFF(fi.fecha, CURDATE()) >= 0 THEN 'vigente'
                     ELSE 'vencida'
                 END as estado
-            FROM fechas_importantes fi
+            FROM fechas fi
             LEFT JOIN usuarios u ON fi.creado_por = u.rut
             WHERE fi.proyecto_id = ?
-            ORDER BY fi.fecha_limite ASC
+            ORDER BY fi.fecha ASC
         `, [proyectoId]);
 
         // Para cada fecha, obtener si tiene extensión pendiente o aprobada
@@ -303,7 +303,7 @@ export const marcarFechaCompletada = async (fechaImportanteId, estudianteRut) =>
 
         // Marcar como completada
         const [result] = await pool.execute(`
-            UPDATE fechas_importantes fi
+            UPDATE fechas fi
             INNER JOIN proyectos p ON fi.proyecto_id = p.id
             SET 
                 fi.completada = TRUE,
@@ -339,15 +339,15 @@ export const verificarPermisoCrearPropuesta = async (estudianteRut) => {
             SELECT 
                 id,
                 titulo,
-                fecha_limite,
+                fecha as fecha_limite,
                 permite_extension,
                 habilitada,
-                DATEDIFF(fecha_limite, CURDATE()) as dias_restantes
-            FROM fechas_importantes
+                DATEDIFF(fecha, CURDATE()) as dias_restantes
+            FROM fechas
             WHERE tipo_fecha = 'entrega_propuesta'
             AND es_global = TRUE
             AND proyecto_id IS NULL
-            ORDER BY fecha_limite DESC
+            ORDER BY fecha DESC
             LIMIT 1
         `);
 
@@ -505,7 +505,7 @@ export const verificarPermisoActualizarPropuesta = async (propuestaId, estudiant
 export const habilitarPeriodoPropuestas = async (fechaImportanteId) => {
     try {
         const [result] = await pool.execute(`
-            UPDATE fechas_importantes 
+            UPDATE fechas 
             SET habilitada = TRUE, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND tipo_fecha = 'entrega_propuesta' AND es_global = TRUE
         `, [fechaImportanteId]);
@@ -533,7 +533,7 @@ export const habilitarPeriodoPropuestas = async (fechaImportanteId) => {
 export const deshabilitarPeriodoPropuestas = async (fechaImportanteId) => {
     try {
         const [result] = await pool.execute(`
-            UPDATE fechas_importantes 
+            UPDATE fechas 
             SET habilitada = FALSE, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND tipo_fecha = 'entrega_propuesta' AND es_global = TRUE
         `, [fechaImportanteId]);
@@ -564,21 +564,21 @@ export const obtenerEstadoPeriodoPropuestas = async () => {
                 id,
                 titulo,
                 descripcion,
-                fecha_limite,
+                fecha as fecha_limite,
                 habilitada,
                 permite_extension,
-                DATEDIFF(fecha_limite, CURDATE()) as dias_restantes,
+                DATEDIFF(fecha, CURDATE()) as dias_restantes,
                 CASE 
-                    WHEN fecha_limite < CURDATE() THEN 'vencido'
-                    WHEN fecha_limite = CURDATE() THEN 'ultimo_dia'
-                    WHEN DATEDIFF(fecha_limite, CURDATE()) <= 3 THEN 'proximo_a_vencer'
+                    WHEN fecha < CURDATE() THEN 'vencido'
+                    WHEN fecha = CURDATE() THEN 'ultimo_dia'
+                    WHEN DATEDIFF(fecha, CURDATE()) <= 3 THEN 'proximo_a_vencer'
                     ELSE 'activo'
                 END as estado_tiempo
-            FROM fechas_importantes
+            FROM fechas
             WHERE tipo_fecha = 'entrega_propuesta'
             AND es_global = TRUE
             AND proyecto_id IS NULL
-            ORDER BY fecha_limite DESC
+            ORDER BY fecha DESC
             LIMIT 1
         `);
 
@@ -617,12 +617,12 @@ export const obtenerEstadoPeriodoPropuestas = async () => {
 export const deshabilitarPeriodosVencidos = async () => {
     try {
         const [result] = await pool.execute(`
-            UPDATE fechas_importantes 
+            UPDATE fechas 
             SET habilitada = FALSE, updated_at = CURRENT_TIMESTAMP
             WHERE tipo_fecha = 'entrega_propuesta' 
             AND es_global = TRUE
             AND habilitada = TRUE
-            AND fecha_limite < CURDATE()
+            AND fecha < CURDATE()
         `);
 
         return {

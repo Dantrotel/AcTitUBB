@@ -1,3 +1,20 @@
+// Variables de colores UBB (unificadas)
+$primary-color: #004b8d;
+$secondary-color: #0066cc;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$accent-color: #00a8ff;
+
 .fechas-importantes-container {
   padding: 20px;
   max-width: 1200px;
@@ -9,17 +26,17 @@
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #004b8d;
+    border-bottom: 2px solid $primary-color;
 
     h2 {
-      color: #004b8d;
+      color: $primary-color;
       font-size: 1.8rem;
       font-weight: 600;
       margin: 0;
 
       i {
         margin-right: 10px;
-        color: #0066cc;
+        color: $secondary-color;
       }
     }
   }

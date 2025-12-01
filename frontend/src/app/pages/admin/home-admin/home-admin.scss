@@ -1,73 +1,266 @@
-// Variables de colores institucionales
+@use 'sass:color';
+
+// Variables de colores UBB (unificadas)
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
-$accent-color: #ff6b35;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
 $success-color: #28a745;
 $warning-color: #ffc107;
-$danger-color: #dc3545;
+$accent-color: #00a8ff;
 $info-color: #17a2b8;
-$light-gray: #f8f9fa;
-$dark-gray: #343a40;
+$light-gray: $light-color;
+$dark-gray: $dark-color;
 
 // Navbar del administrador
-.admin-navbar {
-  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-  padding: 1rem 2rem;
+.navbar {
+  background: $white-color;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 20px rgba(0, 75, 141, 0.3);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  height: 70px;
 
   .navbar-brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: white;
     font-size: 1.5rem;
     font-weight: 700;
+    color: $primary-color;
 
     i {
-      font-size: 1.75rem;
+      color: $secondary-color;
+      margin-right: 0.5rem;
+      font-size: 1.8rem;
     }
   }
 
-  .navbar-user {
+  .navbar-actions {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
 
-    .user-info {
+    .action-item {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: white;
-      font-weight: 600;
-
-      i {
-        font-size: 1.25rem;
-      }
-    }
-
-    .btn-logout {
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      color: white;
       padding: 0.5rem 1rem;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 600;
+      color: #6c757d;
+      font-weight: 500;
+      position: relative;
+
+      i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+      }
 
       &:hover {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
+        background-color: $light-color;
+        color: $secondary-color;
         transform: translateY(-2px);
+      }
+
+      &.notifications-menu {
+        .notification-badge {
+          position: absolute;
+          top: 0.25rem;
+          right: 0.25rem;
+          background: $danger-color;
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.7rem;
+          font-weight: 700;
+        }
+
+        .notifications-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: $white-color;
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+          min-width: 350px;
+          max-width: 400px;
+          max-height: 500px;
+          overflow-y: auto;
+          margin-top: 0.5rem;
+
+          .panel-header {
+            padding: 1rem;
+            border-bottom: 1px solid $gray-color;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            h3 {
+              margin: 0;
+              font-size: 1.1rem;
+              color: $dark-color;
+            }
+
+            .btn-small {
+              background: $primary-color;
+              color: white;
+              border: none;
+              padding: 0.4rem 0.8rem;
+              border-radius: 6px;
+              font-size: 0.8rem;
+              cursor: pointer;
+              transition: all 0.3s ease;
+
+              &:hover {
+                background: color.adjust($primary-color, $lightness: -10%);
+              }
+            }
+          }
+
+          .notifications-list {
+            .notification-item {
+              padding: 1rem;
+              border-bottom: 1px solid $light-color;
+              display: flex;
+              gap: 0.75rem;
+              cursor: pointer;
+              transition: background-color 0.3s ease;
+
+              &:hover {
+                background-color: $light-color;
+              }
+
+              &.no-leida {
+                background-color: rgba($primary-color, 0.05);
+              }
+
+              .notification-icon {
+                font-size: 1.5rem;
+              }
+
+              .notification-content {
+                flex: 1;
+
+                h4 {
+                  margin: 0 0 0.25rem 0;
+                  font-size: 0.95rem;
+                  color: $dark-color;
+                }
+
+                p {
+                  margin: 0 0 0.5rem 0;
+                  font-size: 0.85rem;
+                  color: #6c757d;
+                }
+
+                .notification-time {
+                  font-size: 0.75rem;
+                  color: #999;
+                }
+              }
+
+              .notification-close {
+                background: none;
+                border: none;
+                color: #999;
+                cursor: pointer;
+                padding: 0.25rem;
+                transition: color 0.3s ease;
+
+                &:hover {
+                  color: $danger-color;
+                }
+              }
+            }
+          }
+
+          .no-notifications {
+            padding: 2rem;
+            text-align: center;
+            color: #999;
+
+            i {
+              font-size: 3rem;
+              margin-bottom: 1rem;
+            }
+
+            p {
+              margin: 0;
+            }
+          }
+        }
+      }
+
+      &.user-menu {
+        background-color: $light-color;
+        border: 1px solid $gray-color;
+
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: $white-color;
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+          min-width: 200px;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-10px);
+          transition: all 0.3s ease;
+          z-index: 1001;
+          margin-top: 0.5rem;
+
+          &.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+          }
+
+          .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            color: #6c757d;
+
+            i {
+              margin-right: 0.75rem;
+              width: 16px;
+            }
+
+            &:hover {
+              background-color: $light-color;
+              color: $secondary-color;
+            }
+
+            &:first-child {
+              border-radius: 8px 8px 0 0;
+            }
+
+            &:last-child {
+              border-radius: 0 0 8px 8px;
+            }
+          }
+        }
       }
     }
   }
@@ -75,9 +268,10 @@ $dark-gray: #343a40;
 
 // Contenedor principal
 .main-container {
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 70px);
   background: $light-gray;
   padding: 2rem;
+  margin-top: 70px; // Espacio para el navbar fixed
 }
 
 // Header de bienvenida
@@ -134,8 +328,8 @@ $dark-gray: #343a40;
   }
 }
 
-// Dashboard de estadísticas
-.stats-dashboard {
+// Dashboard de estadísticas unificado
+.analytics-section {
   margin-bottom: 3rem;
 
   .section-title {
@@ -152,10 +346,12 @@ $dark-gray: #343a40;
     }
   }
 
-  .stats-grid {
+  // Grid de propuestas principales (4 tarjetas grandes)
+  .stats-grid-propuestas {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
+    margin-bottom: 2rem;
 
     .stat-card {
       background: white;
@@ -165,12 +361,6 @@ $dark-gray: #343a40;
       align-items: center;
       gap: 1rem;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      }
 
       &.primary {
         border-left: 4px solid $primary-color;
@@ -308,14 +498,15 @@ $dark-gray: #343a40;
 
 // Responsive
 @media (max-width: 768px) {
-  .admin-navbar {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
+  .navbar {
+    padding: 0 1rem;
+    height: auto;
+    min-height: 70px;
+    flex-wrap: wrap;
 
-    .navbar-user {
-      width: 100%;
-      justify-content: space-between;
+    .navbar-actions {
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
   }
 
@@ -698,13 +889,7 @@ $gray-color: #e0e0e0;
     align-items: center;
     gap: 1.25rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
     border-left: 4px solid $gray-color;
-    
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
     
     &.estudiantes {
       border-left-color: $info-color;
@@ -1180,11 +1365,11 @@ $gray-color: #e0e0e0;
         border-radius: 4px;
         
         &.propuestas {
-          background: linear-gradient(90deg, $primary-color 0%, lighten($primary-color, 10%) 100%);
+          background: linear-gradient(90deg, $primary-color 0%, color.adjust($primary-color, $lightness: 10%) 100%);
         }
         
         &.proyectos {
-          background: linear-gradient(90deg, $info-color 0%, lighten($info-color, 10%) 100%);
+          background: linear-gradient(90deg, $info-color 0%, color.adjust($info-color, $lightness: 10%) 100%);
         }
       }
       

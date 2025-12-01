@@ -1113,30 +1113,8 @@ body {
         padding: 1.5rem;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         border-left: 4px solid transparent;
-        transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, currentColor, transparent);
-          transform: scaleX(0);
-          transition: transform 0.3s ease;
-        }
-
-        &:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-
-          &::before {
-            transform: scaleX(1);
-          }
-        }
 
         &.total {
           border-left-color: $primary-color;
@@ -1821,13 +1799,7 @@ $light-color: #f8f9fa;
     align-items: center;
     gap: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
     border-left: 4px solid $gray-color;
-    
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    }
     
     &.pendiente {
       border-left-color: $warning-color;

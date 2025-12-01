@@ -154,11 +154,16 @@ const getProyectosAsignados = async (req, res) => {
         }
 
         // Verificación de permisos más flexible
-        const esProfesor = rol_usuario === 'profesor' || req.rol_id === 2 || req.rol_id === '2';
+        // Permite profesores, admin y super admin
+        const rolId = Number(req.rol_id);
+        const esProfesor = rol_usuario === 'profesor' || rolId === 2;
+        const esAdmin = rol_usuario === 'admin' || rolId === 3;
+        const esSuperAdmin = rol_usuario === 'superadmin' || rolId === 4;
+        const tienePermiso = esProfesor || esAdmin || esSuperAdmin;
         
-        if (!esProfesor) {
+        if (!tienePermiso) {
             return res.status(403).json({ 
-                message: `Solo profesores pueden acceder a esta ruta. Rol actual: ${rol_usuario}, ID: ${req.rol_id}` 
+                message: `Solo profesores, administradores y super administradores pueden acceder a esta ruta. Rol actual: ${rol_usuario}, ID: ${req.rol_id}` 
             });
         }
 

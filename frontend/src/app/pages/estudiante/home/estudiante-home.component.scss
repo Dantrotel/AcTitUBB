@@ -1,21 +1,25 @@
-// Variables de colores UBB
+// Variables de colores UBB (unificadas)
 $primary-color: #004b8d;
 $secondary-color: #0066cc;
-$secondary-color-dark: #004080;
-$secondary-color-darker: #003366;
-$secondary-color-darkest: #002244;
-$accent-color: #00a8ff;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$secondary-color-darker: #004080;
+$secondary-color-darkest: #003366;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$light-color-dark: #e9ecef;
+$gray-color: #e9ecef;
+$dark-color: #212529;
 $success-color: #28a745;
 $success-color-dark: #1e7e34;
 $success-color-darker: #155724;
 $warning-color: #ffc107;
-$danger-color: #dc3545;
-$light-color: #f8f9fa;
-$light-color-dark: #e9ecef;
-$gray-color: #e9ecef;
-$dark-color: #343a40;
-$white-color: #ffffff;
-$ubb-yellow: #ffc107;
+$accent-color: #00a8ff;
+$ubb-yellow: $warning-color;
 
 // Gradientes UBB
 $primary-gradient: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
@@ -909,11 +913,6 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    transition: transform 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-    }
 
     .card-header {
       background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
@@ -1237,12 +1236,6 @@ body {
       border-radius: 12px;
       padding: 1.5rem;
       margin-bottom: 1rem;
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
 
       &.hito-completado {
         border-color: $success-color;
@@ -1777,12 +1770,6 @@ body {
     padding: 1.5rem;
     margin-bottom: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    }
 
     // Estados del hito
     &.pendiente {
@@ -2462,17 +2449,11 @@ body {
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
     border-left: 4px solid $primary-color;
 
     &.urgente {
       border-left-color: $danger-color;
       background: linear-gradient(to right, rgba($danger-color, 0.05), white);
-    }
-
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      transform: translateY(-2px);
     }
 
     .proyecto-header {
@@ -2601,15 +2582,10 @@ body {
       padding: 1rem;
       border-radius: 8px;
       background: $light-color;
-      transition: all 0.3s ease;
 
       &.proximo {
         background: linear-gradient(to right, rgba($warning-color, 0.1), $light-color);
         border-left: 3px solid $warning-color;
-      }
-
-      &:hover {
-        background: #f5f6f7;
         transform: translateX(5px);
       }
 

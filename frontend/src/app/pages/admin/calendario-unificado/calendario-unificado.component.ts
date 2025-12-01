@@ -86,6 +86,16 @@ export class CalendarioUnificadoComponent implements OnInit {
 
   // ===== PERÍODO DE PROPUESTAS =====
   estadoPeriodo: EstadoPeriodo | null = null;
+  todasFechasPropuestas: any[] = [];
+  Math = Math; // Exponer Math para usar en el template
+  
+  // Variables para editar/eliminar propuestas
+  mostrarModalEditarPropuesta = false;
+  fechaPropuestaEditar: any = {};
+  guardandoPropuesta = false;
+  mostrarModalEliminarPropuesta = false;
+  fechaPropuestaEliminar: any = null;
+  eliminandoPropuesta = false;
 
   // ===== REUNIONES =====
   reuniones: Reunion[] = [];
@@ -132,7 +142,15 @@ export class CalendarioUnificadoComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/admin']);
+    // Detectar si es super admin basándose en la ruta o el rol del usuario
+    const userData = JSON.parse(localStorage.getItem('userData') || localStorage.getItem('usuario') || '{}');
+    const rolId = parseInt(userData.rol_id || userData.rol || '0');
+    
+    if (rolId === 4) {
+      this.router.navigate(['/super-admin']);
+    } else {
+      this.router.navigate(['/admin']);
+    }
   }
 
   // ===========================
@@ -191,8 +209,10 @@ export class CalendarioUnificadoComponent implements OnInit {
         // también se debe recargar el estado del período
         if (this.nuevaFecha.tipo_fecha === 'entrega_propuesta' && this.nuevaFecha.es_global) {
           this.mensaje = '✅ Fecha creada exitosamente y agregada al Período de Propuestas';
+          console.log('🔄 Recargando estado del período y lista de fechas de propuestas...');
           // Recargar estado del período para que aparezca en la pestaña correspondiente
           this.cargarEstadoPeriodo();
+          this.cargarTodasFechasPropuestas(); // ⭐ AGREGADO: Recargar la lista completa
         }
         
         this.limpiarFormularioFecha();
@@ -239,9 +259,11 @@ export class CalendarioUnificadoComponent implements OnInit {
       next: (response: any) => {
         this.mensaje = 'Fecha eliminada exitosamente';
         
-        // Si se eliminó una fecha de entrega_propuesta, recargar estado del período
+        // Si se eliminó una fecha de entrega_propuesta, recargar TODAS las listas relacionadas
         if (esEntregaPropuesta) {
+          console.log('🔄 Recargando estado del período y lista de fechas de propuestas...');
           this.cargarEstadoPeriodo();
+          this.cargarTodasFechasPropuestas(); // ⭐ AGREGADO: Recargar la lista completa
         }
         
         this.cancelarEliminar();
@@ -311,15 +333,73 @@ export class CalendarioUnificadoComponent implements OnInit {
 
     this.apiService.get('/periodo-propuestas/estado').subscribe({
       next: (response: any) => {
-        this.estadoPeriodo = response;
+        console.log('📦 Estado del período recibido:', response);
+        
+        // Si no existe período, limpiar el estado
+        if (!response || !response.existe || response.existe === false) {
+          console.log('⚠️  No hay período configurado, limpiando estado...');
+          this.estadoPeriodo = {
+            existe: false,
+            mensaje: 'No hay período de propuestas configurado'
+          };
+        } else {
+          this.estadoPeriodo = response;
+        }
+        
         this.loading = false;
       },
       error: (error: any) => {
-        console.error('Error cargando estado del período:', error);
+        console.error('❌ Error cargando estado del período:', error);
         this.error = 'Error al cargar el estado del período de propuestas';
+        this.estadoPeriodo = null;
         this.loading = false;
       }
     });
+
+    // Cargar TODAS las fechas de entrega de propuestas
+    this.cargarTodasFechasPropuestas();
+  }
+
+  cargarTodasFechasPropuestas(): void {
+    console.log('🔍 Cargando todas las fechas de entrega de propuestas...');
+    this.apiService.get('/fechas-importantes/globales').subscribe({
+      next: (response: any) => {
+        console.log('📦 Respuesta del servidor:', response);
+        
+        // Asegurar que siempre sea un array
+        const todasFechas = response.fechas || response || [];
+        
+        // Si la respuesta no es un array, limpiar
+        if (!Array.isArray(todasFechas)) {
+          console.warn('⚠️  La respuesta no es un array, limpiando fechas...');
+          this.todasFechasPropuestas = [];
+        } else {
+          // Filtrar solo las de tipo "entrega_propuesta" que sean globales
+          this.todasFechasPropuestas = todasFechas.filter((f: any) => 
+            f.tipo_fecha === 'entrega_propuesta'
+          );
+        }
+        
+        console.log(`✅ Encontradas ${this.todasFechasPropuestas.length} fechas de entrega de propuestas`);
+        
+        if (this.todasFechasPropuestas.length === 0) {
+          console.log('📭 No hay fechas de entrega de propuestas en la base de datos');
+        } else {
+          console.log('📋 Fechas:', this.todasFechasPropuestas);
+        }
+      },
+      error: (error: any) => {
+        console.error('❌ Error cargando fechas de propuestas:', error);
+        this.todasFechasPropuestas = []; // Limpiar en caso de error
+      }
+    });
+  }
+
+  calcularDiasRestantes(fecha: string): number {
+    const hoy = new Date();
+    const fechaLimite = new Date(fecha);
+    const diferencia = fechaLimite.getTime() - hoy.getTime();
+    return Math.ceil(diferencia / (1000 * 3600 * 24));
   }
 
   habilitarPeriodo(): void {
@@ -552,5 +632,127 @@ export class CalendarioUnificadoComponent implements OnInit {
       completadas: this.reuniones.filter(r => r.estado === 'completada').length,
       canceladas: this.reuniones.filter(r => r.estado === 'cancelada').length
     };
+  }
+
+  // ===========================
+  // MÉTODOS PARA EDITAR/ELIMINAR PROPUESTAS
+  // ===========================
+
+  abrirModalEditarPropuesta(fecha: any) {
+    console.log('📝 Abriendo modal de edición de propuesta:', fecha);
+    
+    // Clonar la fecha para editar
+    this.fechaPropuestaEditar = {
+      id: fecha.id,
+      titulo: fecha.titulo,
+      descripcion: fecha.descripcion || '',
+      fecha_limite: this.convertirFechaParaInput(fecha.fecha_limite),
+      habilitada: fecha.habilitada !== undefined ? fecha.habilitada : true,
+      tipo_fecha: fecha.tipo_fecha || 'entrega_propuesta',
+      es_global: fecha.es_global !== undefined ? fecha.es_global : true
+    };
+    
+    console.log('📋 Datos cargados en el modal:', this.fechaPropuestaEditar);
+    
+    this.mostrarModalEditarPropuesta = true;
+  }
+
+  cerrarModalEditarPropuesta() {
+    this.mostrarModalEditarPropuesta = false;
+    this.fechaPropuestaEditar = {};
+    this.error = '';
+  }
+
+  convertirFechaParaInput(fecha: string): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  guardarEdicionPropuesta() {
+    if (!this.fechaPropuestaEditar.titulo || !this.fechaPropuestaEditar.fecha_limite) {
+      this.error = 'Por favor completa todos los campos obligatorios';
+      return;
+    }
+
+    this.guardandoPropuesta = true;
+    this.error = '';
+    this.mensaje = '';
+
+    console.log('💾 Guardando cambios de propuesta:', this.fechaPropuestaEditar);
+
+    const datosActualizar = {
+      titulo: this.fechaPropuestaEditar.titulo,
+      descripcion: this.fechaPropuestaEditar.descripcion,
+      fecha_limite: this.fechaPropuestaEditar.fecha_limite,
+      tipo_fecha: this.fechaPropuestaEditar.tipo_fecha || 'entrega_propuesta', // Asegurar que siempre se envíe
+      es_global: this.fechaPropuestaEditar.es_global !== undefined ? this.fechaPropuestaEditar.es_global : true, // Por defecto true
+      habilitada: this.fechaPropuestaEditar.habilitada
+    };
+
+    console.log('📤 Enviando datos al backend:', datosActualizar);
+
+    // Usar el endpoint de calendario en lugar de fechas-importantes
+    this.apiService.put(`/calendario/${this.fechaPropuestaEditar.id}`, datosActualizar).subscribe({
+      next: (response: any) => {
+        console.log('✅ Propuesta actualizada:', response);
+        this.mensaje = 'Fecha de propuesta actualizada correctamente';
+        this.cerrarModalEditarPropuesta();
+        this.cargarEstadoPeriodo();
+        this.cargarTodasFechasPropuestas();
+        this.guardandoPropuesta = false;
+        setTimeout(() => this.mensaje = '', 3000);
+      },
+      error: (error: any) => {
+        console.error('❌ Error al actualizar propuesta:', error);
+        this.error = error.error?.message || 'Error al actualizar la fecha de propuesta';
+        this.guardandoPropuesta = false;
+      }
+    });
+  }
+
+  confirmarEliminarPropuesta(fecha: any) {
+    console.log('🗑️  Confirmando eliminación de propuesta:', fecha);
+    this.fechaPropuestaEliminar = fecha;
+    this.mostrarModalEliminarPropuesta = true;
+  }
+
+  cancelarEliminarPropuesta() {
+    this.mostrarModalEliminarPropuesta = false;
+    this.fechaPropuestaEliminar = null;
+  }
+
+  eliminarFechaPropuesta() {
+    if (!this.fechaPropuestaEliminar || !this.fechaPropuestaEliminar.id) {
+      this.error = 'No se ha seleccionado ninguna fecha para eliminar';
+      return;
+    }
+
+    this.eliminandoPropuesta = true;
+    this.error = '';
+    this.mensaje = '';
+
+    console.log('🗑️  Eliminando fecha de propuesta con ID:', this.fechaPropuestaEliminar.id);
+
+    // Usar el endpoint de calendario en lugar de fechas-importantes
+    this.apiService.delete(`/calendario/${this.fechaPropuestaEliminar.id}`).subscribe({
+      next: (response: any) => {
+        console.log('✅ Fecha de propuesta eliminada:', response);
+        this.mensaje = 'Fecha de propuesta eliminada correctamente';
+        this.cancelarEliminarPropuesta();
+        this.cargarEstadoPeriodo();
+        this.cargarTodasFechasPropuestas();
+        this.eliminandoPropuesta = false;
+        setTimeout(() => this.mensaje = '', 3000);
+      },
+      error: (error: any) => {
+        console.error('❌ Error al eliminar fecha de propuesta:', error);
+        this.error = error.error?.message || 'Error al eliminar la fecha de propuesta';
+        this.eliminandoPropuesta = false;
+      }
+    });
   }
 }

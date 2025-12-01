@@ -74,7 +74,7 @@ const checkTablesExist = async () => {
         // Lista de tablas nuevas que podrían faltar
         const newTables = [
             'estados_propuestas', 'roles_profesores', 'asignaciones_propuestas',
-            'asignaciones_proyectos', 'fechas_importantes', 'participantes_reuniones',
+            'asignaciones_proyectos', 'fechas', 'participantes_reuniones',
             'hitos_proyecto', 'cronogramas_proyecto', 'evaluaciones_proyecto',
             'hitos_cronograma', 'notificaciones_proyecto', 'configuracion_alertas', ''
         ];
@@ -239,7 +239,7 @@ const verifyTables = async () => {
         const requiredTables = [
             'roles', 'usuarios', 'estados_propuestas', 'propuestas', 
             'roles_profesores', 'asignaciones_propuestas', 'proyectos',
-            'asignaciones_proyectos', 'avances', 'fechas_importantes',
+            'asignaciones_proyectos', 'avances', 'fechas',
             'reuniones', 'participantes_reuniones', 'hitos_proyecto',
             'cronogramas_proyecto', 'evaluaciones_proyecto', 'hitos_cronograma',
             'historial_reuniones', 'documentos_proyecto'

@@ -13,6 +13,7 @@ import { ApiService } from '../../../services/api';
 export class SuperAdminHomeComponent implements OnInit {
   userData = signal<any>(null);
   loading = signal(true);
+  showUserMenu = signal(false);
   
   // Estadísticas de estructura académica
   estadisticasEstructura = signal<any>({
@@ -144,6 +145,10 @@ export class SuperAdminHomeComponent implements OnInit {
       
       this.loading.set(false);
     });
+  }
+
+  toggleUserMenu(): void {
+    this.showUserMenu.set(!this.showUserMenu());
   }
 
   logout(): void {

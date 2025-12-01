@@ -10,50 +10,6 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Tabla de Asignaciones de Profesores a Proyectos (UNIFICADA)
-CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
-    profesor_rut VARCHAR(10) NOT NULL,
-    rol_profesor_id INT NOT NULL,
-    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_desasignacion TIMESTAMP NULL,
-    activo BOOLEAN DEFAULT TRUE,
-    observaciones TEXT NULL,
-    asignado_por VARCHAR(10) NOT NULL, -- RUT del admin que hizo la asignación
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
-    FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
-    UNIQUE KEY unique_asignacion_activa (proyecto_id, rol_profesor_id, activo),
-    INDEX idx_proyecto_activo (proyecto_id, activo),
-    INDEX idx_profesor_activo (profesor_rut, activo),
-    INDEX idx_rol_activo (rol_profesor_id, activo)
-);
-
--- Tabla de Historial de Asignaciones (para auditoría)
-CREATE TABLE IF NOT EXISTS historial_asignaciones (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    asignacion_id INT NOT NULL,
-    proyecto_id INT NOT NULL,
-    profesor_rut VARCHAR(10) NOT NULL,
-    rol_profesor_id INT NOT NULL,
-    accion ENUM('asignado', 'desasignado', 'modificado') NOT NULL,
-    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    realizado_por VARCHAR(10) NOT NULL, -- RUT del admin que realizó la acción
-    observaciones TEXT NULL,
-    FOREIGN KEY (asignacion_id) REFERENCES asignaciones_proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
-    FOREIGN KEY (realizado_por) REFERENCES usuarios(rut),
-    INDEX idx_proyecto_historial (proyecto_id),
-    INDEX idx_profesor_historial (profesor_rut),
-    INDEX idx_fecha_historial (fecha_accion)
-);
-
 -- Tabla de Usuarios (Estudiantes y Profesores)
 CREATE TABLE IF NOT EXISTS usuarios (
     rut VARCHAR(10) NOT NULL PRIMARY KEY UNIQUE,
@@ -133,21 +89,6 @@ CREATE TABLE IF NOT EXISTS estudiantes_propuestas (
     INDEX idx_estudiante_propuestas (estudiante_rut)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Tabla para vincular múltiples estudiantes a un proyecto
-CREATE TABLE IF NOT EXISTS estudiantes_proyectos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
-    estudiante_rut VARCHAR(10) NOT NULL,
-    es_creador BOOLEAN DEFAULT FALSE,
-    orden INT DEFAULT 1,
-    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
-    UNIQUE KEY unique_estudiante_proyecto (proyecto_id, estudiante_rut),
-    INDEX idx_proyecto_estudiante (proyecto_id),
-    INDEX idx_estudiante_proyectos (estudiante_rut)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 -- Tabla de Roles de Profesores en Proyectos
 CREATE TABLE IF NOT EXISTS roles_profesores (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -159,12 +100,6 @@ CREATE TABLE IF NOT EXISTS roles_profesores (
 -- Asegurar que la columna codigo existe (por si la tabla ya existía sin esta columna)
 -- Este comando fallará si la columna ya existe, pero el error será ignorado por el sistema
 ALTER TABLE roles_profesores ADD COLUMN codigo VARCHAR(50) UNIQUE AFTER id;
-
--- Asegurar que asignaciones_proyectos tiene las columnas nuevas
-ALTER TABLE asignaciones_proyectos ADD COLUMN asignado_por VARCHAR(10) AFTER activo;
-ALTER TABLE asignaciones_proyectos ADD COLUMN observaciones TEXT NULL AFTER activo;
-ALTER TABLE asignaciones_proyectos ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER observaciones;
-ALTER TABLE asignaciones_proyectos ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;
 
 -- Tabla de Asignaciones de Profesores a Propuestas
 CREATE TABLE IF NOT EXISTS asignaciones_propuestas (
@@ -240,6 +175,67 @@ CREATE TABLE IF NOT EXISTS proyectos (
     FOREIGN KEY (estado_id) REFERENCES estados_proyectos(id)
 );
 
+-- Tabla de Asignaciones de Profesores a Proyectos (UNIFICADA)
+-- MOVIDA AQUÍ para respetar el orden de dependencias
+CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    rol_profesor_id INT NOT NULL,
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_desasignacion TIMESTAMP NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    observaciones TEXT NULL,
+    asignado_por VARCHAR(10) NOT NULL, -- RUT del admin que hizo la asignación
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
+    FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
+    UNIQUE KEY unique_asignacion_activa (proyecto_id, rol_profesor_id, activo),
+    INDEX idx_proyecto_activo (proyecto_id, activo),
+    INDEX idx_profesor_activo (profesor_rut, activo),
+    INDEX idx_rol_activo (rol_profesor_id, activo)
+);
+
+-- Tabla de Historial de Asignaciones (para auditoría)
+CREATE TABLE IF NOT EXISTS historial_asignaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    asignacion_id INT NOT NULL,
+    proyecto_id INT NOT NULL,
+    profesor_rut VARCHAR(10) NOT NULL,
+    rol_profesor_id INT NOT NULL,
+    accion ENUM('asignado', 'desasignado', 'modificado') NOT NULL,
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    realizado_por VARCHAR(10) NOT NULL, -- RUT del admin que realizó la acción
+    observaciones TEXT NULL,
+    FOREIGN KEY (asignacion_id) REFERENCES asignaciones_proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
+    FOREIGN KEY (realizado_por) REFERENCES usuarios(rut),
+    INDEX idx_proyecto_historial (proyecto_id),
+    INDEX idx_profesor_historial (profesor_rut),
+    INDEX idx_fecha_historial (fecha_accion)
+);
+
+-- Tabla para vincular múltiples estudiantes a un proyecto
+-- MOVIDA AQUÍ para respetar el orden de dependencias
+CREATE TABLE IF NOT EXISTS estudiantes_proyectos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    es_creador BOOLEAN DEFAULT FALSE,
+    orden INT DEFAULT 1,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    UNIQUE KEY unique_estudiante_proyecto (proyecto_id, estudiante_rut),
+    INDEX idx_proyecto_estudiante (proyecto_id),
+    INDEX idx_estudiante_proyectos (estudiante_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Tabla de Hitos del Proyecto
 CREATE TABLE IF NOT EXISTS hitos_proyecto (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -299,55 +295,89 @@ CREATE TABLE IF NOT EXISTS avances (
 );
 
 -- Tabla de Fechas Importantes del Calendario
-CREATE TABLE IF NOT EXISTS fechas_calendario (
+-- ============================================
+-- TABLA UNIFICADA DE FECHAS
+-- ============================================
+-- Esta tabla reemplaza a fechas_calendario y fechas_importantes
+-- Combina todos los campos necesarios para ambos propósitos
+
+CREATE TABLE IF NOT EXISTS fechas (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Información básica
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
-    fecha DATE NOT NULL,
-    tipo_fecha ENUM('global', 'academica', 'entrega', 'revision', 'defensa', 'reunion', 'otro') DEFAULT 'otro',
-    -- Campos para determinar visibilidad
-    es_global BOOLEAN DEFAULT FALSE, -- Si es true, la ve todo el mundo (fechas del admin)
-    creado_por_rut VARCHAR(10) NOT NULL, -- RUT del que creó la fecha (admin o profesor)
-    profesor_rut VARCHAR(10) NULL, -- Si no es global, RUT del profesor (para fechas específicas)
-    estudiante_rut VARCHAR(10) NULL, -- Si es específica para un estudiante
-    activa BOOLEAN DEFAULT TRUE,
+    fecha DATE NOT NULL COMMENT 'Fecha principal del evento',
+    
+    -- Tipo y categorización
+    tipo_fecha ENUM(
+        'entrega_propuesta', 
+        'entrega', 
+        'entrega_avance', 
+        'entrega_final',
+        'reunion', 
+        'hito', 
+        'deadline', 
+        'presentacion', 
+        'defensa', 
+        'revision',
+        'academica',
+        'global',
+        'otro'
+    ) DEFAULT 'otro',
+    
+    -- Visibilidad y alcance
+    es_global BOOLEAN DEFAULT FALSE COMMENT 'Si es true, visible para todos (fechas del admin)',
+    activa BOOLEAN DEFAULT TRUE COMMENT 'Para soft delete (solo fechas de calendario)',
+    
+    -- Control de períodos (para fechas importantes)
+    habilitada BOOLEAN DEFAULT TRUE COMMENT 'Controla si el período está activo para recibir entregas',
+    permite_extension BOOLEAN DEFAULT TRUE COMMENT 'Si permite solicitar extensión después de la fecha límite',
+    requiere_entrega BOOLEAN DEFAULT FALSE COMMENT 'Si requiere entrega de archivos/documentos',
+    
+    -- Estado de completitud
+    completada BOOLEAN DEFAULT FALSE,
+    fecha_realizada DATE NULL COMMENT 'Fecha en que se completó el evento',
+    notas TEXT,
+    
+    -- Relaciones
+    proyecto_id INT NULL COMMENT 'NULL para fechas globales, ID del proyecto para fechas específicas',
+    creado_por_rut VARCHAR(10) NOT NULL COMMENT 'RUT del que creó la fecha (admin o profesor)',
+    profesor_rut VARCHAR(10) NULL COMMENT 'RUT del profesor (para fechas específicas profesor-estudiante)',
+    estudiante_rut VARCHAR(10) NULL COMMENT 'RUT del estudiante (para fechas específicas)',
+    
+    -- Auditoría
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Foreign Keys
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (creado_por_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut)
-);
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
+    
+    -- Índices para mejorar performance
+    INDEX idx_fecha (fecha),
+    INDEX idx_tipo_fecha (tipo_fecha),
+    INDEX idx_es_global (es_global),
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_activa (activa),
+    INDEX idx_habilitada (habilitada)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de Fechas Importantes específicas de cada proyecto
-CREATE TABLE IF NOT EXISTS fechas_importantes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NULL, -- NULL para fechas globales de propuestas
-    tipo_fecha ENUM('entrega_propuesta', 'entrega', 'reunion', 'hito', 'deadline', 'presentacion', 'entrega_avance', 'entrega_final', 'defensa', 'revision', 'otro') DEFAULT 'otro',
-    titulo VARCHAR(255) NOT NULL,
-    descripcion TEXT,
-    fecha_limite DATE NOT NULL,
-    permite_extension BOOLEAN DEFAULT TRUE, -- Si permite solicitar extensión después de la fecha límite
-    habilitada BOOLEAN DEFAULT TRUE COMMENT 'Controla si el período está activo para recibir entregas. El admin puede deshabilitarlo manualmente o se deshabilita automáticamente al alcanzar la fecha límite',
-    requiere_entrega BOOLEAN DEFAULT FALSE, -- Si requiere entrega de archivos/documentos
-    creado_por VARCHAR(10) NULL, -- RUT del profesor o admin que creó la fecha
-    completada BOOLEAN DEFAULT FALSE,
-    fecha_realizada DATE NULL,
-    notas TEXT,
-    es_global BOOLEAN DEFAULT FALSE, -- Si es una fecha global (para todas las propuestas, no específica de proyecto)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (creado_por) REFERENCES usuarios(rut)
-);
+-- ============================================
+-- NOTA: MIGRACIÓN DE DATOS
+-- ============================================
+-- Si estás migrando desde una base de datos existente con fechas_calendario
+-- y fechas_importantes, ejecuta el script: migrate_to_unified_fechas.sql
+-- 
+-- Este archivo (database.sql) está diseñado para crear la base de datos desde cero.
+-- ============================================
 
--- Asegurar que fechas_importantes tiene las columnas necesarias (para tablas existentes)
-ALTER TABLE fechas_importantes ADD COLUMN habilitada BOOLEAN DEFAULT TRUE COMMENT 'Controla si el período está activo para recibir entregas';
-ALTER TABLE fechas_importantes ADD COLUMN permite_extension BOOLEAN DEFAULT TRUE;
-ALTER TABLE fechas_importantes ADD COLUMN requiere_entrega BOOLEAN DEFAULT FALSE;
-ALTER TABLE fechas_importantes ADD COLUMN completada BOOLEAN DEFAULT FALSE;
-ALTER TABLE fechas_importantes ADD COLUMN fecha_realizada DATE NULL;
-ALTER TABLE fechas_importantes ADD COLUMN notas TEXT;
-ALTER TABLE fechas_importantes ADD COLUMN es_global BOOLEAN DEFAULT FALSE;
+-- ============================================
+-- NOTA: Las tablas fechas_calendario y fechas_importantes fueron reemplazadas
+-- por la tabla unificada 'fechas' (definida arriba)
+-- ============================================
 
 -- Tabla de Cronogramas de Proyecto (acordados entre guía y estudiante)
 CREATE TABLE IF NOT EXISTS cronogramas_proyecto (
@@ -594,12 +624,8 @@ CREATE INDEX idx_proyectos_estudiante ON proyectos(estudiante_rut);
 CREATE INDEX idx_proyectos_estado ON proyectos(estado_id);
 CREATE INDEX idx_avances_proyecto ON avances(proyecto_id);
 CREATE INDEX idx_avances_estado ON avances(estado_id);
-CREATE INDEX idx_fechas_proyecto ON fechas_importantes(proyecto_id);
-CREATE INDEX idx_fechas_importantes_propuestas_globales ON fechas_importantes(es_global, tipo_fecha, habilitada, fecha_limite);
-CREATE INDEX idx_fechas_propuestas_globales ON fechas_importantes(tipo_fecha, es_global, fecha_limite);
-CREATE INDEX idx_fechas_calendario_global ON fechas_calendario(es_global, fecha);
-CREATE INDEX idx_fechas_calendario_profesor ON fechas_calendario(profesor_rut, fecha);
-CREATE INDEX idx_fechas_calendario_estudiante ON fechas_calendario(estudiante_rut, fecha);
+-- NOTA: Los índices para fechas_calendario y fechas_importantes ya no son necesarios
+-- porque la tabla 'fechas' ya tiene sus propios índices definidos en su creación
 CREATE INDEX idx_reuniones_proyecto ON reuniones(proyecto_id);
 CREATE INDEX idx_asignaciones_propuesta ON asignaciones_propuestas(propuesta_id);
 CREATE INDEX idx_asignaciones_proyecto ON asignaciones_proyectos(proyecto_id);
@@ -797,7 +823,7 @@ CREATE TABLE IF NOT EXISTS solicitudes_extension (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (fecha_importante_id) REFERENCES fechas_importantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (fecha_importante_id) REFERENCES fechas(id) ON DELETE CASCADE,
     FOREIGN KEY (solicitante_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (aprobado_por) REFERENCES usuarios(rut),
     INDEX idx_extension_proyecto (proyecto_id, estado),
@@ -879,8 +905,7 @@ ALTER TABLE estudiantes_proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8m
 ALTER TABLE avances CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE hitos_cronograma CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE hitos_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE fechas_importantes CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE fechas_calendario CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE fechas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE cronogramas_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE notificaciones_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE configuracion_alertas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -952,7 +977,7 @@ CREATE TABLE IF NOT EXISTS carreras (
     titulo_profesional VARCHAR(255) NOT NULL COMMENT 'Ej: Ingeniero Civil en Informática',
     grado_academico VARCHAR(100) COMMENT 'Ej: Licenciado en Ciencias de la Ingeniería',
     duracion_semestres INT NOT NULL DEFAULT 10,
-    jefe_carrera_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del profesor que es jefe de carrera (Admin)',
+    jefe_carrera_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'DEPRECATED: Usar tabla jefes_carreras',
     descripcion TEXT,
     modalidad ENUM('presencial', 'semipresencial', 'online') DEFAULT 'presencial',
     activo BOOLEAN DEFAULT TRUE,
@@ -963,6 +988,23 @@ CREATE TABLE IF NOT EXISTS carreras (
     INDEX idx_codigo (codigo),
     INDEX idx_jefe_carrera (jefe_carrera_rut),
     INDEX idx_activo (activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Jefes de Carrera (relación N:M - un profesor puede ser jefe de múltiples carreras)
+CREATE TABLE IF NOT EXISTS jefes_carreras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    carrera_id INT NOT NULL,
+    fecha_inicio DATE NOT NULL DEFAULT (CURRENT_DATE),
+    fecha_fin DATE NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (carrera_id) REFERENCES carreras(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_jefe_carrera (profesor_rut, carrera_id),
+    INDEX idx_profesor (profesor_rut, activo),
+    INDEX idx_carrera (carrera_id, activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de Profesores-Departamentos (relación N:M)
@@ -1045,6 +1087,13 @@ SET @sql = IF(@fk_exists = 0,
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+-- Migrar datos existentes de jefe_carrera_rut a la nueva tabla jefes_carreras
+INSERT INTO jefes_carreras (profesor_rut, carrera_id, activo)
+SELECT jefe_carrera_rut, id, TRUE
+FROM carreras
+WHERE jefe_carrera_rut IS NOT NULL
+ON DUPLICATE KEY UPDATE activo = TRUE;
 
 -- Insertar datos de ejemplo: Facultades
 INSERT INTO facultades (nombre, codigo, descripcion, email) VALUES
@@ -1161,11 +1210,15 @@ SELECT
     u.email,
     c.nombre AS carrera_nombre,
     c.codigo AS carrera_codigo,
-    f.nombre AS facultad_nombre
+    f.nombre AS facultad_nombre,
+    jc.fecha_inicio,
+    jc.fecha_fin,
+    jc.activo
 FROM usuarios u
-INNER JOIN carreras c ON u.rut = c.jefe_carrera_rut
+INNER JOIN jefes_carreras jc ON u.rut = jc.profesor_rut
+INNER JOIN carreras c ON jc.carrera_id = c.id
 INNER JOIN facultades f ON c.facultad_id = f.id
-WHERE u.rol_id = 3;
+WHERE u.rol_id = 3 AND jc.activo = TRUE;
 
 CREATE OR REPLACE VIEW vista_departamentos_por_carrera AS
 SELECT 

@@ -1,32 +1,48 @@
 @use 'sass:color';
 
-// Variables
-$primary-blue: #2196F3;
-$primary-pink: #E91E63;
-$dark-pink: #C2185B;
-$university-blue: #0066CC;
-$text-dark: #333;
+// Variables de colores UBB (unificadas)
+$primary-color: #004b8d;
+$secondary-color: #0066cc;
+$secondary-color-light: #2989d8;
+$secondary-color-lighter: #7db9e8;
+$secondary-color-dark: #0c3d80;
+$danger-color: #dc3545;
+$danger-color-light: #e53935;
+$danger-color-dark: #7f0000;
+$white-color: #ffffff;
+$light-color: #f8f9fa;
+$gray-color: #e9ecef;
+$dark-color: #212529;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$accent-color: #00a8ff;
+
+// Variables adicionales para compatibilidad
+$primary-blue: $secondary-color;
+$university-blue: $secondary-color;
+$text-dark: $dark-color;
 $text-light: #666;
 $text-lighter: #999;
-$border-color: #ddd;
-$background-light: #f8f9fa;
+$border-color: $gray-color;
+$background-light: $light-color;
 $background-input: #f9f9f9;
-$white: #ffffff;
-
-// UBB Colors
-$ubb-blue: #1e5799;
-$ubb-blue-light: #2989d8;
-$ubb-blue-lighter: #7db9e8;
-$ubb-red: #E20613;
+$white: $white-color;
+$ubb-blue: $primary-color;
+$ubb-blue-light: $secondary-color-light;
+$ubb-blue-lighter: $secondary-color-lighter;
+$ubb-red: $danger-color;
 $ubb-light-gray: #BBBBBB;
-$gray-color: #F3E4E4;
 $ubb-dark-gray: #666;
 
-// UBB Gradients
-$ubb-blue-gradient: linear-gradient(135deg, #1e5799, #207cca, #2989d8, #7db9e8);
-$gray-color-gradient: linear-gradient(to right, #BBBBBB 0%, #F3E4E4 31.3%, #F8F8F8 45.3%, #F3E4E4 66%, #BBBBBB 100%);
-$ubb-red-gradient: linear-gradient(to right, #E20613 0%, #F39D75 51.6%, #E20613 100%);
-$ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
+// Gradientes UBB (unificados)
+$primary-gradient: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+$success-gradient: linear-gradient(135deg, $success-color 0%, #20c997 100%);
+$warning-gradient: linear-gradient(135deg, $warning-color 0%, #fd7e14 100%);
+$accent-gradient: linear-gradient(135deg, $accent-color 0%, #6f42c1 100%);
+$ubb-blue-gradient: linear-gradient(135deg, $primary-color, $secondary-color, $secondary-color-light, $secondary-color-lighter);
+$gray-color-gradient: linear-gradient(to right, #BBBBBB 0%, #E3E4E4 31.3%, #F8F8F8 45.3%, #E3E4E4 66%, #BBBBBB 100%);
+$ubb-red-gradient: linear-gradient(to right, $danger-color 0%, #F39D75 51.6%, $danger-color 100%);
+$ubb-button-gradient: linear-gradient(to right, $primary-color, $secondary-color);
 
 // Mixins
 @mixin flex-center {
@@ -125,7 +141,26 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 1.5rem;
       margin-bottom: 1rem;
+      
+      .logo-ubb {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        transition: transform 0.3s ease;
+        
+        &:hover {
+          transform: scale(1.05);
+        }
+      }
+      
+      .logo-content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
       
       .logo-text {
         font-size: 2.2rem;
@@ -148,23 +183,10 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
         border-radius: 2px;
       }
       
-      .logo-dots {
-        display: flex;
-        gap: 8px;
-        margin-left: 1rem;
-        
-        .dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          
-          &.dot-green { background: $ubb-blue; }
-          &.dot-blue { background: $ubb-blue-light; }
-          &.dot-purple { background: $ubb-red; }
-          &.dot-orange { background: $ubb-blue-lighter; }
-          &.dot-red { background: $ubb-red; }
-          &.dot-teal { background: $ubb-blue; }
-        }
+      .logo-subtitle {
+        font-size: 0.9rem;
+        color: $ubb-dark-gray;
+        margin-top: 0.25rem;
       }
     }
     
@@ -429,14 +451,7 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
     background-color: rgba(255, 255, 255, 0.9);
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
     border: 1px solid rgba($ubb-blue, 0.1);
-
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      background-color: white;
-    }
 
     .info-icon {
       font-size: 2rem;
@@ -482,36 +497,17 @@ $ubb-button-gradient: linear-gradient(to right, #1e5799, #2989d8);
     .university-logo {
       display: flex;
       align-items: center;
+      gap: 1rem;
 
-      .logo-placeholder {
+      .logo-footer {
         width: 60px;
         height: 60px;
-        background-color: $ubb-blue;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        border-radius: 12px;
-        margin-right: 1rem;
-        font-size: 1.5rem;
-        box-shadow: 0 4px 15px rgba($ubb-blue, 0.3);
-        position: relative;
-        overflow: hidden;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+        transition: transform 0.3s ease;
         
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 80%);
-        }
-        
-        i {
-          position: relative;
-          z-index: 1;
+        &:hover {
+          transform: scale(1.1);
         }
       }
 

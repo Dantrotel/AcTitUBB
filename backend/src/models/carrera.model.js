@@ -68,18 +68,30 @@ const obtenerCarreraPorCodigo = async (codigo) => {
 };
 
 /**
- * Obtener la carrera de un jefe de carrera por su RUT
+ * Obtener TODAS las carreras de un jefe de carrera por su RUT
  */
-const obtenerCarreraPorJefeRut = async (rut) => {
+const obtenerCarrerasPorJefeRut = async (rut) => {
     const query = `
-        SELECT c.id, c.nombre, c.codigo, c.facultad_id, f.nombre as facultad_nombre
-        FROM carreras c
+        SELECT c.id, c.nombre, c.codigo, c.facultad_id, f.nombre as facultad_nombre,
+               jc.fecha_inicio, jc.fecha_fin, jc.activo
+        FROM jefes_carreras jc
+        INNER JOIN carreras c ON jc.carrera_id = c.id
         LEFT JOIN facultades f ON c.facultad_id = f.id
-        WHERE c.jefe_carrera_rut = ? AND c.activo = TRUE
+        WHERE jc.profesor_rut = ? AND jc.activo = TRUE AND c.activo = TRUE
+        ORDER BY c.nombre
     `;
     
     const [rows] = await pool.execute(query, [rut]);
-    return rows[0]; // Un jefe solo puede estar en una carrera
+    return rows; // Un jefe puede tener múltiples carreras
+};
+
+/**
+ * Obtener la carrera de un jefe de carrera por su RUT (DEPRECATED - usar obtenerCarrerasPorJefeRut)
+ * Mantener por retrocompatibilidad
+ */
+const obtenerCarreraPorJefeRut = async (rut) => {
+    const carreras = await obtenerCarrerasPorJefeRut(rut);
+    return carreras[0]; // Retornar solo la primera por compatibilidad
 };
 
 /**
@@ -147,7 +159,7 @@ const actualizarCarrera = async (id, carreraData) => {
 };
 
 /**
- * Asignar jefe de carrera
+ * Asignar jefe de carrera (permite múltiples carreras por jefe)
  */
 const asignarJefeCarrera = async (carrera_id, profesor_rut) => {
     const connection = await pool.getConnection();
@@ -155,29 +167,41 @@ const asignarJefeCarrera = async (carrera_id, profesor_rut) => {
     try {
         await connection.beginTransaction();
         
-        // Obtener el jefe actual de la carrera (si existe)
-        const [carreraActual] = await connection.execute(
-            'SELECT jefe_carrera_rut FROM carreras WHERE id = ?',
+        // Desactivar jefes actuales de esta carrera
+        await connection.execute(
+            'UPDATE jefes_carreras SET activo = FALSE, fecha_fin = NOW() WHERE carrera_id = ? AND activo = TRUE',
             [carrera_id]
         );
         
-        // Si hay un jefe actual, cambiar su rol de vuelta a Profesor (rol 2)
-        if (carreraActual[0]?.jefe_carrera_rut) {
+        // Verificar si ya existe una relación inactiva
+        const [existing] = await connection.execute(
+            'SELECT id FROM jefes_carreras WHERE profesor_rut = ? AND carrera_id = ?',
+            [profesor_rut, carrera_id]
+        );
+        
+        if (existing.length > 0) {
+            // Reactivar la relación existente
             await connection.execute(
-                'UPDATE usuarios SET rol_id = 2 WHERE rut = ?',
-                [carreraActual[0].jefe_carrera_rut]
+                'UPDATE jefes_carreras SET activo = TRUE, fecha_inicio = NOW(), fecha_fin = NULL WHERE profesor_rut = ? AND carrera_id = ?',
+                [profesor_rut, carrera_id]
+            );
+        } else {
+            // Crear nueva relación
+            await connection.execute(
+                'INSERT INTO jefes_carreras (profesor_rut, carrera_id, fecha_inicio, activo) VALUES (?, ?, NOW(), TRUE)',
+                [profesor_rut, carrera_id]
             );
         }
         
-        // Actualizar carrera con nuevo jefe
+        // Actualizar también el campo legacy jefe_carrera_rut (por compatibilidad)
         await connection.execute(
             'UPDATE carreras SET jefe_carrera_rut = ? WHERE id = ?',
             [profesor_rut, carrera_id]
         );
         
-        // Cambiar rol del nuevo profesor a Admin (Jefe de Carrera - rol 3)
+        // Cambiar rol del profesor a Admin (Jefe de Carrera - rol 3) si no lo es ya
         await connection.execute(
-            'UPDATE usuarios SET rol_id = 3 WHERE rut = ?',
+            'UPDATE usuarios SET rol_id = 3 WHERE rut = ? AND rol_id != 3',
             [profesor_rut]
         );
         
@@ -192,7 +216,7 @@ const asignarJefeCarrera = async (carrera_id, profesor_rut) => {
 };
 
 /**
- * Remover jefe de carrera
+ * Remover jefe de carrera (desactivar relación)
  */
 const removerJefeCarrera = async (carrera_id) => {
     const connection = await pool.getConnection();
@@ -200,18 +224,37 @@ const removerJefeCarrera = async (carrera_id) => {
     try {
         await connection.beginTransaction();
         
-        // Obtener RUT del jefe actual
-        const [carrera] = await connection.execute('SELECT jefe_carrera_rut FROM carreras WHERE id = ?', [carrera_id]);
+        // Obtener RUT del jefe actual desde la nueva tabla
+        const [jefes] = await connection.execute(
+            'SELECT profesor_rut FROM jefes_carreras WHERE carrera_id = ? AND activo = TRUE',
+            [carrera_id]
+        );
         
-        if (carrera[0]?.jefe_carrera_rut) {
-            // Cambiar rol del usuario de vuelta a Profesor (rol 2)
+        if (jefes.length > 0) {
+            const profesor_rut = jefes[0].profesor_rut;
+            
+            // Desactivar la relación en jefes_carreras
             await connection.execute(
-                'UPDATE usuarios SET rol_id = 2 WHERE rut = ?',
-                [carrera[0].jefe_carrera_rut]
+                'UPDATE jefes_carreras SET activo = FALSE, fecha_fin = NOW() WHERE carrera_id = ? AND profesor_rut = ?',
+                [carrera_id, profesor_rut]
             );
+            
+            // Verificar si el profesor sigue siendo jefe de otras carreras
+            const [otrasCarreras] = await connection.execute(
+                'SELECT COUNT(*) as count FROM jefes_carreras WHERE profesor_rut = ? AND activo = TRUE',
+                [profesor_rut]
+            );
+            
+            // Si no es jefe de ninguna otra carrera, cambiar su rol a Profesor (rol 2)
+            if (otrasCarreras[0].count === 0) {
+                await connection.execute(
+                    'UPDATE usuarios SET rol_id = 2 WHERE rut = ?',
+                    [profesor_rut]
+                );
+            }
         }
         
-        // Remover jefe de la carrera
+        // Remover jefe de la carrera (campo legacy)
         await connection.execute('UPDATE carreras SET jefe_carrera_rut = NULL WHERE id = ?', [carrera_id]);
         
         await connection.commit();
@@ -328,6 +371,7 @@ export {
     obtenerCarreraPorId,
     obtenerCarreraPorCodigo,
     obtenerCarreraPorJefeRut,
+    obtenerCarrerasPorJefeRut,
     crearCarrera,
     actualizarCarrera,
     asignarJefeCarrera,
