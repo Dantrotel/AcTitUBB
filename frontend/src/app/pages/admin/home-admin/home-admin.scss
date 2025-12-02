@@ -1320,11 +1320,11 @@ $gray-color: #e0e0e0;
           }
           
           &.propuestas-bar {
-            background: linear-gradient(to top, $primary-color 0%, lighten($primary-color, 10%) 100%);
+            background: linear-gradient(to top, $primary-color 0%, color.adjust($primary-color, $lightness: 10%) 100%);
           }
           
           &.proyectos-bar {
-            background: linear-gradient(to top, $info-color 0%, lighten($info-color, 10%) 100%);
+            background: linear-gradient(to top, $info-color 0%, color.adjust($info-color, $lightness: 10%) 100%);
           }
           
           .bar-value {
@@ -1562,3 +1562,4 @@ $gray-color: #e0e0e0;
     }
   }
 } 
+

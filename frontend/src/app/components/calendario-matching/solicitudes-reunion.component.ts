@@ -71,8 +71,32 @@ export class SolicitudesReunionComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   
+  // Rol del usuario
+  userRole: string = '';
+  
   // Filtros
   diasAdelante = 14;
+
+  // Propiedades computadas para filtros
+  get solicitudesPendientes(): SolicitudReunion[] {
+    return this.solicitudes.filter(s => s.estado === 'pendiente');
+  }
+
+  get solicitudesHistorial(): SolicitudReunion[] {
+    return this.solicitudes.filter(s => s.estado !== 'pendiente');
+  }
+
+  get countPendientes(): number {
+    return this.solicitudesPendientes.length;
+  }
+
+  get haySolicitudesPendientes(): boolean {
+    return this.countPendientes > 0;
+  }
+
+  get haySolicitudesHistorial(): boolean {
+    return this.solicitudesHistorial.length > 0;
+  }
 
   // Formulario de nueva reserva
   nuevaReserva = {
@@ -97,10 +121,23 @@ export class SolicitudesReunionComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private router: Router
-  ) {}
+  ) {
+    // Obtener rol del usuario desde localStorage
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      const roleId = user.rol_id || user.role_id;
+      this.userRole = roleId === 1 ? 'estudiante' : 
+                    roleId === 2 ? 'profesor' : 'admin';
+      console.log('👤 User Role detectado:', this.userRole, '(rol_id:', roleId, ')');
+    }
+  }
 
   ngOnInit() {
-    this.cargarProfesores();
+    // Cargar profesores solo para estudiantes
+    if (this.userRole === 'estudiante') {
+      this.cargarProfesores();
+    }
     this.cargarSolicitudes();
   }
 
@@ -285,6 +322,40 @@ export class SolicitudesReunionComponent implements OnInit {
         console.error('Error al cancelar:', error);
         this.errorMessage = error.error?.message || 'Error al cancelar la reserva';
         this.isLoading = false;
+      }
+    });
+  }
+
+  // ==========================================
+  // RESPONDER SOLICITUD (PROFESOR)
+  // ==========================================
+
+  responderSolicitud(solicitudId: number, respuesta: 'aceptar' | 'rechazar') {
+    let comentarios = '';
+    if (respuesta === 'rechazar') {
+      comentarios = prompt('Motivo del rechazo:') || '';
+      if (!comentarios.trim()) {
+        this.errorMessage = 'Debe especificar el motivo del rechazo';
+        setTimeout(() => this.errorMessage = '', 3000);
+        return;
+      }
+    }
+
+    this.isLoading = true;
+    this.apiService.responderSolicitudReunion(solicitudId.toString(), { respuesta, comentarios }).subscribe({
+      next: (response: any) => {
+        this.successMessage = respuesta === 'aceptar' ? 
+          '✅ Solicitud aceptada. La reunión se ha agregado al calendario.' :
+          '❌ Solicitud rechazada.';
+        this.cargarSolicitudes();
+        this.isLoading = false;
+        setTimeout(() => this.successMessage = '', 5000);
+      },
+      error: (error) => {
+        console.error('Error al responder solicitud:', error);
+        this.errorMessage = error.error?.message || 'Error al responder la solicitud';
+        this.isLoading = false;
+        setTimeout(() => this.errorMessage = '', 5000);
       }
     });
   }

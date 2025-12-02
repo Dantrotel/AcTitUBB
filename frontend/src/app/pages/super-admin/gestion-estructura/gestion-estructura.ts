@@ -145,9 +145,9 @@ export class GestionEstructuraComponent implements OnInit {
 
   async eliminarFacultad(id: number): Promise<void> {
     const confirmed = await this.notificationService.confirm(
-      '¿Estás seguro de que deseas eliminar esta facultad?',
-      'Confirmar eliminación',
-      'Eliminar',
+      '¿Estás seguro de que deseas desactivar esta facultad? (Soft Delete)',
+      'Confirmar desactivación',
+      'Desactivar',
       'Cancelar'
     );
     
@@ -159,13 +159,69 @@ export class GestionEstructuraComponent implements OnInit {
     this.apiService.deleteFacultad(id).subscribe({
       next: (res: any) => {
         if (res.success) {
-          this.mostrarMensaje('Facultad eliminada exitosamente', 'success');
+          this.mostrarMensaje('Facultad desactivada exitosamente', 'success');
           this.cargarFacultades();
         }
       },
       error: (err) => {
-        console.error('Error al eliminar facultad:', err);
-        this.mostrarMensaje(err.error?.message || 'Error al eliminar facultad', 'error');
+        console.error('Error al desactivar facultad:', err);
+        this.mostrarMensaje(err.error?.message || 'Error al desactivar facultad', 'error');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  async eliminarFacultadPermanente(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE esta facultad? Esta acción NO se puede deshacer.',
+      'Confirmar eliminación permanente',
+      'Eliminar Permanentemente',
+      'Cancelar'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    this.cargando.set(true);
+    this.apiService.deleteFacultadPermanente(id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.mostrarMensaje('Facultad eliminada permanentemente', 'success');
+          this.cargarFacultades();
+        }
+      },
+      error: (err) => {
+        const mensaje = err.error?.message || err.message || 'Error al eliminar facultad permanentemente';
+        this.mostrarMensaje(mensaje, 'error');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  async reactivarFacultad(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que deseas reactivar esta facultad?',
+      'Confirmar reactivación',
+      'Reactivar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    this.cargando.set(true);
+    this.apiService.reactivarFacultad(id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.mostrarMensaje('Facultad reactivada exitosamente', 'success');
+          this.cargarFacultades();
+        }
+      },
+      error: (err) => {
+        const mensaje = err.error?.message || err.message || 'Error al reactivar facultad';
+        this.mostrarMensaje(mensaje, 'error');
         this.cargando.set(false);
       }
     });
@@ -245,9 +301,9 @@ export class GestionEstructuraComponent implements OnInit {
 
   async eliminarDepartamento(id: number): Promise<void> {
     const confirmed = await this.notificationService.confirm(
-      '¿Estás seguro de que deseas eliminar este departamento?',
-      'Confirmar eliminación',
-      'Eliminar',
+      '¿Estás seguro de que deseas desactivar este departamento? (Soft Delete)',
+      'Confirmar desactivación',
+      'Desactivar',
       'Cancelar'
     );
     
@@ -259,13 +315,70 @@ export class GestionEstructuraComponent implements OnInit {
     this.apiService.deleteDepartamento(id).subscribe({
       next: (res: any) => {
         if (res.success) {
-          this.mostrarMensaje('Departamento eliminado exitosamente', 'success');
+          this.mostrarMensaje('Departamento desactivado exitosamente', 'success');
           this.cargarDepartamentos();
         }
       },
       error: (err) => {
-        console.error('Error al eliminar departamento:', err);
-        this.mostrarMensaje(err.error?.message || 'Error al eliminar departamento', 'error');
+        console.error('Error al desactivar departamento:', err);
+        this.mostrarMensaje(err.error?.message || 'Error al desactivar departamento', 'error');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  async reactivarDepartamento(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que deseas reactivar este departamento?',
+      'Confirmar reactivación',
+      'Reactivar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    this.cargando.set(true);
+    this.apiService.reactivarDepartamento(id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.mostrarMensaje('Departamento reactivado exitosamente', 'success');
+          this.cargarDepartamentos();
+        }
+      },
+      error: (err) => {
+        const mensaje = err.error?.message || err.message || 'Error al reactivar departamento';
+        this.mostrarMensaje(mensaje, 'error');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  async eliminarDepartamentoPermanente(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE este departamento? Esta acción NO se puede deshacer.',
+      'Confirmar eliminación permanente',
+      'Eliminar Permanentemente',
+      'Cancelar'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    this.cargando.set(true);
+    this.apiService.deleteDepartamentoPermanente(id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.mostrarMensaje('Departamento eliminado permanentemente', 'success');
+          this.cargarDepartamentos();
+        }
+      },
+      error: (err) => {
+        console.error('Error al eliminar departamento permanentemente:', err);
+        const mensaje = err.error?.message || err.message || 'Error al eliminar departamento permanentemente';
+        this.mostrarMensaje(mensaje, 'error');
         this.cargando.set(false);
       }
     });
@@ -345,9 +458,9 @@ export class GestionEstructuraComponent implements OnInit {
 
   async eliminarCarrera(id: number): Promise<void> {
     const confirmed = await this.notificationService.confirm(
-      '¿Estás seguro de que deseas eliminar esta carrera?',
-      'Confirmar eliminación',
-      'Eliminar',
+      '¿Estás seguro de que deseas desactivar esta carrera? (Soft Delete)',
+      'Confirmar desactivación',
+      'Desactivar',
       'Cancelar'
     );
     
@@ -359,13 +472,70 @@ export class GestionEstructuraComponent implements OnInit {
     this.apiService.deleteCarrera(id).subscribe({
       next: (res: any) => {
         if (res.success) {
-          this.mostrarMensaje('Carrera eliminada exitosamente', 'success');
+          this.mostrarMensaje('Carrera desactivada exitosamente', 'success');
           this.cargarCarreras();
         }
       },
       error: (err) => {
-        console.error('Error al eliminar carrera:', err);
-        this.mostrarMensaje(err.error?.message || 'Error al eliminar carrera', 'error');
+        console.error('Error al desactivar carrera:', err);
+        this.mostrarMensaje(err.error?.message || 'Error al desactivar carrera', 'error');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  async reactivarCarrera(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que deseas reactivar esta carrera?',
+      'Confirmar reactivación',
+      'Reactivar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    this.cargando.set(true);
+    this.apiService.reactivarCarrera(id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.mostrarMensaje('Carrera reactivada exitosamente', 'success');
+          this.cargarCarreras();
+        }
+      },
+      error: (err) => {
+        const mensaje = err.error?.message || err.message || 'Error al reactivar carrera';
+        this.mostrarMensaje(mensaje, 'error');
+        this.cargando.set(false);
+      }
+    });
+  }
+
+  async eliminarCarreraPermanente(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE esta carrera? Esta acción NO se puede deshacer.',
+      'Confirmar eliminación permanente',
+      'Eliminar Permanentemente',
+      'Cancelar'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    this.cargando.set(true);
+    this.apiService.deleteCarreraPermanente(id).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.mostrarMensaje('Carrera eliminada permanentemente', 'success');
+          this.cargarCarreras();
+        }
+      },
+      error: (err) => {
+        console.error('Error al eliminar carrera permanentemente:', err);
+        const mensaje = err.error?.message || err.message || 'Error al eliminar carrera permanentemente';
+        this.mostrarMensaje(mensaje, 'error');
         this.cargando.set(false);
       }
     });

@@ -1,13 +1,19 @@
-<div class="gestionar-jefes-container">
-  <header class="page-header">
-    <div class="header-content">
+<!-- Contenedor principal -->
+<div class="main-container">
+  <!-- Header compacto con gradiente -->
+  <div class="page-header-compact">
+    <div class="header-left">
       <h1>
         <i class="fas fa-user-tie"></i>
         Gestionar Jefes de Carrera
       </h1>
-      <p class="subtitle">Asignar y remover jefes de carrera para cada programa académico</p>
+      <p class="header-subtitle">Asignar y remover jefes de carrera para cada programa académico</p>
     </div>
-  </header>
+    <button class="btn-volver" (click)="volverAtras()" title="Volver a la página anterior">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
 
   <!-- Mensaje de estado -->
   @if (mensaje()) {
@@ -20,7 +26,7 @@
   <!-- Loader -->
   @if (loading()) {
     <div class="loader-container">
-      <div class="loader"></div>
+      <div class="spinner"></div>
       <p>Cargando carreras...</p>
     </div>
   }
@@ -110,10 +116,13 @@
     }
   }
 
-  <!-- Modal de asignación -->
-  @if (mostrarModal()) {
-    <div class="modal-overlay" (click)="cerrarModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+  <!-- Cierre del contenedor principal -->
+</div>
+
+<!-- Modal de asignación -->
+@if (mostrarModal()) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>
             <i class="fas fa-user-tie"></i>
@@ -170,4 +179,3 @@
       </div>
     </div>
   }
-</div>

@@ -20,8 +20,14 @@ router.post('/facultades', verifySession, checkRole('4'), EstructuraController.c
 // Actualizar facultad (solo Super Admin)
 router.put('/facultades/:id', verifySession, checkRole('4'), EstructuraController.actualizarFacultad);
 
-// Eliminar facultad (solo Super Admin)
+// Eliminar facultad - soft delete (solo Super Admin)
 router.delete('/facultades/:id', verifySession, checkRole('4'), EstructuraController.eliminarFacultad);
+
+// Reactivar facultad (solo Super Admin)
+router.put('/facultades/:id/reactivar', verifySession, checkRole('4'), EstructuraController.reactivarFacultad);
+
+// Eliminar facultad permanentemente (solo Super Admin)
+router.delete('/facultades/:id/permanente', verifySession, checkRole('4'), EstructuraController.eliminarFacultadPermanente);
 
 // Obtener estadísticas de facultad
 router.get('/facultades/:id/estadisticas', verifySession, EstructuraController.obtenerEstadisticasFacultad);
@@ -44,11 +50,23 @@ router.post('/departamentos', verifySession, checkRole('4'), EstructuraControlle
 // Actualizar departamento (solo Super Admin)
 router.put('/departamentos/:id', verifySession, checkRole('4'), EstructuraController.actualizarDepartamento);
 
+// Eliminar departamento - soft delete (solo Super Admin)
+router.delete('/departamentos/:id', verifySession, checkRole('4'), EstructuraController.eliminarDepartamento);
+
+// Reactivar departamento (solo Super Admin)
+router.put('/departamentos/:id/reactivar', verifySession, checkRole('4'), EstructuraController.reactivarDepartamento);
+
+// Eliminar departamento permanentemente (solo Super Admin)
+router.delete('/departamentos/:id/permanente', verifySession, checkRole('4'), EstructuraController.eliminarDepartamentoPermanente);
+
 // Asignar profesor a departamento (Super Admin o Jefe de Departamento)
 router.post('/departamentos/:id/profesores', verifySession, checkRole('4'), EstructuraController.asignarProfesorDepartamento);
 
 // Obtener profesores de un departamento
 router.get('/departamentos/:id/profesores', verifySession, EstructuraController.obtenerProfesoresDepartamento);
+
+// Remover profesor de departamento (solo Super Admin)
+router.delete('/departamentos/:id/profesores/:profesorRut', verifySession, checkRole('4'), EstructuraController.removerProfesorDepartamento);
 
 // ============================================
 // RUTAS DE CARRERAS
@@ -67,6 +85,15 @@ router.post('/carreras', verifySession, checkRole('4'), EstructuraController.cre
 // Actualizar carrera (solo Super Admin)
 router.put('/carreras/:id', verifySession, checkRole('4'), EstructuraController.actualizarCarrera);
 
+// Eliminar carrera - soft delete (solo Super Admin)
+router.delete('/carreras/:id', verifySession, checkRole('4'), EstructuraController.eliminarCarrera);
+
+// Reactivar carrera (solo Super Admin)
+router.put('/carreras/:id/reactivar', verifySession, checkRole('4'), EstructuraController.reactivarCarrera);
+
+// Eliminar carrera permanentemente (solo Super Admin)
+router.delete('/carreras/:id/permanente', verifySession, checkRole('4'), EstructuraController.eliminarCarreraPermanente);
+
 // Asignar jefe de carrera (solo Super Admin)
 router.post('/carreras/:id/jefe', verifySession, checkRole('4'), EstructuraController.asignarJefeCarrera);
 
@@ -78,6 +105,9 @@ router.post('/carreras/:id/estudiantes', verifySession, EstructuraController.asi
 
 // Obtener estudiantes de una carrera
 router.get('/carreras/:id/estudiantes', verifySession, EstructuraController.obtenerEstudiantesCarrera);
+
+// Remover estudiante de carrera (solo Super Admin)
+router.delete('/carreras/:id/estudiantes/:estudianteRut', verifySession, checkRole('4'), EstructuraController.removerEstudianteCarrera);
 
 // Obtener estadísticas de carrera
 router.get('/carreras/:id/estadisticas', verifySession, EstructuraController.obtenerEstadisticasCarrera);

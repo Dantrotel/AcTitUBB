@@ -73,10 +73,28 @@ const actualizarFacultad = async (id, facultadData) => {
 };
 
 /**
- * Eliminar (desactivar) facultad
+ * Eliminar (desactivar) facultad - Soft Delete
  */
 const eliminarFacultad = async (id) => {
     const query = 'UPDATE facultades SET activo = FALSE WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Reactivar facultad - Restaurar Soft Delete
+ */
+const reactivarFacultad = async (id) => {
+    const query = 'UPDATE facultades SET activo = TRUE WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Eliminar facultad permanentemente - Hard Delete
+ */
+const eliminarFacultadPermanente = async (id) => {
+    const query = 'DELETE FROM facultades WHERE id = ?';
     const [result] = await pool.execute(query, [id]);
     return result.affectedRows > 0;
 };
@@ -114,5 +132,7 @@ export {
     crearFacultad,
     actualizarFacultad,
     eliminarFacultad,
+    reactivarFacultad,
+    eliminarFacultadPermanente,
     obtenerEstadisticasFacultad
 };

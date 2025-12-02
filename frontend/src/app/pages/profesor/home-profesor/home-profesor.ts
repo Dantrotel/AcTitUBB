@@ -209,7 +209,7 @@ export class HomeProfesor implements OnInit {
   cargarProyectosRecientes() {
     this.ApiService.getProyectosAsignados().subscribe({
       next: (data: any) => {
-        if (data && data.projects) {
+        if (data && data.projects && Array.isArray(data.projects)) {
           this.proyectosRecientes = data.projects.slice(0, 5).map((proyecto: any) => ({
             ...proyecto,
             estado_visual: this.getEstadoClase(proyecto.estado_proyecto || 'en_desarrollo')
@@ -220,10 +220,12 @@ export class HomeProfesor implements OnInit {
             this.cargarDatosProyecto(proyecto);
           });
         } else {
+          console.warn('data.projects no es un array:', data);
           this.proyectosRecientes = [];
         }
       },
       error: (error: any) => {
+        console.error('Error al cargar proyectos recientes:', error);
         this.proyectosRecientes = [];
       }
     });
@@ -470,7 +472,7 @@ export class HomeProfesor implements OnInit {
   }
 
   navegarAHitos() {
-    this.router.navigate(['/profesor/hitos']);
+    this.router.navigate(['/profesor/cronogramas']);
   }
 
   navegarAEvaluaciones() {

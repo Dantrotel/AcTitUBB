@@ -103,6 +103,33 @@ const actualizarDepartamento = async (id, departamentoData) => {
 };
 
 /**
+ * Eliminar departamento - Soft Delete
+ */
+const eliminarDepartamento = async (id) => {
+    const query = 'UPDATE departamentos SET activo = FALSE WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Reactivar departamento - Restaurar Soft Delete
+ */
+const reactivarDepartamento = async (id) => {
+    const query = 'UPDATE departamentos SET activo = TRUE WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Eliminar departamento permanentemente - Hard Delete
+ */
+const eliminarDepartamentoPermanente = async (id) => {
+    const query = 'DELETE FROM departamentos WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
  * Asignar jefe de departamento
  */
 const asignarJefeDepartamento = async (departamento_id, profesor_rut) => {
@@ -183,6 +210,9 @@ export {
     obtenerDepartamentoPorId,
     crearDepartamento,
     actualizarDepartamento,
+    eliminarDepartamento,
+    reactivarDepartamento,
+    eliminarDepartamentoPermanente,
     asignarJefeDepartamento,
     obtenerProfesoresDepartamento,
     asignarProfesorDepartamento,

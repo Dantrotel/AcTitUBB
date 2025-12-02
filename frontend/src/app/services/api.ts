@@ -1198,6 +1198,18 @@ export class ApiService {
     });
   }
 
+  reactivarFacultad(id: number) {
+    return this.http.put(`${this.baseUrl}/estructura/facultades/${id}/reactivar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteFacultadPermanente(id: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/facultades/${id}/permanente`, {
+      headers: this.getHeaders()
+    });
+  }
+
   getEstadisticasFacultad(id: number) {
     return this.http.get(`${this.baseUrl}/estructura/facultades/${id}/estadisticas`, {
       headers: this.getHeaders()
@@ -1240,6 +1252,18 @@ export class ApiService {
 
   deleteDepartamento(id: number) {
     return this.http.delete(`${this.baseUrl}/estructura/departamentos/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  reactivarDepartamento(id: number) {
+    return this.http.put(`${this.baseUrl}/estructura/departamentos/${id}/reactivar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteDepartamentoPermanente(id: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/departamentos/${id}/permanente`, {
       headers: this.getHeaders()
     });
   }
@@ -1305,6 +1329,24 @@ export class ApiService {
 
   deleteCarrera(id: number) {
     return this.http.delete(`${this.baseUrl}/estructura/carreras/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  reactivarCarrera(id: number) {
+    return this.http.put(`${this.baseUrl}/estructura/carreras/${id}/reactivar`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteCarreraPermanente(id: number) {
+    return this.http.delete(`${this.baseUrl}/estructura/carreras/${id}/permanente`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  removerEstudianteCarrera(carreraId: number, estudianteRut: string) {
+    return this.http.delete(`${this.baseUrl}/estructura/carreras/${carreraId}/estudiantes/${estudianteRut}`, {
       headers: this.getHeaders()
     });
   }
