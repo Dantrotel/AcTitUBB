@@ -66,10 +66,42 @@ const eliminarFacultad = async (req, res) => {
         if (!eliminado) {
             return res.status(404).json({ success: false, message: 'Facultad no encontrada' });
         }
-        res.json({ success: true, message: 'Facultad eliminada exitosamente' });
+        res.json({ success: true, message: 'Facultad desactivada exitosamente (soft delete)' });
     } catch (error) {
         console.error('Error al eliminar facultad:', error);
         res.status(500).json({ success: false, message: 'Error al eliminar facultad' });
+    }
+};
+
+const reactivarFacultad = async (req, res) => {
+    try {
+        const reactivado = await FacultadModel.reactivarFacultad(req.params.id);
+        if (!reactivado) {
+            return res.status(404).json({ success: false, message: 'Facultad no encontrada' });
+        }
+        return res.json({ success: true, message: 'Facultad reactivada exitosamente' });
+    } catch (error) {
+        console.error('Error al reactivar facultad:', error);
+        return res.status(500).json({ success: false, message: 'Error al reactivar facultad' });
+    }
+};
+
+const eliminarFacultadPermanente = async (req, res) => {
+    try {
+        const eliminado = await FacultadModel.eliminarFacultadPermanente(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ success: false, message: 'Facultad no encontrada' });
+        }
+        return res.json({ success: true, message: 'Facultad eliminada permanentemente' });
+    } catch (error) {
+        console.error('Error al eliminar facultad permanentemente:', error);
+        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No se puede eliminar la facultad porque tiene departamentos o carreras asociadas. Elimine primero las relaciones.' 
+            });
+        }
+        return res.status(500).json({ success: false, message: 'Error al eliminar facultad permanentemente' });
     }
 };
 
@@ -136,6 +168,61 @@ const actualizarDepartamento = async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar departamento:', error);
         res.status(500).json({ success: false, message: 'Error al actualizar departamento' });
+    }
+};
+
+const eliminarDepartamento = async (req, res) => {
+    try {
+        const eliminado = await DepartamentoModel.eliminarDepartamento(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ success: false, message: 'Departamento no encontrado' });
+        }
+        res.json({ success: true, message: 'Departamento desactivado exitosamente (soft delete)' });
+    } catch (error) {
+        console.error('Error al eliminar departamento:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar departamento' });
+    }
+};
+
+const reactivarDepartamento = async (req, res) => {
+    try {
+        const reactivado = await DepartamentoModel.reactivarDepartamento(req.params.id);
+        if (!reactivado) {
+            return res.status(404).json({ success: false, message: 'Departamento no encontrado' });
+        }
+        return res.json({ success: true, message: 'Departamento reactivado exitosamente' });
+    } catch (error) {
+        console.error('Error al reactivar departamento:', error);
+        return res.status(500).json({ success: false, message: 'Error al reactivar departamento' });
+    }
+};
+
+const eliminarDepartamentoPermanente = async (req, res) => {
+    try {
+        const eliminado = await DepartamentoModel.eliminarDepartamentoPermanente(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ success: false, message: 'Departamento no encontrado' });
+        }
+        return res.json({ success: true, message: 'Departamento eliminado permanentemente' });
+    } catch (error) {
+        console.error('Error al eliminar departamento permanentemente:', error);
+        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No se puede eliminar el departamento porque tiene profesores o relaciones con carreras. Elimine primero las relaciones.' 
+            });
+        }
+        return res.status(500).json({ success: false, message: 'Error al eliminar departamento permanentemente' });
+    }
+};
+
+const removerProfesorDepartamento = async (req, res) => {
+    try {
+        await DepartamentoModel.removerProfesorDepartamento(req.params.profesorRut, req.params.id);
+        res.json({ success: true, message: 'Profesor removido del departamento exitosamente' });
+    } catch (error) {
+        console.error('Error al remover profesor del departamento:', error);
+        res.status(500).json({ success: false, message: 'Error al remover profesor del departamento' });
     }
 };
 
@@ -221,6 +308,61 @@ const actualizarCarrera = async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar carrera:', error);
         res.status(500).json({ success: false, message: 'Error al actualizar carrera' });
+    }
+};
+
+const eliminarCarrera = async (req, res) => {
+    try {
+        const eliminado = await CarreraModel.eliminarCarrera(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ success: false, message: 'Carrera no encontrada' });
+        }
+        res.json({ success: true, message: 'Carrera desactivada exitosamente (soft delete)' });
+    } catch (error) {
+        console.error('Error al eliminar carrera:', error);
+        res.status(500).json({ success: false, message: 'Error al eliminar carrera' });
+    }
+};
+
+const reactivarCarrera = async (req, res) => {
+    try {
+        const reactivado = await CarreraModel.reactivarCarrera(req.params.id);
+        if (!reactivado) {
+            return res.status(404).json({ success: false, message: 'Carrera no encontrada' });
+        }
+        return res.json({ success: true, message: 'Carrera reactivada exitosamente' });
+    } catch (error) {
+        console.error('Error al reactivar carrera:', error);
+        return res.status(500).json({ success: false, message: 'Error al reactivar carrera' });
+    }
+};
+
+const eliminarCarreraPermanente = async (req, res) => {
+    try {
+        const eliminado = await CarreraModel.eliminarCarreraPermanente(req.params.id);
+        if (!eliminado) {
+            return res.status(404).json({ success: false, message: 'Carrera no encontrada' });
+        }
+        return res.json({ success: true, message: 'Carrera eliminada permanentemente' });
+    } catch (error) {
+        console.error('Error al eliminar carrera permanentemente:', error);
+        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No se puede eliminar la carrera porque tiene estudiantes o relaciones con departamentos. Elimine primero las relaciones.' 
+            });
+        }
+        return res.status(500).json({ success: false, message: 'Error al eliminar carrera permanentemente' });
+    }
+};
+
+const removerEstudianteCarrera = async (req, res) => {
+    try {
+        await CarreraModel.removerEstudianteCarrera(req.params.estudianteRut, req.params.id);
+        res.json({ success: true, message: 'Estudiante removido de la carrera exitosamente' });
+    } catch (error) {
+        console.error('Error al remover estudiante de carrera:', error);
+        res.status(500).json({ success: false, message: 'Error al remover estudiante de carrera' });
     }
 };
 
@@ -329,6 +471,8 @@ export {
     crearFacultad,
     actualizarFacultad,
     eliminarFacultad,
+    reactivarFacultad,
+    eliminarFacultadPermanente,
     obtenerEstadisticasFacultad,
     
     // Departamentos
@@ -336,7 +480,11 @@ export {
     obtenerDepartamentoPorId,
     crearDepartamento,
     actualizarDepartamento,
+    eliminarDepartamento,
+    reactivarDepartamento,
+    eliminarDepartamentoPermanente,
     asignarProfesorDepartamento,
+    removerProfesorDepartamento,
     obtenerProfesoresDepartamento,
     
     // Carreras
@@ -344,6 +492,10 @@ export {
     obtenerCarreraPorId,
     crearCarrera,
     actualizarCarrera,
+    eliminarCarrera,
+    reactivarCarrera,
+    eliminarCarreraPermanente,
+    removerEstudianteCarrera,
     asignarJefeCarrera,
     removerJefeCarrera,
     asignarEstudianteCarrera,

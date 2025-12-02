@@ -2,8 +2,10 @@
   <!-- Header principal -->
   <div class="header">
     <div class="header-content">
-      <h1><i class="fas fa-calendar-check"></i> Reservar Reunión</h1>
-      <p>Selecciona un horario disponible de tu profesor y reserva una reunión</p>
+      <h1 *ngIf="userRole === 'estudiante'"><i class="fas fa-calendar-check"></i> Reservar Reunión</h1>
+      <h1 *ngIf="userRole === 'profesor'"><i class="fas fa-inbox"></i> Solicitudes Recibidas</h1>
+      <p *ngIf="userRole === 'estudiante'">Selecciona un horario disponible de tu profesor y reserva una reunión</p>
+      <p *ngIf="userRole === 'profesor'">Gestiona las solicitudes de reunión de tus estudiantes</p>
     </div>
     <div class="header-actions">
       <button class="btn-volver-header" (click)="volver()">
@@ -34,6 +36,11 @@
 
   <!-- Contenido principal -->
   <div *ngIf="!isLoading">
+    
+    <!-- ================================ -->
+    <!-- VISTA PARA ESTUDIANTES -->
+    <!-- ================================ -->
+    <div *ngIf="userRole === 'estudiante'">
     
     <!-- PASO 1: Seleccionar Profesor -->
     <div class="form-section">
@@ -287,5 +294,165 @@
         </ul>
       </div>
     </div>
+    </div>
+    <!-- FIN VISTA ESTUDIANTE -->
+
+    <!-- ================================ -->
+    <!-- VISTA PARA PROFESORES -->
+    <!-- ================================ -->
+    <div *ngIf="userRole === 'profesor'">
+      
+      <!-- Solicitudes Pendientes -->
+      <div class="solicitudes-list">
+        <div class="section-header">
+          <h3><i class="fas fa-clock"></i> Solicitudes Pendientes</h3>
+          <span class="badge-count" *ngIf="haySolicitudesPendientes">
+            {{ countPendientes }}
+          </span>
+        </div>
+        
+        <div class="empty-state" *ngIf="!haySolicitudesPendientes">
+          <i class="fas fa-inbox"></i>
+          <h4>No hay solicitudes pendientes</h4>
+          <p>Aquí aparecerán las solicitudes de reunión de tus estudiantes</p>
+        </div>
+
+        <div class="solicitudes-grid" *ngIf="haySolicitudesPendientes">
+          <div 
+            class="solicitud-card" 
+            *ngFor="let solicitud of solicitudesPendientes; trackBy: trackById">
+            
+            <div class="card-header">
+              <div class="profesor-info">
+                <h4>{{ solicitud.estudiante_nombre || 'Estudiante' }}</h4>
+                <span class="proyecto-info">{{ solicitud.proyecto_titulo }}</span>
+              </div>
+              <div class="estado-badge status-pending">
+                <span class="estado-icon">⏳</span>
+                Pendiente
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="reunion-detalles">
+                <div class="detalle-item">
+                  <i class="fas fa-calendar"></i>
+                  <span>{{ solicitud.fecha_propuesta ? formatearFecha(solicitud.fecha_propuesta) : 'Fecha no disponible' }}</span>
+                </div>
+                <div class="detalle-item">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ formatearHora(solicitud.hora_propuesta) }} ({{ solicitud.duracion_minutos }} min)</span>
+                </div>
+                <div class="detalle-item">
+                  <i class="fas fa-tag"></i>
+                  <span>{{ solicitud.tipo_reunion }}</span>
+                </div>
+              </div>
+
+              <div class="descripcion" *ngIf="solicitud.descripcion">
+                <i class="fas fa-align-left"></i>
+                <p>{{ solicitud.descripcion }}</p>
+              </div>
+
+              <div class="fecha-creacion">
+                <small>
+                  <i class="fas fa-clock"></i>
+                  Solicitada: {{ solicitud.created_at | date:'dd/MM/yyyy HH:mm' }}
+                </small>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button 
+                class="btn btn-sm btn-success"
+                (click)="responderSolicitud(solicitud.id!, 'aceptar')"
+                [disabled]="isLoading"
+                title="Aceptar solicitud">
+                <i class="fas fa-check"></i>
+                Aceptar
+              </button>
+              <button 
+                class="btn btn-sm btn-danger"
+                (click)="responderSolicitud(solicitud.id!, 'rechazar')"
+                [disabled]="isLoading"
+                title="Rechazar solicitud">
+                <i class="fas fa-times"></i>
+                Rechazar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historial de Solicitudes -->
+      <div class="solicitudes-list" *ngIf="haySolicitudesHistorial">
+        <div class="section-header">
+          <h3><i class="fas fa-history"></i> Historial</h3>
+        </div>
+
+        <div class="solicitudes-grid">
+          <div 
+            class="solicitud-card" 
+            *ngFor="let solicitud of solicitudesHistorial; trackBy: trackById"
+            [class]="getEstadoClass(solicitud.estado)">
+            
+            <div class="card-header">
+              <div class="profesor-info">
+                <h4>{{ solicitud.estudiante_nombre || 'Estudiante' }}</h4>
+                <span class="proyecto-info">{{ solicitud.proyecto_titulo }}</span>
+              </div>
+              <div class="estado-badge" [class]="getEstadoClass(solicitud.estado)">
+                <span class="estado-icon">{{ getEstadoIcon(solicitud.estado) }}</span>
+                {{ getEstadoLabel(solicitud.estado) }}
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="reunion-detalles">
+                <div class="detalle-item">
+                  <i class="fas fa-calendar"></i>
+                  <span>{{ solicitud.fecha_propuesta ? formatearFecha(solicitud.fecha_propuesta) : 'Fecha no disponible' }}</span>
+                </div>
+                <div class="detalle-item">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ formatearHora(solicitud.hora_propuesta) }} ({{ solicitud.duracion_minutos }} min)</span>
+                </div>
+                <div class="detalle-item">
+                  <i class="fas fa-tag"></i>
+                  <span>{{ solicitud.tipo_reunion }}</span>
+                </div>
+              </div>
+
+              <div class="descripcion" *ngIf="solicitud.descripcion">
+                <i class="fas fa-align-left"></i>
+                <p>{{ solicitud.descripcion }}</p>
+              </div>
+
+              <div class="comentarios-profesor" *ngIf="solicitud.comentarios_profesor">
+                <div class="comentario-box">
+                  <strong>Tu comentario:</strong>
+                  <p>{{ solicitud.comentarios_profesor }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información para profesores -->
+      <div class="info-section">
+        <div class="info-card">
+          <h4><i class="fas fa-info-circle"></i> Información</h4>
+          <ul>
+            <li>Las solicitudes pendientes requieren tu aprobación</li>
+            <li>Al aceptar, la reunión se agrega automáticamente al calendario</li>
+            <li>Al rechazar, debes proporcionar un motivo para el estudiante</li>
+            <li>Las reuniones aceptadas aparecen en "Calendario" y "Gestión de Reuniones"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!-- FIN VISTA PROFESOR -->
+
   </div>
 </div>

@@ -1,6 +1,8 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { Location } from '@angular/common';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
 
@@ -23,7 +25,7 @@ interface Profesor {
 @Component({
   selector: 'app-gestionar-jefes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './gestionar-jefes.html',
   styleUrls: ['./gestionar-jefes.scss']
 })
@@ -41,10 +43,16 @@ export class GestionarJefesComponent implements OnInit {
   // Mensaje
   mensaje = signal<{ texto: string; tipo: 'success' | 'error' } | null>(null);
   
+  private location = inject(Location);
+  
   constructor(private apiService: ApiService) {}
   
   ngOnInit() {
     this.cargarDatos();
+  }
+  
+  volverAtras() {
+    this.location.back();
   }
   
   cargarDatos() {

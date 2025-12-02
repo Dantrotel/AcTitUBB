@@ -133,6 +133,11 @@ export const routes: Routes = [
         component: CronogramasComponent,
         canActivate: [AuthGuard]
       },
+      {
+        path: 'proyectos',
+        redirectTo: 'cronogramas',
+        pathMatch: 'full'
+      },
       // Ruta para ver proyecto y cronograma específico
       {
         path: 'proyecto/:id',
@@ -141,8 +146,18 @@ export const routes: Routes = [
       },
       // Rutas de Reuniones para Profesores
       {
+        path: 'calendario/dashboard',
+        component: DashboardReunionesComponent,
+        canActivate: [AuthGuard]
+      },
+      {
         path: 'calendario/disponibilidades',
         component: DisponibilidadesComponent,
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'calendario/solicitudes',
+        component: SolicitudesReunionComponent,
         canActivate: [AuthGuard]
       },
       {
@@ -154,6 +169,12 @@ export const routes: Routes = [
       {
         path: 'reuniones',
         component: ReunionesProfesorComponent,
+        canActivate: [AuthGuard]
+      },
+      // Ruta para fechas importantes
+      {
+        path: 'fechas-importantes',
+        component: FechasImportantesProfesorComponent,
         canActivate: [AuthGuard]
       },
       // Ruta para gestión de documentos del proyecto

@@ -1,17 +1,15 @@
- <!-- Contenedor principal -->
 <div class="asignaciones-container">
-  <!-- Header principal -->
   <div class="header">
     <div class="header-content">
       <h1><i class="fas fa-users-cog"></i> Gestión de Roles de Profesores</h1>
-      <p>Administra las asignaciones de profesores a proyectos con roles específicos</p>
+      <p>Administra las asignaciones de profesores a proyectos</p>
     </div>
     <div class="header-actions">
-      <button class="btn-volver-header" (click)="volver()">
+      <button (click)="volver()">
         <i class="fas fa-arrow-left"></i>
         Volver
       </button>
-      <button class="btn-primary" (click)="mostrarFormularioAsignacion()">
+      <button (click)="mostrarFormularioAsignacion()">
         <i class="fas fa-plus"></i>
         Nueva Asignación
       </button>

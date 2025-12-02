@@ -55,10 +55,15 @@ export class FechasImportantesProfesorComponent implements OnInit {
     // // // console.log('🔍 FechasProfesor - Cargando proyectos asignados...');
     
     // Cargar proyectos donde el profesor es guía o co-guía
-    this.apiService.getProyectosProfesor().subscribe({
+    this.apiService.getProyectosAsignados().subscribe({
       next: (response: any) => {
         // // // console.log('🔍 FechasProfesor - Proyectos asignados:', response);
-        this.proyectosAsignados = Array.isArray(response) ? response : (response.data || []);
+        // El API devuelve { total, projects }
+        if (response && response.projects) {
+          this.proyectosAsignados = Array.isArray(response.projects) ? response.projects : [];
+        } else {
+          this.proyectosAsignados = Array.isArray(response) ? response : [];
+        }
         this.cargarTodasLasFechas();
       },
       error: (error) => {

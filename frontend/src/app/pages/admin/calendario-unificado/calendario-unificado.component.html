@@ -1,15 +1,19 @@
-<div class="calendario-unificado-container">
-  <!-- Navbar -->
-  <nav class="navbar">
-    <button class="btn-back" (click)="volver()">
+<!-- Contenedor principal -->
+<div class="main-container">
+  <!-- Header compacto con gradiente -->
+  <div class="page-header-compact">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-calendar-alt"></i>
+        Calendario Unificado
+      </h1>
+      <p class="header-subtitle">Administra fechas importantes, períodos de propuestas y reuniones académicas</p>
+    </div>
+    <button class="btn-volver" (click)="volver()">
       <i class="fas fa-arrow-left"></i>
       Volver
     </button>
-    <h1>
-      <i class="fas fa-calendar-alt"></i>
-      Gestión de Calendario Unificado
-    </h1>
-  </nav>
+  </div>
 
   <!-- Mensajes de error/éxito -->
   <div class="alert alert-error" *ngIf="error">
@@ -37,13 +41,14 @@
   </div>
 
   <!-- Estado de carga -->
-  <div *ngIf="loading" class="loading-state">
+  <div *ngIf="loading" class="loading-container">
     <div class="spinner"></div>
     <p>Cargando datos...</p>
   </div>
 
   <!-- ========== CONTENIDO: CALENDARIO GLOBAL ========== -->
-  <div *ngIf="tabActiva === 'calendario' && !loading" class="tab-content-section">
+  <div *ngIf="tabActiva === 'calendario' && !loading" class="tab-content">
+    <div class="fechas-section">
     <!-- Botón crear fecha -->
     <div class="section-header">
       <h2><i class="fas fa-calendar-alt"></i> Fechas Globales</h2>
@@ -236,18 +241,19 @@
     </div>
 
     <!-- Estado vacío -->
-    <div class="empty-state" *ngIf="fechasGlobales.length === 0 && !loading">
+    <div class="no-fechas" *ngIf="fechasGlobales.length === 0 && !loading">
       <i class="fas fa-calendar-times"></i>
       <p>No hay fechas globales registradas</p>
-      <button class="btn-primary" (click)="toggleFormularioFecha()">
+      <button class="btn-add" (click)="toggleFormularioFecha()">
         <i class="fas fa-plus"></i>
         Crear Primera Fecha
       </button>
     </div>
+    </div>
   </div>
 
   <!-- ========== CONTENIDO: PERÍODO DE PROPUESTAS ========== -->
-  <div *ngIf="tabActiva === 'propuestas' && !loading" class="tab-content-section">
+  <div *ngIf="tabActiva === 'propuestas' && !loading" class="tab-content">
     <div class="section-header">
       <h2><i class="fas fa-calendar-check"></i> Control del Período de Propuestas</h2>
     </div>
@@ -338,7 +344,7 @@
           <li>✅ <strong>MARCA</strong> el checkbox <strong>"⭐ Fecha Global"</strong></li>
           <li>La fecha aparecerá automáticamente aquí para habilitarla/deshabilitarla</li>
         </ol>
-        <button class="btn-primary" (click)="cambiarTab('calendario')">
+        <button class="btn-ir-calendario" (click)="cambiarTab('calendario')">
           <i class="fas fa-arrow-left"></i>
           Ir a Calendario Global
         </button>
@@ -346,23 +352,23 @@
     </div>
 
     <!-- Lista de TODAS las fechas de Entrega de Propuestas -->
-    <div class="todas-fechas-propuestas-section">
-      <h3 class="section-subtitle">
+    <div class="propuestas-list">
+      <h3>
         <i class="fas fa-list"></i>
         Todas las Fechas de Entrega de Propuestas
       </h3>
 
-      <div *ngIf="todasFechasPropuestas.length === 0" class="empty-message">
+      <div *ngIf="todasFechasPropuestas.length === 0" class="no-propuestas">
         <i class="fas fa-calendar-times"></i>
         <p>No hay fechas de "Entrega de Propuestas" publicadas.</p>
-        <button class="btn-secondary" (click)="cambiarTab('calendario')">
+        <button (click)="cambiarTab('calendario')">
           <i class="fas fa-plus"></i>
           Crear Primera Fecha
         </button>
       </div>
 
-      <div class="fechas-propuestas-grid" *ngIf="todasFechasPropuestas.length > 0">
-        <div *ngFor="let fecha of todasFechasPropuestas" class="fecha-propuesta-card">
+      <div *ngIf="todasFechasPropuestas.length > 0">
+        <div *ngFor="let fecha of todasFechasPropuestas" class="propuesta-card">
           <div class="fecha-header">
             <div class="fecha-icon">
               <i class="fas fa-file-upload"></i>
@@ -424,7 +430,7 @@
   </div>
 
   <!-- ========== CONTENIDO: REUNIONES ========== -->
-  <div *ngIf="tabActiva === 'reuniones' && !loading" class="tab-content-section">
+  <div *ngIf="tabActiva === 'reuniones' && !loading" class="tab-content">
     <div class="section-header">
       <h2><i class="fas fa-handshake"></i> Todas las Reuniones</h2>
     </div>
@@ -535,28 +541,33 @@
                 <span *ngIf="reunion.hora_fin"> - {{ formatearHora(reunion.hora_fin) }}</span>
               </span>
             </p>
-            <p class="reunion-participantes">
-              <i class="fas fa-user"></i>
-              Estudiante: {{ reunion.estudiante_nombre || reunion.estudiante_rut }}
-              <span class="separator">|</span>
-              <i class="fas fa-chalkboard-teacher"></i>
-              Profesor: {{ reunion.profesor_nombre || reunion.profesor_rut }}
-            </p>
-          </div>
-          <div class="reunion-estado">
-            <span class="badge" [class]="getEstadoReunionClass(reunion.estado)">
-              {{ getEstadoReunionLabel(reunion.estado) }}
-            </span>
           </div>
         </div>
-        
-        <div class="reunion-details" *ngIf="reunion.descripcion">
+
+        <div class="reunion-participantes">
+          <span class="participante-badge estudiante">
+            <i class="fas fa-user"></i>
+            {{ reunion.estudiante_nombre || reunion.estudiante_rut }}
+          </span>
+          <span class="participante-badge profesor">
+            <i class="fas fa-chalkboard-teacher"></i>
+            {{ reunion.profesor_nombre || reunion.profesor_rut }}
+          </span>
+        </div>
+
+        <div class="reunion-estado">
+          <span class="estado-badge" [ngClass]="getEstadoReunionClass(reunion.estado)">
+            {{ getEstadoReunionLabel(reunion.estado) }}
+          </span>
+        </div>
+
+        <div class="reunion-descripcion" *ngIf="reunion.descripcion">
           <p><i class="fas fa-info-circle"></i> {{ reunion.descripcion }}</p>
         </div>
       </div>
 
       <!-- Estado vacío -->
-      <div class="empty-state" *ngIf="getReunionesFiltradasPorEstado().length === 0">
+      <div class="no-reuniones" *ngIf="getReunionesFiltradasPorEstado().length === 0">
         <i class="fas fa-calendar-times"></i>
         <p *ngIf="filtroEstadoReunion || busquedaTexto">No se encontraron reuniones con los filtros aplicados</p>
         <p *ngIf="!filtroEstadoReunion && !busquedaTexto">No hay reuniones registradas</p>
@@ -567,12 +578,15 @@
 
 <!-- Modal eliminar fecha -->
 <div class="modal-overlay" *ngIf="mostrarModalEliminar" (click)="cancelarEliminar()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>
         <i class="fas fa-exclamation-triangle"></i>
         Confirmar Eliminación
       </h2>
+      <button class="btn-close" (click)="cancelarEliminar()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     <div class="modal-body">
       <p>¿Estás seguro de que deseas eliminar esta fecha?</p>
@@ -582,7 +596,7 @@
       </div>
       <p class="warning-text">Esta acción no se puede deshacer.</p>
     </div>
-    <div class="modal-actions">
+    <div class="modal-footer">
       <button class="btn-danger" (click)="eliminarFechaGlobal()" [disabled]="eliminandoFecha">
         <i class="fas fa-trash"></i>
         {{ eliminandoFecha ? 'Eliminando...' : 'Sí, Eliminar' }}
@@ -659,7 +673,7 @@
       </div>
     </div>
     
-    <div class="modal-actions">
+    <div class="modal-footer">
       <button class="btn-secondary" (click)="cerrarModalEditarPropuesta()" [disabled]="guardandoPropuesta">
         <i class="fas fa-times"></i>
         Cancelar
@@ -699,7 +713,7 @@
       </p>
     </div>
     
-    <div class="modal-actions">
+    <div class="modal-footer">
       <button class="btn-secondary" (click)="cancelarEliminarPropuesta()" [disabled]="eliminandoPropuesta">
         <i class="fas fa-times"></i>
         Cancelar
