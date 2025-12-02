@@ -79,10 +79,19 @@
                     </span>
                   </td>
                   <td>
-                    <button class="btn-edit" (click)="abrirModalFacultad(facultad)">
+                    <button class="btn-edit" (click)="abrirModalFacultad(facultad)" title="Editar">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete" (click)="eliminarFacultad(facultad.id)">
+                    @if (facultad.activo) {
+                      <button class="btn-delete" (click)="eliminarFacultad(facultad.id)" title="Desactivar (Soft Delete)">
+                        <i class="fas fa-eye-slash"></i>
+                      </button>
+                    } @else {
+                      <button class="btn-edit" style="background: #2e7d32;" (click)="reactivarFacultad(facultad.id)" title="Reactivar">
+                        <i class="fas fa-check-circle"></i>
+                      </button>
+                    }
+                    <button class="btn-delete" style="background: #b71c1c;" (click)="eliminarFacultadPermanente(facultad.id)" title="Eliminar Permanentemente">
                       <i class="fas fa-trash"></i>
                     </button>
                   </td>
@@ -137,10 +146,19 @@
                     </span>
                   </td>
                   <td>
-                    <button class="btn-edit" (click)="abrirModalDepartamento(depto)">
+                    <button class="btn-edit" (click)="abrirModalDepartamento(depto)" title="Editar">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete" (click)="eliminarDepartamento(depto.id)">
+                    @if (depto.activo) {
+                      <button class="btn-delete" (click)="eliminarDepartamento(depto.id)" title="Desactivar (Soft Delete)">
+                        <i class="fas fa-eye-slash"></i>
+                      </button>
+                    } @else {
+                      <button class="btn-edit" style="background: #2e7d32;" (click)="reactivarDepartamento(depto.id)" title="Reactivar">
+                        <i class="fas fa-check-circle"></i>
+                      </button>
+                    }
+                    <button class="btn-delete" style="background: #b71c1c;" (click)="eliminarDepartamentoPermanente(depto.id)" title="Eliminar Permanentemente">
                       <i class="fas fa-trash"></i>
                     </button>
                   </td>
@@ -197,10 +215,19 @@
                     </span>
                   </td>
                   <td>
-                    <button class="btn-edit" (click)="abrirModalCarrera(carrera)">
+                    <button class="btn-edit" (click)="abrirModalCarrera(carrera)" title="Editar">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete" (click)="eliminarCarrera(carrera.id)">
+                    @if (carrera.activo) {
+                      <button class="btn-delete" (click)="eliminarCarrera(carrera.id)" title="Desactivar (Soft Delete)">
+                        <i class="fas fa-eye-slash"></i>
+                      </button>
+                    } @else {
+                      <button class="btn-edit" style="background: #2e7d32;" (click)="reactivarCarrera(carrera.id)" title="Reactivar">
+                        <i class="fas fa-check-circle"></i>
+                      </button>
+                    }
+                    <button class="btn-delete" style="background: #b71c1c;" (click)="eliminarCarreraPermanente(carrera.id)" title="Eliminar Permanentemente">
                       <i class="fas fa-trash"></i>
                     </button>
                   </td>

@@ -512,11 +512,6 @@
                         matTooltip="Ver Hitos">
                   <i class="fas fa-tasks"></i>
                 </button>
-                <button class="btn-icon" 
-                        (click)="$event.stopPropagation(); navegarAEvaluaciones()"
-                        matTooltip="Crear Evaluación">
-                  <i class="fas fa-star"></i>
-                </button>
               </div>
             </div>
           </div>
@@ -539,19 +534,6 @@
             <p>Revisar y evaluar hitos de proyectos</p>
             <span class="action-badge" *ngIf="estadisticasProyectos.proximosHitos > 0">
               {{ estadisticasProyectos.proximosHitos }} pendientes
-            </span>
-          </div>
-        </div>
-
-        <div class="action-card" (click)="navegarAEvaluaciones()">
-          <div class="action-icon">
-            <i class="fas fa-star"></i>
-          </div>
-          <div class="action-content">
-            <h4>Crear Evaluaciones</h4>
-            <p>Evaluar avances y entregas</p>
-            <span class="action-badge" *ngIf="estadisticasProyectos.evaluacionesPendientes > 0">
-              {{ estadisticasProyectos.evaluacionesPendientes }} pendientes
             </span>
           </div>
         </div>

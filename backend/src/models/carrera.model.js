@@ -159,6 +159,42 @@ const actualizarCarrera = async (id, carreraData) => {
 };
 
 /**
+ * Eliminar carrera - Soft Delete
+ */
+const eliminarCarrera = async (id) => {
+    const query = 'UPDATE carreras SET activo = FALSE WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Reactivar carrera - Restaurar Soft Delete
+ */
+const reactivarCarrera = async (id) => {
+    const query = 'UPDATE carreras SET activo = TRUE WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Eliminar carrera permanentemente - Hard Delete
+ */
+const eliminarCarreraPermanente = async (id) => {
+    const query = 'DELETE FROM carreras WHERE id = ?';
+    const [result] = await pool.execute(query, [id]);
+    return result.affectedRows > 0;
+};
+
+/**
+ * Remover estudiante de carrera
+ */
+const removerEstudianteCarrera = async (estudiante_rut, carrera_id) => {
+    const query = 'DELETE FROM estudiantes_carreras WHERE estudiante_rut = ? AND carrera_id = ?';
+    const [result] = await pool.execute(query, [estudiante_rut, carrera_id]);
+    return result.affectedRows > 0;
+};
+
+/**
  * Asignar jefe de carrera (permite múltiples carreras por jefe)
  */
 const asignarJefeCarrera = async (carrera_id, profesor_rut) => {
@@ -374,6 +410,10 @@ export {
     obtenerCarrerasPorJefeRut,
     crearCarrera,
     actualizarCarrera,
+    eliminarCarrera,
+    reactivarCarrera,
+    eliminarCarreraPermanente,
+    removerEstudianteCarrera,
     asignarJefeCarrera,
     removerJefeCarrera,
     obtenerEstudiantesCarrera,
