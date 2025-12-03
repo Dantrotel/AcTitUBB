@@ -9,6 +9,7 @@ services:
       MYSQL_DATABASE: actitubb
       MYSQL_USER: actitubb_user
       MYSQL_PASSWORD: actitubb123
+      TZ: America/Santiago
     ports:
       - "3306:3306"
     volumes:

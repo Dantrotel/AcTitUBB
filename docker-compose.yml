@@ -8,6 +8,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-actitubb}
       MYSQL_USER: ${MYSQL_USER:-actitubb_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-actitubb123}
+      TZ: America/Santiago
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
