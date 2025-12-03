@@ -1,4 +1,4 @@
-﻿Create database actitubb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS actitubb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE actitubb;
 
 -- Tabla de Roles de Usuarios
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     password VARCHAR(255) NOT NULL,
     rol_id INT NOT NULL,
     confirmado BOOLEAN DEFAULT FALSE,
-    debe_cambiar_password BOOLEAN DEFAULT FALSE COMMENT 'Indica si el usuario debe cambiar su contraseÃ±a en el prÃ³ximo login (contraseÃ±a temporal)',
+    debe_cambiar_password BOOLEAN DEFAULT FALSE COMMENT 'Indica si el usuario debe cambiar su contraseña en el próximo login (contraseña temporal)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (rol_id) REFERENCES roles(id)
@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS propuestas (
     descripcion TEXT NOT NULL,
     estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     estado_id INT NOT NULL DEFAULT 1, -- Referencia al ID del estado en estados_propuestas
-    comentarios_profesor TEXT,
     fecha_envio DATE NOT NULL,
     fecha_revision TIMESTAMP NULL,
     fecha_aprobacion DATE NULL,
@@ -56,8 +55,8 @@ CREATE TABLE IF NOT EXISTS propuestas (
     nombre_archivo_original VARCHAR(255),
     
     -- NUEVOS CAMPOS MEJORADOS
-    modalidad ENUM('desarrollo_software', 'investigacion') NOT NULL,
-    numero_estudiantes INT NOT NULL DEFAULT 1 CHECK (numero_estudiantes BETWEEN 1 AND 2),
+    modalidad ENUM('desarrollo_software', 'investigacion', 'practica' ) NOT NULL,
+    numero_estudiantes INT NOT NULL DEFAULT 1 CHECK (numero_estudiantes in (1, 2, 3)),
     complejidad_estimada ENUM('baja', 'media', 'alta') NOT NULL DEFAULT 'media',
     justificacion_complejidad TEXT NULL,
     duracion_estimada_semestres INT NOT NULL DEFAULT 1 CHECK (duracion_estimada_semestres BETWEEN 1 AND 2),
@@ -74,7 +73,7 @@ CREATE TABLE IF NOT EXISTS propuestas (
     FOREIGN KEY (estado_id) REFERENCES estados_propuestas(id)
 );
 
--- Tabla para vincular mÃºltiples estudiantes a una propuesta
+-- Tabla para vincular múltiples estudiantes a una propuesta
 CREATE TABLE IF NOT EXISTS estudiantes_propuestas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     propuesta_id INT NOT NULL,
@@ -97,15 +96,49 @@ CREATE TABLE IF NOT EXISTS roles_profesores (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de Asignaciones de Profesores a Propuestas
+-- Tabla de Asignaciones de Profesores a Propuestas (Revisión inicial)
+-- Permite asociar múltiples profesores revisores a una propuesta antes de convertirse en proyecto
 CREATE TABLE IF NOT EXISTS asignaciones_propuestas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     propuesta_id INT NOT NULL,
     profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    rol_revision ENUM('revisor_principal', 'revisor_secundario', 'informante') DEFAULT 'revisor_principal',
     fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_revision TIMESTAMP NULL,
+    estado_revision ENUM('pendiente', 'en_revision', 'revisado') DEFAULT 'pendiente',
+    decision ENUM('aprobar', 'rechazar', 'solicitar_correcciones') NULL COMMENT 'Decisión del profesor sobre la propuesta',
+    comentarios_revision TEXT NULL COMMENT 'Comentarios detallados del profesor sobre la propuesta',
+    activo BOOLEAN DEFAULT TRUE,
+    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'RUT del admin que realizó la asignación',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (propuesta_id) REFERENCES propuestas(id) ON DELETE CASCADE,
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
-    UNIQUE KEY unique_asignacion (propuesta_id, profesor_rut)
+    FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
+    UNIQUE KEY unique_asignacion_activa (propuesta_id, profesor_rut, activo),
+    INDEX idx_propuesta_estado (propuesta_id, estado_revision),
+    INDEX idx_profesor_propuestas (profesor_rut, estado_revision)
+);
+
+-- Tabla de Historial de Revisiones de Propuestas (para auditoría)
+CREATE TABLE IF NOT EXISTS historial_revisiones_propuestas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    asignacion_id INT NOT NULL,
+    propuesta_id INT NOT NULL,
+    profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    accion ENUM('asignado', 'revision_iniciada', 'comentario_agregado', 'decision_tomada', 'desasignado') NOT NULL,
+    decision ENUM('aprobar', 'rechazar', 'solicitar_correcciones') NULL,
+    comentarios TEXT NULL,
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    realizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT de quien realizó la acción (puede ser el mismo profesor)',
+    FOREIGN KEY (asignacion_id) REFERENCES asignaciones_propuestas(id) ON DELETE CASCADE,
+    FOREIGN KEY (propuesta_id) REFERENCES propuestas(id) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (realizado_por) REFERENCES usuarios(rut),
+    INDEX idx_historial_propuesta (propuesta_id),
+    INDEX idx_historial_profesor (profesor_rut),
+    INDEX idx_historial_fecha (fecha_accion),
+    INDEX idx_historial_accion (accion)
 );
 
 -- Tabla de Proyectos (Fase de desarrollo)
@@ -121,31 +154,27 @@ CREATE TABLE IF NOT EXISTS proyectos (
     fecha_entrega_real DATE,
     fecha_defensa DATE,
     
-    -- CAMPOS ROBUSTOS PARA GESTIÃ“N COMPLETA
-    -- InformaciÃ³n extendida del proyecto
+    -- CAMPOS ROBUSTOS PARA GESTIÓN COMPLETA
+    -- Información extendida del proyecto
     objetivo_general TEXT,
     objetivos_especificos TEXT,
     metodologia TEXT,
     recursos_requeridos TEXT,
     bibliografia TEXT,
     
-    -- GestiÃ³n de progreso y calificaciones
+    -- Gestión de progreso
     porcentaje_avance DECIMAL(5,2) DEFAULT 0.00 CHECK (porcentaje_avance >= 0 AND porcentaje_avance <= 100),
-    nota_propuesta DECIMAL(3,1) NULL CHECK (nota_propuesta >= 1.0 AND nota_propuesta <= 7.0),
-    nota_proyecto DECIMAL(3,1) NULL CHECK (nota_proyecto >= 1.0 AND nota_proyecto <= 7.0),
-    nota_defensa DECIMAL(3,1) NULL CHECK (nota_defensa >= 1.0 AND nota_defensa <= 7.0),
-    nota_final DECIMAL(3,1) NULL CHECK (nota_final >= 1.0 AND nota_final <= 7.0),
     
-    -- GestiÃ³n de estado detallado
+    -- Gestión de estado detallado
     estado_detallado ENUM('inicializacion', 'planificacion', 'desarrollo_fase1', 'desarrollo_fase2', 'testing', 'documentacion', 'revision_final', 'preparacion_defensa', 'defendido', 'cerrado') DEFAULT 'inicializacion',
     prioridad ENUM('baja', 'media', 'alta', 'critica') DEFAULT 'media',
     riesgo_nivel ENUM('bajo', 'medio', 'alto') DEFAULT 'medio',
     
-    -- GestiÃ³n de archivos y entregas
+    -- Gestión de archivos y entregas
     documento_proyecto VARCHAR(255) NULL, -- Documento principal del proyecto
     documento_final VARCHAR(255) NULL, -- Documento final/memoria
-    presentacion VARCHAR(255) NULL, -- Archivo de presentaciÃ³n
-    codigo_fuente VARCHAR(255) NULL, -- Link o archivo del cÃ³digo fuente
+    presentacion VARCHAR(255) NULL, -- Archivo de presentación
+    codigo_fuente VARCHAR(255) NULL, -- Link o archivo del código fuente
     
     -- Observaciones y seguimiento
     observaciones_profesor TEXT NULL,
@@ -154,12 +183,19 @@ CREATE TABLE IF NOT EXISTS proyectos (
     proximo_hito_fecha DATE NULL,
     tiempo_dedicado_horas INT DEFAULT 0,
     
-    -- ConfiguraciÃ³n de modalidad (heredada de propuesta)
-    modalidad ENUM('desarrollo_software', 'investigacion') NOT NULL,
+    -- Control de abandono según reglamento
+    ultima_actividad_fecha DATE NULL COMMENT 'Última fecha de actividad real (avance, reunión, entrega)',
+    umbral_dias_riesgo INT DEFAULT 30 COMMENT 'Días sin actividad para marcar como en_riesgo',
+    umbral_dias_abandono INT DEFAULT 60 COMMENT 'Días sin actividad para considerar abandono',
+    alerta_inactividad_enviada BOOLEAN DEFAULT FALSE COMMENT 'Si ya se envió alerta de inactividad',
+    fecha_alerta_inactividad TIMESTAMP NULL COMMENT 'Fecha en que se envió la última alerta',
+    
+    -- Configuración de modalidad (heredada de propuesta)
+    modalidad ENUM('desarrollo_software', 'investigacion', 'practica') NOT NULL,
     complejidad ENUM('baja', 'media', 'alta') NOT NULL,
     duracion_semestres INT NOT NULL DEFAULT 1,
     
-    -- Control de versiones y auditorÃ­a
+    -- Control de versiones y auditoría
     version_actual VARCHAR(10) DEFAULT '1.0',
     ultima_actividad TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     activo BOOLEAN DEFAULT TRUE,
@@ -172,7 +208,7 @@ CREATE TABLE IF NOT EXISTS proyectos (
 );
 
 -- Tabla de Asignaciones de Profesores a Proyectos (UNIFICADA)
--- MOVIDA AQUÃ para respetar el orden de dependencias
+-- MOVIDA AQUÍ para respetar el orden de dependencias
 CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -182,7 +218,7 @@ CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     fecha_desasignacion TIMESTAMP NULL,
     activo BOOLEAN DEFAULT TRUE,
     observaciones TEXT NULL,
-    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT del admin que hizo la asignaciÃ³n
+    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT del admin que hizo la asignación
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
@@ -195,7 +231,7 @@ CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     INDEX idx_rol_activo (rol_profesor_id, activo)
 );
 
--- Tabla de Historial de Asignaciones (para auditorÃ­a)
+-- Tabla de Historial de Asignaciones (para auditoría)
 CREATE TABLE IF NOT EXISTS historial_asignaciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     asignacion_id INT NOT NULL,
@@ -204,7 +240,7 @@ CREATE TABLE IF NOT EXISTS historial_asignaciones (
     rol_profesor_id INT NOT NULL,
     accion ENUM('asignado', 'desasignado', 'modificado') NOT NULL,
     fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    realizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT del admin que realizÃ³ la acciÃ³n
+    realizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT del admin que realizó la acción
     observaciones TEXT NULL,
     FOREIGN KEY (asignacion_id) REFERENCES asignaciones_proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
@@ -216,8 +252,8 @@ CREATE TABLE IF NOT EXISTS historial_asignaciones (
     INDEX idx_fecha_historial (fecha_accion)
 );
 
--- Tabla para vincular mÃºltiples estudiantes a un proyecto
--- MOVIDA AQUÃ para respetar el orden de dependencias
+-- Tabla para vincular múltiples estudiantes a un proyecto
+-- MOVIDA AQUÍ para respetar el orden de dependencias
 CREATE TABLE IF NOT EXISTS estudiantes_proyectos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -245,6 +281,13 @@ CREATE TABLE IF NOT EXISTS hitos_proyecto (
     porcentaje_completado DECIMAL(5,2) DEFAULT 0.00 CHECK (porcentaje_completado >= 0 AND porcentaje_completado <= 100),
     peso_en_proyecto DECIMAL(4,1) DEFAULT 10.0 CHECK (peso_en_proyecto >= 0 AND peso_en_proyecto <= 100),
     
+    -- Plazo del Informante (15 días hábiles según reglamento)
+    fecha_entrega_estudiante DATE NULL COMMENT 'Fecha real en que el estudiante entregó (para entrega_final)',
+    fecha_limite_informante DATE NULL COMMENT 'Fecha límite para que el profesor Informante evalúe (entrega + 15 días hábiles)',
+    dias_habiles_informante INT DEFAULT 15 COMMENT 'Días hábiles que tiene el informante para evaluar',
+    informante_notificado BOOLEAN DEFAULT FALSE COMMENT 'Si se notificó al informante sobre la entrega',
+    fecha_notificacion_informante TIMESTAMP NULL COMMENT 'Fecha en que se notificó al informante',
+    
     -- Archivos y entregables asociados al hito
     archivo_entregable VARCHAR(255) NULL,
     comentarios_estudiante TEXT NULL,
@@ -255,7 +298,7 @@ CREATE TABLE IF NOT EXISTS hitos_proyecto (
     hito_predecesor_id INT NULL,
     es_critico BOOLEAN DEFAULT FALSE,
     
-    -- AuditorÃ­a y seguimiento
+    -- Auditoría y seguimiento
     creado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     actualizado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
     
@@ -295,17 +338,18 @@ CREATE TABLE IF NOT EXISTS avances (
 -- TABLA UNIFICADA DE FECHAS
 -- ============================================
 -- Esta tabla reemplaza a fechas_calendario y fechas_importantes
--- Combina todos los campos necesarios para ambos propÃ³sitos
+-- Combina todos los campos necesarios para ambos propósitos
 
 CREATE TABLE IF NOT EXISTS fechas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     
-    -- InformaciÃ³n bÃ¡sica
+    -- Información básica
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
     fecha DATE NOT NULL COMMENT 'Fecha principal del evento',
+    hora_limite TIME DEFAULT '23:59:59' COMMENT 'Hora l�mite para entregas (por defecto fin del d�a)',
     
-    -- Tipo y categorizaciÃ³n
+    -- Tipo y categorización
     tipo_fecha ENUM(
         'entrega_propuesta', 
         'entrega', 
@@ -326,23 +370,23 @@ CREATE TABLE IF NOT EXISTS fechas (
     es_global BOOLEAN DEFAULT FALSE COMMENT 'Si es true, visible para todos (fechas del admin)',
     activa BOOLEAN DEFAULT TRUE COMMENT 'Para soft delete (solo fechas de calendario)',
     
-    -- Control de perÃ­odos (para fechas importantes)
-    habilitada BOOLEAN DEFAULT TRUE COMMENT 'Controla si el perÃ­odo estÃ¡ activo para recibir entregas',
-    permite_extension BOOLEAN DEFAULT TRUE COMMENT 'Si permite solicitar extensiÃ³n despuÃ©s de la fecha lÃ­mite',
+    -- Control de períodos (para fechas importantes)
+    habilitada BOOLEAN DEFAULT TRUE COMMENT 'Controla si el período está activo para recibir entregas',
+    permite_extension BOOLEAN DEFAULT TRUE COMMENT 'Si permite solicitar extensión después de la fecha límite',
     requiere_entrega BOOLEAN DEFAULT FALSE COMMENT 'Si requiere entrega de archivos/documentos',
     
     -- Estado de completitud
     completada BOOLEAN DEFAULT FALSE,
-    fecha_realizada DATE NULL COMMENT 'Fecha en que se completÃ³ el evento',
+    fecha_realizada DATE NULL COMMENT 'Fecha en que se completó el evento',
     notas TEXT,
     
     -- Relaciones
-    proyecto_id INT NULL COMMENT 'NULL para fechas globales, ID del proyecto para fechas especÃ­ficas',
-    creado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'RUT del que creÃ³ la fecha (admin o profesor)',
-    profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del profesor (para fechas especÃ­ficas profesor-estudiante)',
-    estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del estudiante (para fechas especÃ­ficas)',
+    proyecto_id INT NULL COMMENT 'NULL para fechas globales, ID del proyecto para fechas específicas',
+    creado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'RUT del que creó la fecha (admin o profesor)',
+    profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del profesor (para fechas específicas profesor-estudiante)',
+    estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del estudiante (para fechas específicas)',
     
-    -- AuditorÃ­a
+    -- Auditoría
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -352,7 +396,7 @@ CREATE TABLE IF NOT EXISTS fechas (
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
     
-    -- Ãndices para mejorar performance
+    -- Índices para mejorar performance
     INDEX idx_fecha (fecha),
     INDEX idx_tipo_fecha (tipo_fecha),
     INDEX idx_es_global (es_global),
@@ -361,21 +405,8 @@ CREATE TABLE IF NOT EXISTS fechas (
     INDEX idx_habilitada (habilitada)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================
--- NOTA: MIGRACIÃ“N DE DATOS
--- ============================================
--- Si estÃ¡s migrando desde una base de datos existente con fechas_calendario
--- y fechas_importantes, ejecuta el script: migrate_to_unified_fechas.sql
--- 
--- Este archivo (database.sql) estÃ¡ diseÃ±ado para crear la base de datos desde cero.
--- ============================================
 
--- ============================================
--- NOTA: Las tablas fechas_calendario y fechas_importantes fueron reemplazadas
--- por la tabla unificada 'fechas' (definida arriba)
--- ============================================
-
--- Tabla de Cronogramas de Proyecto (acordados entre guÃ­a y estudiante)
+-- Tabla de Cronogramas de Proyecto (acordados entre guía y estudiante)
 CREATE TABLE IF NOT EXISTS cronogramas_proyecto (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -384,13 +415,13 @@ CREATE TABLE IF NOT EXISTS cronogramas_proyecto (
     fecha_inicio DATE NOT NULL,
     fecha_fin_estimada DATE NOT NULL,
     activo BOOLEAN DEFAULT TRUE,
-    creado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- Profesor guÃ­a que creÃ³ el cronograma
+    creado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- Profesor guía que creó el cronograma
     aprobado_por_estudiante BOOLEAN DEFAULT FALSE,
     fecha_aprobacion_estudiante TIMESTAMP NULL,
     
-    -- ConfiguraciÃ³n de alertas
+    -- Configuración de alertas
     alertas_activas BOOLEAN DEFAULT TRUE,
-    dias_alerta_previa INT DEFAULT 3, -- DÃ­as antes de enviar alerta
+    dias_alerta_previa INT DEFAULT 3, -- Días antes de enviar alerta
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -402,7 +433,7 @@ CREATE TABLE IF NOT EXISTS cronogramas_proyecto (
     INDEX idx_fechas_cronograma (fecha_inicio, fecha_fin_estimada)
 );
 
--- Tabla de Hitos del Cronograma (entregas especÃ­ficas)
+-- Tabla de Hitos del Cronograma (entregas específicas)
 CREATE TABLE IF NOT EXISTS hitos_cronograma (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cronograma_id INT NOT NULL,
@@ -419,7 +450,7 @@ CREATE TABLE IF NOT EXISTS hitos_cronograma (
     estado ENUM('pendiente', 'en_progreso', 'entregado', 'revisado', 'aprobado', 'rechazado', 'retrasado') DEFAULT 'pendiente',
     porcentaje_avance DECIMAL(5,2) DEFAULT 0.00 CHECK (porcentaje_avance >= 0 AND porcentaje_avance <= 100),
     
-    -- Archivos y retroalimentaciÃ³n
+    -- Archivos y retroalimentación
     archivo_entrega VARCHAR(255) NULL,
     nombre_archivo_original VARCHAR(255) NULL,
     comentarios_estudiante TEXT NULL,
@@ -442,7 +473,7 @@ CREATE TABLE IF NOT EXISTS hitos_cronograma (
     INDEX idx_estado_fecha (estado, fecha_limite)
 );
 
--- Tabla de Notificaciones y Alertas AutomÃ¡ticas
+-- Tabla de Notificaciones y Alertas Automáticas
 CREATE TABLE IF NOT EXISTS notificaciones_proyecto (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -462,7 +493,7 @@ CREATE TABLE IF NOT EXISTS notificaciones_proyecto (
     fecha_lectura TIMESTAMP NULL,
     activa BOOLEAN DEFAULT TRUE,
     
-    -- ConfiguraciÃ³n de envÃ­o
+    -- Configuración de envío
     enviar_email BOOLEAN DEFAULT TRUE,
     email_enviado BOOLEAN DEFAULT FALSE,
     fecha_envio_email TIMESTAMP NULL,
@@ -479,13 +510,13 @@ CREATE TABLE IF NOT EXISTS notificaciones_proyecto (
     INDEX idx_no_leidas (destinatario_rut, leida, activa)
 );
 
--- Tabla de ConfiguraciÃ³n de Alertas por Proyecto
+-- Tabla de Configuración de Alertas por Proyecto
 CREATE TABLE IF NOT EXISTS configuracion_alertas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
     profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- Profesor que configura las alertas
     
-    -- ConfiguraciÃ³n de dÃ­as de alerta
+    -- Configuración de días de alerta
     dias_alerta_entregas INT DEFAULT 3,
     dias_alerta_reuniones INT DEFAULT 1,
     dias_alerta_defensas INT DEFAULT 7,
@@ -496,7 +527,7 @@ CREATE TABLE IF NOT EXISTS configuracion_alertas (
     alertas_retrasos BOOLEAN DEFAULT TRUE,
     alertas_hitos BOOLEAN DEFAULT TRUE,
     
-    -- ConfiguraciÃ³n de envÃ­o
+    -- Configuración de envío
     enviar_email_estudiante BOOLEAN DEFAULT TRUE,
     enviar_email_profesor BOOLEAN DEFAULT TRUE,
     
@@ -537,64 +568,16 @@ CREATE TABLE IF NOT EXISTS participantes_reuniones (
     UNIQUE KEY unique_participante (reunion_id, usuario_rut)
 );
 
--- Insertar datos iniciales
-
--- Roles de usuarios
-INSERT IGNORE INTO roles (nombre, descripcion) VALUES
-('estudiante', 'Estudiante que desarrolla el proyecto de tÃ­tulo'),
-('profesor', 'Profesor que guÃ­a o revisa proyectos de tÃ­tulo'),
-('admin', 'Administrador del sistema'),
-('superadmin', 'Administrador con permisos totales del sistema');
-
--- Estados de propuestas
-INSERT IGNORE INTO estados_propuestas (nombre, descripcion) VALUES
-('pendiente', 'Propuesta enviada, esperando asignaciÃ³n de profesor'),
-('en_revision', 'Propuesta siendo revisada por profesor'),
-('correcciones', 'Propuesta requiere correcciones del estudiante'),
-('aprobada', 'Propuesta aprobada, se puede crear proyecto'),
-('rechazada', 'Propuesta rechazada');
-
--- Estados de proyectos
-INSERT IGNORE INTO estados_proyectos (nombre, descripcion) VALUES
-('esperando_asignacion_profesores', 'Proyecto creado esperando asignaciÃ³n de los 3 roles de profesores'),
-('en_desarrollo', 'Proyecto en fase de desarrollo'),
-('avance_enviado', 'Avance enviado para revisiÃ³n'),
-('avance_en_revision', 'Avance siendo revisado'),
-('avance_con_comentarios', 'Avance con comentarios del profesor'),
-('avance_aprobado', 'Avance aprobado'),
-('pausado', 'Proyecto pausado temporalmente'),
-('completado', 'Proyecto completado'),
-('presentado', 'Proyecto presentado'),
-('defendido', 'Proyecto defendido exitosamente'),
-('retrasado', 'Proyecto con retraso en cronograma'),
-('en_riesgo', 'Proyecto en riesgo de no completarse'),
-('revision_urgente', 'Proyecto requiere revisiÃ³n urgente'),
-('excelente_progreso', 'Proyecto con excelente progreso');
-
--- Roles de profesores en proyectos
-INSERT IGNORE INTO roles_profesores (nombre, descripcion) VALUES
-('Profesor Revisor', 'Profesor que evalÃºa la propuesta inicial y determina su viabilidad'),
-('Profesor GuÃ­a', 'Profesor principal que guÃ­a el desarrollo completo del proyecto'),
-('Profesor Co-GuÃ­a', 'Profesor co-guÃ­a que apoya en Ã¡reas especÃ­ficas del proyecto'),
-('Profesor Informante', 'Profesor que evalÃºa el informe final y otorga calificaciÃ³n'),
-('Profesor de Sala', 'Profesor de sala para la defensa oral del proyecto');
-
--- Usuarios de prueba (contraseÃ±a: 1234)
--- Hash generado con bcrypt, salt rounds = 10
-INSERT IGNORE INTO usuarios (rut, nombre, email, password, rol_id, confirmado) VALUES
-('12345678-9', 'Ana Estudiante', 'daniel.aguayo2001@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('98765432-1', 'Carlos Profesor', 'sincorreo@sincorreo.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
-('11111111-1', 'MarÃ­a Administradora', 'sincorreoadm@sincorreo.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 3, 1),
-('12345678-0', 'admin supremo', 'admin.supremo@sincorreo.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 4, 1);
-
--- Crear Ã­ndices para mejorar rendimiento
--- Nota: Los errores de Ã­ndices duplicados serÃ¡n ignorados por el sistema de conexiÃ³n
+-- Crear indices para mejorar rendimiento
 CREATE INDEX idx_propuestas_estudiante ON propuestas(estudiante_rut);
 CREATE INDEX idx_propuestas_estado ON propuestas(estado_id);
 CREATE INDEX idx_propuestas_fecha_envio ON propuestas(fecha_envio);
 CREATE INDEX idx_proyectos_estudiante ON proyectos(estudiante_rut);
 CREATE INDEX idx_proyectos_estado ON proyectos(estado_id);
 
+-- Tabla de Disponibilidad de Horarios
+CREATE TABLE IF NOT EXISTS disponibilidad_horarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     dia_semana ENUM('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo') NOT NULL,
     hora_inicio TIME NOT NULL,
@@ -607,7 +590,7 @@ CREATE INDEX idx_proyectos_estado ON proyectos(estado_id);
     INDEX idx_disponibilidad_dia (dia_semana, activo)
 );
 
--- Tabla de Solicitudes de ReuniÃ³n
+-- Tabla de Solicitudes de Reunión
 CREATE TABLE IF NOT EXISTS solicitudes_reunion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
@@ -653,7 +636,7 @@ CREATE TABLE IF NOT EXISTS reuniones_calendario (
     link_reunion VARCHAR(500) NULL, -- Para reuniones virtuales
     estado ENUM('programada', 'realizada', 'cancelada') DEFAULT 'programada',
     motivo_cancelacion TEXT NULL,
-    acta_reunion TEXT NULL, -- Resumen de la reuniÃ³n
+    acta_reunion TEXT NULL, -- Resumen de la reunión
     fecha_realizacion TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -668,7 +651,7 @@ CREATE TABLE IF NOT EXISTS reuniones_calendario (
     INDEX idx_reunion_estado (estado)
 );
 
--- Tabla de Historial de Reuniones (para auditorÃ­a y dashboard)
+-- Tabla de Historial de Reuniones (para auditoría y dashboard)
 CREATE TABLE IF NOT EXISTS historial_reuniones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     reunion_id INT NULL, -- NULL si la solicitud fue rechazada
@@ -680,7 +663,7 @@ CREATE TABLE IF NOT EXISTS historial_reuniones (
     hora_propuesta TIME NOT NULL,
     tipo_reunion VARCHAR(50) NOT NULL,
     accion ENUM('solicitud_creada', 'aceptada_profesor', 'aceptada_estudiante', 'confirmada', 'rechazada', 'cancelada', 'realizada') NOT NULL,
-    realizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT de quien realizÃ³ la acciÃ³n
+    realizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT de quien realizó la acción
     comentarios TEXT NULL,
     fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (reunion_id) REFERENCES reuniones_calendario(id) ON DELETE SET NULL,
@@ -695,13 +678,37 @@ CREATE TABLE IF NOT EXISTS historial_reuniones (
     INDEX idx_historial_accion (accion)
 );
 
+-- Tabla de Alertas de Abandono/Inactividad (Reglamento)
+CREATE TABLE IF NOT EXISTS alertas_abandono (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo_alerta ENUM('inactividad_detectada', 'riesgo_abandono', 'abandono_potencial', 'reactivacion') NOT NULL,
+    dias_sin_actividad INT NOT NULL COMMENT 'Días sin actividad al momento de la alerta',
+    fecha_ultima_actividad DATE NULL COMMENT 'Fecha de la última actividad registrada',
+    nivel_severidad ENUM('leve', 'moderado', 'grave', 'critico') NOT NULL,
+    mensaje TEXT NOT NULL COMMENT 'Mensaje de la alerta',
+    accion_sugerida TEXT NULL COMMENT 'Acción recomendada según reglamento',
+    notificados TEXT NULL COMMENT 'RUTs de usuarios notificados (JSON array)',
+    fecha_alerta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    alerta_atendida BOOLEAN DEFAULT FALSE,
+    fecha_atencion TIMESTAMP NULL,
+    atendida_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+    observaciones_atencion TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (atendida_por) REFERENCES usuarios(rut),
+    INDEX idx_alerta_proyecto (proyecto_id, fecha_alerta),
+    INDEX idx_alerta_tipo (tipo_alerta, nivel_severidad),
+    INDEX idx_alerta_pendiente (alerta_atendida, fecha_alerta)
+);
+
 -- Tabla de Bloqueos de Horarios (para vacaciones, feriados, etc.)
 CREATE TABLE IF NOT EXISTS bloqueos_horarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
-    hora_inicio TIME NULL, -- NULL significa todo el dÃ­a
+    hora_inicio TIME NULL, -- NULL significa todo el día
     hora_fin TIME NULL,
     motivo VARCHAR(255) NOT NULL,
     tipo ENUM('vacaciones', 'licencia', 'feriado', 'personal', 'academico') DEFAULT 'personal',
@@ -711,7 +718,20 @@ CREATE TABLE IF NOT EXISTS bloqueos_horarios (
     INDEX idx_bloqueo_usuario_fecha (usuario_rut, fecha_inicio, fecha_fin)
 );
 
--- Tabla de ConfiguraciÃ³n del Sistema de Matching
+-- Tabla de Días Feriados (para cálculo de días hábiles)
+CREATE TABLE IF NOT EXISTS dias_feriados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    fecha DATE NOT NULL UNIQUE,
+    nombre VARCHAR(255) NOT NULL COMMENT 'Nombre del feriado',
+    tipo ENUM('nacional', 'regional', 'institucional') DEFAULT 'nacional',
+    es_inamovible BOOLEAN DEFAULT TRUE COMMENT 'Si el feriado no se puede mover (ej: 25 de diciembre)',
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_fecha_feriado (fecha, activo),
+    INDEX idx_tipo_feriado (tipo, activo)
+);
+
+-- Tabla de Configuración del Sistema de Matching
 CREATE TABLE IF NOT EXISTS configuracion_matching (
     id INT AUTO_INCREMENT PRIMARY KEY,
     clave VARCHAR(50) NOT NULL UNIQUE,
@@ -722,45 +742,44 @@ CREATE TABLE IF NOT EXISTS configuracion_matching (
 );
 
 -- Insertar configuraciones por defecto para el sistema de matching
-INSERT IGNORE INTO configuracion_matching (clave, valor, descripcion, tipo) VALUES
-('duracion_reunion_defecto', '60', 'DuraciÃ³n por defecto de las reuniones en minutos', 'entero'),
-('dias_anticipacion_minima', '1', 'DÃ­as mÃ­nimos de anticipaciÃ³n para agendar reuniones', 'entero'),
-('dias_anticipacion_maxima', '30', 'DÃ­as mÃ¡ximos de anticipaciÃ³n para agendar reuniones', 'entero'),
-('horario_inicio_jornada', '08:00', 'Hora de inicio de la jornada laboral', 'texto'),
-('horario_fin_jornada', '18:00', 'Hora de fin de la jornada laboral', 'texto'),
-('matching_automatico_activo', 'true', 'Si el matching automÃ¡tico estÃ¡ activo', 'booleano'),
-('tiempo_respuesta_horas', '48', 'Tiempo mÃ¡ximo en horas para responder solicitudes', 'entero'),
-('permitir_reuniones_sabado', 'false', 'Permitir agendar reuniones los sÃ¡bados', 'booleano'),
-('permitir_reuniones_domingo', 'false', 'Permitir agendar reuniones los domingos', 'booleano');
+-- ===== TABLAS ADICIONALES: COMISIÓN EVALUADORA, EXTENSIONES Y ACTAS =====
 
--- ===== TABLAS ADICIONALES: COMISIÃ“N EVALUADORA, EXTENSIONES Y ACTAS =====
-
--- Tabla de ComisiÃ³n Evaluadora (Tribunal)
+-- Tabla de Comisión Evaluadora (Tribunal)
+-- Puede actuar tanto en fase de propuesta (evaluación inicial) como en fase de proyecto (defensa final)
 CREATE TABLE IF NOT EXISTS comision_evaluadora (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    proyecto_id INT NOT NULL,
+    propuesta_id INT NULL COMMENT 'ID de la propuesta (para evaluación inicial)',
+    proyecto_id INT NULL COMMENT 'ID del proyecto (para evaluación final/defensa)',
+    fase_evaluacion ENUM('propuesta', 'proyecto', 'defensa_final') NOT NULL COMMENT 'Fase en la que actúa la comisión',
     profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    rol_comision ENUM('presidente', 'secretario', 'vocal', 'suplente') NOT NULL,
+    rol_comision ENUM('presidente', 'secretario', 'vocal', 'informante', 'suplente') NOT NULL,
     fecha_designacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_remocion TIMESTAMP NULL,
     activo BOOLEAN DEFAULT TRUE,
     observaciones TEXT NULL,
-    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, -- RUT del admin
+    voto ENUM('aprobar', 'rechazar', 'aprobar_con_modificaciones') NULL COMMENT 'Voto del miembro de la comisión',
+    comentarios_evaluacion TEXT NULL COMMENT 'Comentarios de evaluación del profesor',
+    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'RUT del admin que realizó la asignación',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (propuesta_id) REFERENCES propuestas(id) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
-    UNIQUE KEY unique_comision_rol (proyecto_id, rol_comision, activo),
+    UNIQUE KEY unique_comision_propuesta (propuesta_id, rol_comision, activo),
+    UNIQUE KEY unique_comision_proyecto (proyecto_id, rol_comision, activo),
+    CHECK (propuesta_id IS NOT NULL OR proyecto_id IS NOT NULL),
+    INDEX idx_comision_propuesta (propuesta_id, activo),
     INDEX idx_comision_proyecto (proyecto_id, activo),
-    INDEX idx_comision_profesor (profesor_rut, activo)
+    INDEX idx_comision_profesor (profesor_rut, activo),
+    INDEX idx_comision_fase (fase_evaluacion, activo)
 );
 
--- Tabla de Solicitudes de ExtensiÃ³n/PrÃ³rroga
+-- Tabla de Solicitudes de Extensión/Prórroga
 CREATE TABLE IF NOT EXISTS solicitudes_extension (
     id INT AUTO_INCREMENT PRIMARY KEY,
     proyecto_id INT NOT NULL,
-    fecha_importante_id INT NULL, -- NULL si es extensiÃ³n general del proyecto
+    fecha_importante_id INT NULL, -- NULL si es extensión general del proyecto
     solicitante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     fecha_original DATE NOT NULL,
     fecha_solicitada DATE NOT NULL,
@@ -785,7 +804,7 @@ CREATE TABLE IF NOT EXISTS solicitudes_extension (
     INDEX idx_extension_fecha (created_at)
 );
 
--- Tabla de Actas de ReuniÃ³n
+-- Tabla de Actas de Reunión
 CREATE TABLE IF NOT EXISTS actas_reunion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     reunion_id INT NOT NULL,
@@ -810,9 +829,9 @@ CREATE TABLE IF NOT EXISTS actas_reunion (
     fecha_firma_profesor TIMESTAMP NULL,
     -- Archivo del acta (opcional, si se genera PDF)
     archivo_acta VARCHAR(255) NULL,
-    -- Estado y auditorÃ­a
+    -- Estado y auditoría
     estado ENUM('borrador', 'pendiente_firma', 'firmada', 'archivada') DEFAULT 'borrador',
-    creado_por VARCHAR(10) NOT NULL,
+    creado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (reunion_id) REFERENCES reuniones_calendario(id) ON DELETE CASCADE,
@@ -825,7 +844,7 @@ CREATE TABLE IF NOT EXISTS actas_reunion (
     INDEX idx_acta_estado (estado)
 );
 
--- Tabla de Historial de Extensiones (para auditorÃ­a)
+-- Tabla de Historial de Extensiones (para auditoría)
 CREATE TABLE IF NOT EXISTS historial_extensiones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     solicitud_id INT NOT NULL,
@@ -843,29 +862,20 @@ CREATE TABLE IF NOT EXISTS historial_extensiones (
 );
 
 -- ============================================
--- ESTRUCTURA ACADÃ‰MICA: FACULTADES, DEPARTAMENTOS, CARRERAS
+-- ESTRUCTURA ACAD�MICA: FACULTADES, DEPARTAMENTOS, CARRERAS
 -- ============================================
 
--- Convertir tablas a UTF8MB4 para compatibilidad
-SET FOREIGN_KEY_CHECKS = 0;
-ALTER TABLE usuarios CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE propuestas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE asignaciones_proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE asignaciones_propuestas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE estudiantes_propuestas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE estudiantes_proyectos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE avances CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE hitos_cronograma CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE hitos_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE fechas CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE cronogramas_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE notificaciones_proyecto CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
--- ============================================
--- ESTRUCTURA ACADÃ‰MICA: FACULTADES, DEPARTAMENTOS, CARRERAS
--- ============================================
-
--- Agregar rol de Super Administrador
+-- Tabla de Facultades
+CREATE TABLE IF NOT EXISTS facultades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    descripcion TEXT,
+    decano_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del profesor que es decano',
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    ubicacion VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_codigo (codigo),
@@ -898,8 +908,8 @@ CREATE TABLE IF NOT EXISTS carreras (
     facultad_id INT NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     codigo VARCHAR(20) NOT NULL UNIQUE,
-    titulo_profesional VARCHAR(255) NOT NULL COMMENT 'Ej: Ingeniero Civil en InformÃ¡tica',
-    grado_academico VARCHAR(100) COMMENT 'Ej: Licenciado en Ciencias de la IngenierÃ­a',
+    titulo_profesional VARCHAR(255) NOT NULL COMMENT 'Ej: Ingeniero Civil en Informática',
+    grado_academico VARCHAR(100) COMMENT 'Ej: Licenciado en Ciencias de la Ingeniería',
     duracion_semestres INT NOT NULL DEFAULT 10,
     jefe_carrera_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'DEPRECATED: Usar tabla jefes_carreras',
     descripcion TEXT,
@@ -914,7 +924,7 @@ CREATE TABLE IF NOT EXISTS carreras (
     INDEX idx_activo (activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de Jefes de Carrera (relaciÃ³n N:M - un profesor puede ser jefe de mÃºltiples carreras)
+-- Tabla de Jefes de Carrera (relación N:M - un profesor puede ser jefe de múltiples carreras)
 CREATE TABLE IF NOT EXISTS jefes_carreras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -931,7 +941,7 @@ CREATE TABLE IF NOT EXISTS jefes_carreras (
     INDEX idx_carrera (carrera_id, activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de Profesores-Departamentos (relaciÃ³n N:M)
+-- Tabla de Profesores-Departamentos (relación N:M)
 CREATE TABLE IF NOT EXISTS profesores_departamentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     profesor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -950,7 +960,7 @@ CREATE TABLE IF NOT EXISTS profesores_departamentos (
     INDEX idx_principal (es_principal)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de Estudiantes-Carreras (relaciÃ³n N:M)
+-- Tabla de Estudiantes-Carreras (relación N:M)
 CREATE TABLE IF NOT EXISTS estudiantes_carreras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -963,7 +973,7 @@ CREATE TABLE IF NOT EXISTS estudiantes_carreras (
     fecha_titulacion DATE NULL,
     promedio_acumulado DECIMAL(3,2) NULL,
     creditos_aprobados INT DEFAULT 0,
-    es_carrera_principal BOOLEAN DEFAULT TRUE COMMENT 'Para estudiantes con doble titulaciÃ³n',
+    es_carrera_principal BOOLEAN DEFAULT TRUE COMMENT 'Para estudiantes con doble titulación',
     observaciones TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -976,7 +986,7 @@ CREATE TABLE IF NOT EXISTS estudiantes_carreras (
     INDEX idx_estado (estado_estudiante)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla de Departamentos-Carreras (relaciÃ³n N:M directa)
+-- Tabla de Departamentos-Carreras (relación N:M directa)
 CREATE TABLE IF NOT EXISTS departamentos_carreras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     departamento_id INT NOT NULL,
@@ -1012,28 +1022,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- Migrar datos existentes de jefe_carrera_rut a la nueva tabla jefes_carreras
-INSERT INTO jefes_carreras (profesor_rut, carrera_id, activo)
-SELECT jefe_carrera_rut, id, TRUE
-FROM carreras
-WHERE jefe_carrera_rut IS NOT NULL
-ON DUPLICATE KEY UPDATE activo = TRUE;
-
--- Limpiar datos anteriores para evitar conflictos de FK (orden: de hijo a padre)
-SET FOREIGN_KEY_CHECKS = 0;
-DELETE FROM departamentos_carreras;
-DELETE FROM carreras;
-DELETE FROM departamentos;
-DELETE FROM facultades;
-SET FOREIGN_KEY_CHECKS = 1;
-
--- Reiniciar auto_increment
-ALTER TABLE facultades AUTO_INCREMENT = 1;
-ALTER TABLE departamentos AUTO_INCREMENT = 1;
-ALTER TABLE carreras AUTO_INCREMENT = 1;
 
 
--- Vistas Ãºtiles
+
+-- Vistas útiles
+-- Vistas utiles para consultas frecuentes
 CREATE OR REPLACE VIEW vista_profesores_departamentos AS
 SELECT 
     u.rut,
@@ -1041,11 +1034,29 @@ SELECT
     u.email,
     d.nombre AS departamento_nombre,
     d.codigo AS departamento_codigo,
--- Vistas Ãºtiles
+    pd.es_principal,
+    f.nombre AS facultad_nombre
+FROM profesores_departamentos pd
+INNER JOIN usuarios u ON pd.profesor_rut = u.rut
+INNER JOIN departamentos d ON pd.departamento_id = d.id
+INNER JOIN facultades f ON d.facultad_id = f.id
+WHERE u.rol_id = 2 AND pd.activo = TRUE;
+
+CREATE OR REPLACE VIEW vista_jefes_carreras AS
+SELECT 
+    u.rut,
+    u.nombre AS profesor_nombre,
+    u.email,
+    c.nombre AS carrera_nombre,
+    c.codigo AS carrera_codigo,
+    f.nombre AS facultad_nombre,
+    jc.fecha_inicio,
+    jc.fecha_fin
+FROM usuarios u
 INNER JOIN jefes_carreras jc ON u.rut = jc.profesor_rut
 INNER JOIN carreras c ON jc.carrera_id = c.id
 INNER JOIN facultades f ON c.facultad_id = f.id
-WHERE u.rol_id = 3 AND jc.activo = TRUE;
+WHERE u.rol_id = 2 AND jc.activo = TRUE;
 
 CREATE OR REPLACE VIEW vista_departamentos_por_carrera AS
 SELECT 
@@ -1081,7 +1092,196 @@ INNER JOIN facultades f ON c.facultad_id = f.id
 WHERE dc.activo = TRUE
 ORDER BY d.nombre, dc.es_principal DESC, c.nombre;
 
--- ===== BASE DE DATOS CREADA EXITOSAMENTE =====
-SELECT 'Base de datos AcTitUBB creada exitosamente con estructura acadÃ©mica completa' as status;
+-- Vista de Proyectos en Riesgo por Inactividad (Reglamento)
+CREATE OR REPLACE VIEW vista_proyectos_riesgo_abandono AS
+SELECT 
+    p.id AS proyecto_id,
+    p.titulo,
+    p.estudiante_rut,
+    u.nombre AS estudiante_nombre,
+    u.email AS estudiante_email,
+    p.estado_id,
+    ep.nombre AS estado_nombre,
+    p.ultima_actividad_fecha,
+    CASE 
+        WHEN p.ultima_actividad_fecha IS NOT NULL 
+        THEN DATEDIFF(CURRENT_DATE, p.ultima_actividad_fecha)
+        ELSE NULL 
+    END AS dias_sin_actividad,
+    p.umbral_dias_riesgo,
+    p.umbral_dias_abandono,
+    CASE 
+        WHEN p.ultima_actividad_fecha IS NULL THEN 'sin_actividad_registrada'
+        WHEN DATEDIFF(CURRENT_DATE, p.ultima_actividad_fecha) >= p.umbral_dias_abandono THEN 'abandono_potencial'
+        WHEN DATEDIFF(CURRENT_DATE, p.ultima_actividad_fecha) >= p.umbral_dias_riesgo THEN 'en_riesgo'
+        WHEN DATEDIFF(CURRENT_DATE, p.ultima_actividad_fecha) >= (p.umbral_dias_riesgo * 0.7) THEN 'alerta_previa'
+        ELSE 'activo'
+    END AS nivel_riesgo,
+    p.alerta_inactividad_enviada,
+    p.fecha_alerta_inactividad,
+    p.fecha_inicio,
+    DATEDIFF(CURRENT_DATE, p.fecha_inicio) AS dias_desde_inicio,
+    (SELECT COUNT(*) FROM avances WHERE proyecto_id = p.id) AS total_avances,
+    (SELECT MAX(fecha_envio) FROM avances WHERE proyecto_id = p.id) AS ultimo_avance,
+    (SELECT COUNT(*) FROM reuniones_calendario WHERE proyecto_id = p.id AND estado = 'realizada') AS reuniones_realizadas
+FROM proyectos p
+INNER JOIN usuarios u ON p.estudiante_rut = u.rut
+INNER JOIN estados_proyectos ep ON p.estado_id = ep.id
+WHERE p.activo = TRUE
+    AND ep.nombre NOT IN ('completado', 'defendido', 'cerrado')
+    AND (
+        p.ultima_actividad_fecha IS NULL 
+        OR DATEDIFF(CURRENT_DATE, p.ultima_actividad_fecha) >= (p.umbral_dias_riesgo * 0.7)
+    )
+ORDER BY CASE WHEN p.ultima_actividad_fecha IS NULL THEN 0 ELSE 1 END, dias_sin_actividad DESC;
 
-ORDER BY d.nombre, dc.es_principal DESC, c.nombre;
+-- Vista de Entregas Finales Pendientes de Revisión por Informante
+CREATE OR REPLACE VIEW vista_informante_pendientes AS
+SELECT 
+    h.id AS hito_id,
+    h.proyecto_id,
+    p.titulo AS proyecto_titulo,
+    p.estudiante_rut,
+    u.nombre AS estudiante_nombre,
+    h.fecha_entrega_estudiante,
+    h.fecha_limite_informante,
+    DATEDIFF(h.fecha_limite_informante, CURRENT_DATE) AS dias_restantes,
+    CASE 
+        WHEN h.fecha_limite_informante < CURRENT_DATE THEN 'vencido'
+        WHEN DATEDIFF(h.fecha_limite_informante, CURRENT_DATE) <= 3 THEN 'urgente'
+        WHEN DATEDIFF(h.fecha_limite_informante, CURRENT_DATE) <= 7 THEN 'proximo'
+        ELSE 'en_plazo'
+    END AS estado_plazo,
+    h.informante_notificado,
+    h.fecha_notificacion_informante,
+    ap.profesor_rut AS informante_rut,
+    ui.nombre AS informante_nombre,
+    ui.email AS informante_email,
+    h.comentarios_profesor,
+    h.estado AS estado_hito
+FROM hitos_proyecto h
+INNER JOIN proyectos p ON h.proyecto_id = p.id
+INNER JOIN usuarios u ON p.estudiante_rut = u.rut
+LEFT JOIN asignaciones_proyectos ap ON ap.proyecto_id = p.id 
+    AND ap.rol_profesor_id = (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Informante')
+    AND ap.activo = TRUE
+LEFT JOIN usuarios ui ON ap.profesor_rut = ui.rut
+WHERE h.tipo_hito = 'entrega_final'
+    AND h.fecha_entrega_estudiante IS NOT NULL
+    AND h.estado IN ('completado', 'en_progreso')
+    AND (h.fecha_completado IS NULL OR h.comentarios_profesor IS NULL)
+ORDER BY h.fecha_limite_informante ASC;
+
+-- ============================================
+-- INSERCIÓN DE DATOS INICIALES
+-- ============================================
+
+-- Roles de usuarios (con IDs fijos)
+INSERT INTO roles (id, nombre, descripcion) VALUES
+(1, 'estudiante', 'Estudiante que desarrolla el proyecto de t�tulo'),
+(2, 'profesor', 'Profesor que gu�a o revisa proyectos de t�tulo'),
+(3, 'admin', 'Administrador del sistema'),
+(4, 'superadmin', 'Administrador con permisos totales del sistema')
+ON DUPLICATE KEY UPDATE 
+    nombre = VALUES(nombre), 
+    descripcion = VALUES(descripcion);
+
+-- Estados de propuestas
+INSERT IGNORE INTO estados_propuestas (nombre, descripcion) VALUES
+('pendiente', 'Propuesta enviada, esperando asignación de profesor'),
+('en_revision', 'Propuesta siendo revisada por profesor'),
+('correcciones', 'Propuesta requiere correcciones del estudiante'),
+('aprobada', 'Propuesta aprobada, se puede crear proyecto'),
+('rechazada', 'Propuesta rechazada');
+
+-- Estados de proyectos
+INSERT IGNORE INTO estados_proyectos (nombre, descripcion) VALUES
+('esperando_asignacion_profesores', 'Proyecto creado esperando asignación de los 3 roles de profesores'),
+('en_desarrollo', 'Proyecto en fase de desarrollo'),
+('avance_enviado', 'Avance enviado para revisión'),
+('avance_en_revision', 'Avance siendo revisado'),
+('avance_con_comentarios', 'Avance con comentarios del profesor'),
+('avance_aprobado', 'Avance aprobado'),
+('pausado', 'Proyecto pausado temporalmente'),
+('completado', 'Proyecto completado'),
+('presentado', 'Proyecto presentado'),
+('defendido', 'Proyecto defendido exitosamente'),
+('retrasado', 'Proyecto con retraso en cronograma'),
+('en_riesgo', 'Proyecto en riesgo de no completarse'),
+('revision_urgente', 'Proyecto requiere revisión urgente'),
+('excelente_progreso', 'Proyecto con excelente progreso');
+
+-- Roles de profesores en proyectos
+INSERT IGNORE INTO roles_profesores (nombre, descripcion) VALUES
+('Profesor Revisor', 'Profesor que evalúa la propuesta inicial y determina su viabilidad'),
+('Profesor Guía', 'Profesor principal que guía el desarrollo completo del proyecto'),
+('Profesor Co-Guía', 'Profesor co-guía que apoya en áreas específicas del proyecto'),
+('Profesor Informante', 'Profesor que evalúa el informe final y otorga calificación'),
+('Profesor de Sala', 'Profesor de sala para la defensa oral del proyecto');
+
+-- Usuarios b�sicos del sistema (contrase�a: 1234)
+-- Hash generado con bcrypt, salt rounds = 10
+INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado) VALUES
+('11111111-1', 'Usuario Estudiante', 'estudiante@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
+('22222222-2', 'Usuario Profesor', 'profesor@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
+('33333333-3', 'Usuario Admin', 'admin@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 3, 1),
+('44444444-4', 'Usuario SuperAdmin', 'superadmin@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 4, 1)
+ON DUPLICATE KEY UPDATE 
+    nombre = VALUES(nombre),
+    email = VALUES(email),
+    password = VALUES(password),
+    rol_id = VALUES(rol_id),
+    confirmado = VALUES(confirmado);
+
+-- Asignar usuarios b�sicos a carreras/departamentos (solo si existen las tablas)
+-- Nota: Esto se ejecutar� despu�s de crear facultades, departamentos y carreras con datos-prueba.sql
+-- Estudiante b�sico en Ingenier�a Civil en Inform�tica (carrera_id: 1)
+INSERT IGNORE INTO estudiantes_carreras (estudiante_rut, carrera_id, ano_ingreso, semestre_actual, estado_estudiante, fecha_ingreso, es_carrera_principal)
+SELECT '11111111-1', 1, 2021, 7, 'regular', '2021-03-01', TRUE
+FROM dual
+WHERE EXISTS (SELECT 1 FROM carreras WHERE id = 1);
+
+-- Profesor b�sico en Departamento de Ingenier�a en Sistemas (departamento_id: 1)
+INSERT IGNORE INTO profesores_departamentos (profesor_rut, departamento_id, es_principal, fecha_ingreso)
+SELECT '22222222-2', 1, TRUE, '2020-03-01'
+FROM dual
+WHERE EXISTS (SELECT 1 FROM departamentos WHERE id = 1);
+
+-- Admin como jefe de carrera de Ingenier�a Civil en Inform�tica y Ejecuci�n (carreras 1 y 2)
+INSERT IGNORE INTO jefes_carreras (profesor_rut, carrera_id, fecha_inicio, activo)
+SELECT '33333333-3', 1, '2023-01-01', TRUE
+FROM dual
+WHERE EXISTS (SELECT 1 FROM carreras WHERE id = 1);
+
+INSERT IGNORE INTO jefes_carreras (profesor_rut, carrera_id, fecha_inicio, activo)
+SELECT '33333333-3', 2, '2023-01-01', TRUE
+FROM dual
+WHERE EXISTS (SELECT 1 FROM carreras WHERE id = 2);
+
+-- Admin en departamento
+INSERT IGNORE INTO profesores_departamentos (profesor_rut, departamento_id, es_principal, fecha_ingreso)
+SELECT '33333333-3', 1, TRUE, '2023-01-01'
+FROM dual
+WHERE EXISTS (SELECT 1 FROM departamentos WHERE id = 1);
+
+-- Configuraciones del sistema de matching
+INSERT IGNORE INTO configuracion_matching (clave, valor, descripcion, tipo) VALUES
+('duracion_reunion_defecto', '60', 'Duración por defecto de las reuniones en minutos', 'entero'),
+('dias_anticipacion_minima', '1', 'Días mínimos de anticipación para agendar reuniones', 'entero'),
+('dias_anticipacion_maxima', '30', 'Días máximos de anticipación para agendar reuniones', 'entero'),
+('horario_inicio_jornada', '08:00', 'Hora de inicio de la jornada laboral', 'texto'),
+('horario_fin_jornada', '18:00', 'Hora de fin de la jornada laboral', 'texto'),
+('matching_automatico_activo', 'true', 'Si el matching automático está activo', 'booleano'),
+('tiempo_respuesta_horas', '48', 'Tiempo máximo en horas para responder solicitudes', 'entero'),
+('permitir_reuniones_sabado', 'false', 'Permitir agendar reuniones los sábados', 'booleano'),
+('permitir_reuniones_domingo', 'false', 'Permitir agendar reuniones los domingos', 'booleano'),
+-- Configuraciones de control de abandono según reglamento
+('dias_sin_actividad_alerta', '30', 'Días sin actividad para enviar alerta de inactividad', 'entero'),
+('dias_sin_actividad_riesgo', '45', 'Días sin actividad para marcar proyecto en riesgo', 'entero'),
+('dias_sin_actividad_abandono', '60', 'Días sin actividad para considerar abandono potencial', 'entero'),
+-- Configuración de plazo del informante según reglamento
+('dias_habiles_informante', '15', 'Días hábiles que tiene el profesor Informante para evaluar informe final', 'entero'),
+('notificar_informante_auto', 'true', 'Notificar automáticamente al informante cuando se entrega el informe final', 'booleano');
+
+-- ===== BASE DE DATOS CREADA EXITOSAMENTE =====
+SELECT 'Base de datos AcTitUBB creada exitosamente con estructura academica completa' as status;
