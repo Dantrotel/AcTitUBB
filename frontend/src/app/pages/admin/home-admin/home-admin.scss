@@ -1561,5 +1561,441 @@ $gray-color: #e0e0e0;
       }
     }
   }
-} 
+}
+
+// ============= ESTILOS PARA MONITOREO REGULATORIO =============
+
+.regulatory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.regulatory-card {
+  background: $white-color;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 2px solid $gray-color;
+
+    i {
+      font-size: 1.5rem;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: $dark-color;
+    }
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .regulatory-stats {
+    margin-bottom: 1.5rem;
+
+    .stat-large {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+
+      .number {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: center;
+      }
+    }
+  }
+
+  .risk-levels,
+  .deadline-levels,
+  .alert-severity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .risk-item,
+  .deadline-item,
+  .severity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: $light-color;
+    border-radius: 8px;
+    font-size: 0.9rem;
+
+    i, .dot {
+      font-size: 0.8rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    &.critico {
+      border-left: 4px solid $danger-color;
+
+      i { color: $danger-color; }
+      .dot { background-color: $danger-color; }
+    }
+
+    &.grave {
+      border-left: 4px solid #ff6b6b;
+
+      i { color: #ff6b6b; }
+      .dot { background-color: #ff6b6b; }
+    }
+
+    &.alto {
+      border-left: 4px solid #f39c12;
+
+      i { color: #f39c12; }
+    }
+
+    &.medio, &.moderado {
+      border-left: 4px solid $warning-color;
+
+      i { color: $warning-color; }
+      .dot { background-color: $warning-color; }
+    }
+
+    &.vencido {
+      border-left: 4px solid $danger-color;
+
+      i { color: $danger-color; }
+    }
+
+    &.urgente {
+      border-left: 4px solid #e74c3c;
+
+      i { color: #e74c3c; }
+    }
+
+    &.proximo {
+      border-left: 4px solid $warning-color;
+
+      i { color: $warning-color; }
+    }
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: $primary-color;
+    color: $white-color;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: $secondary-color-dark;
+      transform: scale(1.02);
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+.risk-card {
+  .card-header {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+
+    i { color: $danger-color; }
+  }
+
+  .regulatory-stats .number {
+    color: $danger-color;
+  }
+}
+
+.informante-card {
+  .card-header {
+    background: linear-gradient(135deg, #fff9e6 0%, #fff0cc 100%);
+
+    i { color: #f39c12; }
+  }
+
+  .regulatory-stats .number {
+    color: #f39c12;
+  }
+}
+
+.alerts-card {
+  .card-header {
+    background: linear-gradient(135deg, #f0f8ff 0%, #d9eeff 100%);
+
+    i { color: $info-color; }
+  }
+
+  .regulatory-stats .number {
+    color: $info-color;
+  }
+}
+
+@media (max-width: 768px) {
+  .regulatory-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Estilos para modales
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 2rem;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.modal-content {
+  background: $white-color;
+  border-radius: 12px;
+  max-width: 1000px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid $gray-color;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  border-radius: 12px 12px 0 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: $white-color;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    i {
+      font-size: 1.75rem;
+    }
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: $white-color;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+  }
+}
+
+.modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+
+    i {
+      font-size: 4rem;
+      color: $success-color;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+
+    thead {
+      background: $light-color;
+      
+      th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: $primary-color;
+        border-bottom: 2px solid $secondary-color;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid $gray-color;
+        transition: background 0.2s ease;
+
+        &:hover {
+          background: #f8f9fa;
+        }
+
+        td {
+          padding: 1rem;
+          vertical-align: middle;
+
+          strong {
+            color: $primary-color;
+            display: block;
+            margin-bottom: 0.25rem;
+          }
+        }
+      }
+    }
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 6px;
+
+    &.badge-danger {
+      background: #fee;
+      color: $danger-color;
+    }
+
+    &.badge-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    &.badge-info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    &.badge-success {
+      background: #d4edda;
+      color: #155724;
+    }
+  }
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid $gray-color;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background: $light-color;
+  border-radius: 0 0 12px 12px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    max-height: 90vh;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .data-table {
+    font-size: 0.875rem;
+
+    th, td {
+      padding: 0.5rem;
+    }
+  }
+}
 

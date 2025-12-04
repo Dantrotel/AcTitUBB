@@ -236,6 +236,47 @@ export class ApiService {
     }).toPromise();
   }
 
+  // ===== MONITOREO REGULATORIO =====
+  
+  // Obtener proyectos en riesgo de abandono
+  getProyectosRiesgo(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/dashboard/proyectos-riesgo`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
+  // Obtener entregas pendientes de Informante
+  getInformantesPendientes(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/dashboard/informantes-pendientes`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
+  // Obtener alertas de abandono activas
+  getAlertasAbandono(proyectoId?: number): Promise<any> {
+    const url = proyectoId 
+      ? `${this.baseUrl}/dashboard/alertas-abandono?proyecto_id=${proyectoId}`
+      : `${this.baseUrl}/dashboard/alertas-abandono`;
+    return this.http.get(url, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
+  // Marcar alerta como atendida
+  marcarAlertaAtendida(alertaId: number, observaciones?: string): Promise<any> {
+    return this.http.patch(`${this.baseUrl}/dashboard/alertas-abandono/${alertaId}/atender`, 
+      { observaciones },
+      { headers: this.getHeaders() }
+    ).toPromise();
+  }
+
+  // Obtener configuración de umbrales
+  getConfiguracionAbandono(): Promise<any> {
+    return this.http.get(`${this.baseUrl}/dashboard/configuracion-abandono`, {
+      headers: this.getHeaders()
+    }).toPromise();
+  }
+
   getPropuestas() {
     const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/`, {

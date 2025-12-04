@@ -281,7 +281,10 @@ export class CalendarioUnificadoComponent implements OnInit {
 
   formatearFecha(fecha: string): string {
     if (!fecha) return 'N/A';
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    // Parsear fecha como YYYY-MM-DD sin conversión de timezone
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaObj = new Date(year, month - 1, day);
+    return fechaObj.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -396,8 +399,11 @@ export class CalendarioUnificadoComponent implements OnInit {
   }
 
   calcularDiasRestantes(fecha: string): number {
+    // Parsear fecha como YYYY-MM-DD sin conversión de timezone
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaLimite = new Date(year, month - 1, day);
     const hoy = new Date();
-    const fechaLimite = new Date(fecha);
+    hoy.setHours(0, 0, 0, 0); // Normalizar a medianoche
     const diferencia = fechaLimite.getTime() - hoy.getTime();
     return Math.ceil(diferencia / (1000 * 3600 * 24));
   }
@@ -665,11 +671,13 @@ export class CalendarioUnificadoComponent implements OnInit {
 
   convertirFechaParaInput(fecha: string): string {
     if (!fecha) return '';
-    const d = new Date(fecha);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    // Si la fecha ya está en formato YYYY-MM-DD, devolverla directamente
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return fecha;
+    }
+    // Si no, parsear sin conversión de timezone
+    const [year, month, day] = fecha.split('-').map(Number);
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   guardarEdicionPropuesta() {

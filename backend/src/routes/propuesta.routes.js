@@ -16,10 +16,10 @@ routerProp.post('/', verifySession, checkRole('1'), uploadPropuesta, validate(cr
 routerProp.put('/:id', verifySession, checkRole('1'), uploadPropuesta, validate(actualizarPropuestaSchema), invalidateOnMutation('propuestas'), PropuestaController.ActualizarPropuesta)
 routerProp.get('/estudiante/mis-propuestas', verifySession, checkRole('1'), cacheMiddleware('propuestas'), PropuestaController.getPropuestasEstudiante)
 
-// Profesores
-routerProp.put('/:id/revisar', verifySession, checkRole('2'), validate(revisarPropuestaSchema), invalidateOnMutation('propuestas'), PropuestaController.revisarPropuesta)
-routerProp.put('/:id/asignar-profesor', verifySession, checkRole('2','3'), validate(asignarProfesorSchema), invalidateOnMutation('propuestas'), PropuestaController.asignarProfesor)
-routerProp.get('/profesor/:rut', verifySession, checkRole('2','3'), cacheMiddleware('propuestas'), PropuestaController.getPropuestasPorProfesor)
+// Profesores, Admin y SuperAdmin
+routerProp.put('/:id/revisar', verifySession, checkRole('2','3','4'), validate(revisarPropuestaSchema), invalidateOnMutation('propuestas'), PropuestaController.revisarPropuesta)
+routerProp.put('/:id/asignar-profesor', verifySession, checkRole('2','3','4'), validate(asignarProfesorSchema), invalidateOnMutation('propuestas'), PropuestaController.asignarProfesor)
+routerProp.get('/profesor/:rut', verifySession, checkRole('2','3','4'), cacheMiddleware('propuestas'), PropuestaController.getPropuestasPorProfesor)
 
 
 // Generales (todos los roles)

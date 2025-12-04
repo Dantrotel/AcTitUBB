@@ -6,6 +6,7 @@ import { logger } from '../config/logger.js';
 import { notifyPropuestaAprobada, notifyPropuestaRechazada, notifyAsignacionProfesor } from '../config/socket.js';
 import { sendAsignacionProfesorEmail } from '../services/email.service.js';
 import { UserModel } from '../models/user.model.js';
+import { pool } from '../db/connectionDB.js';
 
 // Endpoint temporal de debug para identificar el problema
 export const debugPropuestaController = async (req, res) => {
@@ -380,13 +381,16 @@ export const revisarPropuesta = async (req, res) => {
   try {
     const { id } = req.params;
     const { comentarios_profesor, estado } = req.body;
+    const userRut = req.rut;
+    const userRole = req.rol_id;
+    const carrerasAdministradas = req.user?.carreras_administradas || [];
 
     console.log('=== DEBUG REVISAR PROPUESTA ===');
     console.log('ID propuesta:', id);
     console.log('Body completo:', JSON.stringify(req.body, null, 2));
     console.log('comentarios_profesor:', comentarios_profesor || 'FALTA');
     console.log('estado:', estado || 'FALTA');
-    console.log('User info:', { rut: req.rut, role: req.role_id });
+    console.log('User info:', { rut: userRut, role: userRole, carreras: carrerasAdministradas });
 
     // Validación mejorada con más información
     const errores = [];
@@ -427,6 +431,46 @@ export const revisarPropuesta = async (req, res) => {
     console.log('✅ Validación exitosa - procesando...');
     console.log('Estado recibido:', estado);
     console.log('Estados válidos:', estadosValidos);
+
+    // Verificar permisos según rol
+    // SuperAdmin: puede revisar todas las propuestas
+    // Admin: solo puede revisar propuestas de estudiantes de sus carreras
+    // Profesor: puede revisar propuestas asignadas o sin asignar
+    if (userRole === 3) { // Admin
+      // Verificar que la propuesta sea de un estudiante de una carrera que administra
+      const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
+      if (!propuesta) {
+        return res.status(404).json({ message: 'Propuesta no encontrada' });
+      }
+
+      // Obtener la carrera del estudiante
+      const [estudianteInfo] = await pool.execute(
+        `SELECT u.rut, c.id as carrera_id, c.nombre as carrera_nombre
+         FROM usuarios u
+         LEFT JOIN carreras c ON u.carrera_id = c.id
+         WHERE u.rut = ?`,
+        [propuesta.estudiante_rut]
+      );
+
+      if (estudianteInfo.length === 0 || !estudianteInfo[0].carrera_id) {
+        return res.status(403).json({ 
+          message: 'No tienes permisos para revisar esta propuesta (estudiante sin carrera asignada)' 
+        });
+      }
+
+      const carreraEstudiante = estudianteInfo[0].carrera_id;
+      
+      if (!carrerasAdministradas.includes(carreraEstudiante)) {
+        return res.status(403).json({ 
+          message: 'No tienes permisos para revisar esta propuesta (no administras la carrera del estudiante)',
+          carreraEstudiante: estudianteInfo[0].carrera_nombre,
+          carrerasAdministradas: carrerasAdministradas
+        });
+      }
+
+      console.log('✅ Admin verificado - puede revisar propuesta de carrera:', estudianteInfo[0].carrera_nombre);
+    }
+    // SuperAdmin (rol 4) y Profesores (rol 2) no necesitan verificación adicional aquí
 
     const resultado = await PropuestasService.revisarPropuesta(id, { comentarios_profesor, estado });
     
@@ -515,7 +559,13 @@ export const obtenerPropuestaPorId = async (req, res) => {
       profesor_rut: propuesta.profesor_rut
     });
 
-    // Verificar permisos de visualización
+    // SuperAdmin y Admin tienen acceso total (verificación directa)
+    if (userRole === 4 || userRole === 3) {
+      console.log('✅ Admin/SuperAdmin - acceso directo concedido');
+      return res.json(propuesta);
+    }
+
+    // Verificar permisos de visualización para otros roles
     const puedeVer = await PropuestasService.verificarPermisosVisualizacion(propuesta, userRut, userRole);
     console.log('🔍 Debug permisos - Puede ver:', puedeVer);
 

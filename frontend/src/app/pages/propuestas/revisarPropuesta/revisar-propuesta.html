@@ -1,5 +1,5 @@
 <!-- Nuevo archivo sugerido: revisar-propuesta.html -->
-<div class="revisar-propuesta-container" *ngIf="esProfesor && propuesta; else errorTpl">
+<div class="revisar-propuesta-container" *ngIf="puedeRevisar && propuesta; else errorTpl">
   <h2>Revisar Propuesta</h2>
   <div>
     <strong>Título:</strong> {{ propuesta.titulo }}<br>

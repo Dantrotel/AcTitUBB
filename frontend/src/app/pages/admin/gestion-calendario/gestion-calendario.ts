@@ -35,10 +35,18 @@ export class GestionCalendarioComponent implements OnInit {
   // Formulario
   mostrarFormulario = false;
   guardando = false;
-  nuevaFecha = {
+  nuevaFecha: {
+    titulo: string;
+    descripcion: string;
+    fecha: string | Date;
+    hora_limite: string;
+    tipo_fecha: string;
+    es_global: boolean;
+  } = {
     titulo: '',
     descripcion: '',
     fecha: '',
+    hora_limite: '23:59',
     tipo_fecha: '',
     es_global: false
   };
@@ -149,13 +157,35 @@ export class GestionCalendarioComponent implements OnInit {
 
   formatearFecha(fecha: string): string {
     if (!fecha) return '';
-    const fechaObj = new Date(fecha);
+    // Parsear fecha como YYYY-MM-DD sin conversión de timezone
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaObj = new Date(year, month - 1, day);
     return fechaObj.toLocaleDateString('es-ES', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
+  }
+
+  formatearFechaCompleta(fecha: string): string {
+    if (!fecha) return '';
+    // Parsear fecha como YYYY-MM-DD sin conversión de timezone
+    const [year, month, day] = fecha.split('-').map(Number);
+    const fechaObj = new Date(year, month - 1, day);
+    return fechaObj.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  formatearFechaCorta(fecha: string): string {
+    if (!fecha) return '';
+    // Parsear fecha como YYYY-MM-DD sin conversión de timezone y formatear como dd/MM/yyyy
+    const [year, month, day] = fecha.split('-');
+    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
   }
 
   obtenerTextoTiempo(dias: number): string {
@@ -184,9 +214,29 @@ export class GestionCalendarioComponent implements OnInit {
     }
 
     console.log('✅ Validación OK, enviando datos...');
+    console.log('🔍 Tipo de this.nuevaFecha.fecha:', typeof this.nuevaFecha.fecha);
+    console.log('🔍 Valor de this.nuevaFecha.fecha:', this.nuevaFecha.fecha);
     this.guardando = true;
     
-    this.apiService.crearFechaGlobal(this.nuevaFecha).subscribe({
+    // Asegurar que la fecha se envíe en formato YYYY-MM-DD sin conversión timezone
+    let fechaFormateada: string;
+    if (typeof this.nuevaFecha.fecha === 'string') {
+      fechaFormateada = this.nuevaFecha.fecha;
+      console.log('✅ Fecha ya es string:', fechaFormateada);
+    } else {
+      fechaFormateada = (this.nuevaFecha.fecha as Date).toISOString().split('T')[0];
+      console.log('⚠️ Fecha convertida desde Date:', fechaFormateada);
+    }
+    
+    const fechaData = {
+      ...this.nuevaFecha,
+      fecha: fechaFormateada
+    };
+    
+    console.log('📅 Fecha final a enviar:', fechaData.fecha);
+    console.log('📦 Objeto completo:', JSON.stringify(fechaData));
+    
+    this.apiService.crearFechaGlobal(fechaData).subscribe({
       next: (response: any) => {
         console.log('✅ Fecha creada exitosamente:', response);
         alert('Fecha global creada exitosamente');
@@ -226,6 +276,7 @@ export class GestionCalendarioComponent implements OnInit {
       titulo: '',
       descripcion: '',
       fecha: '',
+      hora_limite: '23:59',
       tipo_fecha: '',
       es_global: false
     };

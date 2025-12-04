@@ -214,8 +214,8 @@ const obtenerProfesoresAsignadosPropuesta = async (propuesta_id) => {
 
 // Verificar si un usuario puede ver un proyecto específico (actualizado para múltiples estudiantes)
 const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
-    // Los administradores pueden ver todos los proyectos
-    if (rol_usuario === 'admin' || rol_usuario === 3) {
+    // Los administradores y super administradores pueden ver todos los proyectos
+    if (rol_usuario === 'admin' || rol_usuario === 3 || rol_usuario === 4) {
         return true;
     }
 
@@ -243,8 +243,8 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
         let query;
         let params;
 
-        if (rol_usuario === 'admin' || rol_usuario === 3) {
-            // Los administradores ven todos los proyectos - consulta simplificada
+        if (rol_usuario === 'admin' || rol_usuario === 3 || rol_usuario === 4) {
+            // Los administradores y super administradores ven todos los proyectos - consulta simplificada
             query = `
                 SELECT p.*, 
                        u.nombre AS nombre_estudiante,
@@ -778,5 +778,239 @@ const obtenerEstadisticasCarga = async (carrera_id = null) => {
     }
 };
 
+// ============= FUNCIONES PARA MONITOREO REGULATORIO =============
+
+/**
+ * Obtener proyectos en riesgo de abandono según reglamento
+ * Utiliza la vista vista_proyectos_riesgo_abandono
+ * @returns {Promise<Array>} - Lista de proyectos en riesgo
+ */
+const obtenerProyectosRiesgoAbandono = async () => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT * FROM vista_proyectos_riesgo_abandono
+            ORDER BY dias_sin_actividad DESC
+        `);
+        return rows;
+    } catch (error) {
+        console.error('Error al obtener proyectos en riesgo:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener entregas finales pendientes de revisión por Informante
+ * Utiliza la vista vista_informante_pendientes
+ * @returns {Promise<Array>} - Lista de entregas pendientes
+ */
+const obtenerInformantesPendientes = async () => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT * FROM vista_informante_pendientes
+            ORDER BY dias_restantes ASC
+        `);
+        return rows;
+    } catch (error) {
+        console.error('Error al obtener informantes pendientes:', error);
+        throw error;
+    }
+};
+
+/**
+ * Actualizar fecha de última actividad de un proyecto
+ * @param {number} proyecto_id - ID del proyecto
+ * @returns {Promise<boolean>}
+ */
+const actualizarUltimaActividad = async (proyecto_id) => {
+    try {
+        const [result] = await pool.execute(`
+            UPDATE proyectos 
+            SET ultima_actividad_fecha = CURDATE(),
+                alerta_inactividad_enviada = FALSE,
+                updated_at = NOW()
+            WHERE id = ?
+        `, [proyecto_id]);
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al actualizar última actividad:', error);
+        throw error;
+    }
+};
+
+/**
+ * Registrar entrega de Informe Final
+ * @param {number} hito_id - ID del hito de entrega final
+ * @param {string} fecha_entrega - Fecha de entrega
+ * @returns {Promise<boolean>}
+ */
+const registrarEntregaInformeFinal = async (hito_id, fecha_entrega) => {
+    try {
+        const [result] = await pool.execute(`
+            UPDATE hitos_proyecto 
+            SET fecha_entrega_estudiante = ?,
+                informante_notificado = FALSE,
+                updated_at = NOW()
+            WHERE id = ? AND tipo_hito = 'entrega_final'
+        `, [fecha_entrega, hito_id]);
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al registrar entrega de informe final:', error);
+        throw error;
+    }
+};
+
+/**
+ * Calcular y establecer fecha límite para Informante
+ * @param {number} hito_id - ID del hito
+ * @param {string} fecha_limite - Fecha límite calculada
+ * @returns {Promise<boolean>}
+ */
+const establecerFechaLimiteInformante = async (hito_id, fecha_limite) => {
+    try {
+        const [result] = await pool.execute(`
+            UPDATE hitos_proyecto 
+            SET fecha_limite_informante = ?,
+                fecha_notificacion_informante = NOW(),
+                informante_notificado = TRUE,
+                updated_at = NOW()
+            WHERE id = ?
+        `, [fecha_limite, hito_id]);
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al establecer fecha límite informante:', error);
+        throw error;
+    }
+};
+
+/**
+ * Crear alerta de abandono
+ * @param {Object} alertaData - Datos de la alerta
+ * @returns {Promise<number>} - ID de la alerta creada
+ */
+const crearAlertaAbandono = async (alertaData) => {
+    const {
+        proyecto_id,
+        tipo_alerta,
+        nivel_severidad,
+        dias_sin_actividad,
+        fecha_ultima_actividad,
+        mensaje,
+        accion_sugerida
+    } = alertaData;
+
+    try {
+        const [result] = await pool.execute(`
+            INSERT INTO alertas_abandono (
+                proyecto_id, tipo_alerta, nivel_severidad, dias_sin_actividad,
+                fecha_ultima_actividad, mensaje, accion_sugerida
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [
+            proyecto_id, tipo_alerta, nivel_severidad, dias_sin_actividad,
+            fecha_ultima_actividad, mensaje, accion_sugerida
+        ]);
+        return result.insertId;
+    } catch (error) {
+        console.error('Error al crear alerta de abandono:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener alertas de abandono activas
+ * @param {number} proyecto_id - ID del proyecto (opcional)
+ * @returns {Promise<Array>}
+ */
+const obtenerAlertasAbandono = async (proyecto_id = null) => {
+    try {
+        let query = `
+            SELECT a.*, p.titulo AS proyecto_titulo, u.nombre AS estudiante_nombre
+            FROM alertas_abandono a
+            INNER JOIN proyectos p ON a.proyecto_id = p.id
+            INNER JOIN usuarios u ON p.estudiante_rut = u.rut
+            WHERE a.alerta_atendida = FALSE
+        `;
+        
+        const params = [];
+        if (proyecto_id) {
+            query += ` AND a.proyecto_id = ?`;
+            params.push(proyecto_id);
+        }
+        
+        query += ` ORDER BY a.nivel_severidad DESC, a.fecha_alerta DESC`;
+        
+        const [rows] = await pool.execute(query, params);
+        return rows;
+    } catch (error) {
+        console.error('Error al obtener alertas de abandono:', error);
+        throw error;
+    }
+};
+
+/**
+ * Marcar alerta como atendida
+ * @param {number} alerta_id - ID de la alerta
+ * @param {string} observaciones - Observaciones de atención
+ * @returns {Promise<boolean>}
+ */
+const marcarAlertaAtendida = async (alerta_id, observaciones = null) => {
+    try {
+        const [result] = await pool.execute(`
+            UPDATE alertas_abandono 
+            SET alerta_atendida = TRUE,
+                fecha_atencion = NOW(),
+                observaciones = COALESCE(?, observaciones)
+            WHERE id = ?
+        `, [observaciones, alerta_id]);
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error al marcar alerta como atendida:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener configuración de umbrales de abandono
+ * @returns {Promise<Object>}
+ */
+const obtenerConfiguracionAbandono = async () => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT clave, valor, descripcion
+            FROM configuracion_matching
+            WHERE clave IN (
+                'dias_sin_actividad_alerta',
+                'dias_sin_actividad_riesgo',
+                'dias_sin_actividad_abandono',
+                'dias_habiles_informante',
+                'notificar_informante_auto'
+            )
+        `);
+        
+        const config = {};
+        rows.forEach(row => {
+            config[row.clave] = row.valor;
+        });
+        return config;
+    } catch (error) {
+        console.error('Error al obtener configuración de abandono:', error);
+        throw error;
+    }
+};
+
 // Exportar también las nuevas funciones
-export { actualizarEstadoProyecto, obtenerProfesoresProyecto, obtenerCargaProfesores, obtenerEstadisticasCarga };
+export { 
+    actualizarEstadoProyecto, 
+    obtenerProfesoresProyecto, 
+    obtenerCargaProfesores, 
+    obtenerEstadisticasCarga,
+    // Funciones de monitoreo regulatorio
+    obtenerProyectosRiesgoAbandono,
+    obtenerInformantesPendientes,
+    actualizarUltimaActividad,
+    registrarEntregaInformeFinal,
+    establecerFechaLimiteInformante,
+    crearAlertaAbandono,
+    obtenerAlertasAbandono,
+    marcarAlertaAtendida,
+    obtenerConfiguracionAbandono
+};

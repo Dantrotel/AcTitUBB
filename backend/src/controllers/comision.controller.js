@@ -33,8 +33,8 @@ export const agregarMiembro = async (req, res) => {
         const asignado_por = req.user?.rut || req.rut;
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede gestionar comisiones
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden gestionar comisiones
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden gestionar comisiones' });
         }
 
@@ -93,8 +93,8 @@ export const removerMiembro = async (req, res) => {
         const removido_por = req.user?.rut || req.rut;
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede remover
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden remover
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden remover miembros' });
         }
 
@@ -127,8 +127,8 @@ export const actualizarRol = async (req, res) => {
         const { nuevo_rol } = req.body;
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede actualizar roles
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden actualizar roles
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden actualizar roles' });
         }
 
@@ -172,8 +172,8 @@ export const obtenerProyectosConComision = async (req, res) => {
     try {
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede ver todos los proyectos
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden ver todos los proyectos
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden acceder a este recurso' });
         }
 
@@ -197,8 +197,8 @@ export const obtenerProfesoresDisponibles = async (req, res) => {
         const { proyectoId } = req.params;
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede ver profesores disponibles
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden ver profesores disponibles
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden acceder a este recurso' });
         }
 
