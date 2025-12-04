@@ -224,6 +224,27 @@ export const obtenerAlertasUsuario = async (rut, rol_id) => {
                 LIMIT 50
             `;
             params = [];
+            
+        } else if (rol_id === 4) { // SuperAdmin - TODAS las alertas
+            query = `
+                SELECT 
+                    n.*,
+                    fi.titulo as fecha_titulo,
+                    fi.fecha as fecha_limite,
+                    fi.tipo_fecha,
+                    p.titulo as titulo_proyecto,
+                    p.estudiante_rut,
+                    u.nombre as nombre_estudiante,
+                    DATEDIFF(fi.fecha, CURDATE()) as dias_restantes
+                FROM notificaciones_proyecto n
+                INNER JOIN proyectos p ON n.proyecto_id = p.id
+                LEFT JOIN fechas fi ON n.proyecto_id = fi.proyecto_id
+                LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+                WHERE n.leida = FALSE
+                ORDER BY n.created_at DESC
+                LIMIT 100
+            `;
+            params = [];
         }
 
         const [alertas] = await pool.execute(query, params);

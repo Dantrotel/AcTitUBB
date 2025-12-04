@@ -177,7 +177,10 @@ export class CalendarModalComponent implements OnInit, OnChanges {
     // SOLO agregar fechas reales del backend (NO generar fechas dummy)
     if (this.fechasCalendario && this.fechasCalendario.length > 0) {
       this.fechasCalendario.forEach(fecha => {
-        const fechaDate = new Date(fecha.fecha);
+        // Parsear fecha sin conversión de timezone
+        const [year, month, day] = fecha.fecha.split('-').map(Number);
+        const fechaDate = new Date(year, month - 1, day);
+        
         this.upcomingEvents.push({
           titulo: fecha.titulo,
           fecha: fechaDate,

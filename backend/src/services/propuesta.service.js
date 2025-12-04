@@ -320,13 +320,30 @@ export const getPropuestasAsignadasAlProfesor = async (profesor_rut) => {
 
 // Métodos para verificar permisos
 export const verificarPermisosVisualizacion = async (propuesta, userRut, userRole) => {
+  console.log('🔍 verificarPermisosVisualizacion - userRole:', userRole, 'tipo:', typeof userRole);
+  console.log('🔍 verificarPermisosVisualizacion - propuesta.estudiante_rut:', propuesta.estudiante_rut);
+  console.log('🔍 verificarPermisosVisualizacion - userRut:', userRut);
+  
+  // Los super administradores pueden ver absolutamente todo (verificar PRIMERO)
+  if (userRole === 4 || userRole === '4') { // SuperAdmin
+    console.log('✅ SuperAdmin detectado - acceso completo');
+    return true;
+  }
+  
+  // Los administradores pueden ver todas las propuestas
+  if (userRole === 3 || userRole === '3') { // Admin
+    console.log('✅ Admin detectado - acceso completo');
+    return true;
+  }
+  
   // El creador siempre puede ver su propuesta
   if (propuesta.estudiante_rut === userRut) {
+    console.log('✅ Creador de la propuesta - acceso permitido');
     return true;
   }
   
   // Verificar si el usuario es parte del equipo (estudiante adicional)
-  if (userRole === 1) { // Estudiante
+  if (userRole === 1 || userRole === '1') { // Estudiante
     const [rows] = await pool.execute(
       'SELECT * FROM estudiantes_propuestas WHERE propuesta_id = ? AND estudiante_rut = ?',
       [propuesta.id, userRut]
@@ -337,21 +354,20 @@ export const verificarPermisosVisualizacion = async (propuesta, userRut, userRol
   }
   
   // Los profesores pueden ver todas las propuestas sin asignar
-  if (userRole === 2) { // Profesor
+  if (userRole === 2 || userRole === '2') { // Profesor
     // Si la propuesta no tiene profesor asignado, cualquier profesor puede verla
     if (!propuesta.profesor_rut || propuesta.profesor_rut === null) {
+      console.log('✅ Profesor - propuesta sin asignar - acceso permitido');
       return true;
     }
     // Si ya tiene profesor asignado, solo ese profesor puede verla
-    return propuesta.profesor_rut === userRut;
-  }
-  
-  // Los administradores pueden ver todas las propuestas
-  if (userRole === 3) { // Admin
-    return true;
+    const puedeVer = propuesta.profesor_rut === userRut;
+    console.log(`${puedeVer ? '✅' : '❌'} Profesor - propuesta asignada - acceso ${puedeVer ? 'permitido' : 'denegado'}`);
+    return puedeVer;
   }
   
   // Otros estudiantes no pueden ver propuestas de otros estudiantes
+  console.log('❌ Sin permisos de visualización');
   return false;
 };
 

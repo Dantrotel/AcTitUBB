@@ -68,6 +68,17 @@
             </div>
 
             <div class="form-group">
+              <label for="hora_limite">Hora Límite *</label>
+              <input 
+                type="time" 
+                id="hora_limite" 
+                name="hora_limite"
+                [(ngModel)]="nuevaFecha.hora_limite" 
+                required>
+              <small>Hora en que se deshabilitará la entrega automáticamente</small>
+            </div>
+
+            <div class="form-group">
               <label for="tipo_fecha">Tipo de Fecha *</label>
               <select 
                 id="tipo_fecha" 
@@ -285,7 +296,7 @@
             </div>
             <div class="fecha-info">
               <h3>{{fecha.titulo}}</h3>
-              <p class="fecha-date">{{fecha.fecha | date:'fullDate':'es-ES'}}</p>
+              <p class="fecha-date">{{formatearFechaCompleta(fecha.fecha)}}</p>
             </div>
             <div class="fecha-actions">
               <button class="btn-edit" (click)="editarFecha(fecha)" title="Editar">
@@ -419,7 +430,7 @@
                 [class]="'estado-' + fecha.estado">
               <td class="fecha-col">
                 <i class="fas fa-calendar-day"></i>
-                {{ fecha.fecha_limite | date:'dd/MM/yyyy' }}
+                {{ formatearFechaCorta(fecha.fecha_limite) }}
               </td>
               <td>
                 <span class="tipo-badge" [class]="'tipo-' + fecha.tipo_fecha">

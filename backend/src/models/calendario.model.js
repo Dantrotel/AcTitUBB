@@ -8,21 +8,22 @@ import { pool } from '../db/connectionDB.js';
 // ===== CREAR FECHAS =====
 
 // Crear una fecha global (solo admin)
-export const crearFechaGlobal = async ({ titulo, descripcion, fecha, tipo_fecha, es_global, creado_por_rut }) => {
+export const crearFechaGlobal = async ({ titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, creado_por_rut }) => {
     console.log('📋 Creando fecha global en tabla unificada...');
     
     // Determinar valores por defecto según el tipo de fecha
     const habilitada = tipo_fecha === 'entrega_propuesta' ? true : true;
     const permite_extension = tipo_fecha === 'entrega_propuesta' ? true : true;
     const requiere_entrega = ['entrega', 'entrega_propuesta', 'entrega_avance', 'entrega_final'].includes(tipo_fecha);
+    const horaLimite = hora_limite || '23:59:59';
     
     const [result] = await pool.execute(
         `INSERT INTO fechas (
-            titulo, descripcion, fecha, tipo_fecha, es_global, 
+            titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, 
             creado_por_rut, habilitada, permite_extension, requiere_entrega,
             activa
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
-        [titulo, descripcion, fecha, tipo_fecha, es_global || false, creado_por_rut, habilitada, permite_extension, requiere_entrega]
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+        [titulo, descripcion, fecha, horaLimite, tipo_fecha, es_global || false, creado_por_rut, habilitada, permite_extension, requiere_entrega]
     );
     
     console.log('✅ Fecha creada en tabla unificada, ID:', result.insertId);
@@ -47,7 +48,18 @@ export const crearFechaProfesor = async ({ titulo, descripcion, fecha, tipo_fech
 // Obtener todas las fechas globales
 export const obtenerFechasGlobales = async () => {
     const [rows] = await pool.execute(`
-        SELECT f.*, 
+        SELECT f.id,
+               f.titulo,
+               f.descripcion,
+               DATE_FORMAT(f.fecha, '%Y-%m-%d') as fecha,
+               f.hora_limite,
+               f.tipo_fecha,
+               f.es_global,
+               f.creado_por_rut,
+               f.habilitada,
+               f.permite_extension,
+               f.requiere_entrega,
+               f.activa,
                u.nombre AS nombre_creador
         FROM fechas f
         LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
@@ -61,7 +73,17 @@ export const obtenerFechasGlobales = async () => {
 // Obtener fechas próximas (globales visibles para todos)
 export const obtenerFechasProximas = async (limite = 10) => {
     const [rows] = await pool.execute(`
-        SELECT f.*, 
+        SELECT f.id,
+               f.titulo,
+               f.descripcion,
+               DATE_FORMAT(f.fecha, '%Y-%m-%d') as fecha,
+               f.tipo_fecha,
+               f.es_global,
+               f.creado_por_rut,
+               f.habilitada,
+               f.permite_extension,
+               f.requiere_entrega,
+               f.activa,
                u.nombre AS nombre_creador,
                DATEDIFF(f.fecha, CURDATE()) AS dias_restantes
         FROM fechas f

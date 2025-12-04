@@ -120,8 +120,8 @@ export const obtenerSolicitudesPorProyecto = async (req, res) => {
             return res.status(400).json({ message: 'ID de proyecto requerido' });
         }
 
-        // Verificar permisos (estudiante del proyecto, profesor asignado o admin)
-        if (rol_id !== '3') {
+        // Verificar permisos (estudiante del proyecto, profesor asignado o admin/superadmin)
+        if (rol_id !== '3' && rol_id !== '4') {
             // TODO: Verificar que sea estudiante del proyecto o profesor asignado
             // Por ahora permitimos acceso a todos
         }
@@ -145,8 +145,8 @@ export const obtenerSolicitudesPendientes = async (req, res) => {
     try {
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede ver todas las solicitudes pendientes
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden ver todas las solicitudes pendientes
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden acceder a este recurso' });
         }
 
@@ -171,8 +171,8 @@ export const marcarEnRevision = async (req, res) => {
         const revisado_por = req.user?.rut || req.rut;
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede marcar en revisión
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden marcar en revisión
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden revisar solicitudes' });
         }
 
@@ -203,8 +203,8 @@ export const aprobarSolicitud = async (req, res) => {
         const rol_id = String(req.user?.role_id || req.rol_id);
 
         // Solo admin puede aprobar
-        if (rol_id !== '3') {
-            return res.status(403).json({ message: 'Solo administradores pueden aprobar solicitudes' });
+        if (rol_id !== '3' && rol_id !== '4') {
+            return res.status(403).json({ message: 'Solo administradores pueden aprobar solicitudes de extensión' });
         }
 
         if (!solicitudId) {
@@ -246,8 +246,8 @@ export const rechazarSolicitud = async (req, res) => {
         const rechazado_por = req.user?.rut || req.rut;
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede rechazar
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden rechazar
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden rechazar solicitudes' });
         }
 
@@ -318,8 +318,8 @@ export const obtenerEstadisticas = async (req, res) => {
     try {
         const rol_id = String(req.user?.role_id || req.rol_id);
 
-        // Solo admin puede ver estadísticas
-        if (rol_id !== '3') {
+        // Solo admin y superadmin pueden ver estadísticas
+        if (rol_id !== '3' && rol_id !== '4') {
             return res.status(403).json({ message: 'Solo administradores pueden acceder a estadísticas' });
         }
 

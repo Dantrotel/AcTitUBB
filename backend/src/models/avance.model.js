@@ -7,6 +7,16 @@ export const crearAvance = async ({ proyecto_id, titulo, descripcion, archivo })
          VALUES (?, ?, ?, ?)`,
         [proyecto_id, titulo, descripcion, archivo]
     );
+    
+    // Actualizar última actividad del proyecto (control de abandono)
+    await pool.execute(
+        `UPDATE proyectos 
+         SET ultima_actividad_fecha = CURDATE(), 
+             alerta_inactividad_enviada = FALSE 
+         WHERE id = ?`,
+        [proyecto_id]
+    );
+    
     return result.insertId;
 };
 
@@ -215,6 +225,24 @@ export const entregarHito = async (hito_id, { archivo_entrega, nombre_archivo_or
              WHERE id = ?`,
             [archivo_entrega, nombre_archivo_original, comentarios_estudiante, cumplido, diasRetraso, hito_id]
         );
+
+        // Actualizar última actividad del proyecto (control de abandono)
+        const [cronograma] = await pool.execute(
+            `SELECT proyecto_id FROM cronogramas_proyecto WHERE id = (
+                SELECT cronograma_id FROM hitos_cronograma WHERE id = ?
+            )`,
+            [hito_id]
+        );
+        
+        if (cronograma[0]) {
+            await pool.execute(
+                `UPDATE proyectos 
+                 SET ultima_actividad_fecha = CURDATE(), 
+                     alerta_inactividad_enviada = FALSE 
+                 WHERE id = ?`,
+                [cronograma[0].proyecto_id]
+            );
+        }
 
         return { 
             success: result.affectedRows > 0, 

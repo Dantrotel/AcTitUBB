@@ -564,12 +564,13 @@ export const obtenerEstadoPeriodoPropuestas = async () => {
                 id,
                 titulo,
                 descripcion,
-                fecha as fecha_limite,
+                DATE_FORMAT(fecha, '%Y-%m-%d') as fecha_limite,
+                hora_limite,
                 habilitada,
                 permite_extension,
                 DATEDIFF(fecha, CURDATE()) as dias_restantes,
                 CASE 
-                    WHEN fecha < CURDATE() THEN 'vencido'
+                    WHEN CONCAT(fecha, ' ', hora_limite) < NOW() THEN 'vencido'
                     WHEN fecha = CURDATE() THEN 'ultimo_dia'
                     WHEN DATEDIFF(fecha, CURDATE()) <= 3 THEN 'proximo_a_vencer'
                     ELSE 'activo'

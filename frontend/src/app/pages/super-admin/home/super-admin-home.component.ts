@@ -139,10 +139,13 @@ export class SuperAdminHomeComponent implements OnInit {
       this.estadisticasCarga.set({
         profesoresConCarga: conCarga,
         profesoresSinCarga: profesores.length - conCarga,
-        promedioCargaProfesor: estadisticas.promedio_proyectos_profesor || 0,
-        maxCargaProfesor: estadisticas.max_proyectos_profesor || 0
+        promedioCargaProfesor: Number(estadisticas.promedio_proyectos_profesor || 0),
+        maxCargaProfesor: Number(estadisticas.max_proyectos_profesor || 0)
       });
       
+      this.loading.set(false);
+    }).catch(error => {
+      console.error('Error al cargar carga administrativa:', error);
       this.loading.set(false);
     });
   }

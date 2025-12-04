@@ -179,6 +179,17 @@ export const crearReunionAceptada = async (solicitud_id) => {
         solicitud.descripcion
     ]);
     
+    // Actualizar última actividad del proyecto (control de abandono)
+    if (solicitud.proyecto_id) {
+        await pool.execute(
+            `UPDATE proyectos 
+             SET ultima_actividad_fecha = CURDATE(), 
+                 alerta_inactividad_enviada = FALSE 
+             WHERE id = ?`,
+            [solicitud.proyecto_id]
+        );
+    }
+    
     return result.insertId;
 };
 

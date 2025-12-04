@@ -83,12 +83,14 @@ export const routes: Routes = [
 
   // Rutas del Super Administrador
   { path: 'super-admin', component: SuperAdminHomeComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
+  { path: 'super-admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
   { path: 'super-admin/gestion-estructura', component: GestionEstructuraComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
   { path: 'super-admin/gestionar-jefes', component: GestionarJefesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
 
   // Rutas del administrador
   { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard] },
   { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard] },
+  { path: 'admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard] },
   { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
