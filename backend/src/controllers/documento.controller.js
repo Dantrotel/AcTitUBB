@@ -6,8 +6,8 @@ import fs from 'fs';
 // Función auxiliar para verificar si el usuario tiene acceso al proyecto
 const verificarAccesoProyecto = async (proyectoId, rut, rolId) => {
   try {
-    // Admin tiene acceso a todo
-    if (rolId === '3') return true;
+    // Admin y SuperAdmin tienen acceso a todo
+    if (rolId === '3' || rolId === '4') return true;
 
     // Verificar si es estudiante del proyecto o profesor asignado
     const [rows] = await pool.execute(

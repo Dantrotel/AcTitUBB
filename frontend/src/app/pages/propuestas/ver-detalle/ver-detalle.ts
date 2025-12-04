@@ -18,6 +18,7 @@ export class VerPropuestaComponent implements OnInit {
   esProfesor = false;
   esEstudiante = false;
   esAdmin = false;
+  esSuperAdmin = false;
   userRut = '';
   userRole = '';
   private notificationService = inject(NotificationService);
@@ -50,11 +51,13 @@ export class VerPropuestaComponent implements OnInit {
         this.esEstudiante = String(this.userRole) === '1';
         this.esProfesor = String(this.userRole) === '2';
         this.esAdmin = String(this.userRole) === '3';
+        this.esSuperAdmin = String(this.userRole) === '4';
         
         console.log('🔍 Tipo de usuario:', {
           esEstudiante: this.esEstudiante,
           esProfesor: this.esProfesor,
-          esAdmin: this.esAdmin
+          esAdmin: this.esAdmin,
+          esSuperAdmin: this.esSuperAdmin
         });
       } catch (error) {
         console.error('Error al decodificar token:', error);
@@ -248,8 +251,21 @@ export class VerPropuestaComponent implements OnInit {
     return puedeEditar;
   }
 
-  // Verificar si el profesor puede dejar comentarios (solo si la propuesta está asignada a él)
+  // Verificar si el usuario puede dejar comentarios (profesor asignado, admin o superadmin)
   puedeDejarComentarios(): boolean {
+    // SuperAdmin puede revisar todas las propuestas
+    if (this.esSuperAdmin && this.propuesta) {
+      console.log('🔍 SuperAdmin puede dejar comentarios en cualquier propuesta');
+      return true;
+    }
+    
+    // Admin puede revisar propuestas de sus carreras (validado por backend)
+    if (this.esAdmin && this.propuesta) {
+      console.log('🔍 Admin puede dejar comentarios (verificación de carrera en backend)');
+      return true;
+    }
+    
+    // Profesor solo si está asignado a la propuesta
     const puedeComentar = this.esProfesor && this.propuesta && this.propuesta.profesor_rut === this.userRut;
     console.log('🔍 Puede dejar comentarios:', {
       esProfesor: this.esProfesor,
@@ -260,19 +276,26 @@ export class VerPropuestaComponent implements OnInit {
     return puedeComentar;
   }
 
-  // Verificar si el administrador puede asignar profesores
+  // Verificar si el administrador o superadmin puede asignar profesores
   puedeAsignarProfesor(): boolean {
-    return this.esAdmin && this.propuesta;
+    return (this.esAdmin || this.esSuperAdmin) && this.propuesta;
   }
 
-  // Verificar si el administrador puede eliminar propuestas
+  // Verificar si el administrador o superadmin puede eliminar propuestas
   puedeEliminarPropuesta(): boolean {
-    return this.esAdmin && this.propuesta;
+    return (this.esAdmin || this.esSuperAdmin) && this.propuesta;
   }
 
   // Método para ir a la página de revisión (dejar comentarios)
   dejarComentarios(id: number) {
-    this.router.navigate(['/profesor/propuestas/revisar', id]);
+    // Redirigir según el rol del usuario
+    if (this.esSuperAdmin) {
+      this.router.navigate(['/super-admin/propuestas/revisar', id]);
+    } else if (this.esAdmin) {
+      this.router.navigate(['/admin/propuestas/revisar', id]);
+    } else if (this.esProfesor) {
+      this.router.navigate(['/profesor/propuestas/revisar', id]);
+    }
   }
 
   // Método para asignar profesor (solo admin)

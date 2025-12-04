@@ -34,6 +34,17 @@ export class HomeAdminComponent implements OnInit {
   dashboard: any = null;
   loadingDashboard = false;
 
+  // Monitoreo regulatorio
+  proyectosRiesgo: any[] = [];
+  informantesPendientes: any[] = [];
+  alertasAbandono: any[] = [];
+  loadingRegulatorio = false;
+  
+  // Control de modales
+  mostrarModalProyectosRiesgo = false;
+  mostrarModalInformantesPendientes = false;
+  mostrarModalAlertasAbandono = false;
+
   constructor(
     private router: Router,
     private apiService: ApiService
@@ -44,6 +55,34 @@ export class HomeAdminComponent implements OnInit {
     this.cargarDashboard(); // Dashboard unificado con todas las estadísticas
     this.cargarNotificaciones();
     this.generarNotificacionesEspeciales();
+    this.cargarDatosRegulatorios();
+  }
+  
+  async cargarDatosRegulatorios() {
+    this.loadingRegulatorio = true;
+    try {
+      // Cargar proyectos en riesgo
+      const riesgoResponse = await this.apiService.getProyectosRiesgo();
+      if (riesgoResponse && riesgoResponse.success) {
+        this.proyectosRiesgo = riesgoResponse.proyectos || [];
+      }
+
+      // Cargar informantes pendientes
+      const informantesResponse = await this.apiService.getInformantesPendientes();
+      if (informantesResponse && informantesResponse.success) {
+        this.informantesPendientes = informantesResponse.entregas || [];
+      }
+
+      // Cargar alertas de abandono
+      const alertasResponse = await this.apiService.getAlertasAbandono();
+      if (alertasResponse && alertasResponse.success) {
+        this.alertasAbandono = alertasResponse.alertas || [];
+      }
+    } catch (error) {
+      console.error('Error al cargar datos regulatorios:', error);
+    } finally {
+      this.loadingRegulatorio = false;
+    }
   }
   
   async cargarDashboard() {
@@ -279,5 +318,59 @@ export class HomeAdminComponent implements OnInit {
     if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
     return `Hace ${Math.floor(diff / 86400)} días`;
+  }
+
+  // ===== MÉTODOS DE MONITOREO REGULATORIO =====
+
+  contarPorRiesgo(nivel: string): number {
+    return this.proyectosRiesgo.filter(p => p.nivel_riesgo === nivel).length;
+  }
+
+  contarPorPlazo(estado: string): number {
+    return this.informantesPendientes.filter(i => i.estado_plazo === estado).length;
+  }
+
+  contarPorSeveridad(severidad: string): number {
+    return this.alertasAbandono.filter(a => a.nivel_severidad === severidad).length;
+  }
+
+  verProyectosRiesgo(): void {
+    this.mostrarModalProyectosRiesgo = true;
+    console.log('📊 Mostrando modal de proyectos en riesgo:', this.proyectosRiesgo);
+  }
+  
+  cerrarModalProyectosRiesgo(): void {
+    this.mostrarModalProyectosRiesgo = false;
+  }
+
+  verInformantesPendientes(): void {
+    this.mostrarModalInformantesPendientes = true;
+    console.log('📋 Mostrando modal de informantes pendientes:', this.informantesPendientes);
+  }
+  
+  cerrarModalInformantesPendientes(): void {
+    this.mostrarModalInformantesPendientes = false;
+  }
+
+  verAlertasAbandono(): void {
+    this.mostrarModalAlertasAbandono = true;
+    console.log('📢 Mostrando modal de alertas de abandono:', this.alertasAbandono);
+  }
+  
+  cerrarModalAlertasAbandono(): void {
+    this.mostrarModalAlertasAbandono = false;
+  }
+
+  // TrackBy functions para evitar re-renderizado innecesario
+  trackByProyectoId(index: number, item: any): any {
+    return item.proyecto_id || index;
+  }
+
+  trackByHitoId(index: number, item: any): any {
+    return item.hito_id || item.id || index;
+  }
+
+  trackByAlertaId(index: number, item: any): any {
+    return item.id || index;
   }
 } 

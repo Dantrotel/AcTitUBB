@@ -20,6 +20,9 @@ export class RevisarPropuestaComponent implements OnInit {
   estados = ['pendiente', 'correcciones', 'aprobada', 'rechazada'];
   error = '';
   esProfesor = false;
+  esAdmin = false;
+  esSuperAdmin = false;
+  puedeRevisar = false;
 
   private notificationService = inject(NotificationService);
 
@@ -31,9 +34,15 @@ export class RevisarPropuestaComponent implements OnInit {
     if (userDataStr) {
       const userData = JSON.parse(userDataStr);
       this.esProfesor = userData && userData.rol_id === 2;
+      this.esAdmin = userData && userData.rol_id === 3;
+      this.esSuperAdmin = userData && userData.rol_id === 4;
     }
-    if (!this.esProfesor) {
-      this.error = 'Acceso denegado: solo profesores pueden revisar propuestas.';
+    
+    // Permitir acceso a profesores, admins y superadmins
+    this.puedeRevisar = this.esProfesor || this.esAdmin || this.esSuperAdmin;
+    
+    if (!this.puedeRevisar) {
+      this.error = 'Acceso denegado: solo profesores, administradores y super administradores pueden revisar propuestas.';
       return;
     }
 
@@ -71,7 +80,15 @@ export class RevisarPropuestaComponent implements OnInit {
         } else {
           this.notificationService.success('Revisión guardada correctamente');
         }
-        this.router.navigate(['/profesor/propuestas/asignadas']);
+        
+        // Redirigir según el rol del usuario
+        if (this.esSuperAdmin) {
+          this.router.navigate(['/super-admin']);
+        } else if (this.esAdmin) {
+          this.router.navigate(['/admin/propuestas']);
+        } else if (this.esProfesor) {
+          this.router.navigate(['/profesor/propuestas/asignadas']);
+        }
       },
       error: () => this.notificationService.error('No se pudo guardar la revisión')
     });

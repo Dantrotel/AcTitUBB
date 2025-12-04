@@ -25,7 +25,7 @@ export const crearFechaGlobalController = async (req, res) => {
         console.log('  - Body:', req.body);
         console.log('  - Usuario:', req.user);
         
-        const { titulo, descripcion, fecha, tipo_fecha, es_global } = req.body;
+        const { titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global } = req.body;
         const creado_por_rut = req.user?.rut;
 
         // Validar campos requeridos
@@ -75,6 +75,7 @@ export const crearFechaGlobalController = async (req, res) => {
             titulo,
             descripcion,
             fecha,
+            hora_limite,
             tipo_fecha,
             es_global: es_global || false,
             creado_por_rut

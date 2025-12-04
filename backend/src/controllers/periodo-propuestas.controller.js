@@ -30,8 +30,8 @@ export const habilitarPeriodo = async (req, res) => {
             });
         }
 
-        // Verificar que el usuario sea admin
-        if (req.rol_id !== 3) {
+        // Verificar que el usuario sea admin o superadmin
+        if (req.rol_id !== 3 && req.rol_id !== 4) {
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden habilitar períodos de propuestas' 
             });
@@ -66,8 +66,8 @@ export const deshabilitarPeriodo = async (req, res) => {
             });
         }
 
-        // Verificar que el usuario sea admin
-        if (req.rol_id !== 3) {
+        // Verificar que el usuario sea admin o superadmin
+        if (req.rol_id !== 3 && req.rol_id !== 4) {
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden deshabilitar períodos de propuestas' 
             });
@@ -95,8 +95,8 @@ export const deshabilitarPeriodo = async (req, res) => {
  */
 export const deshabilitarPeriodosVencidos = async (req, res) => {
     try {
-        // Verificar que el usuario sea admin
-        if (req.rol_id !== 3) {
+        // Verificar que el usuario sea admin o superadmin
+        if (req.rol_id !== 3 && req.rol_id !== 4) {
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden ejecutar esta acción' 
             });
