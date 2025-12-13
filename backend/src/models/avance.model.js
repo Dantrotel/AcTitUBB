@@ -376,7 +376,7 @@ export const obtenerHitosProximosVencer = async (dias_anticipacion = 3) => {
 
 // ============= FUNCIONES DE TRACKING Y ESTADÍSTICAS =============
 
-// Obtener estadísticas de cumplimiento de cronograma (CON PESOS)
+// Obtener estadísticas de cumplimiento de cronograma
 export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
     const [rows] = await pool.execute(`
         SELECT 
@@ -384,12 +384,9 @@ export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
             SUM(CASE WHEN estado IN ('entregado', 'revisado', 'aprobado') THEN 1 ELSE 0 END) as hitos_completados,
             SUM(CASE WHEN cumplido_en_fecha = TRUE THEN 1 ELSE 0 END) as hitos_a_tiempo,
             SUM(CASE WHEN estado = 'retrasado' OR dias_retraso > 0 THEN 1 ELSE 0 END) as hitos_retrasados,
-            SUM(CASE WHEN es_critico = TRUE THEN 1 ELSE 0 END) as hitos_criticos,
-            SUM(CASE WHEN es_critico = TRUE AND estado IN ('entregado', 'revisado', 'aprobado') THEN 1 ELSE 0 END) as criticos_completados,
             AVG(CASE WHEN calificacion IS NOT NULL THEN calificacion ELSE NULL END) as promedio_calificaciones,
             AVG(CASE WHEN dias_retraso IS NOT NULL THEN dias_retraso ELSE 0 END) as promedio_dias_retraso,
-            SUM(CASE WHEN estado IN ('entregado', 'revisado', 'aprobado') THEN peso_en_proyecto ELSE 0 END) as avance_ponderado,
-            SUM(peso_en_proyecto) as peso_total
+            AVG(porcentaje_avance) as avance_promedio
         FROM hitos_cronograma h
         INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
         WHERE c.proyecto_id = ? AND c.activo = TRUE
@@ -398,10 +395,13 @@ export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
     const estadisticas = rows[0];
     if (estadisticas.total_hitos > 0) {
         estadisticas.porcentaje_cumplimiento = (estadisticas.hitos_completados / estadisticas.total_hitos) * 100;
-        estadisticas.porcentaje_puntualidad = (estadisticas.hitos_a_tiempo / estadisticas.total_hitos) * 100;
-        estadisticas.porcentaje_avance_ponderado = estadisticas.peso_total > 0 
-            ? (estadisticas.avance_ponderado / estadisticas.peso_total) * 100 
+        estadisticas.porcentaje_puntualidad = estadisticas.hitos_a_tiempo > 0 
+            ? (estadisticas.hitos_a_tiempo / estadisticas.total_hitos) * 100 
             : 0;
+    } else {
+        estadisticas.porcentaje_cumplimiento = 0;
+        estadisticas.porcentaje_puntualidad = 0;
+        estadisticas.avance_promedio = 0;
     }
     
     return estadisticas;

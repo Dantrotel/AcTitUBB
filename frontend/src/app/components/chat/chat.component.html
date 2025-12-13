@@ -1,0 +1,191 @@
+<div class="chat-container">
+  <!-- Sidebar - Lista de conversaciones -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <h2>
+        <mat-icon>chat</mat-icon>
+        Mensajes
+        @if (totalNoLeidos > 0) {
+          <span class="badge-total">{{ totalNoLeidos }}</span>
+        }
+      </h2>
+      <button mat-icon-button (click)="toggleBusqueda()" matTooltip="Nueva conversación">
+        <mat-icon>add_circle</mat-icon>
+      </button>
+    </div>
+
+    <!-- Panel de búsqueda de usuarios -->
+    @if (mostrarBusqueda()) {
+      <div class="busqueda-panel">
+        <mat-form-field appearance="outline" class="busqueda-input">
+          <mat-label>Buscar usuario</mat-label>
+          <input 
+            matInput 
+            [(ngModel)]="busqueda" 
+            (ngModelChange)="buscarUsuarios()"
+            placeholder="Nombre, email o RUT"
+          />
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <div class="usuarios-encontrados">
+          @if (usuariosBuscados().length > 0) {
+            @for (usuario of usuariosBuscados(); track usuario.rut) {
+              <div class="usuario-item" (click)="iniciarConversacionCon(usuario)">
+                <div class="usuario-avatar">
+                  <mat-icon>person</mat-icon>
+                </div>
+                <div class="usuario-info">
+                  <div class="usuario-nombre">{{ usuario.nombre }}</div>
+                  <div class="usuario-detalle">{{ usuario.email }} • {{ usuario.rol }}</div>
+                </div>
+              </div>
+            }
+          } @else if (busqueda().length >= 2) {
+            <div class="no-resultados">No se encontraron usuarios</div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Lista de conversaciones -->
+    <div class="conversaciones-lista">
+      @if (cargando()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (conversaciones.length === 0) {
+        <div class="no-conversaciones">
+          <mat-icon>chat_bubble_outline</mat-icon>
+          <p>No tienes conversaciones aún</p>
+          <button mat-raised-button color="primary" (click)="toggleBusqueda()">
+            <mat-icon>add</mat-icon>
+            Iniciar conversación
+          </button>
+        </div>
+      } @else {
+        @for (conv of conversaciones; track conv.id) {
+          <div 
+            class="conversacion-item"
+            [class.activa]="conversacionSeleccionada()?.id === conv.id"
+            (click)="seleccionarConversacion(conv)"
+          >
+            <div class="conversacion-avatar">
+              <mat-icon>account_circle</mat-icon>
+            </div>
+            <div class="conversacion-info">
+              <div class="conversacion-header">
+                <span class="conversacion-nombre">{{ conv.otro_usuario_nombre }}</span>
+                @if (conv.ultimo_mensaje_fecha) {
+                  <span class="conversacion-fecha">{{ formatearFecha(conv.ultimo_mensaje_fecha) }}</span>
+                }
+              </div>
+              @if (conv.ultimo_mensaje) {
+                <div class="conversacion-preview">
+                  @if (conv.ultimo_mensaje_remitente === rutUsuarioActual) {
+                    <span class="tu-mensaje">Tú: </span>
+                  }
+                  {{ conv.ultimo_mensaje }}
+                </div>
+              }
+            </div>
+            @if (conv.mensajes_no_leidos > 0) {
+              <div class="badge-no-leidos">{{ conv.mensajes_no_leidos }}</div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Estado de conexión -->
+    <div class="conexion-status" [class.conectado]="conectado">
+      <mat-icon>{{ conectado ? 'wifi' : 'wifi_off' }}</mat-icon>
+      {{ conectado ? 'Conectado' : 'Desconectado' }}
+    </div>
+  </div>
+
+  <!-- Panel principal - Mensajes -->
+  <div class="chat-main">
+    @if (!conversacionSeleccionada()) {
+      <div class="no-seleccion">
+        <mat-icon>forum</mat-icon>
+        <h3>Selecciona una conversación</h3>
+        <p>Elige una conversación del panel izquierdo o inicia una nueva</p>
+      </div>
+    } @else {
+      <!-- Header de conversación -->
+      <div class="chat-header">
+        <div class="header-info">
+          <mat-icon>account_circle</mat-icon>
+          <div>
+            <h3>{{ conversacionSeleccionada()?.otro_usuario_nombre }}</h3>
+            <span class="header-email">{{ conversacionSeleccionada()?.otro_usuario_email }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de mensajes -->
+      <div class="mensajes-container" #mensajesContainer>
+        @if (mensajes.length === 0) {
+          <div class="no-mensajes">
+            <mat-icon>chat_bubble_outline</mat-icon>
+            <p>No hay mensajes aún. ¡Envía el primero!</p>
+          </div>
+        } @else {
+          <div class="mensajes-lista">
+            @for (mensaje of mensajes; track mensaje.id) {
+              <div 
+                class="mensaje"
+                [class.mensaje-propio]="esMiMensaje(mensaje)"
+                [class.mensaje-ajeno]="!esMiMensaje(mensaje)"
+              >
+                <div class="mensaje-contenido">
+                  <div class="mensaje-texto">{{ mensaje.contenido }}</div>
+                  <div class="mensaje-meta">
+                    <span class="mensaje-hora">{{ formatearFecha(mensaje.created_at) }}</span>
+                    @if (esMiMensaje(mensaje) && mensaje.leido) {
+                      <mat-icon class="mensaje-leido">done_all</mat-icon>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Indicador de "escribiendo..." -->
+        @if (usuarioEscribiendo) {
+          <div class="escribiendo-indicador">
+            <span>escribiendo</span>
+            <span class="dots">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Input de mensaje -->
+      <div class="mensaje-input-container">
+        <mat-form-field appearance="outline" class="mensaje-input">
+          <textarea 
+            matInput 
+            [(ngModel)]="nuevoMensaje"
+            (ngModelChange)="onInputChange()"
+            (keydown.enter)="onEnterPress($any($event))"
+            placeholder="Escribe un mensaje..."
+            rows="1"
+          ></textarea>
+        </mat-form-field>
+        <button 
+          mat-fab 
+          color="primary" 
+          (click)="enviarMensaje()"
+          [disabled]="!nuevoMensaje().trim()"
+          class="btn-enviar"
+        >
+          <mat-icon>send</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+</div>

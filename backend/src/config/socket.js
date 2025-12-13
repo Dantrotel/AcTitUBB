@@ -109,6 +109,128 @@ export const initializeSocketIO = (httpServer, allowedOrigins) => {
       // Aquí podrías actualizar en BD si es necesario
     });
 
+    // ===== EVENTOS DE CHAT =====
+    
+    // Evento: Usuario se une a sala de conversación
+    socket.on('chat:join-conversacion', (conversacionId) => {
+      socket.join(`conversacion_${conversacionId}`);
+      logger.debug('Usuario unido a sala de conversación', {
+        rut,
+        conversacionId,
+        socketId: socket.id
+      });
+      
+      socket.emit('chat:joined-conversacion', { conversacionId });
+    });
+
+    // Evento: Usuario sale de sala de conversación
+    socket.on('chat:leave-conversacion', (conversacionId) => {
+      socket.leave(`conversacion_${conversacionId}`);
+      logger.debug('Usuario salió de sala de conversación', {
+        rut,
+        conversacionId
+      });
+    });
+
+    // Evento: Usuario envía mensaje
+    socket.on('chat:enviar-mensaje', async (data) => {
+      try {
+        const { conversacionId, contenido } = data;
+        
+        if (!contenido || contenido.trim() === '') {
+          socket.emit('chat:error', { message: 'El mensaje no puede estar vacío' });
+          return;
+        }
+
+        // Importar el modelo de chat dinámicamente para evitar dependencias circulares
+        const chatModel = (await import('../models/chat.model.js')).default;
+        
+        // Verificar acceso
+        const tieneAcceso = await chatModel.verificarAccesoConversacion(conversacionId, rut);
+        if (!tieneAcceso) {
+          socket.emit('chat:error', { message: 'No tienes acceso a esta conversación' });
+          return;
+        }
+        
+        // Guardar mensaje en BD
+        const mensaje = await chatModel.enviarMensaje(conversacionId, rut, contenido.trim());
+        
+        // Emitir mensaje a la sala de conversación
+        io.to(`conversacion_${conversacionId}`).emit('chat:nuevo-mensaje', {
+          conversacionId,
+          mensaje
+        });
+        
+        // Obtener el otro usuario para notificarle directamente
+        const [conversaciones] = await chatModel.obtenerConversacionesUsuario(rut);
+        const conversacion = conversaciones.find(c => c.id === parseInt(conversacionId));
+        
+        if (conversacion) {
+          const destinatario_rut = conversacion.otro_usuario_rut;
+          
+          // Notificar al destinatario si no está en la sala
+          io.to(`user_${destinatario_rut}`).emit('chat:notificacion-nuevo-mensaje', {
+            conversacionId,
+            remitente: {
+              rut: rut,
+              nombre: mensaje.remitente_nombre
+            },
+            preview: contenido.substring(0, 100),
+            timestamp: mensaje.created_at
+          });
+        }
+        
+        logger.debug('Mensaje de chat enviado', {
+          rut,
+          conversacionId,
+          mensajeId: mensaje.id
+        });
+        
+      } catch (error) {
+        logger.error('Error enviando mensaje de chat via socket', {
+          error: error.message,
+          rut,
+          stack: error.stack
+        });
+        socket.emit('chat:error', { message: 'Error al enviar mensaje' });
+      }
+    });
+
+    // Evento: Usuario está escribiendo
+    socket.on('chat:escribiendo', (data) => {
+      const { conversacionId, escribiendo } = data;
+      
+      // Emitir a la sala excepto al remitente
+      socket.to(`conversacion_${conversacionId}`).emit('chat:usuario-escribiendo', {
+        conversacionId,
+        usuario: rut,
+        escribiendo
+      });
+    });
+
+    // Evento: Usuario marca mensajes como leídos
+    socket.on('chat:marcar-leidos', async (data) => {
+      try {
+        const { conversacionId } = data;
+        
+        const chatModel = (await import('../models/chat.model.js')).default;
+        
+        await chatModel.marcarComoLeidos(conversacionId, rut);
+        
+        // Notificar a la sala que los mensajes fueron leídos
+        socket.to(`conversacion_${conversacionId}`).emit('chat:mensajes-leidos', {
+          conversacionId,
+          leidoPor: rut
+        });
+        
+      } catch (error) {
+        logger.error('Error marcando mensajes como leídos via socket', {
+          error: error.message,
+          rut
+        });
+      }
+    });
+
     // Evento: Desconexión
     socket.on('disconnect', (reason) => {
       logger.info('Usuario desconectado de WebSocket', {
