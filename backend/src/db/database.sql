@@ -1283,5 +1283,57 @@ INSERT IGNORE INTO configuracion_matching (clave, valor, descripcion, tipo) VALU
 ('dias_habiles_informante', '15', 'Días hábiles que tiene el profesor Informante para evaluar informe final', 'entero'),
 ('notificar_informante_auto', 'true', 'Notificar automáticamente al informante cuando se entrega el informe final', 'booleano');
 
+-- ===== SISTEMA DE CHAT INDIVIDUAL =====
+
+-- Tabla de Conversaciones entre dos usuarios
+CREATE TABLE IF NOT EXISTS conversaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario1_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    usuario2_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    ultimo_mensaje_id INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario1_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (usuario2_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    -- Asegurar que no haya conversaciones duplicadas entre los mismos usuarios
+    UNIQUE KEY unique_conversation (LEAST(usuario1_rut, usuario2_rut), GREATEST(usuario1_rut, usuario2_rut)),
+    INDEX idx_usuario1 (usuario1_rut),
+    INDEX idx_usuario2 (usuario2_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Mensajes
+CREATE TABLE IF NOT EXISTS mensajes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversacion_id INT NOT NULL,
+    remitente_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    contenido TEXT NOT NULL,
+    leido BOOLEAN DEFAULT FALSE,
+    fecha_lectura TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (remitente_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    INDEX idx_conversacion (conversacion_id),
+    INDEX idx_remitente (remitente_rut),
+    INDEX idx_created_at (created_at),
+    INDEX idx_leido (leido)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Agregar foreign key para ultimo_mensaje_id en conversaciones
+ALTER TABLE conversaciones 
+ADD CONSTRAINT fk_ultimo_mensaje 
+FOREIGN KEY (ultimo_mensaje_id) REFERENCES mensajes(id) ON DELETE SET NULL;
+
+-- Tabla de notificaciones de mensajes no leídos
+CREATE TABLE IF NOT EXISTS mensajes_no_leidos (
+    usuario_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    conversacion_id INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 0,
+    ultimo_mensaje_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (usuario_rut, conversacion_id),
+    FOREIGN KEY (usuario_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+    INDEX idx_usuario_no_leidos (usuario_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===== BASE DE DATOS CREADA EXITOSAMENTE =====
 SELECT 'Base de datos AcTitUBB creada exitosamente con estructura academica completa' as status;

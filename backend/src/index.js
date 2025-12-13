@@ -149,8 +149,9 @@ app.use('/api/v1/periodo-propuestas', periodoPropuestasRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/estructura', estructuraRouter);
 
-
-
+// Chat
+import chatRouter from './routes/chat.route.js';
+app.use('/api/v1/chat', chatRouter);
 
 // Sprint 3: Endpoint de estadísticas de caché (solo para admins)
 app.get('/api/v1/admin/cache-stats', (req, res) => {
