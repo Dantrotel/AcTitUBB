@@ -72,8 +72,7 @@ export const obtenerDashboardEstudiante = async (estudiante_rut) => {
                 prop.titulo,
                 prop.estado_id,
                 ep.nombre as estado,
-                prop.fecha_envio,
-                prop.comentarios_profesor
+                prop.fecha_envio
             FROM propuestas prop
             INNER JOIN estudiantes_propuestas est_prop ON prop.id = est_prop.propuesta_id
             LEFT JOIN estados_propuestas ep ON prop.estado_id = ep.id

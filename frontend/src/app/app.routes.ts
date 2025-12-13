@@ -47,6 +47,9 @@ import { ReunionesProfesorComponent } from './pages/profesor/reuniones/reuniones
 // Documentos Component
 import { DocumentosProyectoComponent } from './components/documentos-proyecto/documentos-proyecto.component';
 
+// Chat Component
+import { ChatComponent } from './components/chat/chat.component';
+
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
@@ -236,6 +239,12 @@ export const routes: Routes = [
       {
         path: 'solicitar-extension/:proyectoId',
         component: SolicitarExtensionComponent,
+        canActivate: [AuthGuard]
+      },
+      // Ruta para chat
+      {
+        path: 'chat',
+        component: ChatComponent,
         canActivate: [AuthGuard]
       }
     ],
