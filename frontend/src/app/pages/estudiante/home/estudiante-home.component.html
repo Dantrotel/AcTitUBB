@@ -113,9 +113,6 @@
             <div class="proyecto-card" [class.urgente]="proyecto.dias_restantes <= 7">
               <div class="proyecto-header">
                 <h3>{{ proyecto.titulo }}</h3>
-                <span class="estado-badge" [class]="'estado-' + proyecto.estado_detallado">
-                  {{ proyecto.estado }}
-                </span>
               </div>
               <div class="proyecto-progress">
                 <div class="progress-info">
@@ -414,14 +411,27 @@
   </div>
 
   <!-- Información del profesor asignado -->
-  <div class="profesor-info" *ngIf="ultimaPropuesta">
+  <div class="profesor-info" *ngIf="proyectoActivo || ultimaPropuesta">
     <div class="profesor-card">
       <div class="card-header">
         <i class="fas fa-chalkboard-teacher"></i>
         <h3>Profesor Asignado</h3>
       </div>
       <div class="card-content">
-        <div class="profesor-details" *ngIf="ultimaPropuesta.nombre_profesor">
+        <!-- Mostrar profesor del proyecto si existe -->
+        <div class="profesor-details" *ngIf="proyectoActivo?.profesor_guia_nombre">
+          <div class="profesor-avatar">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <div class="profesor-info-text">
+            <h4>{{ proyectoActivo.profesor_guia_nombre }}</h4>
+            <p>{{ proyectoActivo.profesor_guia_email || 'Email no disponible' }}</p>
+            <span class="rut-badge">{{ proyectoActivo.profesor_guia_rut }}</span>
+            <span class="rol-badge">Profesor Guía</span>
+          </div>
+        </div>
+        <!-- Fallback: Mostrar profesor de la propuesta si no hay proyecto -->
+        <div class="profesor-details" *ngIf="!proyectoActivo?.profesor_guia_nombre && ultimaPropuesta?.nombre_profesor">
           <div class="profesor-avatar">
             <i class="fas fa-user-tie"></i>
           </div>
@@ -429,9 +439,11 @@
             <h4>{{ ultimaPropuesta.nombre_profesor }}</h4>
             <p>{{ ultimaPropuesta.profesor_email || 'Email no disponible' }}</p>
             <span class="rut-badge">{{ ultimaPropuesta.profesor_rut }}</span>
+            <span class="rol-badge">Revisor</span>
           </div>
         </div>
-        <div class="no-profesor" *ngIf="!ultimaPropuesta.nombre_profesor">
+        <!-- Sin profesor asignado -->
+        <div class="no-profesor" *ngIf="!proyectoActivo?.profesor_guia_nombre && !ultimaPropuesta?.nombre_profesor">
           <div class="no-profesor-icon">
             <i class="fas fa-user-clock"></i>
           </div>
@@ -449,6 +461,14 @@
     *ngIf="proyectoActivo" 
     [proyectoId]="proyectoActivo.id">
   </app-fechas-limite-proyecto>
+
+  <!-- Botón para solicitar extensión de plazo -->
+  <div class="extension-section" *ngIf="proyectoActivo">
+    <button class="btn-extension" (click)="solicitarExtension()">
+      <i class="fas fa-clock"></i>
+      Solicitar Extensión de Plazo
+    </button>
+  </div>
 
   <!-- Sección de estadísticas rápidas -->
   <div class="stats-section">

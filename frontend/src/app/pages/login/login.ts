@@ -37,19 +37,15 @@ login() {
   }
   
 
-  console.log('Payload enviado al backend:', payload);
 
   this.apiService.login(payload).subscribe(
     (res: any) => {
-      console.log('Login exitoso:', res);
       const token = res.token;
       if (!token) {
-        console.error('No se recibió un token de autenticación');
         return;
       }
 
       const payload = JSON.parse(atob(token.split('.')[1]));
-      console.log('Payload decodificado:', payload);
       // Guardar el token y refresh token en localStorage
       localStorage.setItem('token', token);
       if (res.refreshToken) {
@@ -59,7 +55,6 @@ login() {
 
       // ✅ Verificar si debe cambiar contraseña
       if (res.debe_cambiar_password) {
-        console.log('⚠️  Usuario debe cambiar contraseña temporal');
         localStorage.setItem('debe_cambiar_password', 'true');
         this.router.navigate(['/cambiar-password-obligatorio']);
         return;
@@ -78,14 +73,12 @@ login() {
       if (rutasPorRol[rolId.toString()]) {
         this.router.navigate([rutasPorRol[rolId.toString()]]);
       } else {
-        console.error(`Rol ID ${rolId} no está configurado para redirección`);
         // Redirigir a una página por defecto o mostrar error
         this.router.navigate(['/']);
       }
   
     },
     (err) => {
-      console.error('Error al iniciar sesión:', err);
     }
   );
 

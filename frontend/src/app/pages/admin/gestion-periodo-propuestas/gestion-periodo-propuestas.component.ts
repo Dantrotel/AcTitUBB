@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 interface EstadoPeriodo {
   existe: boolean;
@@ -45,7 +46,8 @@ export class GestionPeriodoPropuestasComponent implements OnInit {
 
   constructor(
     private api: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -115,15 +117,19 @@ export class GestionPeriodoPropuestasComponent implements OnInit {
     });
   }
 
-  habilitarPeriodo() {
+  async habilitarPeriodo() {
     if (!this.estadoPeriodo?.id) {
       this.error = 'No hay período configurado para habilitar';
       return;
     }
 
-    if (!confirm('¿Estás seguro de habilitar el período de propuestas? Los estudiantes podrán crear nuevas propuestas.')) {
-      return;
-    }
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de habilitar el período de propuestas? Los estudiantes podrán crear nuevas propuestas.',
+      'Habilitar Período',
+      'Habilitar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     this.loading = true;
     this.error = '';
@@ -146,15 +152,19 @@ export class GestionPeriodoPropuestasComponent implements OnInit {
     });
   }
 
-  deshabilitarPeriodo() {
+  async deshabilitarPeriodo() {
     if (!this.estadoPeriodo?.id) {
       this.error = 'No hay período configurado para deshabilitar';
       return;
     }
 
-    if (!confirm('¿Estás seguro de deshabilitar el período de propuestas? Los estudiantes NO podrán crear nuevas propuestas.')) {
-      return;
-    }
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de deshabilitar el período de propuestas? Los estudiantes NO podrán crear nuevas propuestas.',
+      'Deshabilitar Período',
+      'Deshabilitar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     this.loading = true;
     this.error = '';
@@ -177,10 +187,14 @@ export class GestionPeriodoPropuestasComponent implements OnInit {
     });
   }
 
-  deshabilitarVencidos() {
-    if (!confirm('¿Deseas deshabilitar automáticamente todos los períodos vencidos?')) {
-      return;
-    }
+  async deshabilitarVencidos() {
+    const confirmed = await this.notificationService.confirm(
+      '¿Deseas deshabilitar automáticamente todos los períodos vencidos?',
+      'Deshabilitar Vencidos',
+      'Deshabilitar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     this.loading = true;
     this.error = '';
@@ -250,7 +264,7 @@ export class GestionPeriodoPropuestasComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/admin']);
+    window.history.back();
   }
 
   irACalendario() {

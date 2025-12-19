@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
 import { ActivatedRoute } from '@angular/router';
+import { NotificationService } from '../../services/notification.service';
 
 interface Documento {
   id: number;
@@ -34,6 +35,7 @@ interface Documento {
 export class DocumentosProyectoComponent implements OnInit {
   private apiService = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private notificationService = inject(NotificationService);
 
   proyectoId: number = 0;
   documentos: Documento[] = [];
@@ -103,7 +105,6 @@ export class DocumentosProyectoComponent implements OnInit {
         this.cargando = false;
       },
       error: (error) => {
-        console.error('Error al cargar documentos:', error);
         this.cargando = false;
       }
     });
@@ -118,7 +119,7 @@ export class DocumentosProyectoComponent implements OnInit {
 
   subirDocumento(): void {
     if (!this.archivoSeleccionado || !this.tipoDocumento) {
-      alert('Selecciona un archivo y tipo de documento');
+      this.notificationService.warning('Selecciona un archivo y tipo de documento');
       return;
     }
 
@@ -137,8 +138,7 @@ export class DocumentosProyectoComponent implements OnInit {
         this.cargando = false;
       },
       error: (error) => {
-        console.error('Error al subir documento:', error);
-        alert('Error al subir el documento');
+        this.notificationService.error('Error al subir el documento');
         this.cargando = false;
       }
     });
@@ -148,8 +148,16 @@ export class DocumentosProyectoComponent implements OnInit {
     window.open(`http://localhost:3000/api/v1/documentos/${documentoId}/download`, '_blank');
   }
 
-  actualizarEstado(documentoId: number, nuevoEstado: string): void {
-    const comentario = prompt('Comentarios (opcional):');
+  async actualizarEstado(documentoId: number, nuevoEstado: string): Promise<void> {
+    const comentario = await this.notificationService.prompt(
+      'Comentarios (opcional):',
+      'Actualizar estado',
+      '',
+      'Guardar',
+      'Cancelar'
+    );
+    
+    if (comentario === null) return;
     
     this.apiService.put(`/documentos/${documentoId}/estado`, {
       estado: nuevoEstado,
@@ -159,22 +167,27 @@ export class DocumentosProyectoComponent implements OnInit {
         this.cargarDocumentos();
       },
       error: (error) => {
-        console.error('Error al actualizar estado:', error);
-        alert('Error al actualizar el estado');
+        this.notificationService.error('Error al actualizar el estado');
       }
     });
   }
 
-  eliminarDocumento(documentoId: number): void {
-    if (!confirm('¿Estás seguro de eliminar este documento?')) return;
+  async eliminarDocumento(documentoId: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de eliminar este documento?',
+      'Confirmar eliminación',
+      'Sí, eliminar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) return;
 
     this.apiService.delete(`/documentos/${documentoId}`).subscribe({
       next: () => {
         this.cargarDocumentos();
       },
       error: (error) => {
-        console.error('Error al eliminar documento:', error);
-        alert('Error al eliminar el documento');
+        this.notificationService.error('Error al eliminar el documento');
       }
     });
   }

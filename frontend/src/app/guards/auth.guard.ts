@@ -13,7 +13,6 @@ export class AuthGuard implements CanActivate {
       const currentTime = Math.floor(Date.now() / 1000);
       return payload.exp < currentTime;
     } catch (error) {
-      console.error('Error al verificar expiración del token:', error);
       return true; // Si hay error al parsear, considerar como expirado
     }
   }
@@ -32,7 +31,6 @@ export class AuthGuard implements CanActivate {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.rol_id;
     } catch (error) {
-      console.error('Error al extraer rol del token:', error);
       return null;
     }
   }
@@ -41,13 +39,11 @@ export class AuthGuard implements CanActivate {
     const token = localStorage.getItem('token');
     
     if (!token) {
-      console.warn('No hay token, redirigiendo al login');
       this.router.navigate(['/login']);
       return false;
     }
 
     if (this.isTokenExpired(token)) {
-      console.warn('Token expirado, limpiando datos y redirigiendo al login');
       this.clearAuthData();
       this.router.navigate(['/login']);
       return false;
@@ -59,13 +55,11 @@ export class AuthGuard implements CanActivate {
       const userRole = this.getUserRole();
       
       if (userRole === null) {
-        console.warn('No se pudo determinar el rol del usuario');
         this.router.navigate(['/login']);
         return false;
       }
 
       if (!requiredRoles.includes(userRole)) {
-        console.warn(`Acceso denegado. Rol requerido: ${requiredRoles}, rol actual: ${userRole}`);
         this.router.navigate(['/acceso-denegado']);
         return false;
       }

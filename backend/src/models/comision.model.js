@@ -31,7 +31,7 @@ export const obtenerComisionPorProyecto = async (proyectoId) => {
 
         return rows;
     } catch (error) {
-        console.error('Error al obtener comisión:', error);
+        
         throw error;
     }
 };
@@ -58,7 +58,7 @@ export const verificarComisionCompleta = async (proyectoId) => {
         
         return estado;
     } catch (error) {
-        console.error('Error al verificar comisión:', error);
+        
         throw error;
     }
 };
@@ -107,7 +107,7 @@ export const agregarMiembroComision = async ({ proyecto_id, profesor_rut, rol_co
 
         return result.insertId;
     } catch (error) {
-        console.error('Error al agregar miembro a comisión:', error);
+        
         throw error;
     }
 };
@@ -131,7 +131,7 @@ export const removerMiembroComision = async (comisionId, removidoPor) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        console.error('Error al remover miembro de comisión:', error);
+        
         throw error;
     }
 };
@@ -170,7 +170,7 @@ export const actualizarRolMiembro = async (comisionId, nuevoRol) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        console.error('Error al actualizar rol:', error);
+        
         throw error;
     }
 };
@@ -208,7 +208,7 @@ export const obtenerProyectosConComision = async () => {
 
         return rows;
     } catch (error) {
-        console.error('Error al obtener proyectos con comisión:', error);
+        
         throw error;
     }
 };
@@ -228,7 +228,7 @@ export const obtenerProfesoresDisponibles = async (proyectoId) => {
                 COUNT(ce.id) as total_comisiones_activas
             FROM usuarios u
             LEFT JOIN comision_evaluadora ce ON u.rut = ce.profesor_rut AND ce.activo = TRUE
-            WHERE u.rol_id = 2 -- Solo profesores
+            WHERE u.rol_id IN (2, 3) -- Profesores y administradores
             AND u.rut NOT IN (
                 SELECT profesor_rut 
                 FROM comision_evaluadora 
@@ -240,7 +240,7 @@ export const obtenerProfesoresDisponibles = async (proyectoId) => {
 
         return rows;
     } catch (error) {
-        console.error('Error al obtener profesores disponibles:', error);
+        
         throw error;
     }
 };

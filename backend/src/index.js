@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
-import router  from './routes/login.route.js';
+import router from './routes/login.route.js';
 import {initializeDatabase}  from './db/connectionDB.js';
 import routerRole from './routes/role.route.js';
 import routerProject from './routes/project.route.js';
@@ -10,6 +10,7 @@ import downloadRouter from './routes/download.route.js';
 import adminRouter from './routes/admin.route.js';
 import calendarioRouter from './routes/calendario.route.js';
 import fechasImportantesRouter from './routes/fechas-importantes.route.js';
+import profesorRouter from './routes/profesor.route.js';
 import asignacionesProfesoresRouter from './routes/asignaciones-profesores.route.js';
 import calendarioMatchingRouter from './routes/calendario-matching.route.js';
 import sistemaReservasRouter from './routes/sistema-reservas.route.js';
@@ -21,6 +22,12 @@ import fechasLimiteRouter from './routes/fechas-limite.route.js';
 import periodoPropuestasRouter from './routes/periodo-propuestas.route.js';
 import dashboardRouter from './routes/dashboard.route.js';
 import estructuraRouter from './routes/estructura-academica.route.js';
+import configuracionRouter from './routes/configuracion.route.js';
+import reportesRouter from './routes/reportes.route.js';
+import actividadRouter from './routes/actividad.route.js';
+import respaldoRouter from './routes/respaldo.route.js';
+import colaboradoresExternosRouter from './routes/colaboradores-externos.route.js';
+import versionesPlantillasRouter from './routes/versiones-plantillas.route.js';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 
@@ -29,6 +36,7 @@ import logger, { logAuth, logError, logSecurity } from './config/logger.js';
 import { initializeBlacklist } from './middlewares/blacklist.js';
 import { initializeSocketIO } from './config/socket.js';
 import cache from './config/cache.js';
+import { initializeSchedulers } from './services/scheduler.service.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -136,6 +144,7 @@ app.use('/api/v1/calendario', calendarioRouter);
 import { verifySession } from './middlewares/verifySession.js';
 import { obtenerCargaAdministrativa } from './controllers/admin.controller.js';
 app.get('/api/v1/carga-profesores', verifySession, obtenerCargaAdministrativa);
+app.use('/api/v1/profesor', profesorRouter);
 app.use('/api/v1/fechas-importantes', fechasImportantesRouter);
 app.use('/api/v1/asignaciones-profesores', asignacionesProfesoresRouter);
 app.use('/api/v1/calendario-matching', calendarioMatchingRouter);
@@ -148,6 +157,12 @@ app.use('/api/v1/fechas-limite', fechasLimiteRouter);
 app.use('/api/v1/periodo-propuestas', periodoPropuestasRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/estructura', estructuraRouter);
+app.use('/api/v1/configuracion', configuracionRouter);
+app.use('/api/v1/reportes', reportesRouter);
+app.use('/api/v1/actividad', actividadRouter);
+app.use('/api/v1/respaldo', respaldoRouter);
+app.use('/api/v1/colaboradores-externos', colaboradoresExternosRouter);
+app.use('/api/v1/versiones', versionesPlantillasRouter);
 
 // Chat
 import chatRouter from './routes/chat.route.js';
@@ -196,7 +211,7 @@ const initializeSystems = async () => {
         // 4. Iniciar servidor HTTP
         logger.info(`🔧 Iniciando servidor HTTP en puerto ${PORT}...`);
         await new Promise((resolve, reject) => {
-            httpServer.listen(PORT, (error) => {
+            httpServer.listen(PORT, async (error) => {
                 if (error) {
                     logger.error('Error al iniciar servidor HTTP', { error: error.message });
                     reject(error);
@@ -204,6 +219,19 @@ const initializeSystems = async () => {
                     logger.info(`✅ Servidor corriendo en puerto ${PORT}`);
                     logger.info(`📊 Entorno: ${process.env.NODE_ENV || 'development'}`);
                     logger.info(`🌐 CORS habilitado para: ${allowedOrigins.join(', ')}`);
+                    
+                    // Inicializar sistema de recordatorios automáticos
+                    initializeSchedulers();
+                    
+                    // Inicializar sistema de respaldos automáticos
+                    try {
+                        const { inicializarRespaldo } = await import('./services/respaldo.service.js');
+                        await inicializarRespaldo();
+                        logger.info('✅ Sistema de respaldo automático inicializado');
+                    } catch (error) {
+                        logger.warn('⚠️  No se pudo inicializar el sistema de respaldo automático', { error: error.message });
+                    }
+                    
                     resolve();
                 }
             });

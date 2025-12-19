@@ -27,7 +27,7 @@ export const verificarPermisoSubida = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error verificando permiso de subida:', error);
+        
         return res.status(500).json({
             success: false,
             mensaje: 'Error al verificar permiso de subida',
@@ -55,7 +55,7 @@ export const verificarPermisoExtension = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error verificando permiso de extensión:', error);
+        
         return res.status(500).json({
             success: false,
             mensaje: 'Error al verificar permiso de extensión',
@@ -92,7 +92,7 @@ export const obtenerEstadoFechasProyecto = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error obteniendo estado de fechas:', error);
+        
         return res.status(500).json({
             success: false,
             mensaje: 'Error al obtener estado de fechas',
@@ -125,7 +125,7 @@ export const marcarFechaCompletada = async (req, res) => {
         return res.status(200).json(resultado);
 
     } catch (error) {
-        console.error('Error marcando fecha como completada:', error);
+        
         return res.status(400).json({
             success: false,
             mensaje: error.message || 'Error al marcar fecha como completada'
@@ -156,7 +156,7 @@ export const verificarPermisoCrearPropuesta = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error verificando permiso para crear propuesta:', error);
+        
         return res.status(500).json({
             success: false,
             mensaje: 'Error al verificar permiso para crear propuesta',

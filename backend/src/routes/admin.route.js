@@ -38,7 +38,7 @@ router.get('/roles', async (req, res) => {
     const [roles] = await pool.execute('SELECT id, nombre, descripcion FROM roles ORDER BY id');
     res.json(roles);
   } catch (error) {
-    console.error('Error al obtener roles:', error);
+    
     res.status(500).json({ message: 'Error al obtener roles' });
   }
 });
@@ -55,7 +55,7 @@ router.get('/departamentos', async (req, res) => {
     `);
     res.json(departamentos);
   } catch (error) {
-    console.error('Error al obtener departamentos:', error);
+    
     res.status(500).json({ message: 'Error al obtener departamentos' });
   }
 });
@@ -71,7 +71,7 @@ router.get('/carreras', async (req, res) => {
     `);
     res.json(carreras);
   } catch (error) {
-    console.error('Error al obtener carreras:', error);
+    
     res.status(500).json({ message: 'Error al obtener carreras' });
   }
 });
@@ -95,7 +95,7 @@ router.get('/carreras/:carreraId/departamentos', async (req, res) => {
     `, [carreraId]);
     res.json(departamentos);
   } catch (error) {
-    console.error('Error al obtener departamentos de la carrera:', error);
+    
     res.status(500).json({ message: 'Error al obtener departamentos de la carrera' });
   }
 });
@@ -119,7 +119,7 @@ router.get('/departamentos/:departamentoId/carreras', async (req, res) => {
     `, [departamentoId]);
     res.json(carreras);
   } catch (error) {
-    console.error('Error al obtener carreras del departamento:', error);
+    
     res.status(500).json({ message: 'Error al obtener carreras del departamento' });
   }
 });
@@ -149,7 +149,7 @@ router.get('/departamentos-carreras', async (req, res) => {
     `);
     res.json(relaciones);
   } catch (error) {
-    console.error('Error al obtener relaciones departamentos-carreras:', error);
+    
     res.status(500).json({ message: 'Error al obtener relaciones' });
   }
 });
@@ -184,7 +184,7 @@ router.post('/departamentos-carreras', async (req, res) => {
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ message: 'Esta relación ya existe' });
     }
-    console.error('Error al crear relación departamento-carrera:', error);
+    
     res.status(500).json({ message: 'Error al crear relación' });
   }
 });
@@ -225,7 +225,7 @@ router.put('/departamentos-carreras/:id', async (req, res) => {
     
     res.json({ message: 'Relación actualizada exitosamente' });
   } catch (error) {
-    console.error('Error al actualizar relación departamento-carrera:', error);
+    
     res.status(500).json({ message: 'Error al actualizar relación' });
   }
 });
@@ -246,7 +246,7 @@ router.delete('/departamentos-carreras/:id', async (req, res) => {
     
     res.json({ message: 'Relación eliminada exitosamente' });
   } catch (error) {
-    console.error('Error al eliminar relación departamento-carrera:', error);
+    
     res.status(500).json({ message: 'Error al eliminar relación' });
   }
 });
@@ -268,22 +268,22 @@ router.get('/profesores/:rut/propuestas', obtenerPropuestasAsignadasAProfesor);
 // ===== RUTAS DE ROLES DE PROFESORES =====
 router.get('/roles-profesores', async (req, res) => {
   try {
-    console.log('🔄 Solicitando roles de profesores...');
+    
     if (req.user) {
-      console.log('👤 Usuario autenticado:', req.user.rut);
+      
     }
     
     const query = 'SELECT id, nombre, descripcion FROM roles_profesores ORDER BY nombre';
     const [roles] = await pool.execute(query);
     
-    console.log('✅ Roles encontrados:', roles.length);
+    
     
     res.json({
       success: true,
       data: roles
     });
   } catch (error) {
-    console.error('❌ Error al obtener roles de profesores:', error);
+    
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor',

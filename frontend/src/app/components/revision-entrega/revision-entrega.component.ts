@@ -350,7 +350,6 @@ Le sugiero que se acerque durante las horas de consulta para aclarar dudas.`
         this.cerrarModal();
       },
       error: (error: any) => {
-        console.error('Error al guardar revisión:', error);
         this.erroresValidacion = ['Error al guardar la revisión. Intente nuevamente.'];
       },
       complete: () => {

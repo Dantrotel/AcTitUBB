@@ -103,12 +103,9 @@ export class CalendarModalComponent implements OnInit, OnChanges {
   loading = false;
 
   constructor(private apiService: ApiService) {
-    console.log('🟡 CalendarModal constructor - COMPONENTE CREADO');
   }
 
   ngOnInit() {
-    console.log('🟢 CalendarModal ngOnInit - COMPONENTE INICIALIZADO');
-    console.log('  - Propuestas recibidas:', this.propuestas);
     this.cargarFechasCalendario();
   }
 
@@ -122,14 +119,12 @@ export class CalendarModalComponent implements OnInit, OnChanges {
     this.loading = true;
     this.apiService.getMisFechasCalendario().subscribe({
       next: (response: any) => {
-        console.log('Fechas del calendario cargadas:', response);
         this.fechasCalendario = response;
         this.generateEvents();
         this.generateCalendar();
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar fechas del calendario:', error);
         // Fallback a la funcionalidad anterior si hay error
         this.generateEvents();
         this.generateCalendar();
@@ -171,8 +166,6 @@ export class CalendarModalComponent implements OnInit, OnChanges {
 
   generateEvents() {
     this.upcomingEvents = [];
-    console.log('Generando eventos SOLO desde la base de datos');
-    console.log('Fechas del calendario backend:', this.fechasCalendario);
     
     // SOLO agregar fechas reales del backend (NO generar fechas dummy)
     if (this.fechasCalendario && this.fechasCalendario.length > 0) {
@@ -191,15 +184,12 @@ export class CalendarModalComponent implements OnInit, OnChanges {
           creador: fecha.tipo_creador || (fecha.es_global ? 'Admin' : 'Profesor')
         });
       });
-      console.log('✅ Eventos generados desde BD:', this.upcomingEvents.length);
     } else {
-      console.log('ℹ️  No hay fechas en la base de datos para mostrar');
     }
     
     
     // Ordenar por fecha
     this.upcomingEvents.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
-    console.log('✅ Eventos finales (solo desde BD):', this.upcomingEvents.length);
   }
 
   hasEventOnDate(date: Date): boolean {
@@ -207,7 +197,6 @@ export class CalendarModalComponent implements OnInit, OnChanges {
       this.isSameDay(event.fecha, date)
     );
     if (hasEvent) {
-      console.log('Evento encontrado para fecha:', date, 'Eventos:', this.upcomingEvents.filter(event => this.isSameDay(event.fecha, date)));
     }
     return hasEvent;
   }

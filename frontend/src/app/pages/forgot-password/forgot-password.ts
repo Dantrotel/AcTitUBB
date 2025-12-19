@@ -57,7 +57,6 @@ export class ForgotPasswordComponent {
         this.router.navigate(['/login']);
       }, 3000);
     } catch (error: any) {
-      console.error('Error al solicitar reset:', error);
       const errorMessage = error.error?.message || 'Error al procesar tu solicitud. Inténtalo nuevamente.';
       this.showMessage(errorMessage, 'error');
     } finally {

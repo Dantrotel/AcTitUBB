@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   standalone: true,
@@ -40,7 +41,9 @@ export class GestionPropuestasComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -51,21 +54,21 @@ export class GestionPropuestasComponent implements OnInit {
   cargarPropuestas(): void {
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     this.apiService.getPropuestas().subscribe({
       next: (data: any) => {
-        console.log('🔍 Admin - Propuestas cargadas:', data);
         // Log detallado de la primera propuesta para ver la estructura
         if (data.length > 0) {
-          console.log('🔍 Admin - Estructura de la primera propuesta:', JSON.stringify(data[0], null, 2));
         }
         this.propuestas = data;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('🔍 Admin - Error al cargar propuestas:', err);
         this.error = 'Error al cargar las propuestas';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -115,19 +118,25 @@ export class GestionPropuestasComponent implements OnInit {
     this.router.navigate(['/admin/asignar-profesor', id]);
   }
 
-  eliminarPropuesta(id: number) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.')) {
-      this.apiService.deletePropuesta(id.toString()).subscribe({
-        next: () => {
-          console.log('Propuesta eliminada exitosamente');
-          this.cargarPropuestas(); // Recargar la lista
-        },
-        error: (err) => {
-          console.error('Error al eliminar propuesta:', err);
-          alert('Error al eliminar la propuesta');
-        }
-      });
-    }
+  async eliminarPropuesta(id: number) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que quieres eliminar esta propuesta? Esta acción no se puede deshacer.',
+      'Eliminar Propuesta',
+      'Eliminar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) return;
+    
+    this.apiService.deletePropuesta(id.toString()).subscribe({
+      next: () => {
+        this.notificationService.success('Propuesta eliminada exitosamente');
+        this.cargarPropuestas(); // Recargar la lista
+      },
+      error: (err) => {
+        this.notificationService.error('Error al eliminar la propuesta');
+      }
+    });
   }
 
   volver() {

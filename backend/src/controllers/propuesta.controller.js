@@ -8,73 +8,7 @@ import { sendAsignacionProfesorEmail } from '../services/email.service.js';
 import { UserModel } from '../models/user.model.js';
 import { pool } from '../db/connectionDB.js';
 
-// Endpoint temporal de debug para identificar el problema
-export const debugPropuestaController = async (req, res) => {
-  try {
-    logger.debug('Debug propuesta iniciado', {
-      method: req.method,
-      url: req.url,
-      contentType: req.headers['content-type'],
-      body: req.body,
-      file: req.file,
-      user: { rut: req.rut, rol_id: req.rol_id }
-    });
-
-    // Validar qué campos están llegando
-    const camposRequeridos = ['titulo', 'descripcion', 'fecha_envio'];
-    const camposFaltantes = [];
-
-    camposRequeridos.forEach(campo => {
-      if (!req.body[campo] || req.body[campo].trim() === '') {
-        camposFaltantes.push(campo);
-      }
-    });
-
-    logger.debug('Validación de campos', { camposFaltantes });
-
-    // Validar fecha si existe
-    if (req.body.fecha_envio) {
-      const fecha = new Date(req.body.fecha_envio);
-      logger.debug('Validación de fecha', { 
-        original: req.body.fecha_envio, 
-        parseada: fecha, 
-        valida: !isNaN(fecha) 
-      });
-    }
-
-    res.json({
-      success: true,
-      debug: {
-        method: req.method,
-        body: req.body,
-        file: req.file ? {
-          fieldname: req.file.fieldname,
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-          filename: req.file.filename
-        } : null,
-        user: {
-          rut: req.rut,
-          rol: req.rol_id
-        },
-        camposFaltantes,
-        sugerencias: camposFaltantes.length > 0 ? [
-          `Faltan estos campos: ${camposFaltantes.join(', ')}`,
-          'Verifica que el frontend esté enviando todos los campos requeridos',
-          'Asegúrate de que fecha_envio tenga formato YYYY-MM-DD'
-        ] : ['Todos los campos requeridos están presentes']
-      }
-    });
-
-  } catch (error) {
-    logger.error('Error en debug propuesta', { error: error.message });
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
-};
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION
 
 export const crearPropuestaController = async (req, res) => {
   logger.info('Iniciando creación de propuesta', { 
@@ -226,80 +160,7 @@ export const crearPropuestaController = async (req, res) => {
   }
 };
 
-// Endpoint temporal de debug para revisar propuestas
-export const debugRevisarPropuesta = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    console.log('=== DEBUG REVISAR PROPUESTA ===');
-    console.log('Method:', req.method);
-    console.log('URL:', req.url);
-    console.log('Params ID:', id);
-    console.log('Headers Content-Type:', req.headers['content-type']);
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-    console.log('User from token:', {
-      rut: req.rut,
-      rol: req.rol,
-      role_id: req.role_id
-    });
-
-    // Verificar que la propuesta existe
-    const propuesta = await PropuestasService.obtenerPropuestaPorId(id);
-    console.log('Propuesta existe:', !!propuesta);
-    if (propuesta) {
-      console.log('Propuesta info:', {
-        id: propuesta.id,
-        titulo: propuesta.titulo,
-        estado_actual: propuesta.estado,
-        estudiante_rut: propuesta.estudiante_rut
-      });
-    }
-
-    const { comentarios_profesor, estado } = req.body;
-    
-    res.json({
-      success: true,
-      debug: {
-        params: { id },
-        body: req.body,
-        user: { rut: req.rut, role_id: req.role_id },
-        propuestaExiste: !!propuesta,
-        propuestaInfo: propuesta ? {
-          id: propuesta.id,
-          titulo: propuesta.titulo,
-          estado_actual: propuesta.estado
-        } : null,
-        validacion: {
-          comentarios_profesor: {
-            recibido: !!comentarios_profesor,
-            valor: comentarios_profesor || null,
-            valido: !!(comentarios_profesor && comentarios_profesor.trim())
-          },
-          estado: {
-            recibido: !!estado,
-            valor: estado || null,
-            valido: ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'].includes(estado)
-          }
-        },
-        formatoEsperado: {
-          comentarios_profesor: "string no vacío - Comentarios del profesor sobre la propuesta",
-          estado: "string - Uno de: pendiente, en_revision, correcciones, aprobada, rechazada"
-        },
-        ejemploBody: {
-          comentarios_profesor: "La propuesta está bien estructurada y cumple con los requisitos.",
-          estado: "aprobada"
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error('Error en debug revisar propuesta:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
-};
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION
 
 // Nuevo método: obtener propuestas de un estudiante específico
 export const getPropuestasEstudiante = async (req, res) => {
@@ -324,13 +185,14 @@ export const getPropuestasEstudiante = async (req, res) => {
 export const asignarProfesor = async (req, res) => {
   try {
     const { id } = req.params;
-    const profesor_rut = req.rut;
+    const profesor_rut = req.rut; // El profesor que se asigna a sí mismo
+    const asignado_por = req.rut; // Quien realiza la asignación (puede ser el mismo profesor o un admin)
 
     if (!profesor_rut) {
       return res.status(400).json({ message: 'Datos incompletos para asignar profesor.' });
     }
 
-    const resultado = await PropuestasService.asignarProfesor(id, profesor_rut);
+    const resultado = await PropuestasService.asignarProfesor(id, profesor_rut, asignado_por);
     if (!resultado) return res.status(404).json({ message: 'Propuesta no encontrada' });
 
     // 🔔 Notificar al estudiante sobre la asignación del profesor
@@ -384,19 +246,24 @@ export const revisarPropuesta = async (req, res) => {
     const userRut = req.rut;
     const userRole = req.rol_id;
     const carrerasAdministradas = req.user?.carreras_administradas || [];
+    const archivoRevision = req.file; // Multer agrega el archivo aquí
 
     console.log('=== DEBUG REVISAR PROPUESTA ===');
     console.log('ID propuesta:', id);
     console.log('Body completo:', JSON.stringify(req.body, null, 2));
     console.log('comentarios_profesor:', comentarios_profesor || 'FALTA');
     console.log('estado:', estado || 'FALTA');
+    console.log('Archivo:', archivoRevision ? archivoRevision.filename : 'Sin archivo');
     console.log('User info:', { rut: userRut, role: userRole, carreras: carrerasAdministradas });
 
     // Validación mejorada con más información
     const errores = [];
-    if (!comentarios_profesor || comentarios_profesor.trim() === '') {
-      errores.push('comentarios_profesor es requerido y no puede estar vacío');
+    
+    // Los comentarios son obligatorios solo si el estado NO es 'aprobada'
+    if (estado !== 'aprobada' && (!comentarios_profesor || comentarios_profesor.trim() === '')) {
+      errores.push('comentarios_profesor es requerido y no puede estar vacío (excepto cuando el estado es "aprobada")');
     }
+    
     if (!estado || estado.trim() === '') {
       errores.push('estado es requerido y no puede estar vacío');
     }
@@ -412,7 +279,7 @@ export const revisarPropuesta = async (req, res) => {
           bodyCompleto: req.body
         },
         formatoEsperado: {
-          comentarios_profesor: "string no vacío",
+          comentarios_profesor: "string no vacío (opcional si estado es 'aprobada')",
           estado: "uno de: pendiente, en_revision, correcciones, aprobada, rechazada"
         }
       });
@@ -472,11 +339,42 @@ export const revisarPropuesta = async (req, res) => {
     }
     // SuperAdmin (rol 4) y Profesores (rol 2) no necesitan verificación adicional aquí
 
-    const resultado = await PropuestasService.revisarPropuesta(id, { comentarios_profesor, estado });
+    // Preparar datos de revisión
+    // Si no hay comentarios (cuando estado es 'aprobada'), convertir a null para SQL
+    const comentariosNormalizados = comentarios_profesor && comentarios_profesor.trim() !== '' ? comentarios_profesor : null;
+    
+    const datosRevision = { 
+      comentarios_profesor: comentariosNormalizados, 
+      estado 
+    };
+
+    const resultado = await PropuestasService.revisarPropuesta(id, datosRevision);
     
     if (!resultado || !resultado.success) {
       return res.status(404).json({ message: 'Error al procesar la propuesta' });
     }
+
+    // Guardar archivo de revisión del profesor en tabla de archivos (sin sobrescribir)
+    if (archivoRevision) {
+      await PropuestasService.guardarArchivoPropuesta(
+        id,
+        'revision_profesor',
+        archivoRevision.filename,
+        archivoRevision.originalname,
+        userRut,
+        comentariosNormalizados
+      );
+    }
+
+    // Registrar en historial de revisiones
+    await PropuestasService.registrarRevisionEnHistorial(
+      id,
+      userRut,
+      estado,
+      comentariosNormalizados,
+      archivoRevision ? archivoRevision.filename : null,
+      archivoRevision ? archivoRevision.originalname : null
+    );
 
     // 🔔 Enviar notificaciones WebSocket según el estado
     if (estado === 'aprobada' && resultado.estudiante_rut) {
@@ -524,6 +422,14 @@ export const obtenerPropuestas = async (req, res) => {
     
     console.log('🔍 obtenerPropuestas - req.user:', req.user);
     console.log('🔍 obtenerPropuestas - rol_id:', rol_id, 'carrera_id:', carrera_id);
+    
+    // Los estudiantes (rol 1) deben usar /estudiante/mis-propuestas
+    if (rol_id === 1 || rol_id === '1') {
+      return res.status(403).json({ 
+        message: 'Acceso denegado. Los estudiantes deben usar el endpoint /estudiante/mis-propuestas',
+        code: 'FORBIDDEN_ESTUDIANTE'
+      });
+    }
     
     // Si es admin/jefe de carrera (rol 3), filtrar por su carrera
     // Si es super admin (rol 4) o no tiene carrera, ver todas las propuestas
@@ -608,18 +514,6 @@ export const eliminarPropuesta = async (req, res) => {
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
-
-export const descargarArchivo = (req, res) => {
-  const { filename } = req.params;
-  const filePath = path.join('uploads/propuestas', filename);
-
-  res.download(filePath, (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(404).json({ message: 'Archivo no encontrado' });
-    }
-  });
-}
 
 export const ActualizarPropuesta = async (req, res) => {
   try {
@@ -737,5 +631,131 @@ export const getPropuestasPorProfesor = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener propuestas del profesor:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const obtenerHistorialRevisiones = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const historial = await PropuestasService.obtenerHistorialRevisiones(id);
+    
+    return res.status(200).json(historial);
+  } catch (error) {
+    console.error('Error al obtener historial de revisiones:', error);
+    return res.status(500).json({ 
+      message: 'Error al obtener el historial de revisiones',
+      details: error.message 
+    });
+  }
+};
+
+// Obtener todos los archivos de una propuesta
+export const obtenerArchivosPropuesta = async (req, res) => {
+  try {
+    const { propuesta_id } = req.params;
+    
+    const archivos = await PropuestasService.obtenerArchivosPropuesta(propuesta_id);
+    
+    return res.status(200).json(archivos);
+  } catch (error) {
+    console.error('Error al obtener archivos de propuesta:', error);
+    return res.status(500).json({ 
+      message: 'Error al obtener los archivos',
+      details: error.message 
+    });
+  }
+};
+
+// Descargar un archivo específico
+export const descargarArchivo = async (req, res) => {
+  try {
+    const { archivo_id } = req.params;
+    
+    // Obtener información del archivo
+    const ArchivosPropuestaModel = await import('../models/archivos-propuesta.model.js');
+    const archivo = await ArchivosPropuestaModel.obtenerArchivoPorId(archivo_id);
+    
+    if (!archivo) {
+      return res.status(404).json({ message: 'Archivo no encontrado' });
+    }
+    
+    // Construir ruta completa del archivo
+    const filePath = path.join(process.cwd(), 'uploads', 'propuestas', archivo.archivo);
+    
+    // Verificar que el archivo existe
+    const fs = await import('fs');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
+    }
+    
+    // Descargar archivo con nombre original
+    return res.download(filePath, archivo.nombre_archivo_original);
+  } catch (error) {
+    console.error('Error al descargar archivo:', error);
+    return res.status(500).json({ 
+      message: 'Error al descargar el archivo',
+      details: error.message 
+    });
+  }
+};
+
+// Estudiante sube corrección
+export const subirCorreccion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userRut = req.rut;
+    const archivoCorreccion = req.file;
+    
+    // Verificar que el estudiante es el dueño de la propuesta
+    const propuesta = await PropuestasService.obtenerPropuestaPorId(id, userRut, 1);
+    
+    if (!propuesta) {
+      return res.status(404).json({ message: 'Propuesta no encontrada' });
+    }
+    
+    if (propuesta.estudiante_rut !== userRut) {
+      return res.status(403).json({ message: 'No tienes permiso para subir archivos a esta propuesta' });
+    }
+    
+    // Verificar que el estado permite correcciones
+    if (propuesta.estado !== 'correcciones') {
+      return res.status(400).json({ 
+        message: 'Solo puedes subir correcciones cuando la propuesta está en estado "correcciones"',
+        estado_actual: propuesta.estado
+      });
+    }
+    
+    if (!archivoCorreccion) {
+      return res.status(400).json({ message: 'Debes subir un archivo' });
+    }
+    
+    // Guardar archivo de corrección en tabla de archivos
+    const resultado = await PropuestasService.guardarArchivoPropuesta(
+      id,
+      'correccion_estudiante',
+      archivoCorreccion.filename,
+      archivoCorreccion.originalname,
+      userRut,
+      'Corrección del estudiante'
+    );
+    
+    // Actualizar estado de la propuesta a "revision" para que el profesor la revise nuevamente
+    await PropuestasService.actualizarEstadoPropuesta(id, 'revision');
+    
+    logger.info('Corrección de estudiante subida', { 
+      propuesta_id: id, 
+      estudiante: userRut,
+      archivo: archivoCorreccion.filename,
+      version: resultado.version
+    });
+    
+    return res.json({ 
+      message: 'Corrección subida exitosamente. La propuesta ha sido enviada nuevamente a revisión.',
+      version: resultado.version
+    });
+  } catch (error) {
+    logger.error('Error al subir corrección', { error: error.message, propuesta_id: req.params.id });
+    return res.status(500).json({ message: error.message || 'Error interno del servidor' });
   }
 };

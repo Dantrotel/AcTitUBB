@@ -15,7 +15,7 @@ router.get('/descargar/:filename', (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.download(filePath, filename, (err) => {
     if (err) {
-      console.error('Error al descargar archivo:', err);
+      
       res.status(500).send('Error al descargar el archivo');
     }
   });

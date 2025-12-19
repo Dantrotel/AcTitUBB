@@ -45,6 +45,19 @@ export class CrearPropuestaComponent {
     private notificationService: NotificationService
   ) {}
 
+  probarNotificaciones() {
+    this.notificationService.success('¡Prueba exitosa!', 'El sistema de notificaciones funciona correctamente');
+    setTimeout(() => {
+      this.notificationService.error('Error de prueba', 'Este es un mensaje de error de prueba');
+    }, 1000);
+    setTimeout(() => {
+      this.notificationService.warning('Advertencia de prueba', 'Este es un mensaje de advertencia de prueba');
+    }, 2000);
+    setTimeout(() => {
+      this.notificationService.info('Info de prueba', 'Este es un mensaje informativo de prueba');
+    }, 3000);
+  }
+
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
     this.archivo = input.files?.[0] || null;
@@ -193,13 +206,11 @@ export class CrearPropuestaComponent {
 
     this.apiService.createPropuesta(formData).subscribe({
       next: (res: any) => {
-        console.log('Propuesta creada:', res);
         this.notificationService.success('¡Propuesta creada!', 'Tu propuesta ha sido enviada exitosamente');
         this.isSubmitting = false;
         this.router.navigate(['/estudiante']);
       },
       error: (err: any) => {
-        console.error('Error:', err);
         const mensaje = err.error?.message || 'Hubo un error al crear la propuesta';
         this.notificationService.error('Error al crear propuesta', mensaje);
         this.isSubmitting = false;

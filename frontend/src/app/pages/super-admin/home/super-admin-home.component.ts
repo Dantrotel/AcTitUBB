@@ -145,7 +145,6 @@ export class SuperAdminHomeComponent implements OnInit {
       
       this.loading.set(false);
     }).catch(error => {
-      console.error('Error al cargar carga administrativa:', error);
       this.loading.set(false);
     });
   }

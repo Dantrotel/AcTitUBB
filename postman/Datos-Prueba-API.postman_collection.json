@@ -1,0 +1,359 @@
+{
+	"info": {
+		"_postman_id": "datos-prueba-collection",
+		"name": "AcTitUBB - Datos de Prueba API",
+		"description": "Colección para insertar datos de prueba a través de la API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "0. Setup",
+			"item": [
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('accessToken', jsonData.accessToken);",
+									"    pm.environment.set('refreshToken', jsonData.refreshToken);",
+									"    console.log('Token guardado:', jsonData.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						},
+						"description": "Login como admin para obtener token de autenticación"
+					}
+				}
+			]
+		},
+		{
+			"name": "1. Crear Profesores",
+			"item": [
+				{
+					"name": "Crear Dr. Juan Pérez",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"12345678-9\",\n    \"nombre\": \"Dr. Juan Pérez Soto\",\n    \"email\": \"juan.perez@ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 2,\n    \"confirmado\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"usuarios"
+							]
+						}
+					}
+				},
+				{
+					"name": "Crear Dra. María González",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"98765432-1\",\n    \"nombre\": \"Dra. María González López\",\n    \"email\": \"maria.gonzalez@ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 2,\n    \"confirmado\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"usuarios"
+							]
+						}
+					}
+				},
+				{
+					"name": "Crear Dr. Carlos Ramírez",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"11223344-5\",\n    \"nombre\": \"Dr. Carlos Ramírez Torres\",\n    \"email\": \"carlos.ramirez@ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 2,\n    \"confirmado\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"usuarios"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Crear Estudiantes",
+			"item": [
+				{
+					"name": "Crear Luis Morales",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"20111222-3\",\n    \"nombre\": \"Luis Andrés Morales Castro\",\n    \"email\": \"luis.morales@alumnos.ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 1,\n    \"confirmado\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"usuarios"
+							]
+						}
+					}
+				},
+				{
+					"name": "Crear Camila Rojas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"20222333-4\",\n    \"nombre\": \"Camila Andrea Rojas Fernández\",\n    \"email\": \"camila.rojas@alumnos.ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 1,\n    \"confirmado\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"usuarios"
+							]
+						}
+					}
+				},
+				{
+					"name": "Crear Diego Vargas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"20333444-5\",\n    \"nombre\": \"Diego Sebastián Vargas Muñoz\",\n    \"email\": \"diego.vargas@alumnos.ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 1,\n    \"confirmado\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"usuarios"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Login Estudiante",
+			"item": [
+				{
+					"name": "Login Luis Morales",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('studentToken', jsonData.accessToken);",
+									"    console.log('Token estudiante guardado');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"luis.morales@alumnos.ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Crear Propuestas",
+			"item": [
+				{
+					"name": "Crear Propuesta - Sistema Inventario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.propuesta && jsonData.propuesta.id) {",
+									"        pm.environment.set('propuestaId', jsonData.propuesta.id);",
+									"        console.log('ID propuesta guardado:', jsonData.propuesta.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Sistema Web de Gestión de Inventario para PYMES\",\n    \"descripcion\": \"Desarrollo de un sistema web completo para la gestión de inventario, ventas y compras orientado a pequeñas y medianas empresas del sector retail.\",\n    \"objetivos\": \"1. Implementar módulo de gestión de inventario con alertas de stock\\n2. Desarrollar módulo de ventas con facturación electrónica\\n3. Crear módulo de compras y proveedores\\n4. Generar reportes y dashboards analíticos\\n5. Implementar sistema de usuarios y permisos\",\n    \"metodologia\": \"Se utilizará metodología ágil Scrum con sprints de 2 semanas. Stack tecnológico: Angular 18, Node.js, Express, MySQL. Se aplicarán patrones de diseño MVC y arquitectura en capas.\",\n    \"palabras_clave\": \"gestión inventario, sistema ventas, PYME, web application, facturación\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/propuestas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"propuestas"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		}
+	]
+}

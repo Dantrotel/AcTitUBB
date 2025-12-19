@@ -1,0 +1,293 @@
+<div class="container-modern">
+  <!-- Header Hero -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-user-tie"></i>
+      </div>
+      <div class="header-text">
+        <h1>Gestión de Colaboradores Externos</h1>
+        <p class="subtitle">Administra supervisores, mentores y asesores técnicos externos</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="busqueda" (keyup.enter)="buscar()" 
+               placeholder="Buscar por nombre o email...">
+        <button (click)="buscar()" class="search-btn">
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <button class="btn-primary" (click)="toggleFormulario()">
+        <i class="fas" [ngClass]="mostrarFormulario() ? 'fa-times' : 'fa-user-plus'"></i>
+        {{ mostrarFormulario() ? 'Cancelar' : 'Nuevo Colaborador' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Card -->
+  <div class="content-card">
+    <!-- Formulario de Creación -->
+    @if (mostrarFormulario()) {
+      <div class="form-section-modern">
+        <div class="section-title">
+          <i class="fas fa-user-plus"></i>
+          <h3>Nuevo Colaborador Externo</h3>
+        </div>
+
+        <form (ngSubmit)="crearColaborador()" class="modern-form">
+          <!-- Información Personal -->
+          <div class="form-subsection">
+            <h4><i class="fas fa-user"></i> Información Personal</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label><i class="fas fa-user"></i> Nombre Completo *</label>
+                <input type="text" [(ngModel)]="nuevoColaborador.nombre_completo" name="nombre_completo" 
+                       required placeholder="Ingresa el nombre completo" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-id-card"></i> RUT</label>
+                <input type="text" [(ngModel)]="nuevoColaborador.rut" name="rut" 
+                       placeholder="12345678-9" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email *</label>
+                <input type="email" [(ngModel)]="nuevoColaborador.email" name="email" 
+                       required placeholder="correo@ejemplo.cl" class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-phone"></i> Teléfono</label>
+                <input type="text" [(ngModel)]="nuevoColaborador.telefono" name="telefono" 
+                       placeholder="+56912345678" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <!-- Información Laboral -->
+          <div class="form-subsection">
+            <h4><i class="fas fa-briefcase"></i> Información Laboral</h4>
+            <div class="form-grid">
+              <div class="form-group">
+                <label><i class="fas fa-building"></i> Entidad/Empresa *</label>
+                <select [(ngModel)]="nuevoColaborador.entidad_id" name="entidad_id" required class="form-input">
+                  <option value="">Selecciona una entidad</option>
+                  @for (entidad of entidades(); track entidad.id) {
+                    <option [value]="entidad.id">{{ entidad.nombre }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-user-tag"></i> Cargo</label>
+                <input type="text" [(ngModel)]="nuevoColaborador.cargo" name="cargo" 
+                       placeholder="Gerente, Ingeniero, etc." class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-tag"></i> Tipo de Colaborador *</label>
+                <select [(ngModel)]="nuevoColaborador.tipo_colaborador" name="tipo_colaborador" 
+                        required class="form-input">
+                  <option value="">Selecciona un tipo</option>
+                  @for (tipo of tiposColaborador; track tipo.value) {
+                    <option [value]="tipo.value">{{ tipo.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-sitemap"></i> Área/Departamento</label>
+                <input type="text" [(ngModel)]="nuevoColaborador.area_departamento" name="area_departamento" 
+                       placeholder="Desarrollo, Operaciones, etc." class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-graduation-cap"></i> Especialidad</label>
+                <input type="text" [(ngModel)]="nuevoColaborador.especialidad" name="especialidad" 
+                       placeholder="Desarrollo Web, Cloud, etc." class="form-input">
+              </div>
+
+              <div class="form-group">
+                <label><i class="fas fa-calendar-alt"></i> Años de Experiencia</label>
+                <input type="number" [(ngModel)]="nuevoColaborador.anos_experiencia" name="anos_experiencia" 
+                       min="0" placeholder="0" class="form-input">
+              </div>
+
+              <div class="form-group full-width">
+                <label><i class="fab fa-linkedin"></i> LinkedIn</label>
+                <input type="url" [(ngModel)]="nuevoColaborador.linkedin" name="linkedin" 
+                       placeholder="https://linkedin.com/in/usuario" class="form-input">
+              </div>
+            </div>
+          </div>
+
+          <!-- Información Adicional -->
+          <div class="form-subsection">
+            <h4><i class="fas fa-info-circle"></i> Información Adicional</h4>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label><i class="fas fa-file-alt"></i> Biografía</label>
+                <textarea [(ngModel)]="nuevoColaborador.biografia" name="biografia" rows="3" 
+                          placeholder="Breve descripción profesional del colaborador..." 
+                          class="form-input"></textarea>
+              </div>
+
+              <div class="form-group full-width">
+                <label><i class="fas fa-sticky-note"></i> Observaciones</label>
+                <textarea [(ngModel)]="nuevoColaborador.observaciones" name="observaciones" rows="2" 
+                          placeholder="Notas internas sobre el colaborador..." 
+                          class="form-input"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="toggleFormulario()">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="submit" class="btn-success" [disabled]="cargando()">
+              <i class="fas fa-save"></i> Guardar Colaborador
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Lista de Colaboradores -->
+    <div class="colaboradores-section">
+      @if (cargando()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando colaboradores...</p>
+        </div>
+      } @else if (colaboradores().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <h3>No hay colaboradores registrados</h3>
+          <p>Comienza agregando el primer colaborador externo</p>
+          <button class="btn-primary" (click)="toggleFormulario()">
+            <i class="fas fa-user-plus"></i> Crear Primer Colaborador
+          </button>
+        </div>
+      } @else {
+        <div class="colaboradores-grid">
+          @for (colab of colaboradores(); track colab.id) {
+            <div class="colaborador-card">
+              <div class="colaborador-header">
+                <div class="avatar">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="badges">
+                  <div class="badge-tipo" [ngClass]="'tipo-' + colab.tipo_colaborador">
+                    {{ getTipoLabel(colab.tipo_colaborador) }}
+                  </div>
+                  @if (colab.verificado) {
+                    <div class="badge-verificado">
+                      <i class="fas fa-check-circle"></i>
+                      Verificado
+                    </div>
+                  } @else {
+                    <div class="badge-pendiente">
+                      <i class="fas fa-clock"></i>
+                      Pendiente
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="colaborador-body">
+                <h3 class="colaborador-nombre">{{ colab.nombre_completo }}</h3>
+                @if (colab.cargo) {
+                  <p class="colaborador-cargo">{{ colab.cargo }}</p>
+                }
+                <div class="colaborador-entidad">
+                  <i class="fas fa-building"></i>
+                  <span>{{ colab.entidad_nombre }}</span>
+                </div>
+                @if (colab.especialidad) {
+                  <div class="colaborador-especialidad">
+                    <i class="fas fa-star"></i>
+                    <span>{{ colab.especialidad }}</span>
+                  </div>
+                }
+                @if (colab.anos_experiencia) {
+                  <div class="colaborador-experiencia">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>{{ colab.anos_experiencia }} años de experiencia</span>
+                  </div>
+                }
+                @if (colab.biografia) {
+                  <p class="colaborador-bio">{{ colab.biografia }}</p>
+                }
+              </div>
+
+              <div class="colaborador-contact">
+                <a [href]="'mailto:' + colab.email" class="contact-item">
+                  <i class="fas fa-envelope"></i>
+                  <span>{{ colab.email }}</span>
+                </a>
+                @if (colab.telefono) {
+                  <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ colab.telefono }}</span>
+                  </div>
+                }
+                @if (colab.linkedin) {
+                  <a [href]="colab.linkedin" target="_blank" class="contact-item">
+                    <i class="fab fa-linkedin"></i>
+                    <span>LinkedIn</span>
+                  </a>
+                }
+                @if (colab.rut) {
+                  <div class="contact-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>{{ colab.rut }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="colaborador-footer">
+                <div class="status-indicator" [ngClass]="colab.activo ? 'active' : 'inactive'">
+                  <i class="fas" [ngClass]="colab.activo ? 'fa-circle' : 'fa-circle'"></i>
+                  {{ colab.activo ? 'Activo' : 'Inactivo' }}
+                </div>
+                <div class="colaborador-actions">
+                  @if (!colab.verificado) {
+                    <button class="btn-verify" (click)="verificarColaborador(colab)" 
+                            title="Verificar colaborador">
+                      <i class="fas fa-check-double"></i>
+                    </button>
+                  }
+                  <button class="btn-icon" title="Ver proyectos asignados" 
+                          (click)="verProyectos(colab)">
+                    <i class="fas fa-tasks"></i>
+                  </button>
+                  <button class="btn-icon" title="Ver detalles completos" 
+                          (click)="verDetalles(colab)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn-icon" title="Editar información" 
+                          (click)="editarColaborador(colab)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="back-button-container">
+    <button class="btn-back" (click)="volver()">
+      <i class="fas fa-arrow-left"></i> Volver
+    </button>
+  </div>
+</div>

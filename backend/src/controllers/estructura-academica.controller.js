@@ -10,7 +10,7 @@ const obtenerFacultades = async (req, res) => {
         const facultades = await FacultadModel.obtenerFacultades(soloActivas);
         res.json({ success: true, facultades });
     } catch (error) {
-        console.error('Error al obtener facultades:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener facultades' });
     }
 };
@@ -23,7 +23,7 @@ const obtenerFacultadPorId = async (req, res) => {
         }
         res.json({ success: true, facultad });
     } catch (error) {
-        console.error('Error al obtener facultad:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener facultad' });
     }
 };
@@ -39,7 +39,7 @@ const crearFacultad = async (req, res) => {
         const id = await FacultadModel.crearFacultad(req.body);
         res.status(201).json({ success: true, message: 'Facultad creada exitosamente', id });
     } catch (error) {
-        console.error('Error al crear facultad:', error);
+        
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ success: false, message: 'Ya existe una facultad con ese código o nombre' });
         }
@@ -55,7 +55,7 @@ const actualizarFacultad = async (req, res) => {
         }
         res.json({ success: true, message: 'Facultad actualizada exitosamente' });
     } catch (error) {
-        console.error('Error al actualizar facultad:', error);
+        
         res.status(500).json({ success: false, message: 'Error al actualizar facultad' });
     }
 };
@@ -68,7 +68,7 @@ const eliminarFacultad = async (req, res) => {
         }
         res.json({ success: true, message: 'Facultad desactivada exitosamente (soft delete)' });
     } catch (error) {
-        console.error('Error al eliminar facultad:', error);
+        
         res.status(500).json({ success: false, message: 'Error al eliminar facultad' });
     }
 };
@@ -81,7 +81,7 @@ const reactivarFacultad = async (req, res) => {
         }
         return res.json({ success: true, message: 'Facultad reactivada exitosamente' });
     } catch (error) {
-        console.error('Error al reactivar facultad:', error);
+        
         return res.status(500).json({ success: false, message: 'Error al reactivar facultad' });
     }
 };
@@ -94,7 +94,7 @@ const eliminarFacultadPermanente = async (req, res) => {
         }
         return res.json({ success: true, message: 'Facultad eliminada permanentemente' });
     } catch (error) {
-        console.error('Error al eliminar facultad permanentemente:', error);
+        
         if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
             return res.status(400).json({ 
                 success: false, 
@@ -110,7 +110,7 @@ const obtenerEstadisticasFacultad = async (req, res) => {
         const estadisticas = await FacultadModel.obtenerEstadisticasFacultad(req.params.id);
         res.json({ success: true, estadisticas });
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener estadísticas' });
     }
 };
@@ -124,7 +124,7 @@ const obtenerDepartamentos = async (req, res) => {
         const departamentos = await DepartamentoModel.obtenerDepartamentos(soloActivos, facultadId);
         res.json({ success: true, departamentos });
     } catch (error) {
-        console.error('Error al obtener departamentos:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener departamentos' });
     }
 };
@@ -137,7 +137,7 @@ const obtenerDepartamentoPorId = async (req, res) => {
         }
         res.json({ success: true, departamento });
     } catch (error) {
-        console.error('Error al obtener departamento:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener departamento' });
     }
 };
@@ -153,7 +153,7 @@ const crearDepartamento = async (req, res) => {
         const id = await DepartamentoModel.crearDepartamento(req.body);
         res.status(201).json({ success: true, message: 'Departamento creado exitosamente', id });
     } catch (error) {
-        console.error('Error al crear departamento:', error);
+        
         res.status(500).json({ success: false, message: 'Error al crear departamento' });
     }
 };
@@ -166,7 +166,7 @@ const actualizarDepartamento = async (req, res) => {
         }
         res.json({ success: true, message: 'Departamento actualizado exitosamente' });
     } catch (error) {
-        console.error('Error al actualizar departamento:', error);
+        
         res.status(500).json({ success: false, message: 'Error al actualizar departamento' });
     }
 };
@@ -179,7 +179,7 @@ const eliminarDepartamento = async (req, res) => {
         }
         res.json({ success: true, message: 'Departamento desactivado exitosamente (soft delete)' });
     } catch (error) {
-        console.error('Error al eliminar departamento:', error);
+        
         res.status(500).json({ success: false, message: 'Error al eliminar departamento' });
     }
 };
@@ -192,7 +192,7 @@ const reactivarDepartamento = async (req, res) => {
         }
         return res.json({ success: true, message: 'Departamento reactivado exitosamente' });
     } catch (error) {
-        console.error('Error al reactivar departamento:', error);
+        
         return res.status(500).json({ success: false, message: 'Error al reactivar departamento' });
     }
 };
@@ -205,7 +205,7 @@ const eliminarDepartamentoPermanente = async (req, res) => {
         }
         return res.json({ success: true, message: 'Departamento eliminado permanentemente' });
     } catch (error) {
-        console.error('Error al eliminar departamento permanentemente:', error);
+        
         if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
             return res.status(400).json({ 
                 success: false, 
@@ -221,7 +221,7 @@ const removerProfesorDepartamento = async (req, res) => {
         await DepartamentoModel.removerProfesorDepartamento(req.params.profesorRut, req.params.id);
         res.json({ success: true, message: 'Profesor removido del departamento exitosamente' });
     } catch (error) {
-        console.error('Error al remover profesor del departamento:', error);
+        
         res.status(500).json({ success: false, message: 'Error al remover profesor del departamento' });
     }
 };
@@ -237,7 +237,7 @@ const asignarProfesorDepartamento = async (req, res) => {
         await DepartamentoModel.asignarProfesorDepartamento(profesor_rut, req.params.id, es_principal, fecha_ingreso);
         res.json({ success: true, message: 'Profesor asignado al departamento exitosamente' });
     } catch (error) {
-        console.error('Error al asignar profesor:', error);
+        
         res.status(500).json({ success: false, message: 'Error al asignar profesor al departamento' });
     }
 };
@@ -247,7 +247,7 @@ const obtenerProfesoresDepartamento = async (req, res) => {
         const profesores = await DepartamentoModel.obtenerProfesoresDepartamento(req.params.id);
         res.json({ success: true, profesores });
     } catch (error) {
-        console.error('Error al obtener profesores:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener profesores del departamento' });
     }
 };
@@ -261,7 +261,7 @@ const obtenerCarreras = async (req, res) => {
         const carreras = await CarreraModel.obtenerCarreras(soloActivas, facultadId);
         res.json({ success: true, carreras });
     } catch (error) {
-        console.error('Error al obtener carreras:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener carreras' });
     }
 };
@@ -274,7 +274,7 @@ const obtenerCarreraPorId = async (req, res) => {
         }
         res.json({ success: true, carrera });
     } catch (error) {
-        console.error('Error al obtener carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener carrera' });
     }
 };
@@ -293,7 +293,7 @@ const crearCarrera = async (req, res) => {
         const id = await CarreraModel.crearCarrera(req.body);
         res.status(201).json({ success: true, message: 'Carrera creada exitosamente', id });
     } catch (error) {
-        console.error('Error al crear carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al crear carrera' });
     }
 };
@@ -306,7 +306,7 @@ const actualizarCarrera = async (req, res) => {
         }
         res.json({ success: true, message: 'Carrera actualizada exitosamente' });
     } catch (error) {
-        console.error('Error al actualizar carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al actualizar carrera' });
     }
 };
@@ -319,7 +319,7 @@ const eliminarCarrera = async (req, res) => {
         }
         res.json({ success: true, message: 'Carrera desactivada exitosamente (soft delete)' });
     } catch (error) {
-        console.error('Error al eliminar carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al eliminar carrera' });
     }
 };
@@ -332,7 +332,7 @@ const reactivarCarrera = async (req, res) => {
         }
         return res.json({ success: true, message: 'Carrera reactivada exitosamente' });
     } catch (error) {
-        console.error('Error al reactivar carrera:', error);
+        
         return res.status(500).json({ success: false, message: 'Error al reactivar carrera' });
     }
 };
@@ -345,7 +345,7 @@ const eliminarCarreraPermanente = async (req, res) => {
         }
         return res.json({ success: true, message: 'Carrera eliminada permanentemente' });
     } catch (error) {
-        console.error('Error al eliminar carrera permanentemente:', error);
+        
         if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
             return res.status(400).json({ 
                 success: false, 
@@ -361,7 +361,7 @@ const removerEstudianteCarrera = async (req, res) => {
         await CarreraModel.removerEstudianteCarrera(req.params.estudianteRut, req.params.id);
         res.json({ success: true, message: 'Estudiante removido de la carrera exitosamente' });
     } catch (error) {
-        console.error('Error al remover estudiante de carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al remover estudiante de carrera' });
     }
 };
@@ -377,7 +377,7 @@ const asignarJefeCarrera = async (req, res) => {
         await CarreraModel.asignarJefeCarrera(req.params.id, profesor_rut);
         res.json({ success: true, message: 'Jefe de carrera asignado exitosamente' });
     } catch (error) {
-        console.error('Error al asignar jefe de carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al asignar jefe de carrera' });
     }
 };
@@ -387,7 +387,7 @@ const removerJefeCarrera = async (req, res) => {
         await CarreraModel.removerJefeCarrera(req.params.id);
         res.json({ success: true, message: 'Jefe de carrera removido exitosamente' });
     } catch (error) {
-        console.error('Error al remover jefe de carrera:', error);
+        
         res.status(500).json({ success: false, message: 'Error al remover jefe de carrera' });
     }
 };
@@ -403,7 +403,7 @@ const asignarEstudianteCarrera = async (req, res) => {
         await CarreraModel.asignarEstudianteCarrera(estudiante_rut, req.params.id, datosAcademicos);
         res.json({ success: true, message: 'Estudiante asignado a la carrera exitosamente' });
     } catch (error) {
-        console.error('Error al asignar estudiante:', error);
+        
         res.status(500).json({ success: false, message: 'Error al asignar estudiante a la carrera' });
     }
 };
@@ -413,7 +413,7 @@ const obtenerEstudiantesCarrera = async (req, res) => {
         const estudiantes = await CarreraModel.obtenerEstudiantesCarrera(req.params.id);
         res.json({ success: true, estudiantes });
     } catch (error) {
-        console.error('Error al obtener estudiantes:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener estudiantes de la carrera' });
     }
 };
@@ -423,7 +423,7 @@ const obtenerEstadisticasCarrera = async (req, res) => {
         const estadisticas = await CarreraModel.obtenerEstadisticasCarrera(req.params.id);
         res.json({ success: true, estadisticas });
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener estadísticas' });
     }
 };
@@ -433,7 +433,7 @@ const obtenerPropuestasPendientes = async (req, res) => {
         const propuestas = await CarreraModel.obtenerPropuestasPendientesAprobacion(req.params.id);
         res.json({ success: true, propuestas });
     } catch (error) {
-        console.error('Error al obtener propuestas pendientes:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener propuestas pendientes' });
     }
 };
@@ -447,7 +447,7 @@ const obtenerCarrerasPublicas = async (req, res) => {
         const carreras = await CarreraModel.obtenerCarreras(true);
         res.json({ success: true, carreras });
     } catch (error) {
-        console.error('Error al obtener carreras públicas:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener carreras' });
     }
 };
@@ -459,7 +459,7 @@ const obtenerDepartamentosPublicos = async (req, res) => {
         const departamentos = await DepartamentoModel.obtenerDepartamentos(true);
         res.json({ success: true, departamentos });
     } catch (error) {
-        console.error('Error al obtener departamentos públicos:', error);
+        
         res.status(500).json({ success: false, message: 'Error al obtener departamentos' });
     }
 };

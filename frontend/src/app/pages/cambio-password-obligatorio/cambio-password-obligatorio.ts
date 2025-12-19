@@ -105,7 +105,6 @@ export class CambioPasswordObligatorioComponent implements OnInit {
         this.router.navigate(['/login']);
       }, 2000);
     } catch (error: any) {
-      console.error('Error al cambiar contraseña:', error);
       const errorMessage = error.error?.message || 'Error al cambiar la contraseña. Inténtalo nuevamente.';
       this.showMessage(errorMessage, 'error');
     } finally {

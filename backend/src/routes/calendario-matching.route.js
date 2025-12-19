@@ -46,7 +46,7 @@ router.get('/disponibilidades', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo disponibilidades:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -84,7 +84,7 @@ router.post('/disponibilidades', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error creando disponibilidad:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -148,7 +148,7 @@ router.put('/disponibilidades/:id', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error actualizando disponibilidad:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -174,7 +174,7 @@ router.delete('/disponibilidades/:id', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error eliminando disponibilidad:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -239,7 +239,7 @@ router.post('/buscar-reunion', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error en búsqueda de reunión:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -332,7 +332,7 @@ router.get('/solicitudes', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo solicitudes:', error);
+        
         res.status(500).json({
             success: false,
             data: [], // Siempre devolver un array vacío
@@ -410,7 +410,7 @@ router.post('/solicitudes', async (req, res) => {
         `;
         const [asignaciones] = await pool.execute(validacionProfesorQuery, [proyecto_id, profesor_rut]);
         
-        console.log('Validación de profesor:', { proyecto_id, profesor_rut, asignaciones });
+        
         
         if (asignaciones.length === 0) {
             return res.status(403).json({
@@ -471,7 +471,7 @@ router.post('/solicitudes', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error creando solicitud:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -510,7 +510,7 @@ router.post('/solicitudes/:id/responder', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error respondiendo solicitud:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -539,7 +539,7 @@ router.get('/reuniones', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo reuniones:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -578,7 +578,7 @@ router.post('/reuniones/:id/reprogramar', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error reprogramando reunión:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -605,7 +605,7 @@ router.post('/reuniones/:id/cancelar', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error cancelando reunión:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -671,7 +671,7 @@ router.post('/reuniones/:id/marcar-realizada', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error marcando reunión como realizada:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -689,7 +689,7 @@ router.post('/reuniones/:id/confirmar', async (req, res) => {
         const { id } = req.params;
         const { confirmado } = req.body;
         
-        console.log('🔔 Confirmando reunión:', { id, user: user.rut, confirmado });
+        
         
         // Validar que el usuario sea parte de la reunión
         const [reuniones] = await pool.execute(
@@ -717,7 +717,7 @@ router.post('/reuniones/:id/confirmar', async (req, res) => {
             [nuevoEstado, id]
         );
         
-        console.log('✅ Reunión confirmada:', { id, nuevoEstado });
+        
         
         res.json({
             success: true,
@@ -726,7 +726,7 @@ router.post('/reuniones/:id/confirmar', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error al confirmar reunión:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -756,7 +756,7 @@ router.get('/dashboard', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo dashboard:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -781,7 +781,7 @@ router.get('/historial-reuniones', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo historial:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -819,7 +819,7 @@ router.post('/reuniones/:id/marcar-realizada', async (req, res) => {
         }
         
     } catch (error) {
-        console.error('Error marcando reunión como realizada:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -849,7 +849,7 @@ router.get('/verificar-relacion/:proyecto_id', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error verificando relación:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -884,7 +884,7 @@ router.get('/estadisticas', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo estadísticas:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -899,10 +899,10 @@ router.get('/estadisticas', async (req, res) => {
 router.get('/profesores', async (req, res) => {
     try {
         const { user } = req;
-        console.log('📨 GET /profesores - Usuario:', user?.rut || 'NO AUTENTICADO');
+        
         
         if (!user || !user.rut) {
-            console.error('❌ Usuario no autenticado');
+            
             return res.status(401).json({
                 success: false,
                 data: [],
@@ -916,13 +916,9 @@ router.get('/profesores', async (req, res) => {
             [user.rut]
         );
         
-        console.log('📋 Proyectos encontrados:', proyectos.length);
-        if (proyectos.length > 0) {
-            console.log('   Proyecto:', proyectos[0].titulo, '(ID:', proyectos[0].id + ')');
-        }
         
         if (proyectos.length === 0) {
-            console.log('⚠️  Estudiante sin proyectos');
+            
             return res.json({
                 success: true,
                 data: [],
@@ -947,9 +943,9 @@ router.get('/profesores', async (req, res) => {
         `;
         
         const [profesores] = await pool.execute(profesoresQuery, [proyecto_id]);
-        console.log('👨‍🏫 Profesores asignados:', profesores?.length || 0);
+        
         if (profesores.length > 0) {
-            profesores.forEach(p => console.log('   -', p.nombre, `(${p.rut}) - ${p.rol_nombre}`));
+            console.log(`📋 Profesores encontrados: ${profesores.map(p => `${p.nombre} - ${p.rol_nombre}`).join(', ')}`);
         }
 
         res.json({
@@ -959,7 +955,7 @@ router.get('/profesores', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error obteniendo profesores del proyecto:', error);
+        
         res.status(500).json({
             success: false,
             data: [], // Siempre devolver un array vacío

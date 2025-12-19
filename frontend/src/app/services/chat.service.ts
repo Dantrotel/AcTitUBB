@@ -63,17 +63,14 @@ export class ChatService {
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ Conectado al servidor de chat');
       this.conectado.set(true);
     });
 
     this.socket.on('disconnect', () => {
-      console.log('❌ Desconectado del servidor de chat');
       this.conectado.set(false);
     });
 
     this.socket.on('connected', (data) => {
-      console.log('Confirmación de conexión:', data);
     });
 
     // Escuchar nuevos mensajes
@@ -99,7 +96,6 @@ export class ChatService {
     });
 
     this.socket.on('chat:error', (data) => {
-      console.error('Error en chat:', data);
     });
   }
 
@@ -304,7 +300,6 @@ export class ChatService {
   }
 
   private handleNotificacionMensaje(data: any) {
-    console.log('Nueva notificación de mensaje:', data);
     
     // Actualizar contador total
     const total = this.totalNoLeidos();

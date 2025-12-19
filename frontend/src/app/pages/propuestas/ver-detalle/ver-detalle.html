@@ -96,6 +96,15 @@
           <i class="fas fa-trash"></i>
           Eliminar
         </button>
+
+        <button 
+          class="btn-warning" 
+          (click)="subirCorreccion(propuesta.id)" 
+          *ngIf="esEstudiante && propuesta.estado === 'correcciones'"
+        >
+          <i class="fas fa-file-upload"></i>
+          Subir Corrección
+        </button>
       </div>
     </div>
 
@@ -182,23 +191,23 @@
       </div>
 
       <!-- Comentarios del profesor -->
-      <div class="detail-card" *ngIf="propuesta.comentarios_profesor">
+      <div class="detail-card" *ngIf="propuesta.comentarios">
         <div class="card-header">
           <i class="fas fa-comments"></i>
           <h3>Comentarios del Profesor</h3>
         </div>
         <div class="card-content">
           <div class="comentarios-content">
-            <p>{{ propuesta.comentarios_profesor }}</p>
+            <p>{{ propuesta.comentarios }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Archivo adjunto -->
+      <!-- Archivo adjunto original -->
       <div class="detail-card" *ngIf="propuesta.archivo">
         <div class="card-header">
           <i class="fas fa-paperclip"></i>
-          <h3>Archivo Adjunto</h3>
+          <h3>Archivo Original de la Propuesta</h3>
         </div>
         <div class="card-content">
           <div class="archivo-info">
@@ -213,6 +222,48 @@
                   Descargar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archivos de Revisión (Historial Completo) -->
+      <div class="detail-card full-width" *ngIf="archivosVersionados.length > 0">
+        <div class="card-header">
+          <i class="fas fa-file-archive"></i>
+          <h3>Archivos del Historial de Revisión</h3>
+        </div>
+        <div class="card-content">
+          <div class="archivos-list">
+            <div class="archivo-item" *ngFor="let archivo of archivosVersionados">
+              <div class="archivo-info-row">
+                <div class="archivo-icono" [class]="'tipo-' + archivo.tipo_archivo">
+                  <i class="fas fa-file-pdf" *ngIf="archivo.nombre_archivo_original.endsWith('.pdf')"></i>
+                  <i class="fas fa-file-word" *ngIf="!archivo.nombre_archivo_original.endsWith('.pdf')"></i>
+                </div>
+                <div class="archivo-detalles">
+                  <div class="archivo-nombre">
+                    {{ archivo.nombre_archivo_original }}
+                  </div>
+                  <div class="archivo-meta">
+                    <span class="badge-tipo">{{ obtenerTipoArchivoLabel(archivo.tipo_archivo) }}</span>
+                    <span class="version-badge">Versión {{ archivo.version }}</span>
+                    <span class="fecha-badge">{{ formatearFecha(archivo.created_at) }}</span>
+                    <span class="autor-badge">{{ archivo.nombre_usuario }}</span>
+                  </div>
+                  <p class="archivo-comentario" *ngIf="archivo.comentario">
+                    <i class="fas fa-comment"></i> {{ archivo.comentario }}
+                  </p>
+                </div>
+              </div>
+              <button 
+                class="btn-download-archivo" 
+                (click)="descargarArchivoVersionado(archivo.id, archivo.nombre_archivo_original)"
+                type="button"
+              >
+                <i class="fas fa-download"></i>
+                Descargar
+              </button>
             </div>
           </div>
         </div>

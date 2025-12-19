@@ -1,0 +1,205 @@
+<mat-card class="evaluacion-card">
+  <mat-card-header>
+    <mat-card-title>
+      <div class="header-title">
+        <mat-icon>rate_review</mat-icon>
+        <span>Evaluación de Colaborador Externo</span>
+      </div>
+    </mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (cargando()) {
+      <div class="loading">
+        <mat-icon>hourglass_empty</mat-icon>
+        <p>Cargando evaluadores...</p>
+      </div>
+    } @else if (colaboradoresEvaluadores().length === 0) {
+      <div class="empty-state">
+        <mat-icon>assignment_turned_in</mat-icon>
+        <p>No hay colaboradores pendientes de evaluar o todos ya evaluaron</p>
+      </div>
+    } @else {
+      <mat-stepper linear #stepper>
+        <!-- Paso 1: Seleccionar Evaluador -->
+        <mat-step>
+          <ng-template matStepLabel>Seleccionar Evaluador</ng-template>
+          <div class="step-content">
+            <h3>Seleccione el colaborador que realizó la evaluación</h3>
+            <div class="evaluadores-grid">
+              @for (colab of colaboradoresEvaluadores(); track colab.id) {
+                <div class="evaluador-card" 
+                     [class.selected]="evaluacion.colaborador_proyecto_id === colab.id"
+                     (click)="seleccionarColaborador(colab)">
+                  <mat-icon>person</mat-icon>
+                  <div class="info">
+                    <strong>{{ colab.nombre_completo }}</strong>
+                    <small>{{ colab.entidad_nombre }}</small>
+                    <small class="rol">{{ colab.rol_en_proyecto }}</small>
+                  </div>
+                  @if (evaluacion.colaborador_proyecto_id === colab.id) {
+                    <mat-icon class="check">check_circle</mat-icon>
+                  }
+                </div>
+              }
+            </div>
+            <div class="step-actions">
+              <button mat-raised-button color="primary" matStepperNext 
+                      [disabled]="!evaluacion.colaborador_proyecto_id">
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Paso 2: Criterios de Evaluación -->
+        <mat-step>
+          <ng-template matStepLabel>Criterios de Evaluación</ng-template>
+          <div class="step-content">
+            <h3>Evalúe al estudiante en los siguientes criterios (1-10)</h3>
+            <div class="criterios-container">
+              @for (criterio of criterios; track criterio.campo) {
+                <div class="criterio-item">
+                  <div class="criterio-header">
+                    <mat-icon>{{ criterio.icon }}</mat-icon>
+                    <label>{{ criterio.label }}</label>
+                    <span class="valor">{{ formatValue(getCampoValue(criterio.campo)) }}</span>
+                  </div>
+                  <mat-slider min="1" max="10" step="1" discrete [ngModel]="getCampoValue(criterio.campo)" (ngModelChange)="setCampoValue(criterio.campo, $event)">
+                    <input matSliderThumb>
+                  </mat-slider>
+                  <div class="escala-labels">
+                    <span>Deficiente</span>
+                    <span>Regular</span>
+                    <span>Bueno</span>
+                    <span>Excelente</span>
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="calificacion-preview">
+              <mat-icon>grade</mat-icon>
+              <span>Calificación calculada: <strong>{{ calcularCalificacion() }}</strong> (escala 1.0-7.0)</span>
+            </div>
+            <div class="step-actions">
+              <button mat-button matStepperPrevious>Anterior</button>
+              <button mat-raised-button color="primary" matStepperNext>
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Paso 3: Comentarios Cualitativos -->
+        <mat-step>
+          <ng-template matStepLabel>Comentarios</ng-template>
+          <div class="step-content">
+            <h3>Comentarios y observaciones sobre el estudiante</h3>
+            <form class="comentarios-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Fortalezas del Estudiante *</mat-label>
+                <textarea matInput [(ngModel)]="evaluacion.fortalezas" name="fortalezas" 
+                          rows="4" required
+                          placeholder="Describa los puntos fuertes y destacados del estudiante..."></textarea>
+                <mat-hint>Mínimo 50 caracteres</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Áreas de Mejora *</mat-label>
+                <textarea matInput [(ngModel)]="evaluacion.areas_mejora" name="areas_mejora" 
+                          rows="4" required
+                          placeholder="Indique aspectos en los que el estudiante puede mejorar..."></textarea>
+                <mat-hint>Mínimo 50 caracteres</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Comentarios Generales</mat-label>
+                <textarea matInput [(ngModel)]="evaluacion.comentarios_generales" name="comentarios_generales" 
+                          rows="3"
+                          placeholder="Observaciones adicionales sobre el desempeño del estudiante..."></textarea>
+              </mat-form-field>
+
+              <div class="checkbox-container">
+                <mat-checkbox [(ngModel)]="evaluacion.recomendaria_estudiante" name="recomendaria">
+                  <strong>¿Recomendaría a este estudiante para futuras oportunidades?</strong>
+                </mat-checkbox>
+              </div>
+            </form>
+            <div class="step-actions">
+              <button mat-button matStepperPrevious>Anterior</button>
+              <button mat-raised-button color="primary" matStepperNext>
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </mat-step>
+
+        <!-- Paso 4: Resumen y Confirmación -->
+        <mat-step>
+          <ng-template matStepLabel>Confirmar</ng-template>
+          <div class="step-content">
+            <h3>Resumen de la Evaluación</h3>
+            <div class="resumen-container">
+              <div class="resumen-seccion">
+                <h4><mat-icon>person</mat-icon> Evaluador</h4>
+                @for (colab of colaboradoresEvaluadores(); track colab.id) {
+                  @if (colab.id === evaluacion.colaborador_proyecto_id) {
+                    <p>{{ colab.nombre_completo }} - {{ colab.entidad_nombre }}</p>
+                  }
+                }
+              </div>
+
+              <div class="resumen-seccion">
+                <h4><mat-icon>grade</mat-icon> Calificación Final</h4>
+                <p class="calificacion-final">{{ calcularCalificacion() }}</p>
+                <small>Escala 1.0 - 7.0</small>
+              </div>
+
+              <div class="resumen-seccion">
+                <h4><mat-icon>assessment</mat-icon> Criterios Evaluados</h4>
+                <div class="criterios-resumen">
+                  @for (criterio of criterios; track criterio.campo) {
+                    <div class="criterio-resumen-item">
+                      <span>{{ criterio.label }}:</span>
+                      <strong>{{ getCampoValue(criterio.campo) }}/10</strong>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="resumen-seccion">
+                <h4><mat-icon>comment</mat-icon> Observaciones</h4>
+                <div class="observaciones-preview">
+                  <p><strong>Fortalezas:</strong> {{ evaluacion.fortalezas }}</p>
+                  <p><strong>Áreas de mejora:</strong> {{ evaluacion.areas_mejora }}</p>
+                  @if (evaluacion.comentarios_generales) {
+                    <p><strong>Comentarios:</strong> {{ evaluacion.comentarios_generales }}</p>
+                  }
+                </div>
+              </div>
+
+              <div class="resumen-seccion recomendacion">
+                <mat-icon [class.recomienda]="evaluacion.recomendaria_estudiante">
+                  {{ evaluacion.recomendaria_estudiante ? 'thumb_up' : 'thumb_down' }}
+                </mat-icon>
+                <span>
+                  {{ evaluacion.recomendaria_estudiante ? 'Recomienda' : 'No recomienda' }} al estudiante
+                </span>
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <button mat-button matStepperPrevious>Anterior</button>
+              <button mat-raised-button color="accent" 
+                      (click)="guardarEvaluacion()"
+                      [disabled]="guardando()">
+                <mat-icon>save</mat-icon>
+                {{ guardando() ? 'Guardando...' : 'Guardar Evaluación' }}
+              </button>
+            </div>
+          </div>
+        </mat-step>
+      </mat-stepper>
+    }
+  </mat-card-content>
+</mat-card>

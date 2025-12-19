@@ -8,25 +8,26 @@ import { pool } from '../db/connectionDB.js';
 // ===== CREAR FECHAS =====
 
 // Crear una fecha global (solo admin)
-export const crearFechaGlobal = async ({ titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, creado_por_rut }) => {
-    console.log('📋 Creando fecha global en tabla unificada...');
+export const crearFechaGlobal = async ({ titulo, descripcion, fecha_inicio, hora_inicio, fecha, hora_limite, tipo_fecha, es_global, creado_por_rut }) => {
+    
     
     // Determinar valores por defecto según el tipo de fecha
-    const habilitada = tipo_fecha === 'entrega_propuesta' ? true : true;
+    const habilitada = fecha_inicio ? false : true; // Si tiene fecha_inicio, se habilita automáticamente al llegar a esa fecha
     const permite_extension = tipo_fecha === 'entrega_propuesta' ? true : true;
     const requiere_entrega = ['entrega', 'entrega_propuesta', 'entrega_avance', 'entrega_final'].includes(tipo_fecha);
     const horaLimite = hora_limite || '23:59:59';
+    const horaInicio = hora_inicio || '00:00:00';
     
     const [result] = await pool.execute(
         `INSERT INTO fechas (
-            titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, 
+            titulo, descripcion, fecha_inicio, hora_inicio, fecha, hora_limite, tipo_fecha, es_global, 
             creado_por_rut, habilitada, permite_extension, requiere_entrega,
             activa
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
-        [titulo, descripcion, fecha, horaLimite, tipo_fecha, es_global || false, creado_por_rut, habilitada, permite_extension, requiere_entrega]
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+        [titulo, descripcion, fecha_inicio || null, horaInicio, fecha, horaLimite, tipo_fecha, es_global || false, creado_por_rut, habilitada, permite_extension, requiere_entrega]
     );
     
-    console.log('✅ Fecha creada en tabla unificada, ID:', result.insertId);
+    
     return result.insertId;
 };
 
@@ -51,6 +52,8 @@ export const obtenerFechasGlobales = async () => {
         SELECT f.id,
                f.titulo,
                f.descripcion,
+               DATE_FORMAT(f.fecha_inicio, '%Y-%m-%d') as fecha_inicio,
+               f.hora_inicio,
                DATE_FORMAT(f.fecha, '%Y-%m-%d') as fecha,
                f.hora_limite,
                f.tipo_fecha,
@@ -99,7 +102,7 @@ export const obtenerFechasProximas = async (limite = 10) => {
 
 // Obtener fecha por ID (busca en la tabla unificada)
 export const obtenerFechaPorId = async (fecha_id) => {
-    console.log(`🔍 Buscando fecha con ID: ${fecha_id}`);
+    
 
     const [rows] = await pool.execute(`
         SELECT f.*, 
@@ -114,11 +117,11 @@ export const obtenerFechaPorId = async (fecha_id) => {
     `, [fecha_id]);
     
     if (rows.length > 0) {
-        console.log(`✅ Fecha encontrada`);
+        
     return rows[0];
     }
     
-    console.log(`❌ Fecha ${fecha_id} no encontrada`);
+    
     return null;
 };
 
@@ -191,9 +194,9 @@ export const obtenerEstadisticasFechas = async () => {
 
 // ===== ACTUALIZAR FECHAS =====
 
-export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, tipo_fecha, habilitada, es_global }) => {
-    console.log(`💾 Actualizando fecha ID: ${fecha_id}`);
-    console.log(`📋 Datos a actualizar:`, { titulo, descripcion, fecha, tipo_fecha, habilitada, es_global });
+export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha_inicio, hora_inicio, fecha, hora_limite, tipo_fecha, habilitada, es_global }) => {
+    
+    
     
     // Construir query dinámicamente según los campos disponibles
     let campos = [];
@@ -207,9 +210,21 @@ export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, ti
         campos.push('descripcion = ?');
         valores.push(descripcion);
     }
+    if (fecha_inicio !== undefined) {
+        campos.push('fecha_inicio = ?');
+        valores.push(fecha_inicio || null);
+    }
+    if (hora_inicio !== undefined) {
+        campos.push('hora_inicio = ?');
+        valores.push(hora_inicio || '00:00:00');
+    }
     if (fecha !== undefined) {
         campos.push('fecha = ?');
         valores.push(fecha);
+    }
+    if (hora_limite !== undefined) {
+        campos.push('hora_limite = ?');
+        valores.push(hora_limite);
     }
     if (tipo_fecha !== undefined) {
         campos.push('tipo_fecha = ?');
@@ -225,7 +240,7 @@ export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, ti
     }
     
     if (campos.length === 0) {
-        console.log('⚠️  No hay campos para actualizar');
+        
         return false;
     }
     
@@ -238,24 +253,24 @@ export const actualizarFecha = async (fecha_id, { titulo, descripcion, fecha, ti
     );
     
     const updated = result.affectedRows > 0;
-    console.log(`✅ Actualizado: ${updated}`);
+    
     return updated;
 };
 
 // ===== ELIMINAR FECHAS =====
 
 export const eliminarFecha = async (fecha_id) => {
-    console.log(`🗑️  Eliminando fecha con ID: ${fecha_id}`);
+    
     
     // Verificar que la fecha existe
     const fecha = await obtenerFechaPorId(fecha_id);
     
     if (!fecha) {
-        console.log(`❌ Fecha ${fecha_id} no encontrada`);
+        
         return false;
     }
     
-    console.log(`📋 Datos de la fecha:`, { titulo: fecha.titulo, tipo_fecha: fecha.tipo_fecha, es_global: fecha.es_global });
+    
     
     // Eliminar directamente (hard delete)
     const [result] = await pool.execute(
@@ -264,7 +279,7 @@ export const eliminarFecha = async (fecha_id) => {
     );
     
     const deleted = result.affectedRows > 0;
-    console.log(`✅ Eliminada: ${deleted}`);
+    
     
     return deleted;
 };
@@ -283,25 +298,25 @@ export const desactivarFecha = async (fecha_id) => {
 export const puedeEditarFecha = async (fecha_id, usuario_rut, rol_usuario) => {
     const fecha = await obtenerFechaPorId(fecha_id);
     if (!fecha) {
-        console.log(`❌ Fecha ${fecha_id} no encontrada para validar permisos`);
+        
         return false;
     }
     
-    console.log(`🔐 Validando permisos para editar fecha ${fecha_id}:`);
-    console.log(`   - Usuario RUT: ${usuario_rut}`);
-    console.log(`   - Rol usuario: ${rol_usuario}`);
-    console.log(`   - Fecha es_global: ${fecha.es_global}`);
-    console.log(`   - Fecha creado_por: ${fecha.creado_por_rut}`);
+    
+    
+    
+    
+    
     
     // Admin (rol 'admin' o rol_id 3) puede editar cualquier fecha
     if (rol_usuario === 'admin' || rol_usuario === 3 || rol_usuario === '3') {
-        console.log('✅ Permiso concedido: Usuario es Admin');
+        
         return true;
     }
     
     // Super Admin (rol_id 4) puede editar cualquier fecha
     if (rol_usuario === 4 || rol_usuario === '4') {
-        console.log('✅ Permiso concedido: Usuario es Super Admin');
+        
         return true;
     }
     
@@ -309,11 +324,11 @@ export const puedeEditarFecha = async (fecha_id, usuario_rut, rol_usuario) => {
     if ((rol_usuario === 'profesor' || rol_usuario === 2 || rol_usuario === '2') && 
         !fecha.es_global && 
         fecha.creado_por_rut === usuario_rut) {
-        console.log('✅ Permiso concedido: Profesor editando su propia fecha');
+        
         return true;
     }
     
-    console.log('❌ Permiso denegado: No cumple ninguna condición');
+    
     return false;
 };
 

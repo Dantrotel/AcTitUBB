@@ -21,24 +21,24 @@ import { pool } from '../db/connectionDB.js';
 // Crear fecha global (solo admin)
 export const crearFechaGlobalController = async (req, res) => {
     try {
-        console.log('📅 Intentando crear fecha global...');
-        console.log('  - Body:', req.body);
-        console.log('  - Usuario:', req.user);
         
-        const { titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global } = req.body;
+        
+        
+        
+        const { titulo, descripcion, fecha_inicio, hora_inicio, fecha, hora_limite, tipo_fecha, es_global } = req.body;
         const creado_por_rut = req.user?.rut;
 
         // Validar campos requeridos
         if (!titulo || !fecha || !tipo_fecha) {
-            console.error('❌ Faltan campos requeridos');
+            
             return res.status(400).json({ 
-                message: 'Faltan campos requeridos: titulo, fecha, tipo_fecha' 
+                message: 'Faltan campos requeridos: titulo, fecha (fin), tipo_fecha' 
             });
         }
 
         // Validar que el usuario esté autenticado
         if (!req.user || !creado_por_rut) {
-            console.error('❌ Usuario no autenticado');
+            
             return res.status(401).json({ 
                 message: 'Usuario no autenticado' 
             });
@@ -49,9 +49,9 @@ export const crearFechaGlobalController = async (req, res) => {
         const esAdmin = rolUsuario === 3 || req.user.rol === 'admin';
         const esSuperAdmin = rolUsuario === 4 || req.user.rol === 'superadmin';
         
-        console.log('  - Rol del usuario:', req.user.rol, 'rol_id:', req.user.rol_id);
+        
         if (!esAdmin && !esSuperAdmin) {
-            console.error('❌ Usuario no es admin ni super admin, rol:', req.user.rol);
+            
             return res.status(403).json({ 
                 message: 'Solo los administradores pueden crear fechas globales',
                 debug: {
@@ -62,26 +62,71 @@ export const crearFechaGlobalController = async (req, res) => {
             });
         }
 
-        // Validar formato de fecha
+        // Validar formato de fecha fin (obligatoria)
         if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-            console.error('❌ Formato de fecha inválido:', fecha);
+            
             return res.status(400).json({ 
-                message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
+                message: 'Formato de fecha fin inválido. Use YYYY-MM-DD' 
             });
         }
 
-        console.log('✅ Validaciones OK, creando fecha en BD...');
+        // Validar fecha_inicio si existe
+        if (fecha_inicio) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha_inicio)) {
+                
+                return res.status(400).json({ 
+                    message: 'Formato de fecha inicio inválido. Use YYYY-MM-DD' 
+                });
+            }
+
+            // Validar que fecha_inicio + hora_inicio sea antes de fecha_fin + hora_limite
+            const horaInicioValue = hora_inicio || '00:00:00';
+            const horaLimiteValue = hora_limite || '23:59:59';
+            const fechaHoraInicio = new Date(fecha_inicio + 'T' + horaInicioValue);
+            const fechaHoraFin = new Date(fecha + 'T' + horaLimiteValue);
+            if (fechaHoraInicio >= fechaHoraFin) {
+                return res.status(400).json({ 
+                    message: 'La fecha y hora de inicio deben ser anteriores a la fecha y hora fin' 
+                });
+            }
+
+            // Validar que fecha_inicio no sea en el pasado (permite hoy)
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const fechaInicioDate = new Date(fecha_inicio + 'T00:00:00');
+            fechaInicioDate.setHours(0, 0, 0, 0);
+            if (fechaInicioDate < hoy) {
+                return res.status(400).json({ 
+                    message: 'La fecha de inicio no puede ser anterior a hoy' 
+                });
+            }
+        }
+
+        // Validar que fecha_fin no sea en el pasado (permite hoy)
+        const fechaFinDate = new Date(fecha + 'T00:00:00');
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        fechaFinDate.setHours(0, 0, 0, 0);
+        if (fechaFinDate < hoy) {
+            return res.status(400).json({ 
+                message: 'La fecha fin no puede ser anterior a hoy' 
+            });
+        }
+
+        
         const fechaId = await crearFechaGlobal({
             titulo,
             descripcion,
+            fecha_inicio: fecha_inicio || null,
+            hora_inicio: hora_inicio || '00:00:00',
             fecha,
-            hora_limite,
+            hora_limite: hora_limite || '23:59:59',
             tipo_fecha,
             es_global: es_global || false,
             creado_por_rut
         });
 
-        console.log('✅ Fecha creada exitosamente, ID:', fechaId);
+        
 
         // 📧 Enviar emails a todos los profesores y estudiantes (excepto admins)
         try {
@@ -114,7 +159,7 @@ export const crearFechaGlobalController = async (req, res) => {
             fecha_id: fechaId
         });
     } catch (error) {
-        console.error('❌ Error al crear fecha global:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
@@ -128,7 +173,7 @@ export const obtenerFechasGlobalesController = async (req, res) => {
         // Si es super admin, obtener TODAS las fechas globales creadas por admins (rol 3) y super admins (rol 4)
         // Esto asegura que el super admin vea todas las fechas que publican los admins de todas las carreras
         if (esSuperAdmin) {
-            console.log('🔓 Super Admin - Obteniendo TODAS las fechas globales de todos los admins');
+            
             const [fechas] = await pool.execute(`
                 SELECT f.*, 
                        u.nombre AS nombre_creador,
@@ -141,7 +186,7 @@ export const obtenerFechasGlobalesController = async (req, res) => {
                 AND (u.rol_id = 3 OR u.rol_id = 4)  -- Fechas creadas por admins (rol 3) o super admins (rol 4)
                 ORDER BY f.fecha ASC
             `);
-            console.log(`✅ Super Admin - Encontradas ${fechas.length} fechas globales de todos los admins`);
+            
             return res.json(fechas);
         }
         
@@ -149,7 +194,7 @@ export const obtenerFechasGlobalesController = async (req, res) => {
         const fechas = await obtenerFechasGlobales();
         res.json(fechas);
     } catch (error) {
-        console.error('Error al obtener fechas globales:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -175,7 +220,7 @@ export const obtenerEstadisticasFechasController = async (req, res) => {
         const estadisticas = await obtenerEstadisticasFechas();
         res.json(estadisticas);
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -261,7 +306,7 @@ export const crearFechaEspecificaController = async (req, res) => {
             fecha_id: fechaId
         });
     } catch (error) {
-        console.error('Error al crear fecha específica:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -280,7 +325,7 @@ export const obtenerFechasPorProfesorController = async (req, res) => {
         const fechas = await obtenerFechasPorProfesor(profesor_rut);
         res.json(fechas);
     } catch (error) {
-        console.error('Error al obtener fechas del profesor:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -308,7 +353,7 @@ export const obtenerFechasParaEstudianteController = async (req, res) => {
         const fechas = await obtenerFechasParaEstudiante(estudiante_rut);
         res.json(fechas);
     } catch (error) {
-        console.error('Error al obtener fechas del estudiante:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -319,10 +364,10 @@ export const obtenerFechasProximasEstudianteController = async (req, res) => {
         const estudiante_rut = req.user?.rut;
         const limite = parseInt(req.query.limite) || 5;
 
-        console.log('🎯 Controller obtenerFechasProximasEstudianteController:');
-        console.log('  - req.user:', req.user);
-        console.log('  - estudiante_rut:', estudiante_rut);
-        console.log('  - limite:', limite);
+        
+        
+        
+        
 
         if (req.user?.rol !== 'estudiante') {
             return res.status(403).json({ 
@@ -337,10 +382,10 @@ export const obtenerFechasProximasEstudianteController = async (req, res) => {
         }
 
         const fechas = await obtenerFechasProximas(estudiante_rut, limite);
-        console.log('  - Fechas obtenidas:', fechas.length);
+        
         res.json(fechas);
     } catch (error) {
-        console.error('Error al obtener fechas próximas:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -351,11 +396,7 @@ export const obtenerFechasProximasController = async (req, res) => {
         const usuario_rut = req.user?.rut;
         const limite = parseInt(req.query.limite) || 5;
 
-        console.log('🎯 Controller obtenerFechasProximasController (GENERAL):');
-        console.log('  - req.user:', req.user);
-        console.log('  - usuario_rut:', usuario_rut);
-        console.log('  - limite:', limite);
-        console.log('  - rol:', req.user?.rol);
+        console.log('📅 Obteniendo fechas próximas para:', usuario_rut);
 
         // Validar autenticación
         if (!req.user || !usuario_rut) {
@@ -373,10 +414,10 @@ export const obtenerFechasProximasController = async (req, res) => {
 
         // Este endpoint es accesible por todos los roles autenticados
         const fechas = await obtenerFechasProximas(usuario_rut, limite);
-        console.log('  - Fechas globales obtenidas:', fechas.length);
+        
         res.json(fechas);
     } catch (error) {
-        console.error('Error al obtener fechas próximas:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -416,7 +457,7 @@ export const obtenerFechaPorIdController = async (req, res) => {
 
         res.json(fecha);
     } catch (error) {
-        console.error('Error al obtener fecha:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -425,13 +466,13 @@ export const obtenerFechaPorIdController = async (req, res) => {
 export const actualizarFechaController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { titulo, descripcion, fecha, fecha_limite, tipo_fecha, habilitada, es_global } = req.body;
+        const { titulo, descripcion, fecha_inicio, hora_inicio, fecha, fecha_limite, hora_limite, tipo_fecha, habilitada, es_global } = req.body;
         const usuario_rut = req.user?.rut;
         const rol_usuario = req.user?.rol || req.user?.rol_id; // Usar rol o rol_id
 
-        console.log(`📝 Actualizando fecha calendario ID: ${id}`);
-        console.log('📋 Datos recibidos:', { titulo, descripcion, fecha, fecha_limite, tipo_fecha, habilitada, es_global });
-        console.log('👤 Usuario:', { rut: usuario_rut, rol: rol_usuario, user: req.user });
+        
+        
+        
 
         // Validar autenticación
         if (!req.user || !usuario_rut) {
@@ -451,14 +492,56 @@ export const actualizarFechaController = async (req, res) => {
         const fechaParaValidar = fecha || fecha_limite;
         if (!titulo || !fechaParaValidar) {
             return res.status(400).json({ 
-                message: 'Faltan campos requeridos: titulo, fecha' 
+                message: 'Faltan campos requeridos: titulo, fecha fin' 
             });
         }
 
-        // Validar formato de fecha
+        // Validar formato de fecha fin
         if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaParaValidar)) {
             return res.status(400).json({ 
-                message: 'Formato de fecha inválido. Use YYYY-MM-DD' 
+                message: 'Formato de fecha fin inválido. Use YYYY-MM-DD' 
+            });
+        }
+
+        // Validar fecha_inicio si existe
+        if (fecha_inicio) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha_inicio)) {
+                return res.status(400).json({ 
+                    message: 'Formato de fecha inicio inválido. Use YYYY-MM-DD' 
+                });
+            }
+
+            // Validar que fecha_inicio + hora_inicio sea antes de fecha_fin + hora_limite
+            const horaInicioValue = hora_inicio || '00:00:00';
+            const horaLimiteValue = hora_limite || '23:59:59';
+            const fechaHoraInicio = new Date(fecha_inicio + 'T' + horaInicioValue);
+            const fechaHoraFin = new Date(fechaParaValidar + 'T' + horaLimiteValue);
+            if (fechaHoraInicio >= fechaHoraFin) {
+                return res.status(400).json({ 
+                    message: 'La fecha y hora de inicio deben ser anteriores a la fecha y hora fin' 
+                });
+            }
+
+            // Validar que fecha_inicio no sea en el pasado (permite hoy)
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const fechaInicioDate = new Date(fecha_inicio + 'T00:00:00');
+            fechaInicioDate.setHours(0, 0, 0, 0);
+            if (fechaInicioDate < hoy) {
+                return res.status(400).json({ 
+                    message: 'La fecha de inicio no puede ser anterior a hoy' 
+                });
+            }
+        }
+
+        // Validar que fecha_fin no sea en el pasado (permite hoy)
+        const fechaFinDate = new Date(fechaParaValidar + 'T00:00:00');
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        fechaFinDate.setHours(0, 0, 0, 0);
+        if (fechaFinDate < hoy) {
+            return res.status(400).json({ 
+                message: 'La fecha fin no puede ser anterior a hoy' 
             });
         }
 
@@ -474,13 +557,16 @@ export const actualizarFechaController = async (req, res) => {
         const datosActualizar = {
             titulo,
             descripcion,
+            fecha_inicio: fecha_inicio || null,
+            hora_inicio: hora_inicio || '00:00:00',
             fecha: fechaParaValidar,
+            hora_limite: hora_limite || '23:59:59',
             tipo_fecha,
             habilitada,
             es_global
         };
 
-        console.log('💾 Actualizando fecha con:', datosActualizar);
+        
 
         // El modelo ahora maneja todo en la tabla unificada 'fechas'
         const actualizada = await actualizarFecha(id, datosActualizar);
@@ -494,7 +580,7 @@ export const actualizarFechaController = async (req, res) => {
             res.status(404).json({ message: 'Fecha no encontrada' });
         }
     } catch (error) {
-        console.error('❌ Error al actualizar fecha:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
 };
@@ -525,7 +611,7 @@ export const eliminarFechaController = async (req, res) => {
             res.status(404).json({ message: 'Fecha no encontrada' });
         }
     } catch (error) {
-        console.error('Error al eliminar fecha:', error);
+        
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };

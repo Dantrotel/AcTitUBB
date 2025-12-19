@@ -284,13 +284,41 @@ const crearFechasImportantesProyecto = async (proyecto_id, fechasPersonalizadas 
 };
 
 /**
+ * Crear una fecha importante para un proyecto
+ * @param {Object} fechaData - Datos de la fecha importante
+ * @returns {Promise<number>} - ID de la fecha creada
+ */
+const crearFechaImportante = async (fechaData) => {
+    return await fechasImportantesModel.crearFechaImportante(fechaData);
+};
+
+/**
+ * Actualizar fecha importante
+ * @param {number} fecha_id - ID de la fecha a actualizar
+ * @param {Object} updateData - Datos a actualizar
+ * @returns {Promise<boolean>} - True si se actualizó correctamente
+ */
+const actualizarFechaImportante = async (fecha_id, updateData) => {
+    return await fechasImportantesModel.actualizarFechaImportante(fecha_id, updateData);
+};
+
+/**
+ * Eliminar fecha importante
+ * @param {number} fecha_id - ID de la fecha a eliminar
+ * @returns {Promise<boolean>} - True si se eliminó correctamente
+ */
+const eliminarFechaImportante = async (fecha_id) => {
+    return await fechasImportantesModel.eliminarFechaImportante(fecha_id);
+};
+
+/**
  * Obtener fechas importantes de un proyecto con notificaciones
  * @param {number} proyecto_id - ID del proyecto
  * @returns {Promise<Object>} - Fechas con estadísticas
  */
 const obtenerFechasConNotificaciones = async (proyecto_id) => {
     const fechas = await fechasImportantesModel.obtenerFechasImportantesPorProyecto(proyecto_id);
-    const fechasProximas = await fechasImportantesModel.obtenerFechasProximasProyecto(proyecto_id);
+    const fechasProximas = await fechasImportantesModel.obtenerFechasProximasAVencer(proyecto_id, 7);
     
     const estadisticas = {
         total: fechas.length,
@@ -762,6 +790,9 @@ export const ProjectService = {
     puedeVerProyecto,
     // Funciones existentes
     crearFechasImportantesProyecto,
+    crearFechaImportante,
+    actualizarFechaImportante,
+    eliminarFechaImportante,
     obtenerFechasConNotificaciones,
     asignarProfesoresAProyecto,
     obtenerProyectoCompleto,

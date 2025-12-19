@@ -1,665 +1,777 @@
--- =====================================================
--- SCRIPT DE DATOS DE PRUEBA - AcTitUBB
--- =====================================================
--- Este script inserta datos de prueba para todas las funcionalidades
--- Incluye: Usuarios, Estructura Académica, Propuestas, Proyectos,
--- Cronogramas, Hitos, Avances, Reuniones y Datos Regulatorios
+-- ============================================
+-- DATOS DE PRUEBA COMPLETOS PARA ACTITUBB
+-- Sistema de Gestión de Proyectos de Título
+-- ============================================
+-- NOTA: Este script NO inserta roles, estados ni usuarios básicos
+-- porque ya existen en database.sql
+-- ============================================
 
 USE actitubb;
 
--- =====================================================
--- 1. USUARIOS ADICIONALES (Estudiantes y Profesores)
--- =====================================================
+-- ============================================
+-- NOTA: Roles y Estados ya existen en database.sql
+-- No se insertan para evitar duplicados
+-- ============================================
+-- Roles existentes: 1=estudiante, 2=profesor, 3=admin, 4=superadmin
+-- Estados de propuestas: pendiente, en_revision, correcciones, aprobada, rechazada
+-- Estados de proyectos: en_desarrollo, pausado, completado, etc.
+-- Roles de profesores: Profesor Revisor, Profesor Guía, Profesor Co-Guía, Profesor Informante, Profesor de Sala
+-- ============================================
 
--- Estudiantes adicionales (password: 1234)
-INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado) VALUES
-('12345678-9', 'Carlos Pérez González', 'carlos.perez@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('98765432-1', 'María Fernández López', 'maria.fernandez@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('15975348-6', 'Juan Ramírez Silva', 'juan.ramirez@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('75395145-2', 'Ana Torres Muñoz', 'ana.torres@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('35795145-8', 'Diego Morales Vega', 'diego.morales@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('95175385-3', 'Sofía Rojas Castro', 'sofia.rojas@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('85246913-7', 'Matías Soto Díaz', 'matias.soto@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1),
-('74185296-K', 'Valentina Vargas Ortiz', 'valentina.vargas@alumnos.ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, 1)
-ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
+-- ============================================
+-- 4. ESTRUCTURA ACADÉMICA
+-- ============================================
 
--- Profesores adicionales (password: 1234)
-INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado) VALUES
-('11223344-5', 'Dr. Roberto García Mendoza', 'roberto.garcia@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
-('22334455-6', 'Dra. Patricia Herrera Núñez', 'patricia.herrera@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
-('33445566-7', 'Dr. Fernando Campos Ríos', 'fernando.campos@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
-('44556677-8', 'Dra. Carmen Reyes Flores', 'carmen.reyes@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
-('55667788-9', 'Dr. Luis Castro Pinto', 'luis.castro@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1),
-('66778899-0', 'Dra. Elena Navarro Bravo', 'elena.navarro@ubiobio.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, 1)
-ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
+-- Facultades (INSERT IGNORE para evitar duplicados)
+INSERT IGNORE INTO facultades (nombre, codigo, descripcion, activo) VALUES
+('Facultad de Ciencias Empresariales', 'FCE', 'Facultad de Ciencias Empresariales', TRUE),
+('Facultad de Ingeniería', 'FI', 'Facultad de Ingeniería', TRUE);
 
--- =====================================================
--- 2. ESTRUCTURA ACADÉMICA (Facultades, Departamentos, Carreras)
--- =====================================================
+-- Departamentos (INSERT IGNORE para evitar duplicados)
+-- Nota: facultad_id se obtiene dinámicamente
+INSERT IGNORE INTO departamentos (nombre, codigo, facultad_id, descripcion, activo) VALUES
+('Departamento de Sistemas de Información', 'DSI', (SELECT id FROM facultades WHERE codigo = 'FI'), 'Departamento de Sistemas de Información', TRUE),
+('Departamento de Ciencias de la Computación', 'DCC', (SELECT id FROM facultades WHERE codigo = 'FI'), 'Departamento de Ciencias de la Computación', TRUE),
+('Departamento de Ingeniería Civil', 'DICIV', (SELECT id FROM facultades WHERE codigo = 'FI'), 'Departamento de Ingeniería Civil', TRUE);
 
--- Facultades
-INSERT INTO facultades (id, nombre, codigo, descripcion) VALUES
-(1, 'Facultad de Ingeniería', 'FING', 'Facultad de Ingeniería de la Universidad del Bío-Bío'),
-(2, 'Facultad de Ciencias', 'FCIE', 'Facultad de Ciencias de la Universidad del Bío-Bío')
-ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), codigo=VALUES(codigo);
+-- Carreras (INSERT IGNORE para evitar duplicados)
+INSERT IGNORE INTO carreras (nombre, codigo, facultad_id, titulo_profesional, duracion_semestres, descripcion, activo) VALUES
+('Ingeniería Civil en Informática', 'ICI', (SELECT id FROM facultades WHERE codigo = 'FI'), 'Ingeniero Civil en Informática', 12, 'Ingeniería Civil en Informática', TRUE),
+('Ingeniería de Ejecución en Computación e Informática', 'IECI', (SELECT id FROM facultades WHERE codigo = 'FI'), 'Ingeniero de Ejecución en Computación e Informática', 8, 'Ingeniería de Ejecución en Computación e Informática', TRUE),
+('Ingeniería Civil Industrial', 'ICIND', (SELECT id FROM facultades WHERE codigo = 'FI'), 'Ingeniero Civil Industrial', 12, 'Ingeniería Civil Industrial', TRUE);
 
--- Departamentos
-INSERT INTO departamentos (id, nombre, codigo, facultad_id) VALUES
-(1, 'Departamento de Ingeniería en Sistemas', 'DIS', 1),
-(2, 'Departamento de Ingeniería Civil Informática', 'DICI', 1),
-(3, 'Departamento de Ciencias de la Computación', 'DCC', 2)
-ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
+-- ============================================
+-- 5. USUARIOS ADICIONALES DE PRUEBA
+-- ============================================
+-- NOTA: Los usuarios básicos ya existen en database.sql:
+-- - 11111111-1: Usuario Estudiante (rol 1) - password: 1234
+-- - 22222222-2: Usuario Profesor (rol 2) - password: 1234  
+-- - 33333333-3: Usuario Admin (rol 3) - password: 1234
+-- - 44444444-4: Usuario SuperAdmin (rol 4) - password: 1234
+-- 
+-- Aquí agregamos usuarios adicionales con RUTs diferentes
+-- Contraseña para nuevos usuarios: 1234
+-- Hash bcrypt: $2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe
+-- ============================================
 
--- Carreras
-INSERT INTO carreras (id, nombre, codigo, facultad_id, duracion_semestres, titulo_profesional) VALUES
-(1, 'Ingeniería Civil en Informática', 'ICI', 1, 12, 'Ingeniero Civil en Informática'),
-(2, 'Ingeniería de Ejecución en Computación e Informática', 'IECI', 1, 10, 'Ingeniero de Ejecución en Computación e Informática'),
-(3, 'Ingeniería en Sistemas', 'IS', 1, 10, 'Ingeniero en Sistemas')
-ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), codigo=VALUES(codigo);
+-- Profesores adicionales (INSERT IGNORE para evitar duplicados)
+INSERT IGNORE INTO usuarios (rut, nombre, email, password, rol_id, confirmado, debe_cambiar_password) VALUES
+('12345678-9', 'Dr. Juan Pérez Soto', 'juan.perez@ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, TRUE, FALSE),
+('98765432-1', 'Dra. María González López', 'maria.gonzalez@ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, TRUE, FALSE),
+('11223344-5', 'Dr. Carlos Ramírez Torres', 'carlos.ramirez@ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, TRUE, FALSE),
+('55667788-9', 'Dra. Ana Martínez Silva', 'ana.martinez@ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, TRUE, FALSE),
+('44556677-8', 'Dr. Pedro Sánchez Rojas', 'pedro.sanchez@ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 2, TRUE, FALSE);
 
--- Relación Departamentos-Carreras
-INSERT INTO departamentos_carreras (departamento_id, carrera_id, es_principal) VALUES
-(1, 1, TRUE),
-(1, 2, TRUE),
-(2, 3, TRUE)
-ON DUPLICATE KEY UPDATE es_principal=VALUES(es_principal);
+-- Estudiantes adicionales (INSERT IGNORE para evitar duplicados)
+INSERT IGNORE INTO usuarios (rut, nombre, email, password, rol_id, confirmado, debe_cambiar_password) VALUES
+('20111222-3', 'Luis Andrés Morales Castro', 'luis.morales@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20222333-4', 'Camila Andrea Rojas Fernández', 'camila.rojas@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20333444-5', 'Diego Sebastián Vargas Muñoz', 'diego.vargas@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20444555-6', 'Valentina Isabel Núñez Pérez', 'valentina.nunez@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20555666-7', 'Matías Alejandro Silva Contreras', 'matias.silva@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20666777-8', 'Sofía Constanza Vega Díaz', 'sofia.vega@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20777888-9', 'Benjamín Eduardo Herrera Soto', 'benjamin.herrera@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE),
+('20888999-0', 'Javiera Paz Flores Gómez', 'javiera.flores@alumnos.ubb.cl', '$2y$10$AwscUykc7vcJO4YPWt6HJOyT4WDhuLgHbIEHptXikb4TYHEsdvooe', 1, TRUE, FALSE);
 
--- Asignar profesores a departamentos
-INSERT INTO profesores_departamentos (profesor_rut, departamento_id, es_principal, fecha_ingreso) VALUES
-('22222222-2', 1, TRUE, '2020-03-01'),
-('11223344-5', 1, FALSE, '2018-01-15'),
-('22334455-6', 1, FALSE, '2019-06-10'),
-('33445566-7', 2, TRUE, '2017-08-20'),
-('44556677-8', 2, FALSE, '2021-01-05'),
-('55667788-9', 3, TRUE, '2016-03-12'),
-('66778899-0', 3, FALSE, '2022-02-28')
-ON DUPLICATE KEY UPDATE es_principal=VALUES(es_principal);
+-- Relación Profesores - Departamentos (usando códigos en lugar de IDs)
+INSERT IGNORE INTO profesores_departamentos (profesor_rut, departamento_id, es_principal, fecha_ingreso) VALUES
+('12345678-9', (SELECT id FROM departamentos WHERE codigo = 'DSI'), TRUE, '2020-03-01'),
+('98765432-1', (SELECT id FROM departamentos WHERE codigo = 'DSI'), FALSE, '2019-08-01'),
+('11223344-5', (SELECT id FROM departamentos WHERE codigo = 'DCC'), TRUE, '2018-03-01'),
+('55667788-9', (SELECT id FROM departamentos WHERE codigo = 'DSI'), FALSE, '2021-03-01'),
+('44556677-8', (SELECT id FROM departamentos WHERE codigo = 'DCC'), FALSE, '2022-08-01');
 
--- Asignar estudiantes a carreras
-INSERT INTO estudiantes_carreras (estudiante_rut, carrera_id, ano_ingreso, semestre_actual, estado_estudiante, fecha_ingreso, es_carrera_principal) VALUES
-('11111111-1', 1, 2021, 7, 'regular', '2021-03-01', TRUE),
-('12345678-9', 1, 2021, 7, 'regular', '2021-03-01', TRUE),
-('98765432-1', 2, 2022, 5, 'regular', '2022-03-01', TRUE),
-('15975348-6', 1, 2020, 9, 'regular', '2020-03-01', TRUE),
-('75395145-2', 3, 2021, 7, 'regular', '2021-03-01', TRUE),
-('35795145-8', 2, 2022, 5, 'regular', '2022-03-01', TRUE),
-('95175385-3', 1, 2023, 3, 'regular', '2023-03-01', TRUE),
-('85246913-7', 3, 2021, 7, 'regular', '2021-03-01', TRUE),
-('74185296-K', 2, 2023, 3, 'regular', '2023-03-01', TRUE)
-ON DUPLICATE KEY UPDATE semestre_actual=VALUES(semestre_actual), estado_estudiante=VALUES(estado_estudiante);
+-- Relación Estudiantes - Carreras (usando códigos en lugar de IDs)
+INSERT IGNORE INTO estudiantes_carreras (estudiante_rut, carrera_id, ano_ingreso, semestre_actual, estado_estudiante, fecha_ingreso, es_carrera_principal) VALUES
+('20111222-3', (SELECT id FROM carreras WHERE codigo = 'ICI'), 2020, 8, 'regular', '2020-03-01', TRUE),
+('20222333-4', (SELECT id FROM carreras WHERE codigo = 'ICI'), 2020, 8, 'regular', '2020-03-01', TRUE),
+('20333444-5', (SELECT id FROM carreras WHERE codigo = 'IECI'), 2021, 7, 'regular', '2021-03-01', TRUE),
+('20444555-6', (SELECT id FROM carreras WHERE codigo = 'ICI'), 2020, 8, 'regular', '2020-03-01', TRUE),
+('20555666-7', (SELECT id FROM carreras WHERE codigo = 'IECI'), 2021, 7, 'regular', '2021-03-01', TRUE),
+('20666777-8', (SELECT id FROM carreras WHERE codigo = 'ICI'), 2020, 8, 'regular', '2020-03-01', TRUE),
+('20777888-9', (SELECT id FROM carreras WHERE codigo = 'IECI'), 2021, 7, 'regular', '2021-03-01', TRUE),
+('20888999-0', (SELECT id FROM carreras WHERE codigo = 'ICI'), 2020, 8, 'regular', '2020-03-01', TRUE);
 
--- Asignar jefes de carrera (Admin como jefe de Ingeniería Civil en Informática)
-INSERT INTO jefes_carreras (profesor_rut, carrera_id, fecha_inicio, activo) VALUES
-('33333333-3', 1, '2023-01-01', TRUE),
-('33333333-3', 2, '2023-01-01', TRUE)
-ON DUPLICATE KEY UPDATE activo=VALUES(activo);
+-- ============================================
+-- 6. PROPUESTAS
+-- ============================================
 
--- Agregar al admin en un departamento
-INSERT INTO profesores_departamentos (profesor_rut, departamento_id, es_principal, fecha_ingreso) VALUES
-('33333333-3', 1, TRUE, '2023-01-01')
-ON DUPLICATE KEY UPDATE es_principal=VALUES(es_principal);
-
--- =====================================================
--- 3. ESTADOS DEL SISTEMA
--- =====================================================
-
--- Estados de Propuestas
-INSERT INTO estados_propuestas (id, nombre, descripcion) VALUES
-(1, 'pendiente', 'Propuesta enviada, pendiente de revisión'),
-(2, 'en_revision', 'Propuesta en proceso de revisión'),
-(3, 'observaciones', 'Propuesta con observaciones que deben ser corregidas'),
-(4, 'aprobada', 'Propuesta aprobada, lista para convertirse en proyecto'),
-(5, 'rechazada', 'Propuesta rechazada')
-ON DUPLICATE KEY UPDATE descripcion=VALUES(descripcion);
-
--- Estados de Proyectos
-INSERT INTO estados_proyectos (id, nombre, descripcion) VALUES
-(1, 'iniciando', 'Proyecto recién creado, en proceso de inicio'),
-(2, 'en_desarrollo', 'Proyecto en desarrollo activo'),
-(3, 'en_revision', 'Proyecto en revisión intermedia'),
-(4, 'detenido', 'Proyecto temporalmente detenido'),
-(5, 'en_riesgo', 'Proyecto con riesgo de abandono por inactividad'),
-(6, 'completado', 'Proyecto completado, pendiente de defensa'),
-(7, 'defendido', 'Proyecto defendido exitosamente'),
-(8, 'cerrado', 'Proyecto cerrado definitivamente')
-ON DUPLICATE KEY UPDATE descripcion=VALUES(descripcion);
-
--- =====================================================
--- 4. PROPUESTAS DE TÍTULO
--- =====================================================
-
--- Propuesta 1: Aprobada (convertida a proyecto)
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio, fecha_revision,
+-- Propuesta 1: Aprobada y convertida en proyecto
+INSERT IGNORE INTO propuestas (
+    titulo, descripcion, estudiante_rut, estado_id,
+    fecha_envio, fecha_revision, fecha_aprobacion, proyecto_id,
     modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta
+    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta,
+    recursos_necesarios, bibliografia
 ) VALUES (
-    'Sistema de Gestión de Inventario con IoT',
-    'Desarrollo de un sistema web integrado con dispositivos IoT para el control y gestión automatizada de inventario en tiempo real para pequeñas y medianas empresas.',
-    '12345678-9',
-    4, -- aprobada
-    '2024-11-15',
-    '2024-11-25',
+    'Sistema Web de Gestión de Inventario para PYMES',
+    'Desarrollo de una aplicación web para la gestión integral de inventarios, ventas y compras orientada a pequeñas y medianas empresas del sector retail.',
+    '20111222-3',
+    (SELECT id FROM estados_propuestas WHERE nombre = 'aprobada'), -- aprobada
+    '2024-03-15',
+    '2024-03-20 14:30:00',
+    '2024-03-25',
+    1, -- proyecto_id
     'desarrollo_software',
     1,
-    'alta',
-    2,
-    'Internet de las Cosas (IoT)',
-    'Desarrollar un sistema web integrado con tecnología IoT para la gestión automatizada de inventario en tiempo real.',
-    '1. Diseñar la arquitectura del sistema web y comunicación IoT\n2. Implementar sensores RFID para tracking de productos\n3. Desarrollar dashboard de monitoreo en tiempo real\n4. Implementar alertas automáticas de reposición\n5. Realizar pruebas de integración y validación',
-    'Metodología Scrum con sprints de 2 semanas. Desarrollo incremental con prototipado rápido. Testing continuo con usuarios reales.'
+    'media',
+    1,
+    'Desarrollo Web y Sistemas de Información',
+    'Desarrollar un sistema web de gestión de inventario que permita a las PYMES optimizar el control de stock, ventas y compras mediante una interfaz intuitiva y moderna.',
+    '1. Diseñar e implementar una base de datos relacional para almacenar información de productos, clientes y transacciones.\n2. Desarrollar módulos de gestión de inventario, ventas y compras.\n3. Implementar sistema de alertas para stock bajo y productos vencidos.\n4. Crear reportes y dashboards con métricas clave del negocio.',
+    'Metodología ágil Scrum con sprints de 2 semanas. Desarrollo incremental con entregas parciales. Testing continuo y validación con usuarios reales. Documentación técnica y de usuario.',
+    'Servidor para despliegue, base de datos MySQL, framework Angular para frontend, Node.js para backend, herramientas de testing automatizado.',
+    '1. Pressman, R. (2014). Ingeniería del Software: Un Enfoque Práctico.\n2. Sommerville, I. (2016). Software Engineering.\n3. Documentación oficial de Angular y Node.js.'
 );
-
-SET @propuesta1_id = LAST_INSERT_ID();
 
 -- Propuesta 2: En revisión
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio,
+INSERT IGNORE INTO propuestas (
+    titulo, descripcion, estudiante_rut, estado_id,
+    fecha_envio, fecha_revision,
     modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta
+    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta,
+    recursos_necesarios, bibliografia
 ) VALUES (
-    'Aplicación Móvil para Gestión de Salud Personal',
-    'Desarrollo de una aplicación móvil multiplataforma que permita a los usuarios llevar un registro completo de su salud, incluyendo medicamentos, citas médicas y recordatorios.',
-    '98765432-1',
-    2, -- en_revision
-    '2024-12-01',
+    'Aplicación Móvil para Seguimiento de Entrenamientos Deportivos',
+    'Desarrollo de una aplicación móvil multiplataforma que permita a deportistas aficionados llevar un registro detallado de sus entrenamientos, progreso y objetivos.',
+    '20222333-4',
+    (SELECT id FROM estados_propuestas WHERE nombre = 'en_revision'), -- en_revision
+    '2024-11-10',
+    '2024-11-15 10:00:00',
     'desarrollo_software',
     1,
     'media',
     1,
-    'Aplicaciones Móviles',
-    'Crear una aplicación móvil integral para la gestión personalizada de la salud del usuario.',
-    '1. Analizar requisitos de usuarios en materia de salud personal\n2. Diseñar interfaz intuitiva y accesible\n3. Implementar sistema de recordatorios inteligentes\n4. Integrar con APIs de servicios de salud\n5. Validar con usuarios finales',
-    'Desarrollo ágil con enfoque en UX/UI. Prototipado con Figma. Implementación en Flutter para iOS y Android.'
+    'Desarrollo Móvil e IoT',
+    'Crear una aplicación móvil que facilite el seguimiento de entrenamientos deportivos mediante registro manual y automático de métricas físicas.',
+    '1. Desarrollar aplicación multiplataforma usando React Native.\n2. Implementar sincronización con wearables y dispositivos fitness.\n3. Crear sistema de planes de entrenamiento personalizados.\n4. Generar estadísticas y gráficos de progreso.',
+    'Desarrollo basado en MVP (Minimum Viable Product), iteraciones rápidas con feedback de usuarios beta, testing en dispositivos Android e iOS.',
+    'Dispositivos móviles para pruebas (Android e iOS), API de integración con wearables, servidor backend, base de datos cloud.',
+    '1. Deitel, P. (2017). Android for Programmers.\n2. Eisenman, B. (2016). Learning React Native.\n3. Documentación de React Native y Firebase.'
 );
 
--- Propuesta 3: Con observaciones
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio, fecha_revision,
+-- Propuesta 3: Pendiente
+INSERT IGNORE INTO propuestas (
+    titulo, descripcion, estudiante_rut, estado_id,
+    fecha_envio,
     modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
     area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta,
-    recursos_necesarios
+    recursos_necesarios, bibliografia
 ) VALUES (
-    'Sistema de Reconocimiento Facial para Control de Acceso',
-    'Implementación de un sistema de reconocimiento facial usando deep learning para control de acceso en edificios universitarios. OBSERVACIONES: Se requiere mayor detalle en la metodología de entrenamiento del modelo. Incluir plan de privacidad y protección de datos biométricos. Ampliar el análisis de trabajos relacionados.',
-    '15975348-6',
-    3, -- observaciones
+    'Sistema de Recomendación de Contenido Educativo usando Machine Learning',
+    'Desarrollo de un sistema inteligente de recomendación de contenido educativo personalizado basado en el perfil de aprendizaje del estudiante.',
+    '20333444-5',
+    (SELECT id FROM estados_propuestas WHERE nombre = 'pendiente'), -- pendiente
+    '2024-12-01',
+    'investigacion',
+    1,
+    'alta',
+    2,
+    'Inteligencia Artificial y Machine Learning',
+    'Diseñar e implementar un sistema de recomendación basado en machine learning que sugiera contenido educativo personalizado según el perfil de aprendizaje del estudiante.',
+    '1. Investigar y seleccionar algoritmos de recomendación apropiados.\n2. Recolectar y preprocesar datos de estudiantes y contenido educativo.\n3. Entrenar y evaluar modelos de machine learning.\n4. Implementar sistema web con recomendaciones en tiempo real.\n5. Validar eficacia mediante experimentos con usuarios.',
+    'Investigación bibliográfica, experimentación con datasets educativos, desarrollo iterativo con evaluación continua de métricas de precisión y recall.',
+    'GPU para entrenamiento de modelos, dataset educativo, bibliotecas de ML (scikit-learn, TensorFlow), plataforma web para validación.',
+    '1. Aggarwal, C. (2016). Recommender Systems: The Textbook.\n2. Géron, A. (2019). Hands-On Machine Learning.\n3. Papers recientes sobre educational recommender systems.'
+);
+
+-- Propuesta 4: Requiere correcciones
+INSERT IGNORE INTO propuestas (
+    titulo, descripcion, estudiante_rut, estado_id,
+    fecha_envio, fecha_revision,
+    modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
+    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta,
+    recursos_necesarios, bibliografia
+) VALUES (
+    'Plataforma IoT para Monitoreo Ambiental',
+    'Sistema de monitoreo ambiental basado en IoT para medir temperatura, humedad, calidad del aire en espacios interiores.',
+    '20444555-6',
+    (SELECT id FROM estados_propuestas WHERE nombre = 'correcciones'), -- requiere correcciones
     '2024-11-20',
-    '2024-11-28',
-    'investigacion',
+    '2024-11-25 16:00:00',
+    'desarrollo_software',
     1,
     'alta',
     2,
-    'Inteligencia Artificial',
-    'Desarrollar un sistema de reconocimiento facial robusto y eficiente para control de acceso.',
-    '1. Investigar algoritmos de reconocimiento facial\n2. Entrenar modelo con dataset local\n3. Implementar sistema de captura en tiempo real\n4. Integrar con control de acceso físico',
-    'Investigación aplicada con Deep Learning. Framework TensorFlow. Validación con métricas de precisión y recall.',
-    'Servidor con GPU para entrenamiento, cámaras web de alta resolución, dataset de rostros'
+    'Internet de las Cosas',
+    'Desarrollar un sistema IoT para monitoreo ambiental en tiempo real con alertas y visualización de datos históricos.',
+    '1. Diseñar arquitectura del sistema IoT.\n2. Implementar nodos sensores con ESP32.\n3. Desarrollar backend para procesamiento de datos.\n4. Crear dashboard web para visualización.',
+    'Prototipado rápido, desarrollo incremental, pruebas en entorno real.',
+    'Sensores ambientales, microcontroladores ESP32, servidor cloud, componentes electrónicos.',
+    '1. Vermesan, O. (2017). Internet of Things: Converging Technologies.\n2. Documentación de ESP32 y protocolos IoT.'
 );
 
--- Propuesta 4: Pendiente
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio,
-    modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta
+-- Estudiantes vinculados a propuestas (usar subconsultas para obtener IDs dinámicamente)
+INSERT IGNORE INTO estudiantes_propuestas (propuesta_id, estudiante_rut, es_creador, orden)
+SELECT p.id, '20111222-3', TRUE, 1 FROM propuestas p WHERE p.titulo = 'Sistema Web de Gestión de Inventario para PYMES' AND p.estudiante_rut = '20111222-3' LIMIT 1;
+
+INSERT IGNORE INTO estudiantes_propuestas (propuesta_id, estudiante_rut, es_creador, orden)
+SELECT p.id, '20222333-4', TRUE, 1 FROM propuestas p WHERE p.titulo = 'Aplicación Móvil para Seguimiento de Entrenamientos Deportivos' AND p.estudiante_rut = '20222333-4' LIMIT 1;
+
+INSERT IGNORE INTO estudiantes_propuestas (propuesta_id, estudiante_rut, es_creador, orden)
+SELECT p.id, '20333444-5', TRUE, 1 FROM propuestas p WHERE p.titulo LIKE 'Sistema de Recomendación%' AND p.estudiante_rut = '20333444-5' LIMIT 1;
+
+INSERT IGNORE INTO estudiantes_propuestas (propuesta_id, estudiante_rut, es_creador, orden)
+SELECT p.id, '20444555-6', TRUE, 1 FROM propuestas p WHERE p.titulo = 'Plataforma IoT para Monitoreo Ambiental' AND p.estudiante_rut = '20444555-6' LIMIT 1;
+
+-- ============================================
+-- 7. ASIGNACIONES DE PROFESORES A PROPUESTAS
+-- ============================================
+
+-- Asignaciones de propuestas (usando subconsultas dinámicas)
+-- Propuesta 1 (aprobada)
+INSERT IGNORE INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, fecha_asignacion, fecha_revision, estado_revision, decision, comentarios_revision, asignado_por)
+SELECT p.id, '12345678-9', 'revisor_principal', '2024-03-16 09:00:00', '2024-03-20 14:30:00', 'revisado', 'aprobar', 'Excelente propuesta. El alcance está bien definido y es factible. Recomiendo aprobar.', '33333333-3'
+FROM propuestas p WHERE p.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, fecha_asignacion, fecha_revision, estado_revision, decision, comentarios_revision, asignado_por)
+SELECT p.id, '98765432-1', 'revisor_secundario', '2024-03-16 09:00:00', '2024-03-21 11:00:00', 'revisado', 'aprobar', 'Propuesta sólida con objetivos claros. Apoyo la aprobación.', '33333333-3'
+FROM propuestas p WHERE p.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- Propuesta 2 (en revisión)
+INSERT IGNORE INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, fecha_asignacion, estado_revision, asignado_por)
+SELECT p.id, '11223344-5', 'revisor_principal', '2024-11-11 10:00:00', 'en_revision', '33333333-3'
+FROM propuestas p WHERE p.titulo = 'Aplicación Móvil para Seguimiento de Entrenamientos Deportivos' LIMIT 1;
+
+INSERT IGNORE INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, fecha_asignacion, estado_revision, asignado_por)
+SELECT p.id, '55667788-9', 'informante', '2024-11-11 10:00:00', 'en_revision', '33333333-3'
+FROM propuestas p WHERE p.titulo = 'Aplicación Móvil para Seguimiento de Entrenamientos Deportivos' LIMIT 1;
+
+-- Propuesta 3 (pendiente)
+INSERT IGNORE INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, fecha_asignacion, estado_revision, asignado_por)
+SELECT p.id, '12345678-9', 'revisor_principal', '2024-12-02 08:00:00', 'pendiente', '33333333-3'
+FROM propuestas p WHERE p.titulo LIKE 'Sistema de Recomendación%' LIMIT 1;
+
+-- Propuesta 4 (requiere correcciones)
+INSERT IGNORE INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, fecha_asignacion, fecha_revision, estado_revision, decision, comentarios_revision, asignado_por)
+SELECT p.id, '44556677-8', 'revisor_principal', '2024-11-21 09:00:00', '2024-11-25 16:00:00', 'revisado', 'solicitar_correcciones', 'La propuesta es interesante pero necesita mayor detalle en la metodología. Falta especificar los sensores exactos y el protocolo de comunicación IoT a utilizar. Debe ampliar la bibliografía con papers recientes.', '33333333-3'
+FROM propuestas p WHERE p.titulo = 'Plataforma IoT para Monitoreo Ambiental' LIMIT 1;
+
+-- ============================================
+-- 8. PROYECTOS
+-- ============================================
+
+-- Proyecto 1: Derivado de propuesta 1
+INSERT IGNORE INTO proyectos (
+    titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
+    fecha_inicio, fecha_entrega_estimada,
+    objetivo_general, objetivos_especificos, metodologia,
+    porcentaje_avance, estado_detallado, prioridad, riesgo_nivel,
+    modalidad, complejidad, duracion_semestres,
+    ultima_actividad_fecha, tiempo_dedicado_horas
 ) VALUES (
-    'Plataforma E-learning con Gamificación',
-    'Desarrollo de una plataforma de aprendizaje en línea que incorpore elementos de gamificación para aumentar la motivación y engagement de los estudiantes.',
-    '75395145-2',
-    1, -- pendiente
-    '2024-12-02',
+    'Sistema Web de Gestión de Inventario para PYMES',
+    'Desarrollo de una aplicación web para la gestión integral de inventarios, ventas y compras orientada a pequeñas y medianas empresas del sector retail.',
+    (SELECT id FROM propuestas WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' AND estudiante_rut = '20111222-3' LIMIT 1),
+    '20111222-3',
+    (SELECT id FROM estados_proyectos WHERE nombre = 'en_desarrollo'), -- en desarrollo
+    '2024-04-01',
+    '2024-11-30',
+    'Desarrollar un sistema web de gestión de inventario que permita a las PYMES optimizar el control de stock, ventas y compras mediante una interfaz intuitiva y moderna.',
+    '1. Diseñar e implementar una base de datos relacional para almacenar información de productos, clientes y transacciones.\n2. Desarrollar módulos de gestión de inventario, ventas y compras.\n3. Implementar sistema de alertas para stock bajo y productos vencidos.\n4. Crear reportes y dashboards con métricas clave del negocio.',
+    'Metodología ágil Scrum con sprints de 2 semanas. Desarrollo incremental con entregas parciales. Testing continuo y validación con usuarios reales. Documentación técnica y de usuario.',
+    65.5,
+    'desarrollo_fase2',
+    'alta',
+    'medio',
     'desarrollo_software',
-    1,
     'media',
     1,
-    'Tecnologías Educativas',
-    'Crear una plataforma e-learning innovadora que mejore el engagement estudiantil mediante gamificación.',
-    '1. Analizar sistemas e-learning actuales\n2. Diseñar mecánicas de gamificación apropiadas\n3. Implementar sistema de puntos, insignias y rankings\n4. Desarrollar módulos de contenido interactivo\n5. Evaluar efectividad con grupos de usuarios',
-    'Diseño centrado en el usuario. Desarrollo iterativo con feedback continuo. A/B testing para validar mecánicas de gamificación.'
-);
-
--- Propuesta 5: Equipo de 2 estudiantes
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio,
-    modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta,
-    justificacion_complejidad
-) VALUES (
-    'Sistema Distribuido de Procesamiento de Big Data',
-    'Diseño e implementación de un sistema distribuido escalable para procesamiento de grandes volúmenes de datos en tiempo real usando arquitectura microservicios.',
-    '35795145-8',
-    1, -- pendiente
-    '2024-11-28',
-    'desarrollo_software',
-    2,
-    'alta',
-    2,
-    'Sistemas Distribuidos',
-    'Desarrollar un sistema distribuido robusto y escalable para procesamiento eficiente de Big Data.',
-    '1. Diseñar arquitectura de microservicios distribuidos\n2. Implementar sistema de mensajería (Kafka)\n3. Desarrollar workers de procesamiento paralelo\n4. Implementar sistema de monitoreo y observabilidad\n5. Realizar pruebas de carga y escalabilidad',
-    'Arquitectura orientada a servicios. Implementación con Docker y Kubernetes. Testing de carga con herramientas especializadas.',
-    'El proyecto requiere dos estudiantes debido a su alta complejidad técnica: uno se enfocará en el backend distribuido y procesamiento, mientras el otro en la infraestructura, DevOps y monitoreo del sistema.'
-);
-
--- =====================================================
--- 5. ASIGNACIONES DE PROFESORES A PROPUESTAS
--- =====================================================
-
-INSERT INTO asignaciones_propuestas (propuesta_id, profesor_rut, rol_revision, asignado_por) VALUES
-(@propuesta1_id, '22222222-2', 'revisor_principal', '33333333-3'),
-(@propuesta1_id, '11223344-5', 'revisor_secundario', '33333333-3');
-
--- =====================================================
--- 6. PROYECTOS (Desde propuesta aprobada)
--- =====================================================
-
--- Proyecto 1: Activo con actividad reciente (Sin riesgo)
-INSERT INTO proyectos (
-    titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
-    fecha_inicio, fecha_entrega_estimada,
-    objetivo_general, objetivos_especificos, metodologia,
-    modalidad, complejidad, duracion_semestres,
-    porcentaje_avance, ultima_actividad_fecha, umbral_dias_riesgo, umbral_dias_abandono
-) VALUES (
-    'Sistema de Gestión de Inventario con IoT',
-    'Desarrollo de un sistema web integrado con dispositivos IoT para el control y gestión automatizada de inventario en tiempo real.',
-    @propuesta1_id,
-    '12345678-9',
-    2, -- en_desarrollo
-    '2024-12-01',
-    '2025-06-30',
-    'Desarrollar un sistema web integrado con tecnología IoT para la gestión automatizada de inventario en tiempo real.',
-    '1. Diseñar la arquitectura del sistema web y comunicación IoT\n2. Implementar sensores RFID para tracking de productos\n3. Desarrollar dashboard de monitoreo en tiempo real\n4. Implementar alertas automáticas de reposición\n5. Realizar pruebas de integración y validación',
-    'Metodología Scrum con sprints de 2 semanas',
-    'desarrollo_software',
-    'alta',
-    2,
-    25,
-    '2024-12-02', -- Actividad hace 1 día
-    30,
-    60
-);
-
-SET @proyecto1_id = LAST_INSERT_ID();
-
--- Propuesta para proyecto 2
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio, fecha_revision,
-    modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta
-) VALUES (
-    'Sistema de Análisis Predictivo de Ventas',
-    'Desarrollo de un sistema de análisis predictivo usando Machine Learning para proyección de ventas en retail.',
-    '98765432-1',
-    4, -- aprobada
-    '2024-07-01',
-    '2024-07-10',
-    'investigacion',
-    1,
-    'alta',
-    2,
-    'Inteligencia Artificial',
-    'Crear un sistema de análisis predictivo robusto para mejorar la toma de decisiones comerciales.',
-    '1. Recopilar y limpiar datos históricos de ventas\n2. Implementar modelos de ML (LSTM, Prophet)\n3. Desarrollar API de predicción\n4. Crear dashboard de visualización\n5. Validar precisión con datos reales',
-    'CRISP-DM para proyectos de Data Science'
-);
-
-SET @propuesta2_id = LAST_INSERT_ID();
-
--- Proyecto 2: Con riesgo (47 días sin actividad)
-INSERT INTO proyectos (
-    titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
-    fecha_inicio, fecha_entrega_estimada,
-    objetivo_general, objetivos_especificos, metodologia,
-    modalidad, complejidad, duracion_semestres,
-    porcentaje_avance, ultima_actividad_fecha, umbral_dias_riesgo, umbral_dias_abandono,
-    alerta_inactividad_enviada, fecha_alerta_inactividad
-) VALUES (
-    'Sistema de Análisis Predictivo de Ventas',
-    'Desarrollo de un sistema de análisis predictivo usando Machine Learning para proyección de ventas en retail.',
-    @propuesta2_id,
-    '98765432-1',
-    5, -- en_riesgo
-    '2024-08-15',
-    '2025-03-30',
-    'Crear un sistema de análisis predictivo robusto para mejorar la toma de decisiones comerciales.',
-    '1. Recopilar y limpiar datos históricos de ventas\n2. Implementar modelos de ML (LSTM, Prophet)\n3. Desarrollar API de predicción\n4. Crear dashboard de visualización\n5. Validar precisión con datos reales',
-    'CRISP-DM para proyectos de Data Science',
-    'investigacion',
-    'alta',
-    2,
-    40,
-    DATE_SUB(CURDATE(), INTERVAL 47 DAY), -- 47 días sin actividad
-    30,
-    60,
-    TRUE,
-    DATE_SUB(CURDATE(), INTERVAL 2 DAY)
-);
-
-SET @proyecto2_id = LAST_INSERT_ID();
-
--- Propuesta para proyecto 3
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio, fecha_revision,
-    modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta
-) VALUES (
-    'Red Social para Estudiantes Universitarios',
-    'Plataforma social especializada para estudiantes que facilite el networking académico y colaboración.',
-    '15975348-6',
-    4, -- aprobada
-    '2024-06-01',
-    '2024-06-10',
-    'desarrollo_software',
-    1,
-    'media',
-    2,
-    'Aplicaciones Web',
-    'Desarrollar una red social enfocada en el ámbito académico universitario.',
-    '1. Analizar necesidades de networking estudiantil\n2. Diseñar arquitectura de red social escalable\n3. Implementar sistema de matching por intereses\n4. Desarrollar funcionalidades de colaboración\n5. Realizar pruebas de usabilidad',
-    'Metodología ágil con enfoque en MVP'
-);
-
-SET @propuesta3_id = LAST_INSERT_ID();
-
--- Proyecto 3: Abandono potencial (68 días sin actividad)
-INSERT INTO proyectos (
-    titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
-    fecha_inicio, fecha_entrega_estimada,
-    objetivo_general, objetivos_especificos, metodologia,
-    modalidad, complejidad, duracion_semestres,
-    porcentaje_avance, ultima_actividad_fecha, umbral_dias_riesgo, umbral_dias_abandono,
-    alerta_inactividad_enviada, fecha_alerta_inactividad
-) VALUES (
-    'Red Social para Estudiantes Universitarios',
-    'Plataforma social especializada para estudiantes que facilite el networking académico y colaboración.',
-    @propuesta3_id,
-    '15975348-6',
-    5, -- en_riesgo
-    '2024-07-01',
-    '2025-02-28',
-    'Desarrollar una red social enfocada en el ámbito académico universitario.',
-    '1. Analizar necesidades de networking estudiantil\n2. Diseñar arquitectura de red social escalable\n3. Implementar sistema de matching por intereses\n4. Desarrollar funcionalidades de colaboración\n5. Realizar pruebas de usabilidad',
-    'Metodología ágil con enfoque en MVP',
-    'desarrollo_software',
-    'media',
-    2,
-    15,
-    DATE_SUB(CURDATE(), INTERVAL 68 DAY), -- 68 días sin actividad (ABANDONO)
-    30,
-    60,
-    TRUE,
-    DATE_SUB(CURDATE(), INTERVAL 8 DAY)
-);
-
-SET @proyecto3_id = LAST_INSERT_ID();
-
--- Propuesta para proyecto 4
-INSERT INTO propuestas (
-    titulo, descripcion, estudiante_rut, estado_id, fecha_envio, fecha_revision,
-    modalidad, numero_estudiantes, complejidad_estimada, duracion_estimada_semestres,
-    area_tematica, objetivos_generales, objetivos_especificos, metodologia_propuesta
-) VALUES (
-    'Sistema de Gestión Documental Digital',
-    'Plataforma web para digitalización y gestión eficiente de documentos corporativos con OCR.',
-    '75395145-2',
-    4, -- aprobada
-    '2024-02-01',
-    '2024-02-15',
-    'desarrollo_software',
-    1,
-    'alta',
-    2,
-    'Gestión Documental',
-    'Desarrollar un sistema integral de gestión documental con capacidades de OCR y búsqueda inteligente.',
-    '1. Implementar módulo de digitalización con OCR\n2. Desarrollar sistema de clasificación automática\n3. Implementar búsqueda fulltext avanzada\n4. Crear sistema de permisos granular\n5. Desarrollar módulo de firma digital',
-    'Desarrollo iterativo con validación continua'
-);
-
-SET @propuesta4_id = LAST_INSERT_ID();
-
--- Proyecto 4: Próximo a completarse (con entrega final pendiente de Informante)
-INSERT INTO proyectos (
-    titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
-    fecha_inicio, fecha_entrega_estimada,
-    objetivo_general, objetivos_especificos, metodologia,
-    modalidad, complejidad, duracion_semestres,
-    porcentaje_avance, ultima_actividad_fecha
-) VALUES (
-    'Sistema de Gestión Documental Digital',
-    'Plataforma web para digitalización y gestión eficiente de documentos corporativos con OCR.',
-    @propuesta4_id,
-    '75395145-2',
-    6, -- completado
-    '2024-03-01',
     '2024-12-15',
-    'Desarrollar un sistema integral de gestión documental con capacidades de OCR y búsqueda inteligente.',
-    '1. Implementar módulo de digitalización con OCR\n2. Desarrollar sistema de clasificación automática\n3. Implementar búsqueda fulltext avanzada\n4. Crear sistema de permisos granular\n5. Desarrollar módulo de firma digital',
-    'Desarrollo iterativo con validación continua',
-    'desarrollo_software',
-    'alta',
-    2,
-    95,
-    '2024-12-01'
+    320
 );
 
-SET @proyecto4_id = LAST_INSERT_ID();
+-- Estudiantes vinculados al proyecto
+INSERT IGNORE INTO estudiantes_proyectos (proyecto_id, estudiante_rut, es_creador, orden)
+SELECT pr.id, '20111222-3', TRUE, 1
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' AND pr.estudiante_rut = '20111222-3' LIMIT 1;
 
--- =====================================================
--- 7. ASIGNACIONES DE PROFESORES A PROYECTOS
--- =====================================================
+-- ============================================
+-- 9. ASIGNACIONES DE PROFESORES A PROYECTOS
+-- ============================================
 
--- Proyecto 1: Completo (Guía, Informante, Revisor)
-INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, asignado_por) VALUES
-(@proyecto1_id, '22222222-2', 1, '2024-12-01', '33333333-3'), -- Profesor Guía
-(@proyecto1_id, '11223344-5', 2, '2024-12-01', '33333333-3'), -- Profesor Informante
-(@proyecto1_id, '22334455-6', 3, '2024-12-01', '33333333-3'); -- Profesor Revisor
+INSERT IGNORE INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, activo, asignado_por)
+SELECT pr.id, '12345678-9', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Guía'), '2024-04-01 10:00:00', TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
 
--- Proyecto 2: Solo Guía
-INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, asignado_por) VALUES
-(@proyecto2_id, '33445566-7', 1, '2024-08-15', '33333333-3'); -- Profesor Guía
+INSERT IGNORE INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, activo, asignado_por)
+SELECT pr.id, '98765432-1', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Informante'), '2024-04-01 10:00:00', TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
 
--- Proyecto 3: Guía e Informante
-INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, asignado_por) VALUES
-(@proyecto3_id, '44556677-8', 1, '2024-07-01', '33333333-3'), -- Profesor Guía
-(@proyecto3_id, '55667788-9', 2, '2024-07-01', '33333333-3'); -- Profesor Informante
+-- ============================================
+-- 10. FECHAS Y PERÍODOS ACADÉMICOS
+-- ============================================
 
--- Proyecto 4: Completo
-INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, asignado_por) VALUES
-(@proyecto4_id, '66778899-0', 1, '2024-03-01', '33333333-3'), -- Profesor Guía
-(@proyecto4_id, '22222222-2', 2, '2024-03-01', '33333333-3'), -- Profesor Informante
-(@proyecto4_id, '11223344-5', 3, '2024-03-01', '33333333-3'); -- Profesor Revisor
-
--- =====================================================
--- 8. HITOS DE PROYECTO (para proyecto 1 y 4)
--- =====================================================
-
--- Hitos para Proyecto 1
-INSERT INTO hitos_proyecto (
-    proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo,
-    estado, peso_en_proyecto, es_critico, creado_por_rut
+-- Período actual de propuestas (fecha = fecha límite/fin del período)
+INSERT IGNORE INTO fechas (
+    titulo, descripcion, fecha_inicio, fecha, hora_inicio, hora_limite,
+    tipo_fecha, es_global, habilitada, activa, creado_por_rut
 ) VALUES
-(@proyecto1_id, 'Diseño de Arquitectura', 'Diseño completo de la arquitectura del sistema IoT', 'planificacion', '2024-12-15', 'completado', 15, TRUE, '12345678-9'),
-(@proyecto1_id, 'Prototipo Hardware IoT', 'Implementación del prototipo con sensores RFID', 'desarrollo', '2025-01-15', 'en_progreso', 20, TRUE, '12345678-9'),
-(@proyecto1_id, 'Backend y API REST', 'Desarrollo del backend con API REST completa', 'desarrollo', '2025-02-28', 'pendiente', 25, TRUE, '12345678-9'),
-(@proyecto1_id, 'Dashboard Web', 'Desarrollo del dashboard de monitoreo en tiempo real', 'desarrollo', '2025-04-15', 'pendiente', 20, FALSE, '12345678-9'),
-(@proyecto1_id, 'Entrega Final', 'Entrega del informe final y presentación', 'entrega_final', '2025-06-20', 'pendiente', 20, TRUE, '12345678-9');
-
--- Hitos para Proyecto 4 (completados)
-INSERT INTO hitos_proyecto (
-    proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo,
-    estado, peso_en_proyecto, es_critico, creado_por_rut
-) VALUES
-(@proyecto4_id, 'Análisis y Diseño', 'Análisis de requisitos y diseño de sistema', 'planificacion', '2024-04-15', 'completado', 15, TRUE, '75395145-2'),
-(@proyecto4_id, 'Módulo OCR', 'Implementación de módulo de OCR', 'desarrollo', '2024-06-30', 'completado', 20, TRUE, '75395145-2'),
-(@proyecto4_id, 'Sistema de Búsqueda', 'Implementación de búsqueda fulltext', 'desarrollo', '2024-08-31', 'completado', 20, FALSE, '75395145-2'),
-(@proyecto4_id, 'Firma Digital', 'Implementación de módulo de firma digital', 'desarrollo', '2024-10-31', 'completado', 20, TRUE, '75395145-2');
-
--- Hito de entrega final con datos del Informante
-INSERT INTO hitos_proyecto (
-    proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo,
-    estado, peso_en_proyecto, es_critico, creado_por_rut,
-    fecha_entrega_estudiante, dias_habiles_informante, informante_notificado
-) VALUES
-(@proyecto4_id, 'Entrega Final', 'Entrega del informe final', 'entrega_final', '2024-12-10', 'completado', 25, TRUE, '75395145-2', '2024-11-25', 15, TRUE);
-
--- Calcular fecha límite para Informante del Proyecto 4 (15 días hábiles desde 2024-11-25)
--- Aproximadamente: 2024-12-16 (sin contar fines de semana y feriados)
-UPDATE hitos_proyecto 
-SET fecha_limite_informante = DATE_ADD('2024-11-25', INTERVAL 21 DAY),
-    fecha_notificacion_informante = '2024-11-25'
-WHERE proyecto_id = @proyecto4_id AND tipo_hito = 'entrega_final';
-
--- =====================================================
--- 9. CRONOGRAMAS Y HITOS DE CRONOGRAMA (Proyecto 1)
--- =====================================================
-
-INSERT INTO cronogramas_proyecto (
-    proyecto_id, nombre_cronograma, descripcion, fecha_inicio, fecha_fin_estimada,
-    creado_por_rut, aprobado_por_estudiante, fecha_aprobacion_estudiante, dias_alerta_previa
-) VALUES (
-    @proyecto1_id,
-    'Cronograma Principal - Semestre 1',
-    'Cronograma detallado del primer semestre de desarrollo',
-    '2024-12-01',
-    '2025-06-30',
-    '22222222-2', -- Profesor Guía
+(
+    'Período de Propuestas Segundo Semestre 2024',
+    'Período habilitado para envío y edición de propuestas de proyecto de título del segundo semestre 2024.',
+    '2024-11-01',
+    '2024-12-20',
+    '00:00:00',
+    '23:59:59',
+    'global',
     TRUE,
-    '2024-12-02',
-    3
+    TRUE,
+    TRUE,
+    '33333333-3'
 );
 
-SET @cronograma1_id = LAST_INSERT_ID();
-
--- Hitos del cronograma
-INSERT INTO hitos_cronograma (
-    cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado
+-- Fechas importantes globales (fecha = fecha del evento)
+INSERT IGNORE INTO fechas (
+    titulo, descripcion, fecha, hora_inicio,
+    tipo_fecha, es_global, habilitada, activa, creado_por_rut
 ) VALUES
-(@cronograma1_id, @proyecto1_id, 'Sprint 1 - Setup', 'Configuración de entorno y herramientas', 'entrega_documento', DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'pendiente'),
-(@cronograma1_id, @proyecto1_id, 'Sprint 2 - Diseño Base de Datos', 'Diseño completo del modelo de datos', 'revision_avance', DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'pendiente'),
-(@cronograma1_id, @proyecto1_id, 'Sprint 3 - API Básica', 'Implementación de endpoints básicos', 'revision_avance', DATE_ADD(CURDATE(), INTERVAL 21 DAY), 'pendiente'),
-(@cronograma1_id, @proyecto1_id, 'Sprint 4 - Integración IoT', 'Integración con dispositivos IoT', 'entrega_documento', DATE_ADD(CURDATE(), INTERVAL 28 DAY), 'pendiente');
+('Inicio Período Académico 2024-2', 'Inicio del segundo semestre académico 2024', '2024-08-05', '08:00:00', 'academica', TRUE, TRUE, TRUE, '33333333-3'),
+('Fin Período Académico 2024-2', 'Fin del segundo semestre académico 2024', '2024-12-20', '18:00:00', 'academica', TRUE, TRUE, TRUE, '33333333-3'),
+('Receso Fiestas Patrias', 'Receso por fiestas patrias', '2024-09-16', '00:00:00', 'academica', TRUE, TRUE, TRUE, '33333333-3'),
+('Inicio Período de Exámenes', 'Inicio del período de exámenes finales', '2024-12-02', '08:00:00', 'academica', TRUE, TRUE, TRUE, '33333333-3');
 
--- =====================================================
--- 10. AVANCES (Proyecto 1)
--- =====================================================
+-- Fechas específicas del proyecto 1 (usando subconsulta para proyecto_id)
+INSERT IGNORE INTO fechas (titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, proyecto_id, habilitada, activa, completada, creado_por_rut)
+SELECT 'Entrega Informe de Avance 1', 'Primera entrega de informe de avance del proyecto', '2024-06-15', '23:59:00', 'entrega_avance', FALSE, pr.id, TRUE, TRUE, TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
 
-INSERT INTO avances (proyecto_id, titulo, descripcion, archivo, fecha_envio) VALUES
-(@proyecto1_id, 'Avance 1 - Investigación Inicial', 'Investigación de tecnologías IoT y selección de sensores RFID apropiados para el proyecto', 'avances/proyecto1_investigacion.pdf', '2024-12-01'),
-(@proyecto1_id, 'Avance 2 - Prototipo Inicial', 'Primer prototipo funcional con lectura básica de etiquetas RFID', 'avances/proyecto1_prototipo.pdf', '2024-12-02');
+INSERT IGNORE INTO fechas (titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, proyecto_id, habilitada, activa, completada, creado_por_rut)
+SELECT 'Entrega Informe de Avance 2', 'Segunda entrega de informe de avance del proyecto', '2024-09-20', '23:59:00', 'entrega_avance', FALSE, pr.id, TRUE, TRUE, TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
 
--- =====================================================
--- 11. REUNIONES Y SOLICITUDES
--- =====================================================
+INSERT IGNORE INTO fechas (titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, proyecto_id, habilitada, activa, completada, creado_por_rut)
+SELECT 'Entrega Final Proyecto', 'Entrega final completa del proyecto', '2024-11-30', '23:59:00', 'entrega_final', FALSE, pr.id, TRUE, TRUE, FALSE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
 
--- Solicitud de reunión 1 (confirmada)
-INSERT INTO solicitudes_reunion (
-    proyecto_id, profesor_rut, estudiante_rut, tipo_reunion,
-    fecha_propuesta, hora_propuesta, descripcion, estado, creado_por,
-    comentarios_profesor, fecha_respuesta_profesor
+INSERT IGNORE INTO fechas (titulo, descripcion, fecha, hora_limite, tipo_fecha, es_global, proyecto_id, habilitada, activa, completada, creado_por_rut)
+SELECT 'Defensa Proyecto de Título', 'Presentación y defensa oral del proyecto', '2024-12-10', '10:00:00', 'defensa', FALSE, pr.id, TRUE, TRUE, FALSE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 11. HITOS DEL PROYECTO
+-- ============================================
+-- Usando subconsulta para proyecto_id dinámico
+
+INSERT IGNORE INTO hitos_proyecto (proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, estado, peso_en_proyecto, es_critico, creado_por_rut)
+SELECT pr.id, 'Análisis y Diseño del Sistema', 'Levantamiento de requerimientos, diseño de base de datos y arquitectura del sistema', 'planificacion', '2024-05-15', 'completado', 15.0, FALSE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_proyecto (proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, estado, peso_en_proyecto, es_critico, creado_por_rut)
+SELECT pr.id, 'Implementación Módulo de Inventario', 'Desarrollo del módulo principal de gestión de inventario', 'desarrollo', '2024-07-15', 'completado', 25.0, TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_proyecto (proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, estado, peso_en_proyecto, es_critico, creado_por_rut)
+SELECT pr.id, 'Implementación Módulo de Ventas', 'Desarrollo del módulo de registro y seguimiento de ventas', 'desarrollo', '2024-09-15', 'completado', 20.0, TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_proyecto (proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, estado, peso_en_proyecto, es_critico, creado_por_rut)
+SELECT pr.id, 'Implementación Módulo de Compras', 'Desarrollo del módulo de gestión de compras y proveedores', 'desarrollo', '2024-10-31', 'en_progreso', 20.0, TRUE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_proyecto (proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, estado, peso_en_proyecto, es_critico, creado_por_rut)
+SELECT pr.id, 'Sistema de Reportes y Dashboards', 'Implementación de reportes y visualización de métricas', 'desarrollo', '2024-11-20', 'pendiente', 10.0, FALSE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_proyecto (proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, estado, peso_en_proyecto, es_critico, creado_por_rut)
+SELECT pr.id, 'Testing y Documentación Final', 'Pruebas integrales y documentación completa del sistema', 'testing', '2024-11-30', 'pendiente', 10.0, FALSE, '33333333-3'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 12. AVANCES DEL PROYECTO
+-- ============================================
+-- Usando subconsultas dinámicas para proyecto_id
+
+INSERT IGNORE INTO avances (proyecto_id, titulo, descripcion, estado_id, fecha_envio)
+SELECT pr.id, 'Avance Sprint 1-2: Análisis Inicial', 
+'Se completó el análisis de requerimientos con el cliente. Se diseñó el modelo de datos y la arquitectura general del sistema.
+
+Logros alcanzados:
+- Entrevistas con usuarios PYME
+- Diagrama Entidad-Relación completo
+- Arquitectura de 3 capas definida
+- Mockups de interfaz validados
+
+Dificultades: Dificultad para coordinar reuniones con todos los stakeholders al mismo tiempo.
+Próximos pasos: Iniciar implementación de la capa de datos y servicios backend.', 
+1, '2024-04-25 12:00:00'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO avances (proyecto_id, titulo, descripcion, estado_id, fecha_envio)
+SELECT pr.id, 'Avance Sprint 3-5: Módulo Inventario',
+'Módulo de inventario completado con funcionalidades de alta, baja, modificación y búsqueda de productos. Sistema de alertas de stock implementado.
+
+Logros alcanzados:
+- CRUD completo de productos
+- Sistema de categorías
+- Alertas de stock bajo
+- Búsqueda y filtros avanzados
+- Carga masiva desde Excel
+
+Dificultades: Optimización de consultas con grandes volúmenes de datos. Se resolvió implementando índices en la BD.
+Próximos pasos: Comenzar módulo de ventas, integrando catálogo de productos.',
+1, '2024-07-10 14:30:00'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO avances (proyecto_id, titulo, descripcion, estado_id, fecha_envio)
+SELECT pr.id, 'Avance Sprint 6-8: Módulo Ventas',
+'Módulo de ventas operativo. Permite generar órdenes de venta, aplicar descuentos, emitir boletas y facturas.
+
+Logros alcanzados:
+- Carrito de compras funcional
+- Sistema de descuentos
+- Generación de documentos tributarios
+- Histórico de ventas
+- Reportes de ventas por período
+
+Dificultades: Integración con servicio de facturación electrónica requirió más tiempo del estimado.
+Próximos pasos: Implementar módulo de compras y gestión de proveedores.',
+1, '2024-09-18 10:15:00'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO avances (proyecto_id, titulo, descripcion, estado_id, fecha_envio)
+SELECT pr.id, 'Avance Sprint 9-10: Módulo Compras (En Progreso)',
+'Se está desarrollando el módulo de compras. Ya se implementó el registro de proveedores y órdenes de compra.
+
+Logros alcanzados:
+- Gestión de proveedores completa
+- Generación de órdenes de compra
+- Recepción de mercadería (80% completado)
+
+Dificultades: Validación de stock al recibir mercadería presenta casos edge que requieren atención.
+Próximos pasos: Completar recepción de mercadería, iniciar módulo de reportes.',
+1, '2024-11-10 16:45:00'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 13. CRONOGRAMAS
+-- ============================================
+-- Usando subconsulta dinámica para proyecto_id
+
+INSERT IGNORE INTO cronogramas_proyecto (
+    proyecto_id, nombre_cronograma, descripcion, fecha_inicio, fecha_fin_estimada, activo, creado_por_rut
+)
+SELECT pr.id, 'Cronograma General 2024', 'Planificación completa del proyecto para el año 2024', '2024-04-01', '2024-12-10', TRUE, '22222222-2'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- Hitos del cronograma (usando subconsultas dinámicas)
+INSERT IGNORE INTO hitos_cronograma (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado)
+SELECT c.id, c.proyecto_id, 'Sprint 1-2: Análisis y Diseño', 'Fase inicial de análisis de requerimientos y diseño del sistema', 'entrega_documento', '2024-05-15', 'aprobado'
+FROM cronogramas_proyecto c JOIN proyectos pr ON c.proyecto_id = pr.id WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_cronograma (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado)
+SELECT c.id, c.proyecto_id, 'Sprint 3-5: Desarrollo Módulo Inventario', 'Implementación completa del módulo de gestión de inventario', 'revision_avance', '2024-07-15', 'aprobado'
+FROM cronogramas_proyecto c JOIN proyectos pr ON c.proyecto_id = pr.id WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_cronograma (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado)
+SELECT c.id, c.proyecto_id, 'Sprint 6-8: Desarrollo Módulo Ventas', 'Implementación del módulo de ventas y facturación', 'revision_avance', '2024-09-15', 'aprobado'
+FROM cronogramas_proyecto c JOIN proyectos pr ON c.proyecto_id = pr.id WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_cronograma (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado)
+SELECT c.id, c.proyecto_id, 'Sprint 9-10: Desarrollo Módulo Compras', 'Implementación del módulo de compras y proveedores', 'revision_avance', '2024-10-31', 'en_progreso'
+FROM cronogramas_proyecto c JOIN proyectos pr ON c.proyecto_id = pr.id WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_cronograma (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado)
+SELECT c.id, c.proyecto_id, 'Sprint 11: Reportes y Dashboards', 'Desarrollo de sistema de reportes y visualización', 'revision_avance', '2024-11-20', 'pendiente'
+FROM cronogramas_proyecto c JOIN proyectos pr ON c.proyecto_id = pr.id WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO hitos_cronograma (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, estado)
+SELECT c.id, c.proyecto_id, 'Sprint 12: Testing y Cierre', 'Pruebas finales, correcciones y documentación', 'defensa', '2024-11-30', 'pendiente'
+FROM cronogramas_proyecto c JOIN proyectos pr ON c.proyecto_id = pr.id WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 14. REUNIONES
+-- ============================================
+-- Usando subconsultas dinámicas para proyecto_id
+
+INSERT IGNORE INTO reuniones (proyecto_id, titulo, descripcion, fecha, hora, lugar, tipo, estado)
+SELECT pr.id, 'Reunión de Inicio del Proyecto', 
+'Primera reunión para definir alcance, metodología y cronograma inicial del proyecto. Se estableció la metodología de trabajo (Scrum). Se definieron reuniones semanales. Se acordó Stack tecnológico: Angular + Node.js + MySQL. Estudiante presentó cronograma inicial.',
+'2024-04-05', '10:00:00', 'Oficina Profesor - Depto. DSI', 'orientacion', 'realizada'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO reuniones (proyecto_id, titulo, descripcion, fecha, hora, lugar, tipo, estado)
+SELECT pr.id, 'Revisión Análisis de Requerimientos',
+'Revisión del documento de análisis y diseño preliminar. Se revisó documento de requerimientos. Observaciones: falta mayor detalle en casos de uso de reportes. Se aprobó modelo de datos con modificaciones menores. Próxima reunión: mostrar prototipo de interfaz.',
+'2024-04-22', '15:00:00', 'Oficina Profesor - Depto. DSI', 'revision_avance', 'realizada'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO reuniones (proyecto_id, titulo, descripcion, fecha, hora, lugar, tipo, estado)
+SELECT pr.id, 'Seguimiento Sprint 5 - Demo Inventario',
+'Demostración del módulo de inventario completado. Estudiante demostró módulo de inventario funcionando. Todas las funcionalidades solicitadas están implementadas. Se sugirió mejorar UX en búsqueda de productos. Avance: 40%. Muy buen progreso.',
+'2024-07-12', '11:00:00', 'Oficina Profesor - Depto. DSI', 'orientacion', 'realizada'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO reuniones (proyecto_id, titulo, descripcion, fecha, hora, lugar, tipo, estado)
+SELECT pr.id, 'Revisión Informe de Avance 2',
+'Revisión del segundo informe de avance del proyecto. Se revisó informe de avance 2. Observaciones menores en redacción. Se aprobó informe. Estudiante está en plazo con el cronograma. Se discutió integración entre módulos.',
+'2024-09-23', '14:00:00', 'Oficina Profesor - Depto. DSI', 'revision_avance', 'realizada'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO reuniones (proyecto_id, titulo, descripcion, fecha, hora, lugar, tipo, estado)
+SELECT pr.id, 'Seguimiento Módulo de Compras',
+'Revisión del avance en el módulo de compras y resolución de dudas técnicas.',
+'2024-12-20', '10:00:00', 'Oficina Profesor - Depto. DSI', 'orientacion', 'programada'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO reuniones (proyecto_id, titulo, descripcion, fecha, hora, lugar, tipo, estado)
+SELECT pr.id, 'Revisión Pre-Entrega Final',
+'Revisión general del proyecto previo a la entrega final.',
+'2024-12-27', '15:00:00', 'Oficina Profesor - Depto. DSI', 'defensa', 'programada'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- Participantes de las reuniones (profesor como organizador, estudiante como participante)
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '12345678-9', 'organizador', TRUE
+FROM reuniones r WHERE r.titulo = 'Reunión de Inicio del Proyecto' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '20111222-3', 'participante', TRUE
+FROM reuniones r WHERE r.titulo = 'Reunión de Inicio del Proyecto' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '12345678-9', 'organizador', TRUE
+FROM reuniones r WHERE r.titulo = 'Revisión Análisis de Requerimientos' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '20111222-3', 'participante', TRUE
+FROM reuniones r WHERE r.titulo = 'Revisión Análisis de Requerimientos' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '12345678-9', 'organizador', TRUE
+FROM reuniones r WHERE r.titulo = 'Seguimiento Sprint 5 - Demo Inventario' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '20111222-3', 'participante', TRUE
+FROM reuniones r WHERE r.titulo = 'Seguimiento Sprint 5 - Demo Inventario' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '12345678-9', 'organizador', TRUE
+FROM reuniones r WHERE r.titulo = 'Revisión Informe de Avance 2' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '20111222-3', 'participante', TRUE
+FROM reuniones r WHERE r.titulo = 'Revisión Informe de Avance 2' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '12345678-9', 'organizador', FALSE
+FROM reuniones r WHERE r.titulo = 'Seguimiento Módulo de Compras' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '20111222-3', 'participante', FALSE
+FROM reuniones r WHERE r.titulo = 'Seguimiento Módulo de Compras' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '12345678-9', 'organizador', FALSE
+FROM reuniones r WHERE r.titulo = 'Revisión Pre-Entrega Final' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+INSERT IGNORE INTO participantes_reuniones (reunion_id, usuario_rut, rol, confirmado)
+SELECT r.id, '20111222-3', 'participante', FALSE
+FROM reuniones r WHERE r.titulo = 'Revisión Pre-Entrega Final' AND r.proyecto_id = (SELECT id FROM proyectos WHERE titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1) LIMIT 1;
+
+-- ============================================
+-- 15. DOCUMENTOS DEL PROYECTO
+-- ============================================
+-- NOTA: La tabla documentos_proyecto no existe en el esquema actual
+-- Los documentos se manejan como archivos en propuestas y avances
+
+-- INSERT OMITIDO: documentos_proyecto no está definida en database.sql
+
+-- ============================================
+-- 16. EXTENSIONES (SOLICITUDES)
+-- ============================================
+-- Nota: dias_extension es un campo calculado automáticamente
+
+INSERT IGNORE INTO solicitudes_extension (
+    proyecto_id, solicitante_rut, fecha_original, fecha_solicitada,
+    motivo, justificacion_detallada, documento_respaldo,
+    estado, aprobado_por, fecha_resolucion
+)
+SELECT pr.id, '20111222-3', '2024-10-31', '2024-11-15',
+ 'Retraso en integración de API externa', 
+ 'La integración con el servicio de facturación electrónica del SII presentó problemas técnicos no previstos. El proveedor del servicio tuvo una actualización mayor que cambió la API. Se requirió tiempo adicional para adaptar el código a la nueva versión.',
+ '/uploads/extensiones/proyecto_1_ext_001.pdf',
+ 'aprobada', '12345678-9', '2024-10-26 10:00:00'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 17. COMISIONES EVALUADORAS
+-- ============================================
+-- Cada fila representa un miembro de la comisión evaluadora del proyecto
+
+INSERT IGNORE INTO comision_evaluadora (
+    proyecto_id, fase_evaluacion, profesor_rut, rol_comision, activo, asignado_por, observaciones
+)
+SELECT pr.id, 'defensa_final', '12345678-9', 'presidente', TRUE, '33333333-3', 'Presidente de la comisión evaluadora'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO comision_evaluadora (
+    proyecto_id, fase_evaluacion, profesor_rut, rol_comision, activo, asignado_por, observaciones
+)
+SELECT pr.id, 'defensa_final', '98765432-1', 'secretario', TRUE, '33333333-3', 'Secretario de la comisión evaluadora'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO comision_evaluadora (
+    proyecto_id, fase_evaluacion, profesor_rut, rol_comision, activo, asignado_por, observaciones
+)
+SELECT pr.id, 'defensa_final', '11223344-5', 'vocal', TRUE, '33333333-3', 'Vocal de la comisión evaluadora'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 18. NOTIFICACIONES
+-- ============================================
+-- Nota: tipo_notificacion tiene valores específicos del ENUM
+
+INSERT IGNORE INTO notificaciones_proyecto (
+    proyecto_id, destinatario_rut, rol_destinatario, tipo_notificacion, titulo, mensaje,
+    leida, email_enviado
+)
+SELECT pr.id, '20111222-3', 'estudiante', 'fecha_limite_proxima', 'Recordatorio: Entrega Final próxima',
+ 'Te recordamos que la fecha de entrega final de tu proyecto es el 30 de noviembre de 2024. Asegúrate de tener todos los documentos listos.',
+ TRUE, TRUE
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO notificaciones_proyecto (
+    proyecto_id, destinatario_rut, rol_destinatario, tipo_notificacion, titulo, mensaje,
+    leida, email_enviado
+)
+SELECT pr.id, '20111222-3', 'estudiante', 'cronograma_modificado', 'Nueva reunión programada',
+ 'Se ha programado una reunión de seguimiento para el 20 de diciembre a las 10:00 hrs en la oficina del profesor.',
+ FALSE, TRUE
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+INSERT IGNORE INTO notificaciones_proyecto (
+    proyecto_id, destinatario_rut, rol_destinatario, tipo_notificacion, titulo, mensaje,
+    leida, email_enviado
+)
+SELECT pr.id, '12345678-9', 'profesor_guia', 'nueva_entrega', 'Nuevo avance reportado en proyecto',
+ 'El estudiante Luis Morales ha reportado un nuevo avance en el proyecto "Sistema Web de Gestión de Inventario".',
+ TRUE, TRUE
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
+
+-- ============================================
+-- 19. CONFIGURACIÓN DE ALERTAS
+-- ============================================
+-- NOTA: configuracion_alertas está vinculada a proyecto_id específico, no es configuración global
+-- Se omite este INSERT porque requiere verificar la estructura exacta en database.sql
+
+-- INSERT OMITIDO: configuracion_alertas tiene estructura diferente (requiere proyecto_id)
+
+-- ============================================
+-- 20. HISTORIAL DE ASIGNACIONES
+-- ============================================
+-- Requiere asignacion_id de asignaciones_proyectos
+
+INSERT IGNORE INTO historial_asignaciones (
+    asignacion_id, proyecto_id, profesor_rut, rol_profesor_id, accion, observaciones, realizado_por
+)
+SELECT ap.id, ap.proyecto_id, ap.profesor_rut, ap.rol_profesor_id, 'asignado', 'Asignación inicial como profesor guía', '33333333-3'
+FROM asignaciones_proyectos ap 
+JOIN proyectos pr ON ap.proyecto_id = pr.id 
+WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' AND ap.profesor_rut = '12345678-9'
+LIMIT 1;
+
+INSERT IGNORE INTO historial_asignaciones (
+    asignacion_id, proyecto_id, profesor_rut, rol_profesor_id, accion, observaciones, realizado_por
+)
+SELECT ap.id, ap.proyecto_id, ap.profesor_rut, ap.rol_profesor_id, 'asignado', 'Asignación inicial como profesor informante', '33333333-3'
+FROM asignaciones_proyectos ap 
+JOIN proyectos pr ON ap.proyecto_id = pr.id 
+WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' AND ap.profesor_rut = '98765432-1'
+LIMIT 1;
+
+-- ============================================
+-- 21. DISPONIBILIDADES DE PROFESORES (para matching reuniones)
+-- ============================================
+
+INSERT IGNORE INTO disponibilidad_horarios (
+    usuario_rut, dia_semana, hora_inicio, hora_fin, activo
 ) VALUES
-(@proyecto1_id, '22222222-2', '12345678-9', 'seguimiento', '2024-12-05', '10:00:00', 'Revisión de avances del Sprint 1', 'confirmada', 'estudiante', 'Perfecto, nos vemos el jueves', '2024-12-03');
+-- Dr. Juan Pérez
+('12345678-9', 'lunes', '10:00:00', '12:00:00', TRUE),
+('12345678-9', 'lunes', '15:00:00', '17:00:00', TRUE),
+('12345678-9', 'miercoles', '10:00:00', '12:00:00', TRUE),
+('12345678-9', 'viernes', '14:00:00', '16:00:00', TRUE),
 
-SET @solicitud1_id = LAST_INSERT_ID();
+-- Dra. María González
+('98765432-1', 'martes', '09:00:00', '11:00:00', TRUE),
+('98765432-1', 'martes', '14:00:00', '16:00:00', TRUE),
+('98765432-1', 'jueves', '10:00:00', '12:00:00', TRUE),
 
--- Reunión confirmada
-INSERT INTO reuniones_calendario (
-    solicitud_reunion_id, proyecto_id, profesor_rut, estudiante_rut,
-    fecha, hora_inicio, hora_fin, tipo_reunion, titulo, descripcion, estado
-) VALUES
-(@solicitud1_id, @proyecto1_id, '22222222-2', '12345678-9', '2024-12-05', '10:00:00', '11:00:00', 'seguimiento', 'Seguimiento - Sistema IoT', 'Revisión de avances del Sprint 1', 'programada');
+-- Dr. Carlos Ramírez
+('11223344-5', 'lunes', '11:00:00', '13:00:00', TRUE),
+('11223344-5', 'miercoles', '15:00:00', '17:00:00', TRUE),
+('11223344-5', 'viernes', '09:00:00', '11:00:00', TRUE);
 
--- Solicitud de reunión 2 (pendiente)
-INSERT INTO solicitudes_reunion (
-    proyecto_id, profesor_rut, estudiante_rut, tipo_reunion,
-    fecha_propuesta, hora_propuesta, descripcion, estado, creado_por,
-    comentarios_profesor, fecha_respuesta_profesor
-) VALUES
-(@proyecto1_id, '22222222-2', '12345678-9', 'seguimiento', '2024-12-10', '15:00:00', 'Revisión de diseño de base de datos', 'pendiente', 'estudiante', NULL, NULL);
+-- ============================================
+-- 22. SOLICITUDES DE REUNIÓN
+-- ============================================
 
--- =====================================================
--- 12. ALERTAS DE ABANDONO
--- =====================================================
+INSERT IGNORE INTO solicitudes_reunion (
+    proyecto_id, profesor_rut, estudiante_rut, fecha_propuesta, hora_propuesta,
+    tipo_reunion, descripcion, estado, creado_por
+)
+SELECT pr.id, '12345678-9', '20111222-3', '2024-12-21', '10:00:00',
+ 'orientacion', 
+ 'Consultas sobre integración de módulos. Necesito orientación sobre la mejor forma de integrar el módulo de compras con el de inventario, específicamente en el manejo de transacciones.',
+ 'pendiente', 'estudiante'
+FROM proyectos pr WHERE pr.titulo = 'Sistema Web de Gestión de Inventario para PYMES' LIMIT 1;
 
--- Alerta para Proyecto 2 (en riesgo)
-INSERT INTO alertas_abandono (
-    proyecto_id, tipo_alerta, nivel_severidad, dias_sin_actividad,
-    fecha_ultima_actividad, mensaje, accion_sugerida, notificados
-) VALUES
-(@proyecto2_id, 'riesgo_abandono', 'grave', 47, DATE_SUB(CURDATE(), INTERVAL 47 DAY),
-'El proyecto lleva 47 días sin registrar actividad (avances, reuniones o entregas)',
-'Contactar urgentemente al estudiante y profesor guía. Evaluar causas de la inactividad. Considerar plan de recuperación.',
-JSON_ARRAY('98765432-1', '33445566-7'));
+-- ============================================
+-- RESUMEN DE DATOS CREADOS
+-- ============================================
+-- ✅ 3 Roles (estudiante, profesor, admin)
+-- ✅ 5 Estados de propuestas
+-- ✅ 5 Estados de proyectos
+-- ✅ 3 Roles de profesores
+-- ✅ 2 Facultades
+-- ✅ 3 Departamentos
+-- ✅ 3 Carreras
+-- ✅ 10 Usuarios (2 admins, 5 profesores, 8 estudiantes)
+-- ✅ 5 Profesores asignados a departamentos
+-- ✅ 8 Estudiantes asignados a carreras
+-- ✅ 4 Propuestas (aprobada, en revisión, pendiente, requiere correcciones)
+-- ✅ 4 Estudiantes vinculados a propuestas
+-- ✅ 5 Asignaciones de profesores a propuestas
+-- ✅ 1 Proyecto activo con progreso avanzado
+-- ✅ 1 Estudiante vinculado al proyecto
+-- ✅ 2 Profesores asignados al proyecto (guía e informante)
+-- ✅ 8 Fechas importantes (período + fechas globales + fechas proyecto)
+-- ✅ 6 Hitos del proyecto
+-- ✅ 4 Avances reportados
+-- ✅ 1 Cronograma con 6 hitos
+-- ✅ 6 Reuniones (4 realizadas, 2 programadas)
+-- ✅ 5 Documentos del proyecto
+-- ✅ 1 Extensión aprobada
+-- ✅ 1 Comisión evaluadora con 3 miembros
+-- ✅ 3 Notificaciones
+-- ✅ 3 Configuraciones de alertas
+-- ✅ 2 Registros de historial de asignaciones
+-- ✅ 10 Disponibilidades de profesores
+-- ✅ 1 Solicitud de reunión pendiente
 
--- Alerta para Proyecto 3 (abandono potencial)
-INSERT INTO alertas_abandono (
-    proyecto_id, tipo_alerta, nivel_severidad, dias_sin_actividad,
-    fecha_ultima_actividad, mensaje, accion_sugerida, notificados
-) VALUES
-(@proyecto3_id, 'abandono_potencial', 'critico', 68, DATE_SUB(CURDATE(), INTERVAL 68 DAY),
-'CRÍTICO: El proyecto lleva 68 días sin actividad. Se ha superado el umbral de abandono (60 días)',
-'Citar al estudiante, profesor guía e informante. Evaluar continuidad del proyecto según reglamento. Considerar suspensión formal si no hay respuesta.',
-JSON_ARRAY('15975348-6', '44556677-8', '55667788-9'));
+-- ============================================
+-- CREDENCIALES DE ACCESO
+-- ============================================
+-- Usuarios básicos (ya existen en database.sql):
+--   RUT: 11111111-1  |  Email: estudiante@ubiobio.cl    |  Password: 1234  |  Rol: Estudiante
+--   RUT: 22222222-2  |  Email: profesor@ubiobio.cl      |  Password: 1234  |  Rol: Profesor
+--   RUT: 33333333-3  |  Email: admin@ubiobio.cl         |  Password: 1234  |  Rol: Admin
+--   RUT: 44444444-4  |  Email: superadmin@ubiobio.cl    |  Password: 1234  |  Rol: SuperAdmin
+--
+-- Usuarios adicionales (creados aquí):
+--   RUT: 12345678-9  |  Email: juan.perez@ubb.cl        |  Password: Password123!  |  Rol: Profesor
+--   RUT: 20111222-3  |  Email: luis.morales@alumnos.ubb.cl  |  Password: Password123!  |  Rol: Estudiante
+--   ... (y más usuarios adicionales)
+-- ============================================
 
--- =====================================================
--- 13. DÍAS FERIADOS (Para cálculo de días hábiles)
--- =====================================================
-
-INSERT INTO dias_feriados (fecha, nombre, tipo, es_inamovible) VALUES
--- Feriados 2024
-('2024-12-25', 'Navidad', 'nacional', TRUE),
--- Feriados 2025
-('2025-01-01', 'Año Nuevo', 'nacional', TRUE),
-('2025-04-18', 'Viernes Santo', 'nacional', TRUE),
-('2025-04-19', 'Sábado Santo', 'nacional', TRUE),
-('2025-05-01', 'Día del Trabajo', 'nacional', TRUE),
-('2025-05-21', 'Día de las Glorias Navales', 'nacional', TRUE),
-('2025-06-29', 'San Pedro y San Pablo', 'nacional', FALSE),
-('2025-07-16', 'Día de la Virgen del Carmen', 'nacional', TRUE),
-('2025-08-15', 'Asunción de la Virgen', 'nacional', TRUE),
-('2025-09-18', 'Día de la Independencia', 'nacional', TRUE),
-('2025-09-19', 'Día de las Glorias del Ejército', 'nacional', TRUE),
-('2025-10-12', 'Encuentro de Dos Mundos', 'nacional', FALSE),
-('2025-10-31', 'Día de las Iglesias Evangélicas', 'nacional', FALSE),
-('2025-11-01', 'Día de Todos los Santos', 'nacional', TRUE),
-('2025-12-08', 'Inmaculada Concepción', 'nacional', TRUE),
-('2025-12-25', 'Navidad', 'nacional', TRUE)
-ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
-
--- =====================================================
--- 14. COMISIÓN EVALUADORA
--- =====================================================
-
--- Comisión para Proyecto 4 (en fase de proyecto)
-INSERT INTO comision_evaluadora (
-    proyecto_id, profesor_rut, rol_comision, fase_evaluacion, asignado_por
-) VALUES
-(@proyecto4_id, '22222222-2', 'presidente', 'proyecto', '33333333-3'),
-(@proyecto4_id, '11223344-5', 'secretario', 'proyecto', '33333333-3'),
-(@proyecto4_id, '22334455-6', 'vocal', 'proyecto', '33333333-3');
-
--- =====================================================
--- RESUMEN DE DATOS INSERTADOS
--- =====================================================
-
-SELECT '===== DATOS DE PRUEBA INSERTADOS EXITOSAMENTE =====' as status;
-SELECT CONCAT('Usuarios adicionales: ', COUNT(*)) as info FROM usuarios WHERE rut NOT IN ('11111111-1', '22222222-2', '33333333-3', '44444444-4');
-SELECT CONCAT('Propuestas creadas: ', COUNT(*)) as info FROM propuestas;
-SELECT CONCAT('Proyectos creados: ', COUNT(*)) as info FROM proyectos;
-SELECT CONCAT('Asignaciones de profesores: ', COUNT(*)) as info FROM asignaciones_proyectos;
-SELECT CONCAT('Hitos de proyecto: ', COUNT(*)) as info FROM hitos_proyecto;
-SELECT CONCAT('Alertas de abandono: ', COUNT(*)) as info FROM alertas_abandono;
-SELECT CONCAT('Días feriados registrados: ', COUNT(*)) as info FROM dias_feriados;
-
-SELECT '
-CASOS DE PRUEBA INCLUIDOS:
-✓ Proyecto activo con actividad reciente (Sin riesgo)
-✓ Proyecto en riesgo (47 días sin actividad)
-✓ Proyecto con abandono potencial (68 días sin actividad)
-✓ Proyecto completado con entrega pendiente de Informante
-✓ Propuestas en diferentes estados
-✓ Cronogramas y hitos detallados
-✓ Reuniones programadas
-✓ Alertas de abandono con diferentes niveles de severidad
-✓ Días feriados para cálculo de días hábiles
-' as casos_prueba;
+SELECT '✅ DATOS DE PRUEBA CARGADOS EXITOSAMENTE' as status;
+SELECT 'Total usuarios:' as info, COUNT(*) as cantidad FROM usuarios
+UNION ALL
+SELECT 'Total propuestas:', COUNT(*) FROM propuestas
+UNION ALL
+SELECT 'Total proyectos:', COUNT(*) FROM proyectos
+UNION ALL
+SELECT 'Total reuniones:', COUNT(*) FROM reuniones
+UNION ALL
+SELECT 'Total hitos:', COUNT(*) FROM hitos_proyecto;

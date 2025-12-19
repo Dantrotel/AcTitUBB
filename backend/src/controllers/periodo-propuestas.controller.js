@@ -9,7 +9,7 @@ export const obtenerEstadoPeriodo = async (req, res) => {
         const estado = await FechasLimiteModel.obtenerEstadoPeriodoPropuestas();
         return res.json(estado);
     } catch (error) {
-        console.error('Error obteniendo estado del período:', error);
+        
         return res.status(500).json({ 
             message: 'Error al obtener el estado del período de propuestas',
             error: error.message 
@@ -45,7 +45,7 @@ export const habilitarPeriodo = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error habilitando período:', error);
+        
         return res.status(500).json({ 
             message: 'Error al habilitar el período de propuestas',
             error: error.message 
@@ -81,7 +81,7 @@ export const deshabilitarPeriodo = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error deshabilitando período:', error);
+        
         return res.status(500).json({ 
             message: 'Error al deshabilitar el período de propuestas',
             error: error.message 
@@ -110,7 +110,7 @@ export const deshabilitarPeriodosVencidos = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error deshabilitando períodos vencidos:', error);
+        
         return res.status(500).json({ 
             message: 'Error al deshabilitar períodos vencidos',
             error: error.message 

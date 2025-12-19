@@ -87,7 +87,7 @@ export const crearSolicitud = async (req, res) => {
                 solicitud_id: solicitudId
             });
         } catch (error) {
-            console.error('Error al crear solicitud:', error);
+            
 
             if (error.message.includes('posterior')) {
                 return res.status(400).json({ message: error.message });
@@ -133,7 +133,7 @@ export const obtenerSolicitudesPorProyecto = async (req, res) => {
             solicitudes
         });
     } catch (error) {
-        console.error('Error al obtener solicitudes:', error);
+        
         res.status(500).json({ message: 'Error al obtener solicitudes' });
     }
 };
@@ -157,7 +157,7 @@ export const obtenerSolicitudesPendientes = async (req, res) => {
             solicitudes
         });
     } catch (error) {
-        console.error('Error al obtener solicitudes pendientes:', error);
+        
         res.status(500).json({ message: 'Error al obtener solicitudes pendientes' });
     }
 };
@@ -187,7 +187,7 @@ export const marcarEnRevision = async (req, res) => {
             solicitud_id: solicitudId 
         });
     } catch (error) {
-        console.error('Error al marcar en revisión:', error);
+        
         res.status(500).json({ message: 'Error al marcar solicitud en revisión' });
     }
 };
@@ -222,7 +222,7 @@ export const aprobarSolicitud = async (req, res) => {
             ...resultado
         });
     } catch (error) {
-        console.error('Error al aprobar solicitud:', error);
+        
 
         if (error.message.includes('no encontrada')) {
             return res.status(404).json({ message: error.message });
@@ -278,7 +278,7 @@ export const rechazarSolicitud = async (req, res) => {
             solicitud_id: solicitudId 
         });
     } catch (error) {
-        console.error('Error al rechazar solicitud:', error);
+        
 
         if (error.message.includes('ya fue procesada')) {
             return res.status(409).json({ message: error.message });
@@ -306,7 +306,7 @@ export const obtenerHistorial = async (req, res) => {
             historial
         });
     } catch (error) {
-        console.error('Error al obtener historial:', error);
+        
         res.status(500).json({ message: 'Error al obtener historial' });
     }
 };
@@ -327,7 +327,7 @@ export const obtenerEstadisticas = async (req, res) => {
 
         res.json(estadisticas);
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        
         res.status(500).json({ message: 'Error al obtener estadísticas' });
     }
 };

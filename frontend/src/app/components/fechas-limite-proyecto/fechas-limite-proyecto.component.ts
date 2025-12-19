@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
@@ -35,7 +35,7 @@ interface FechaImportante {
   templateUrl: './fechas-limite-proyecto.component.html',
   styleUrl: './fechas-limite-proyecto.component.scss'
 })
-export class FechasLimiteProyectoComponent implements OnInit {
+export class FechasLimiteProyectoComponent implements OnInit, OnChanges {
   @Input() proyectoId!: number;
   
   fechas: FechaImportante[] = [];
@@ -44,7 +44,8 @@ export class FechasLimiteProyectoComponent implements OnInit {
 
   constructor(
     private api: ApiService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -53,21 +54,41 @@ export class FechasLimiteProyectoComponent implements OnInit {
     }
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['proyectoId'] && !changes['proyectoId'].firstChange) {
+      this.cargarFechas();
+    }
+  }
+
   cargarFechas() {
+    if (!this.proyectoId) return;
+    
     this.loading = true;
     this.error = '';
 
-    this.api.get(`/fechas-limite/proyecto/${this.proyectoId}`).subscribe({
+    // Usar el método correcto del ApiService
+    this.api.getFechasImportantesProyecto(this.proyectoId.toString()).subscribe({
       next: (response: any) => {
-        if (response && response.fechas) {
-          this.fechas = response.fechas;
+        console.log('✅ Fechas del proyecto cargadas:', response);
+        
+        // Manejar respuesta: { success: true, data: { fechas_importantes: [...] } }
+        if (response && response.success && response.data && response.data.fechas_importantes) {
+          this.fechas = response.data.fechas_importantes;
+        } else if (response && Array.isArray(response)) {
+          this.fechas = response;
+        } else {
+          this.fechas = [];
         }
+        
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error: any) => {
         console.error('Error cargando fechas:', error);
         this.error = 'Error al cargar las fechas del proyecto';
         this.loading = false;
+        this.fechas = [];
+        this.cdr.detectChanges();
       }
     });
   }

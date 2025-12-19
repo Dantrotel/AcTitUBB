@@ -17,56 +17,88 @@ $dark-gray: #343a40;
   padding: 20px;
 
   .header {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
     color: white;
-    padding: 30px;
-    border-radius: 15px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(0, 75, 141, 0.3);
+    padding: 40px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 40px rgba(0, 75, 141, 0.3);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+    }
 
     .header-content {
       flex: 1;
       text-align: center;
+      position: relative;
+      z-index: 1;
 
       h1 {
         margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 2.8rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        
+        i {
+          margin-right: 15px;
+          font-size: 2.6rem;
+        }
       }
 
       p {
-        margin: 10px 0 0 0;
-        opacity: 0.9;
-        font-size: 1.1rem;
+        margin: 15px 0 0 0;
+        opacity: 0.95;
+        font-size: 1.15rem;
+        font-weight: 400;
       }
     }
 
     .header-actions {
+      position: relative;
+      z-index: 1;
+      
       .btn-volver-header {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.15);
         color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        padding: 10px 16px;
-        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        padding: 12px 24px;
+        border-radius: 12px;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 1rem;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+        backdrop-filter: blur(10px);
 
         &:hover {
-          background: rgba(255, 255, 255, 0.3);
-          border-color: rgba(255, 255, 255, 0.5);
-          transform: translateY(-2px);
+          background: rgba(255, 255, 255, 0.25);
+          border-color: rgba(255, 255, 255, 0.6);
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
         i {
-          font-size: 0.9rem;
+          font-size: 1rem;
+          transition: transform 0.3s ease;
+        }
+
+        &:hover i {
+          transform: translateX(-4px);
         }
       }
     }
@@ -105,10 +137,1025 @@ $dark-gray: #343a40;
     }
   }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Nuevos estilos modernos
+.form-group-modern {
+  padding: 30px;
+
+  .input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .input-icon {
+      position: absolute;
+      left: 20px;
+      color: $primary-color;
+      font-size: 1.3rem;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .form-control-modern {
+      width: 100%;
+      padding: 18px 20px 18px 60px;
+      font-size: 1.1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 15px;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      color: $dark-gray;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(0, 75, 141, 0.1);
+      }
+
+      &:hover {
+        border-color: color.adjust($primary-color, $lightness: 20%);
+      }
+    }
   }
+}
+
+.profesor-card-modern {
+  margin: 20px 30px 30px 30px;
+  padding: 25px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 2px solid #dee2e6;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: $primary-color;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 4px 20px rgba(0, 75, 141, 0.1);
+  }
+
+  .profesor-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 75, 141, 0.3);
+    flex-shrink: 0;
+
+    i {
+      font-size: 3.5rem;
+      color: white;
+    }
+  }
+
+  .profesor-details {
+    flex: 1;
+
+    h4 {
+      margin: 0 0 10px 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: $primary-color;
+    }
+
+    .profesor-email {
+      margin: 5px 0;
+      color: #6c757d;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      i {
+        color: $primary-color;
+      }
+    }
+
+    .profesor-rol-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: $primary-color;
+      color: white;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+  }
+}
+
+.loading-small-modern {
+  padding: 40px;
+  text-align: center;
+  color: $primary-color;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+
+  .spinner-small {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e9ecef;
+    border-top: 4px solid $primary-color;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  span {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+.empty-state-modern {
+  padding: 60px 40px;
+  text-align: center;
+  color: #6c757d;
+
+  .empty-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 25px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #dee2e6;
+
+    i {
+      font-size: 4rem;
+      color: #adb5bd;
+    }
+  }
+
+  h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: $dark-gray;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #6c757d;
+    line-height: 1.5;
+  }
+}
+
+// Filtros modernos
+.filtros-section-modern {
+  padding: 25px 30px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 2px solid #e9ecef;
+
+  .filtro-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+
+    .filtro-icon {
+      font-size: 1.5rem;
+      color: $primary-color;
+    }
+
+    label {
+      margin: 0;
+      font-weight: 600;
+      color: $dark-gray;
+      font-size: 1.05rem;
+    }
+
+    .form-control-filtro {
+      padding: 10px 16px;
+      border: 2px solid #dee2e6;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $primary-color;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 120px;
+
+      &:hover {
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.1);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 4px rgba(0, 75, 141, 0.15);
+      }
+    }
+  }
+}
+
+// Grid de horarios moderno
+.horarios-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  padding: 30px;
+}
+
+.horario-card-modern {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid #e9ecef;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, $primary-color 0%, $secondary-color 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 35px rgba(0, 75, 141, 0.2);
+    border-color: $primary-color;
+
+    &::before {
+      opacity: 1;
+    }
+
+    .dia-badge-modern {
+      transform: scale(1.05);
+    }
+
+    .btn-reservar-modern {
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 75, 141, 0.3);
+    }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    
+    &:hover {
+      transform: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      border-color: #e9ecef;
+    }
+  }
+
+  .dia-badge-modern {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    text-align: center;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid #dee2e6;
+
+    .dia-nombre {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: $primary-color;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    &.lunes { 
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); 
+      .dia-nombre { color: #1976d2; }
+    }
+    &.martes { 
+      background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); 
+      .dia-nombre { color: #7b1fa2; }
+    }
+    &.miercoles { 
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); 
+      .dia-nombre { color: #388e3c; }
+    }
+    &.jueves { 
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); 
+      .dia-nombre { color: #f57c00; }
+    }
+    &.viernes { 
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); 
+      .dia-nombre { color: #c2185b; }
+    }
+    &.sabado { 
+      background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%); 
+      .dia-nombre { color: #00796b; }
+    }
+    &.domingo { 
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); 
+      .dia-nombre { color: #c62828; }
+    }
+  }
+
+  .horario-body-modern {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    .fecha-display,
+    .hora-display,
+    .fecha-completa-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+
+      i {
+        font-size: 1.3rem;
+        color: $primary-color;
+        min-width: 24px;
+        text-align: center;
+      }
+
+      span {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: $dark-gray;
+      }
+
+      &:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+      }
+    }
+
+    .fecha-display {
+      .fecha-corta {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: $primary-color;
+      }
+    }
+
+    .hora-display {
+      .hora-texto {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: $secondary-color;
+      }
+    }
+
+    .fecha-completa-display {
+      span {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #6c757d;
+      }
+    }
+  }
+
+  .horario-action-modern {
+    padding: 0 25px 25px 25px;
+
+    .btn-reservar-modern {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, color.adjust($primary-color, $lightness: 10%) 0%, color.adjust($secondary-color, $lightness: 10%) 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0, 75, 141, 0.2);
+
+      i {
+        font-size: 1.2rem;
+      }
+
+      &:hover:not(.disabled) {
+        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 75, 141, 0.3);
+      }
+
+      &:active:not(.disabled) {
+        transform: translateY(0);
+      }
+
+      &.disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        box-shadow: none;
+
+        &:hover {
+          transform: none;
+        }
+      }
+    }
+  }
+}
+
+// Empty state para horarios
+.empty-state-horarios {
+  padding: 60px 40px;
+  text-align: center;
+  margin: 30px;
+
+  .empty-icon-horarios {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #ffcc80;
+    animation: pulse 2s ease-in-out infinite;
+
+    i {
+      font-size: 5rem;
+      color: #f57c00;
+    }
+  }
+
+  h4 {
+    margin: 0 0 15px 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: $dark-gray;
+  }
+
+  .empty-text {
+    margin: 0 0 20px 0;
+    font-size: 1.1rem;
+    color: #6c757d;
+    line-height: 1.6;
+
+    strong {
+      color: $primary-color;
+      font-weight: 700;
+    }
+  }
+
+  .empty-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 25px;
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+    border-radius: 12px;
+    border: 2px solid #fdd835;
+    margin-top: 10px;
+
+    i {
+      font-size: 1.3rem;
+      color: #f57f17;
+    }
+
+    span {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f57f17;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+// Formulario de reserva moderno
+.reserva-form-modern {
+  margin: 30px;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 6px 30px rgba(0, 75, 141, 0.12);
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 10px 40px rgba(0, 75, 141, 0.18);
+    border-color: color.adjust($primary-color, $lightness: 30%);
+  }
+
+  .form-header-modern {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    padding: 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .header-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      flex-shrink: 0;
+      z-index: 1;
+
+      i {
+        font-size: 2rem;
+        color: white;
+      }
+    }
+
+    .header-content {
+      flex: 1;
+      z-index: 1;
+
+      h4 {
+        margin: 0 0 5px 0;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: white;
+        letter-spacing: -0.5px;
+      }
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 400;
+      }
+    }
+  }
+
+  .form-body-modern {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+
+    .form-group-elegant {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      label {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: $primary-color;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+
+        i {
+          font-size: 1.2rem;
+          color: $secondary-color;
+        }
+
+        .optional {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: #6c757d;
+          font-style: italic;
+        }
+      }
+
+      .form-control-elegant {
+        padding: 16px 20px;
+        font-size: 1.05rem;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        background: white;
+        color: $dark-gray;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          border-color: color.adjust($primary-color, $lightness: 20%);
+          box-shadow: 0 4px 12px rgba(0, 75, 141, 0.1);
+        }
+
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 4px rgba(0, 75, 141, 0.1), 0 4px 12px rgba(0, 75, 141, 0.15);
+          background: #ffffff;
+        }
+      }
+
+      .textarea-elegant {
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.6;
+        font-family: inherit;
+
+        &::placeholder {
+          color: #adb5bd;
+          font-style: italic;
+        }
+      }
+
+      .char-counter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: #6c757d;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        font-weight: 600;
+        border: 1px solid #e9ecef;
+
+        i {
+          color: $primary-color;
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+// Solicitudes Grid Moderno (Mis Reservas)
+.solicitudes-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 30px;
+  padding: 30px;
+}
+
+.solicitud-card-modern {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid #e9ecef;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+    transition: opacity 0.3s ease;
+  }
+
+  &.estado-pendiente::before {
+    background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+  }
+
+  &.estado-aceptada::before {
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+  }
+
+  &.estado-rechazada::before {
+    background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+  }
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    border-color: $primary-color;
+  }
+
+  .solicitud-header-modern {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-bottom: 2px solid #e9ecef;
+
+    .estado-badge-modern {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+      i {
+        font-size: 1.2rem;
+      }
+
+      &.pendiente {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffc107 100%);
+        color: #856404;
+      }
+
+      &.aceptada, &.aceptada_profesor {
+        background: linear-gradient(135deg, #d4edda 0%, #28a745 100%);
+        color: #155724;
+      }
+
+      &.rechazada {
+        background: linear-gradient(135deg, #f8d7da 0%, #dc3545 100%);
+        color: #721c24;
+      }
+    }
+  }
+
+  .solicitud-body-modern {
+    padding: 25px;
+
+    .profesor-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+
+      .profesor-avatar-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 75, 141, 0.3);
+        flex-shrink: 0;
+
+        i {
+          font-size: 2rem;
+          color: white;
+        }
+      }
+
+      .profesor-details-small {
+        flex: 1;
+
+        h4 {
+          margin: 0 0 8px 0;
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: $primary-color;
+        }
+
+        .proyecto-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: #f8f9fa;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: #6c757d;
+          border: 1px solid #dee2e6;
+
+          i {
+            color: $primary-color;
+          }
+        }
+      }
+    }
+
+    .reunion-details-modern {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+
+      .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #e9ecef;
+          transform: translateX(5px);
+        }
+
+        .detail-icon {
+          width: 45px;
+          height: 45px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          i {
+            font-size: 1.3rem;
+          }
+
+          &.fecha {
+            background: linear-gradient(135deg, #e3f2fd 0%, #2196f3 100%);
+            i { color: white; }
+          }
+
+          &.hora {
+            background: linear-gradient(135deg, #f3e5f5 0%, #9c27b0 100%);
+            i { color: white; }
+          }
+
+          &.duracion {
+            background: linear-gradient(135deg, #fff3e0 0%, #ff9800 100%);
+            i { color: white; }
+          }
+
+          &.tipo {
+            background: linear-gradient(135deg, #e8f5e9 0%, #4caf50 100%);
+            i { color: white; }
+          }
+        }
+
+        .detail-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .detail-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          .detail-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: $dark-gray;
+          }
+        }
+      }
+    }
+
+    .descripcion-modern {
+      margin-top: 20px;
+      padding: 15px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-left: 4px solid $primary-color;
+      border-radius: 8px;
+
+      .descripcion-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: $primary-color;
+        font-size: 1rem;
+
+        i {
+          font-size: 1.1rem;
+        }
+      }
+
+      p {
+        margin: 0;
+        color: #6c757d;
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+    }
+
+    .comentarios-modern {
+      margin-top: 20px;
+
+      .comentario-box-modern {
+        padding: 15px;
+        background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+        border-left: 4px solid #fdd835;
+        border-radius: 8px;
+
+        .comentario-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 10px;
+          font-weight: 700;
+          color: #f57f17;
+          font-size: 1rem;
+
+          i {
+            font-size: 1.1rem;
+          }
+        }
+
+        p {
+          margin: 0;
+          color: #f57f17;
+          line-height: 1.6;
+          font-size: 0.95rem;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .fecha-creacion-modern {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e9ecef;
+      color: #6c757d;
+      font-size: 0.9rem;
+
+      i {
+        color: $primary-color;
+      }
+    }
+  }
+
+  .solicitud-actions-modern {
+    padding: 0 25px 25px 25px;
+
+    .btn-cancelar-modern {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+
+      i {
+        font-size: 1.2rem;
+      }
+
+      &:hover:not(:disabled) {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
 
   .messages {
     margin-bottom: 20px;
@@ -142,10 +1189,17 @@ $dark-gray: #343a40;
 
   .form-section {
     background: white;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
+    border-radius: 20px;
+    overflow: visible;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
+    margin-bottom: 40px;
+    border: 1px solid rgba(0, 75, 141, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 10px 40px rgba(0, 75, 141, 0.15);
+      transform: translateY(-2px);
+    }
 
     .section-header {
       background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
@@ -162,6 +1216,55 @@ $dark-gray: #343a40;
 
         i {
           font-size: 1.2rem;
+        }
+      }
+    }
+
+    // Nuevos estilos modernos
+    .section-header-modern {
+      padding: 30px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 2px solid #f0f0f0;
+
+      .step-badge {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 800;
+        box-shadow: 0 4px 15px rgba(0, 75, 141, 0.3);
+        flex-shrink: 0;
+      }
+
+      .section-info {
+        flex: 1;
+
+        h3 {
+          margin: 0 0 5px 0;
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: $primary-color;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          i {
+            font-size: 1.6rem;
+          }
+        }
+
+        .section-subtitle {
+          margin: 0;
+          color: #6c757d;
+          font-size: 1rem;
+          font-weight: 400;
         }
       }
     }

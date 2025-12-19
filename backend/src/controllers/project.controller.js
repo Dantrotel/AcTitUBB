@@ -122,6 +122,7 @@ const getMisProyectos = async (req, res) => {
 
 // Obtener proyectos asignados al profesor autenticado
 const getProyectosAsignados = async (req, res) => {
+    console.log('🎯 ===== INICIO getProyectosAsignados =====');
     try {
         console.log('🔍 Debug getProyectosAsignados:', {
             'req.user': req.user,
@@ -854,6 +855,210 @@ const obtenerEstadisticasCumplimiento = async (req, res) => {
     }
 };
 
+// Obtener avances de un proyecto
+const obtenerAvancesProyecto = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const usuario_rut = req.user?.rut;
+        const rol_usuario = req.user?.rol;
+
+        if (!usuario_rut || !rol_usuario) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+
+        // Verificar permisos
+        const puedeVer = await ProjectService.puedeVerProyecto(projectId, usuario_rut, rol_usuario);
+        if (!puedeVer) {
+            return res.status(403).json({ message: 'No tienes permisos para ver este proyecto' });
+        }
+
+        // Importar dinámicamente el modelo
+        const avanceModel = await import('../models/avance.model.js');
+        const avances = await avanceModel.obtenerAvancesPorProyecto(projectId);
+
+        res.status(200).json({
+            success: true,
+            data: avances
+        });
+    } catch (error) {
+        console.error('Error al obtener avances:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ============= CONTROLADORES DE FECHAS IMPORTANTES =============
+
+// Crear fecha importante para un proyecto
+const crearFechaImportante = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { tipo_fecha, titulo, descripcion, fecha_limite } = req.body;
+        const usuario_rut = req.user?.rut;
+        const rol_usuario = req.user?.rol; // Usar rol como string, no rol_id
+        const rol_id = req.user?.rol_id;
+        
+        if (!usuario_rut || !rol_usuario) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+
+        // Validar datos requeridos
+        if (!tipo_fecha || !titulo || !fecha_limite) {
+            return res.status(400).json({
+                success: false,
+                message: 'Faltan campos obligatorios: tipo_fecha, titulo, fecha_limite'
+            });
+        }
+        
+        // Verificar permisos (solo admin y profesores guía pueden crear fechas)
+        if (rol_id !== 3 && rol_id !== 4) { // No es admin ni superadmin
+            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
+            if (!puedeModificar) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permisos para crear fechas en este proyecto'
+                });
+            }
+        }
+        
+        const fechaId = await ProjectService.crearFechaImportante({
+            proyecto_id: projectId,
+            tipo_fecha,
+            titulo,
+            descripcion,
+            fecha_limite,
+            creado_por: usuario_rut
+        });
+        
+        res.status(201).json({
+            success: true,
+            message: 'Fecha importante creada exitosamente',
+            fecha_id: fechaId
+        });
+    } catch (error) {
+        console.error('Error al crear fecha importante:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Actualizar fecha importante de un proyecto
+const actualizarFechaImportante = async (req, res) => {
+    try {
+        const { projectId, fechaId } = req.params;
+        const updateData = req.body;
+        const usuario_rut = req.user?.rut;
+        const rol_usuario = req.user?.rol;
+        const rol_id = req.user?.rol_id;
+        
+        if (!usuario_rut || !rol_usuario) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+        
+        // Verificar permisos (solo admin y profesores guía pueden actualizar fechas)
+        if (rol_id !== 3 && rol_id !== 4) { // No es admin ni superadmin
+            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
+            if (!puedeModificar) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permisos para actualizar fechas en este proyecto'
+                });
+            }
+        }
+        
+        await ProjectService.actualizarFechaImportante(fechaId, updateData);
+        
+        res.json({
+            success: true,
+            message: 'Fecha importante actualizada exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al actualizar fecha importante:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Eliminar fecha importante de un proyecto
+const eliminarFechaImportante = async (req, res) => {
+    try {
+        const { projectId, fechaId } = req.params;
+        const usuario_rut = req.user?.rut;
+        const rol_usuario = req.user?.rol;
+        const rol_id = req.user?.rol_id;
+        
+        if (!usuario_rut || !rol_usuario) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+        
+        // Verificar permisos (solo admin y profesores guía pueden eliminar fechas)
+        if (rol_id !== 3 && rol_id !== 4) { // No es admin ni superadmin
+            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
+            if (!puedeModificar) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permisos para eliminar fechas en este proyecto'
+                });
+            }
+        }
+        
+        await ProjectService.eliminarFechaImportante(fechaId);
+        
+        res.json({
+            success: true,
+            message: 'Fecha importante eliminada exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al eliminar fecha importante:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Obtener fechas importantes de un proyecto
+const obtenerFechasImportantes = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const usuario_rut = req.user?.rut;
+        const rol_usuario = req.user?.rol; // Usar rol como string
+        
+        if (!usuario_rut || !rol_usuario) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+        
+        // Verificar permisos para ver el proyecto
+        const puedeVer = await ProjectService.puedeVerProyecto(projectId, usuario_rut, rol_usuario);
+        if (!puedeVer) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tienes permisos para ver las fechas de este proyecto'
+            });
+        }
+        
+        const fechasInfo = await ProjectService.obtenerFechasConNotificaciones(parseInt(projectId));
+        
+        res.json({
+            success: true,
+            data: {
+                fechas_importantes: fechasInfo.fechas,
+                fechas_proximas: fechasInfo.fechasProximas,
+                estadisticas: fechasInfo.estadisticas
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener fechas importantes:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 export const ProjectController = {
     createProject,
     getProjects,
@@ -886,5 +1091,12 @@ export const ProjectController = {
     obtenerNotificaciones,
     marcarNotificacionLeida,
     configurarAlertas,
-    obtenerEstadisticasCumplimiento
+    obtenerEstadisticasCumplimiento,
+    obtenerAvancesProyecto,
+    
+    // Fechas importantes
+    crearFechaImportante,
+    actualizarFechaImportante,
+    eliminarFechaImportante,
+    obtenerFechasImportantes
 };

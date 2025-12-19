@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-fechas-importantes-profesor',
@@ -44,7 +45,11 @@ export class FechasImportantesProfesorComponent implements OnInit {
     { value: 'critica', label: 'Crítica' }
   ];
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.cargarProyectosAsignados();
@@ -64,12 +69,14 @@ export class FechasImportantesProfesorComponent implements OnInit {
         } else {
           this.proyectosAsignados = Array.isArray(response) ? response : [];
         }
+        this.cdr.detectChanges(); // Forzar detección de cambios
         this.cargarTodasLasFechas();
       },
       error: (error) => {
         // console.error('❌ Error al cargar proyectos del profesor:', error);
         this.proyectosAsignados = [];
         this.cargando = false;
+        this.cdr.detectChanges(); // Forzar detección de cambios
       }
     });
   }
@@ -91,8 +98,16 @@ export class FechasImportantesProfesorComponent implements OnInit {
 
     Promise.all(promesasFechas).then(resultados => {
       this.fechasImportantes = [];
-      resultados.forEach((fechas: any, index) => {
-        if (fechas && Array.isArray(fechas)) {
+      resultados.forEach((response: any, index) => {
+        // Manejar la respuesta del backend: { success: true, data: { fechas_importantes: [...] } }
+        let fechas = [];
+        if (response && response.success && response.data && response.data.fechas_importantes) {
+          fechas = response.data.fechas_importantes;
+        } else if (response && Array.isArray(response)) {
+          fechas = response;
+        }
+        
+        if (fechas.length > 0) {
           const fechasConProyecto = fechas.map((fecha: any) => ({
             ...fecha,
             proyecto_titulo: this.proyectosAsignados[index]?.titulo || 'Sin título',
@@ -109,9 +124,11 @@ export class FechasImportantesProfesorComponent implements OnInit {
 
       // // // console.log('✅ FechasProfesor - Fechas cargadas:', this.fechasImportantes);
       this.cargando = false;
+      this.cdr.detectChanges(); // Forzar detección de cambios
     }).catch(error => {
       // console.error('❌ Error cargando fechas:', error);
       this.cargando = false;
+      this.cdr.detectChanges(); // Forzar detección de cambios
     });
   }
 
@@ -123,19 +140,30 @@ export class FechasImportantesProfesorComponent implements OnInit {
 
     this.cargando = true;
     this.apiService.getFechasImportantesProyecto(proyectoId).subscribe({
-      next: (fechas: any) => {
+      next: (response: any) => {
         const proyecto = this.proyectosAsignados.find(p => p.id === proyectoId);
-        this.fechasImportantes = Array.isArray(fechas) ? fechas.map((fecha: any) => ({
+        
+        // Manejar la respuesta del backend: { success: true, data: { fechas_importantes: [...] } }
+        let fechas = [];
+        if (response && response.success && response.data && response.data.fechas_importantes) {
+          fechas = response.data.fechas_importantes;
+        } else if (response && Array.isArray(response)) {
+          fechas = response;
+        }
+        
+        this.fechasImportantes = fechas.map((fecha: any) => ({
           ...fecha,
           proyecto_titulo: proyecto?.titulo || 'Sin título',
           estudiante_nombre: proyecto?.estudiante_nombre || 'Sin asignar'
-        })) : [];
+        }));
         this.cargando = false;
+        this.cdr.detectChanges(); // Forzar detección de cambios
       },
       error: (error) => {
         // console.error('❌ Error cargando fechas del proyecto:', error);
         this.fechasImportantes = [];
         this.cargando = false;
+        this.cdr.detectChanges(); // Forzar detección de cambios
       }
     });
   }
@@ -151,29 +179,40 @@ export class FechasImportantesProfesorComponent implements OnInit {
 
     // // // console.log('🔍 FechasProfesor - Creando fecha importante:', this.nuevaFecha);
 
-    this.apiService.crearFechaImportante(this.nuevaFecha.proyecto_id, this.nuevaFecha).subscribe({
+    // Preparar datos sin proyecto_id (va en la URL)
+    const fechaData = {
+      titulo: this.nuevaFecha.titulo,
+      descripcion: this.nuevaFecha.descripcion,
+      fecha_limite: this.nuevaFecha.fecha_limite,
+      tipo_fecha: this.nuevaFecha.tipo_fecha
+    };
+
+    this.apiService.crearFechaImportante(this.nuevaFecha.proyecto_id, fechaData).subscribe({
       next: (response) => {
         // // // console.log('✅ Fecha importante creada:', response);
+        this.notificationService.success('Fecha importante creada exitosamente');
         this.mostrarFormulario = false;
         this.cargarTodasLasFechas();
         this.limpiarFormulario();
       },
       error: (error) => {
         // console.error('❌ Error al crear fecha importante:', error);
-        alert('Error al crear la fecha importante. Intenta de nuevo.');
+        this.notificationService.error('Error al crear la fecha importante', 'Intenta de nuevo');
       }
     });
   }
 
   editarFecha(fecha: any) {
     this.fechaSeleccionada = fecha;
+    // El campo en la BD se llama 'fecha', no 'fecha_limite'
+    const fechaValor = fecha.fecha || fecha.fecha_limite;
     this.nuevaFecha = {
       titulo: fecha.titulo,
       descripcion: fecha.descripcion || '',
-      fecha_limite: new Date(fecha.fecha_limite).toISOString().split('T')[0],
+      fecha_limite: fechaValor ? new Date(fechaValor).toISOString().split('T')[0] : '',
       tipo_fecha: fecha.tipo_fecha,
       proyecto_id: fecha.proyecto_id.toString(),
-      prioridad: fecha.prioridad
+      prioridad: fecha.prioridad || 'media'
     };
     this.mostrarFormulario = true;
   }
@@ -195,24 +234,30 @@ export class FechasImportantesProfesorComponent implements OnInit {
       },
       error: (error) => {
         // console.error('❌ Error al actualizar fecha importante:', error);
-        alert('Error al actualizar la fecha importante. Intenta de nuevo.');
+        this.notificationService.error('Error al actualizar la fecha importante', 'Intenta de nuevo');
       }
     });
   }
 
-  eliminarFecha(fecha: any) {
-    if (confirm(`¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`)) {
-      this.apiService.eliminarFechaImportante(fecha.proyecto_id, fecha.id).subscribe({
-        next: () => {
-          // // // console.log('✅ Fecha importante eliminada');
-          this.cargarTodasLasFechas();
-        },
-        error: (error) => {
-          // console.error('❌ Error al eliminar fecha importante:', error);
-          alert('Error al eliminar la fecha importante. Intenta de nuevo.');
-        }
-      });
-    }
+  async eliminarFecha(fecha: any): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      `¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`,
+      'Eliminar Fecha',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
+
+    this.apiService.eliminarFechaImportante(fecha.proyecto_id, fecha.id).subscribe({
+      next: () => {
+        this.notificationService.success('Fecha eliminada correctamente');
+        this.cargarTodasLasFechas();
+      },
+      error: (error) => {
+        // console.error('❌ Error al eliminar fecha importante:', error);
+        this.notificationService.error('Error al eliminar la fecha importante', 'Intenta de nuevo');
+      }
+    });
   }
 
   marcarCompletada(fecha: any) {
@@ -224,7 +269,7 @@ export class FechasImportantesProfesorComponent implements OnInit {
       },
       error: (error) => {
         // console.error('❌ Error al cambiar estado de la fecha:', error);
-        alert('Error al cambiar el estado de la fecha.');
+        this.notificationService.error('Error al cambiar el estado de la fecha');
       }
     });
   }
@@ -248,15 +293,15 @@ export class FechasImportantesProfesorComponent implements OnInit {
 
   validarFormulario(): boolean {
     if (!this.nuevaFecha.titulo.trim()) {
-      alert('El título es obligatorio');
+      this.notificationService.warning('El título es obligatorio');
       return false;
     }
     if (!this.nuevaFecha.fecha_limite) {
-      alert('La fecha límite es obligatoria');
+      this.notificationService.warning('La fecha límite es obligatoria');
       return false;
     }
     if (!this.nuevaFecha.proyecto_id) {
-      alert('Debe seleccionar un proyecto');
+      this.notificationService.warning('Debe seleccionar un proyecto');
       return false;
     }
     return true;

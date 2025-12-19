@@ -25,14 +25,14 @@ export const asignarProfesor = async (proyecto_id, profesor_rut) => {
  * @returns {Promise<boolean>} - true si se asignó correctamente
  */
 export const asignarProfesorConRol = async (proyecto_id, profesor_rut, rol_profesor_id) => {
-  // Verificar que el profesor sea válido
+  // Verificar que el profesor sea válido (profesor o admin)
   const [profesorExists] = await pool.execute(
-    `SELECT rut FROM usuarios WHERE rut = ? AND rol_id = 2`,
+    `SELECT rut FROM usuarios WHERE rut = ? AND rol_id IN (2, 3)`,
     [profesor_rut]
   );
   
   if (profesorExists.length === 0) {
-    throw new Error('El usuario no es un profesor válido');
+    throw new Error('El usuario no es un profesor o administrador válido');
   }
 
   // Verificar que no exista ya una asignación del mismo rol
@@ -63,14 +63,14 @@ export const asignarProfesorConRol = async (proyecto_id, profesor_rut, rol_profe
  * @returns {Promise<number>} - ID de la asignación creada
  */
 export const asignarProfesorAProyecto = async ({ proyecto_id, profesor_rut, rol_profesor_id, asignado_por, observaciones = null }) => {
-  // Verificar que el profesor sea válido
+  // Verificar que el profesor sea válido (profesor o admin)
   const [profesorExists] = await pool.execute(
-    `SELECT rut FROM usuarios WHERE rut = ? AND rol_id = 2`,
+    `SELECT rut FROM usuarios WHERE rut = ? AND rol_id IN (2, 3)`,
     [profesor_rut]
   );
   
   if (profesorExists.length === 0) {
-    throw new Error('El usuario no es un profesor válido');
+    throw new Error('El usuario no es un profesor o administrador válido');
   }
 
   // Verificar que no exista ya una asignación activa del mismo rol
@@ -312,7 +312,7 @@ export const obtenerProfesoresDisponibles = async (rol_profesor_id) => {
         LEFT JOIN asignaciones_proyectos ap ON u.rut = ap.profesor_rut 
             AND ap.activo = TRUE 
             AND ap.rol_profesor_id = ?
-        WHERE u.role_id = 2
+        WHERE u.rol_id IN (2, 3)
         GROUP BY u.rut, u.nombre, u.email
         ORDER BY proyectos_actuales ASC, u.nombre ASC
     `;
@@ -489,10 +489,41 @@ export const obtenerProfesoresAsignados = async (proyecto_id) => {
  * @returns {Promise<boolean>} - true si se desasignó correctamente
  */
 export const desasignarProfesor = async (proyecto_id, profesor_rut) => {
-  const [result] = await pool.execute(
-    `UPDATE asignaciones_proyectos SET activo = FALSE WHERE proyecto_id = ? AND profesor_rut = ?`,
+  // Primero verificamos si existe una asignación activa
+  const [rows] = await pool.execute(
+    `SELECT id, rol_profesor_id FROM asignaciones_proyectos WHERE proyecto_id = ? AND profesor_rut = ? AND activo = TRUE`,
     [proyecto_id, profesor_rut]
   );
+  
+  // Si no hay asignación activa, retornamos false
+  if (rows.length === 0) {
+    console.log(`⚠️ No hay asignación activa para proyecto ${proyecto_id} y profesor ${profesor_rut}`);
+    return false;
+  }
+  
+  const rolProfesorId = rows[0].rol_profesor_id;
+  
+  // WORKAROUND: Eliminar asignaciones inactivas antiguas del mismo proyecto y rol
+  // para evitar conflicto con la restricción unique_asignacion_activa
+  try {
+    await pool.execute(
+      `DELETE FROM asignaciones_proyectos 
+       WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = FALSE`,
+      [proyecto_id, rolProfesorId]
+    );
+    console.log(`🗑️ Limpiadas asignaciones inactivas antiguas del proyecto ${proyecto_id} con rol ${rolProfesorId}`);
+  } catch (cleanupError) {
+    console.warn('⚠️ Error al limpiar asignaciones antiguas:', cleanupError.message);
+  }
+  
+  // Ahora desactivamos la asignación actual
+  const [result] = await pool.execute(
+    `UPDATE asignaciones_proyectos 
+     SET activo = FALSE, fecha_desasignacion = NOW() 
+     WHERE proyecto_id = ? AND profesor_rut = ? AND activo = TRUE`,
+    [proyecto_id, profesor_rut]
+  );
+  
   return result.affectedRows > 0;
 };
 

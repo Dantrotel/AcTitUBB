@@ -18,6 +18,10 @@ routerProject.get('/:projectId', verifySession, cacheMiddleware('proyectos'), Pr
 // Obtener proyecto específico con información completa (fechas importantes y profesores)
 routerProject.get('/:projectId/completo', verifySession, cacheMiddleware('proyectos'), ProjectController.getProyectoCompleto);
 
+// Gestión de fechas importantes del proyecto (accesible para todos con permisos)
+routerProject.get('/:projectId/fechas-importantes', verifySession, ProjectController.obtenerFechasImportantes);
+routerProject.post('/:projectId/fechas-importantes', verifySession, ProjectController.crearFechaImportante);
+
 // Crear nuevo proyecto (solo estudiantes)
 routerProject.post('/', verifySession, checkRole('1'), validate(crearProyectoSchema), invalidateOnMutation('proyectos'), ProjectController.createProject);
 
@@ -84,5 +88,8 @@ routerProject.post('/:projectId/alertas', verifySession, checkRole('2'), Project
 
 // Estadísticas y reportes
 routerProject.get('/:projectId/estadisticas', verifySession, ProjectController.obtenerEstadisticasCumplimiento);
+
+// Obtener avances de un proyecto
+routerProject.get('/:projectId/avances', verifySession, ProjectController.obtenerAvancesProyecto);
 
 export default routerProject;

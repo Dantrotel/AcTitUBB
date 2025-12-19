@@ -1,0 +1,197 @@
+<div class="reportes-container">
+  <div class="header">
+    <h1><i class="fas fa-file-pdf"></i> Sistema de Reportes y Exportación</h1>
+    <p class="subtitle">Genera reportes PDF y Excel del sistema</p>
+  </div>
+
+  <!-- Mensajes -->
+  <div class="mensajes">
+    <div class="alert alert-success" *ngIf="mensajeExito">
+      <i class="fas fa-check-circle"></i> {{ mensajeExito }}
+    </div>
+    <div class="alert alert-error" *ngIf="mensajeError">
+      <i class="fas fa-exclamation-circle"></i> {{ mensajeError }}
+    </div>
+  </div>
+
+  <!-- Reporte 1: Cumplimiento por Carrera (PDF) -->
+  <div class="reporte-card">
+    <div class="reporte-header">
+      <div class="reporte-icon pdf">
+        <i class="fas fa-file-pdf"></i>
+      </div>
+      <div class="reporte-info">
+        <h3>Reporte de Cumplimiento por Carrera</h3>
+        <p>Genera un PDF con estadísticas de cumplimiento de proyectos por carrera</p>
+      </div>
+    </div>
+    
+    <div class="reporte-body">
+      <div class="form-group">
+        <label for="carreraSelect">Seleccione una Carrera:</label>
+        <select 
+          id="carreraSelect" 
+          [(ngModel)]="carreraSeleccionada" 
+          class="form-control"
+          [disabled]="cargandoReporte">
+          <option [value]="null">-- Seleccione --</option>
+          <option *ngFor="let carrera of carreras" [value]="carrera.id">
+            {{ carrera.nombre }}
+          </option>
+        </select>
+      </div>
+      
+      <button 
+        class="btn btn-primary" 
+        (click)="generarReporteCumplimientoCarrera()"
+        [disabled]="!carreraSeleccionada || cargandoReporte">
+        <i class="fas fa-download"></i> 
+        {{ cargandoReporte ? 'Generando...' : 'Generar PDF' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Reporte 2: Carga Docente (Excel) -->
+  <div class="reporte-card">
+    <div class="reporte-header">
+      <div class="reporte-icon excel">
+        <i class="fas fa-file-excel"></i>
+      </div>
+      <div class="reporte-info">
+        <h3>Reporte de Carga Docente</h3>
+        <p>Genera un Excel con la carga de trabajo de todos los profesores</p>
+      </div>
+    </div>
+    
+    <div class="reporte-body">
+      <p class="info-text">
+        <i class="fas fa-info-circle"></i>
+        Este reporte incluye todos los profesores con sus proyectos actuales y su estado de carga
+      </p>
+      
+      <button 
+        class="btn btn-success" 
+        (click)="generarReporteCargaDocente()"
+        [disabled]="cargandoReporte">
+        <i class="fas fa-download"></i> 
+        {{ cargandoReporte ? 'Generando...' : 'Generar Excel' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Reporte 3: Proyectos Finalizados (Excel) -->
+  <div class="reporte-card">
+    <div class="reporte-header">
+      <div class="reporte-icon excel">
+        <i class="fas fa-file-excel"></i>
+      </div>
+      <div class="reporte-info">
+        <h3>Reporte de Proyectos Finalizados</h3>
+        <p>Genera un Excel con todos los proyectos finalizados en un rango de fechas</p>
+      </div>
+    </div>
+    
+    <div class="reporte-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaInicio">Fecha Inicio (opcional):</label>
+          <input 
+            type="date" 
+            id="fechaInicio" 
+            [(ngModel)]="fechaInicio" 
+            class="form-control"
+            [disabled]="cargandoReporte">
+        </div>
+        
+        <div class="form-group">
+          <label for="fechaFin">Fecha Fin (opcional):</label>
+          <input 
+            type="date" 
+            id="fechaFin" 
+            [(ngModel)]="fechaFin" 
+            class="form-control"
+            [disabled]="cargandoReporte">
+        </div>
+      </div>
+      
+      <button 
+        class="btn btn-success" 
+        (click)="generarReporteProyectosFinalizados()"
+        [disabled]="cargandoReporte">
+        <i class="fas fa-download"></i> 
+        {{ cargandoReporte ? 'Generando...' : 'Generar Excel' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Sección 4: Datos de Tendencias -->
+  <div class="reporte-card">
+    <div class="reporte-header">
+      <div class="reporte-icon chart">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="reporte-info">
+        <h3>Análisis de Tendencias</h3>
+        <p>Visualiza la evolución de propuestas y proyectos a lo largo del tiempo</p>
+      </div>
+    </div>
+    
+    <div class="reporte-body">
+      <div class="form-group">
+        <label for="mesesTendencias">Meses a analizar:</label>
+        <select 
+          id="mesesTendencias" 
+          [(ngModel)]="mesesTendencias" 
+          class="form-control"
+          [disabled]="cargandoReporte">
+          <option [value]="3">3 meses</option>
+          <option [value]="6">6 meses</option>
+          <option [value]="12">12 meses</option>
+          <option [value]="24">24 meses</option>
+        </select>
+      </div>
+      
+      <button 
+        class="btn btn-info" 
+        (click)="cargarDatosTendencias()"
+        [disabled]="cargandoReporte">
+        <i class="fas fa-chart-bar"></i> 
+        {{ cargandoReporte ? 'Cargando...' : 'Cargar Datos' }}
+      </button>
+      
+      <!-- Mostrar datos si existen -->
+      <div class="tendencias-result" *ngIf="datosTendencias">
+        <h4>Resumen de Tendencias (últimos {{ mesesTendencias }} meses)</h4>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">{{ datosTendencias.propuestas_recibidas }}</div>
+            <div class="stat-label">Propuestas Recibidas</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value">{{ datosTendencias.proyectos_iniciados }}</div>
+            <div class="stat-label">Proyectos Iniciados</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value">{{ datosTendencias.proyectos_finalizados }}</div>
+            <div class="stat-label">Proyectos Finalizados</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value">
+              {{ datosTendencias.tasa_aprobacion ? (datosTendencias.tasa_aprobacion * 100).toFixed(1) : '0' }}%
+            </div>
+            <div class="stat-label">Tasa de Aprobación</div>
+          </div>
+        </div>
+        
+        <div class="info-text" style="margin-top: 20px;">
+          <i class="fas fa-info-circle"></i>
+          En el futuro, aquí se mostrarán gráficos interactivos con los datos de tendencias
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

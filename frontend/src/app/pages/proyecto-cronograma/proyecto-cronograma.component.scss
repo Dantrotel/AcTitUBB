@@ -404,3 +404,105 @@
     border: 1px solid var(--ubb-accent);
   }
 }
+
+// Estilos para la sección de entregas y versiones
+.entregas-container {
+  padding: 20px;
+
+  .entregas-header {
+    margin-bottom: 30px;
+
+    h3 {
+      color: var(--ubb-primary);
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    p {
+      color: var(--ubb-gray);
+      font-size: 14px;
+    }
+  }
+
+  .avances-selector {
+    background: var(--ubb-white);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 75, 141, 0.1);
+
+    label {
+      display: block;
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: var(--ubb-dark);
+    }
+
+    .avances-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .avance-btn {
+      padding: 15px;
+      background: var(--ubb-light);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      i {
+        color: var(--ubb-primary);
+        margin-right: 8px;
+      }
+
+      .avance-fecha {
+        font-size: 12px;
+        color: var(--ubb-gray);
+      }
+
+      &:hover {
+        background: #e9ecef;
+        border-color: var(--ubb-secondary);
+      }
+
+      &.active {
+        background: linear-gradient(135deg, var(--ubb-primary) 0%, var(--ubb-secondary) 100%);
+        color: var(--ubb-white);
+        border-color: var(--ubb-primary);
+
+        i, .avance-fecha {
+          color: var(--ubb-white);
+          opacity: 0.9;
+        }
+      }
+    }
+  }
+
+  .versiones-panel {
+    background: var(--ubb-white);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 75, 141, 0.1);
+  }
+
+  .sin-avances {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ubb-gray);
+
+    i {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    p {
+      font-size: 16px;
+    }
+  }
+}

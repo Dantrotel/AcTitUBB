@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 interface Reunion {
   id: number;
@@ -49,8 +50,11 @@ export class ReunionesProfesorComponent implements OnInit {
   
   // Filtros
   filtroActivo: 'expiradas' | 'proximas' | 'realizadas' | 'canceladas' = 'expiradas';
-  
-  constructor(private apiService: ApiService) {}
+
+  constructor(
+    private api: ApiService,
+    private notificationService: NotificationService
+  ) {}
   
   ngOnInit() {
     this.cargarReuniones();
@@ -60,7 +64,7 @@ export class ReunionesProfesorComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     
-    this.apiService.getReunionesProgramadas().subscribe({
+    this.api.getReunionesProgramadas().subscribe({
       next: (response: any) => {
         const todasReuniones = response.data || [];
         
@@ -84,7 +88,6 @@ export class ReunionesProfesorComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error cargando reuniones:', error);
         this.errorMessage = 'Error al cargar las reuniones';
         this.isLoading = false;
       }
@@ -128,7 +131,7 @@ export class ReunionesProfesorComponent implements OnInit {
       modalidad: this.modalidadReunion
     };
     
-    this.apiService.marcarReunionRealizada(this.reunionSeleccionada.id.toString(), data).subscribe({
+    this.api.marcarReunionRealizada(this.reunionSeleccionada.id.toString(), data).subscribe({
       next: () => {
         this.successMessage = 'Reunión marcada como realizada exitosamente';
         this.cerrarModal();
@@ -136,19 +139,29 @@ export class ReunionesProfesorComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error:', error);
         this.errorMessage = error.error?.message || 'Error al marcar la reunión como realizada';
         this.isLoading = false;
       }
     });
   }
   
-  cancelarReunion(reunion: Reunion) {
-    const confirmar = confirm(`¿Estás seguro de que deseas cancelar la reunión con ${reunion.estudiante_nombre}?`);
+  async cancelarReunion(reunion: Reunion) {
+    const confirmed = await this.notificationService.confirm(
+      `¿Estás seguro de que deseas cancelar la reunión con ${reunion.estudiante_nombre}?`,
+      'Cancelar Reunión',
+      'Cancelar',
+      'Volver'
+    );
     
-    if (!confirmar) return;
+    if (!confirmed) return;
     
-    const motivo = prompt('Motivo de cancelación (opcional):');
+    const motivo = await this.notificationService.prompt(
+      'Motivo de cancelación (opcional):',
+      'Motivo de Cancelación',
+      'Reunión no realizada',
+      'Aceptar',
+      'Omitir'
+    );
     
     this.isLoading = true;
     this.errorMessage = '';
@@ -157,14 +170,13 @@ export class ReunionesProfesorComponent implements OnInit {
       motivo: motivo || 'Reunión no realizada'
     };
     
-    this.apiService.cancelarReunion(reunion.id.toString(), data).subscribe({
+    this.api.cancelarReunion(reunion.id.toString(), data).subscribe({
       next: () => {
         this.successMessage = 'Reunión cancelada exitosamente';
         this.cargarReuniones();
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error:', error);
         this.errorMessage = error.error?.message || 'Error al cancelar la reunión';
         this.isLoading = false;
       }

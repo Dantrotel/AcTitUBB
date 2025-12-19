@@ -92,7 +92,6 @@ export class GestionEstructuraComponent implements OnInit {
         this.cargando.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar facultades:', err);
         this.mostrarMensaje('Error al cargar facultades', 'error');
         this.cargando.set(false);
       }
@@ -136,7 +135,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al guardar facultad:', err);
         this.mostrarMensaje(err.error?.message || 'Error al guardar facultad', 'error');
         this.cargando.set(false);
       }
@@ -164,7 +162,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al desactivar facultad:', err);
         this.mostrarMensaje(err.error?.message || 'Error al desactivar facultad', 'error');
         this.cargando.set(false);
       }
@@ -237,7 +234,6 @@ export class GestionEstructuraComponent implements OnInit {
         this.cargando.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar departamentos:', err);
         this.mostrarMensaje('Error al cargar departamentos', 'error');
         this.cargando.set(false);
       }
@@ -292,7 +288,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al guardar departamento:', err);
         this.mostrarMensaje(err.error?.message || 'Error al guardar departamento', 'error');
         this.cargando.set(false);
       }
@@ -320,7 +315,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al desactivar departamento:', err);
         this.mostrarMensaje(err.error?.message || 'Error al desactivar departamento', 'error');
         this.cargando.set(false);
       }
@@ -376,7 +370,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al eliminar departamento permanentemente:', err);
         const mensaje = err.error?.message || err.message || 'Error al eliminar departamento permanentemente';
         this.mostrarMensaje(mensaje, 'error');
         this.cargando.set(false);
@@ -394,7 +387,6 @@ export class GestionEstructuraComponent implements OnInit {
         this.cargando.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar carreras:', err);
         this.mostrarMensaje('Error al cargar carreras', 'error');
         this.cargando.set(false);
       }
@@ -449,7 +441,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al guardar carrera:', err);
         this.mostrarMensaje(err.error?.message || 'Error al guardar carrera', 'error');
         this.cargando.set(false);
       }
@@ -477,7 +468,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al desactivar carrera:', err);
         this.mostrarMensaje(err.error?.message || 'Error al desactivar carrera', 'error');
         this.cargando.set(false);
       }
@@ -533,7 +523,6 @@ export class GestionEstructuraComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al eliminar carrera permanentemente:', err);
         const mensaje = err.error?.message || err.message || 'Error al eliminar carrera permanentemente';
         this.mostrarMensaje(mensaje, 'error');
         this.cargando.set(false);
@@ -554,7 +543,6 @@ export class GestionEstructuraComponent implements OnInit {
       this.carreras.set(Array.isArray(carreras) ? carreras : []);
       this.cargando.set(false);
     }).catch(error => {
-      console.error('Error al cargar relaciones:', error);
       this.mostrarMensaje('Error al cargar relaciones', 'error');
       this.cargando.set(false);
     });
@@ -618,7 +606,6 @@ export class GestionEstructuraComponent implements OnInit {
           this.cerrarModalRelacion();
         },
         error: (err) => {
-          console.error('Error al actualizar relación:', err);
           this.mostrarMensaje('Error al actualizar relación', 'error');
           this.cargando.set(false);
         }
@@ -635,7 +622,6 @@ export class GestionEstructuraComponent implements OnInit {
           this.cerrarModalRelacion();
         },
         error: (err) => {
-          console.error('Error al crear relación:', err);
           if (err.status === 409) {
             this.mostrarMensaje('Esta relación ya existe', 'error');
           } else {
@@ -647,10 +633,14 @@ export class GestionEstructuraComponent implements OnInit {
     }
   }
 
-  eliminarRelacion(id: number): void {
-    if (!confirm('¿Está seguro de eliminar esta relación?')) {
-      return;
-    }
+  async eliminarRelacion(id: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Está seguro de eliminar esta relación?',
+      'Eliminar Relación',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     this.cargando.set(true);
     this.apiService.eliminarRelacionDepartamentoCarrera(id).subscribe({
@@ -659,7 +649,6 @@ export class GestionEstructuraComponent implements OnInit {
         this.cargarRelaciones();
       },
       error: (err) => {
-        console.error('Error al eliminar relación:', err);
         this.mostrarMensaje('Error al eliminar relación', 'error');
         this.cargando.set(false);
       }
@@ -679,7 +668,6 @@ export class GestionEstructuraComponent implements OnInit {
         this.cargarRelaciones();
       },
       error: (err) => {
-        console.error('Error al cambiar estado:', err);
         this.mostrarMensaje('Error al cambiar estado', 'error');
         this.cargando.set(false);
       }

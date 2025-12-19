@@ -16,7 +16,7 @@ export const getDashboardEstudiante = async (req, res) => {
             data: dashboard
         });
     } catch (error) {
-        console.error('Error al obtener dashboard estudiante:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener dashboard del estudiante',
@@ -37,7 +37,7 @@ export const getDashboardProfesor = async (req, res) => {
             data: dashboard
         });
     } catch (error) {
-        console.error('Error al obtener dashboard profesor:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener dashboard del profesor',
@@ -56,7 +56,7 @@ export const getDashboardAdmin = async (req, res) => {
             data: dashboard
         });
     } catch (error) {
-        console.error('Error al obtener dashboard admin:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener dashboard del administrador',
@@ -88,7 +88,7 @@ export const getProyectosRiesgo = async (req, res) => {
             proyectos
         });
     } catch (error) {
-        console.error('Error al obtener proyectos en riesgo:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener proyectos en riesgo de abandono',
@@ -110,7 +110,7 @@ export const getInformantesPendientes = async (req, res) => {
             entregas
         });
     } catch (error) {
-        console.error('Error al obtener informantes pendientes:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener entregas pendientes de informante',
@@ -133,7 +133,7 @@ export const getAlertasAbandono = async (req, res) => {
             alertas
         });
     } catch (error) {
-        console.error('Error al obtener alertas de abandono:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener alertas de abandono',
@@ -164,7 +164,7 @@ export const marcarAlertaComoAtendida = async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Error al marcar alerta:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al marcar alerta como atendida',
@@ -185,7 +185,7 @@ export const getConfiguracionAbandono = async (req, res) => {
             configuracion: config
         });
     } catch (error) {
-        console.error('Error al obtener configuración:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener configuración de abandono',

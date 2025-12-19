@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-actualizar-propuesta',
@@ -54,7 +55,9 @@ export class ActualizarPropuestaComponent implements OnInit {
     private apiService: ApiService,
     private route: ActivatedRoute,
     private router: Router,
-    private location: Location
+    private location: Location,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -90,7 +93,6 @@ export class ActualizarPropuestaComponent implements OnInit {
         }, 2000);
       }
     } catch (error) {
-      console.error('Error al verificar token:', error);
       this.mostrarToast('Token inválido. Por favor, inicia sesión nuevamente.', 'error');
       localStorage.removeItem('token');
       setTimeout(() => {
@@ -106,7 +108,6 @@ export class ActualizarPropuestaComponent implements OnInit {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.userRut = payload.rut || '';
       } catch {
-        console.error('Error al decodificar token');
       }
     }
   }
@@ -121,6 +122,7 @@ export class ActualizarPropuestaComponent implements OnInit {
         if (!this.puedeEditarPropuesta(data)) {
           this.error = 'No tienes permisos para editar esta propuesta';
           this.loading = false;
+          this.cdr.detectChanges();
           return;
         }
         
@@ -137,11 +139,12 @@ export class ActualizarPropuestaComponent implements OnInit {
         // Validar justificación de complejidad al cargar
         this.validarJustificacionComplejidad();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
-        console.error('Error al obtener propuesta:', err);
         this.error = 'No se pudo cargar la propuesta';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -302,11 +305,17 @@ export class ActualizarPropuestaComponent implements OnInit {
   }
 
   // File management methods
-  eliminarArchivo() {
-    if (confirm('¿Estás seguro de que quieres eliminar el archivo actual? Esta acción no se puede deshacer.')) {
-      this.propuesta.archivo = null;
-      this.mostrarToast('Archivo eliminado. Recuerda guardar los cambios.', 'success');
-    }
+  async eliminarArchivo() {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que quieres eliminar el archivo actual? Esta acción no se puede deshacer.',
+      'Eliminar Archivo',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
+    
+    this.propuesta.archivo = null;
+    this.mostrarToast('Archivo eliminado. Recuerda guardar los cambios.', 'success');
   }
 
   onDragOver(event: DragEvent) {
@@ -368,7 +377,6 @@ export class ActualizarPropuestaComponent implements OnInit {
   }
 
   actualizar() {
-    console.log('Propuesta a actualizar:', this.propuesta);
     
     // Validar formulario antes de enviar
     const errorValidacion = this.validarFormulario();
@@ -433,7 +441,6 @@ export class ActualizarPropuestaComponent implements OnInit {
 
     this.apiService.updatePropuestaWithFile(this.propuestaId, formData).subscribe({
       next: (res: any) => {
-        console.log('Propuesta actualizada con archivo:', res);
         this.saving = false;
         this.mostrarToast('Propuesta actualizada con éxito', 'success');
         
@@ -446,7 +453,6 @@ export class ActualizarPropuestaComponent implements OnInit {
         }, 2000);
       },
       error: (err: any) => {
-        console.error('Error al actualizar con archivo:', err);
         this.manejarErrorActualizacion(err);
       }
     });
@@ -477,7 +483,6 @@ export class ActualizarPropuestaComponent implements OnInit {
 
     this.apiService.updatePropuesta(this.propuestaId, datosActualizacion).subscribe({
       next: (res: any) => {
-        console.log('Propuesta actualizada:', res);
         this.saving = false;
         this.mostrarToast('Propuesta actualizada con éxito', 'success');
         
@@ -487,7 +492,6 @@ export class ActualizarPropuestaComponent implements OnInit {
         }, 2000);
       },
       error: (err: any) => {
-        console.error('Error al actualizar:', err);
         this.manejarErrorActualizacion(err);
       }
     });
@@ -536,7 +540,6 @@ export class ActualizarPropuestaComponent implements OnInit {
         this.mostrarToast('Archivo descargado exitosamente', 'success');
       },
       error: (err) => {
-        console.error('Error al descargar archivo:', err);
         this.mostrarToast('Error al descargar el archivo', 'error');
       }
     });

@@ -13,6 +13,7 @@ import { PropuestasAsignadasComponent } from './pages/propuestas/asignadas/asign
 import { RevisarPropuestaComponent } from './pages/propuestas/revisarPropuesta/revisar-propuesta';
 import { HomeAdminComponent } from './pages/admin/home-admin/home-admin';
 import { GestionPropuestasComponent } from './pages/admin/gestion-propuestas/gestion-propuestas';
+import { GestionProyectosComponent } from './pages/admin/gestion-proyectos/gestion-proyectos.component';
 import { AsignarProfesorComponent } from './pages/admin/asignar-profesor/asignar-profesor';
 import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion-usuarios';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
@@ -43,6 +44,9 @@ import { ProyectoCronogramaComponent } from './pages/proyecto-cronograma/proyect
 
 // Reuniones Profesor Component
 import { ReunionesProfesorComponent } from './pages/profesor/reuniones/reuniones-profesor.component';
+
+// Reportes Profesor Component
+import { ReportesProfesorComponent } from './pages/profesor/reportes/reportes-profesor.component';
 
 // Documentos Component
 import { DocumentosProyectoComponent } from './components/documentos-proyecto/documentos-proyecto.component';
@@ -89,11 +93,42 @@ export const routes: Routes = [
   { path: 'super-admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
   { path: 'super-admin/gestion-estructura', component: GestionEstructuraComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
   { path: 'super-admin/gestionar-jefes', component: GestionarJefesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
+  { 
+    path: 'super-admin/configuracion', 
+    loadComponent: () => import('./pages/admin/configuracion-sistema/configuracion-sistema.component').then(m => m.ConfiguracionSistemaComponent),
+    canActivate: [AuthGuard], 
+    data: { requiredRoles: [4] } 
+  },
+  { 
+    path: 'super-admin/dashboard-metricas', 
+    loadComponent: () => import('./pages/admin/dashboard-metricas/dashboard-metricas.component').then(m => m.DashboardMetricasComponent),
+    canActivate: [AuthGuard], 
+    data: { requiredRoles: [4] } 
+  },
+  { 
+    path: 'super-admin/actividad', 
+    loadComponent: () => import('./pages/super-admin/actividad-tiempo-real/actividad-tiempo-real.component').then(m => m.ActividadTiempoRealComponent),
+    canActivate: [AuthGuard], 
+    data: { requiredRoles: [4] } 
+  },
+  { 
+    path: 'super-admin/respaldos', 
+    loadComponent: () => import('./pages/super-admin/gestion-respaldos/gestion-respaldos.component').then(m => m.GestionRespaldosComponent),
+    canActivate: [AuthGuard], 
+    data: { requiredRoles: [4] } 
+  },
 
   // Rutas del administrador
   { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard] },
+  { 
+    path: 'admin/reportes', 
+    loadComponent: () => import('./pages/admin/reportes/reportes.component').then(m => m.ReportesComponent),
+    canActivate: [AuthGuard],
+    data: { requiredRoles: [3, 4] }
+  },
   { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard] },
   { path: 'admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard] },
+  { path: 'admin/proyectos', component: GestionProyectosComponent, canActivate: [AuthGuard], data: { requiredRoles: [3, 4] } },
   { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard] },
   { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard] },
   { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
@@ -107,6 +142,18 @@ export const routes: Routes = [
     path: 'admin/carga-profesores', 
     loadComponent: () => import('./pages/admin/carga-administrativa/carga-administrativa').then(m => m.CargaAdministrativaComponent),
     canActivate: [AuthGuard] 
+  },
+  {
+    path: 'admin/entidades-externas',
+    loadComponent: () => import('./pages/admin/gestion-entidades/gestion-entidades.component').then(m => m.GestionEntidadesComponent),
+    canActivate: [AuthGuard],
+    data: { requiredRoles: [3, 4] }
+  },
+  {
+    path: 'admin/colaboradores-externos',
+    loadComponent: () => import('./pages/admin/gestion-colaboradores/gestion-colaboradores.component').then(m => m.GestionColaboradoresComponent),
+    canActivate: [AuthGuard],
+    data: { requiredRoles: [2, 3, 4] }
   },
 
   {
@@ -182,6 +229,12 @@ export const routes: Routes = [
         component: FechasImportantesProfesorComponent,
         canActivate: [AuthGuard]
       },
+      // Ruta para reportes y métricas
+      {
+        path: 'reportes',
+        component: ReportesProfesorComponent,
+        canActivate: [AuthGuard]
+      },
       // Ruta para gestión de documentos del proyecto
       {
         path: 'proyecto/:id/documentos',
@@ -246,7 +299,21 @@ export const routes: Routes = [
         path: 'chat',
         component: ChatComponent,
         canActivate: [AuthGuard]
+      },
+      // Ruta para plantillas de documentos
+      {
+        path: 'plantillas',
+        loadComponent: () => import('./pages/estudiante/plantillas-documentos/plantillas-documentos.component').then(m => m.PlantillasEstudianteComponent),
+        canActivate: [AuthGuard]
       }
     ],
+  },
+
+  // Ruta de gestión de plantillas para admin
+  {
+    path: 'admin/plantillas',
+    loadComponent: () => import('./pages/admin/gestion-plantillas/gestion-plantillas.component').then(m => m.GestionPlantillasComponent),
+    canActivate: [AuthGuard],
+    data: { requiredRoles: [3, 4] }
   },
 ];

@@ -25,7 +25,7 @@ export const subirDocumento = async ({
     );
     return result.insertId;
   } catch (error) {
-    console.error('Error en subirDocumento:', error.message);
+    
     throw error;
   }
 };
@@ -56,7 +56,7 @@ export const obtenerDocumentosProyecto = async (proyecto_id, filtros = {}) => {
     const [rows] = await pool.execute(query, params);
     return rows;
   } catch (error) {
-    console.error('Error en obtenerDocumentosProyecto:', error.message);
+    
     throw error;
   }
 };
@@ -73,7 +73,7 @@ export const obtenerDocumento = async (id) => {
     );
     return rows[0];
   } catch (error) {
-    console.error('Error en obtenerDocumento:', error.message);
+    
     throw error;
   }
 };
@@ -88,7 +88,7 @@ export const actualizarEstadoDocumento = async (id, { estado, revisado_por, come
     );
     return result.affectedRows > 0;
   } catch (error) {
-    console.error('Error en actualizarEstadoDocumento:', error.message);
+    
     throw error;
   }
 };
@@ -101,7 +101,7 @@ export const eliminarDocumento = async (id) => {
     );
     return result.affectedRows > 0;
   } catch (error) {
-    console.error('Error en eliminarDocumento:', error.message);
+    
     throw error;
   }
 };
@@ -118,7 +118,7 @@ export const obtenerVersionesDocumento = async (proyecto_id, tipo_documento) => 
     );
     return rows;
   } catch (error) {
-    console.error('Error en obtenerVersionesDocumento:', error.message);
+    
     throw error;
   }
 };
@@ -133,7 +133,7 @@ export const obtenerUltimaVersion = async (proyecto_id, tipo_documento) => {
     );
     return rows[0]?.ultima_version || 0;
   } catch (error) {
-    console.error('Error en obtenerUltimaVersion:', error.message);
+    
     throw error;
   }
 };

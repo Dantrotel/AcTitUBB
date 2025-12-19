@@ -51,8 +51,46 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const uploadPropuestas = multer({ storage: storagePropuestas, fileFilter });
+// Configuración de almacenamiento para versiones
+const storageVersiones = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/versiones';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, uniqueName);
+  }
+});
+
+// Configuración de almacenamiento para plantillas
+const storagePlantillas = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/plantillas';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, uniqueName);
+  }
+});
+
+const uploadPropuestas = multer({ storage: storagePropuestas, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
 const uploadDocumentos = multer({ storage: storageDocumentos, fileFilter });
+const uploadVersiones = multer({ storage: storageVersiones, fileFilter });
+const uploadPlantillas = multer({ storage: storagePlantillas, fileFilter });
 
 export const uploadPropuesta = uploadPropuestas.single('archivo');
+export const uploadRevision = uploadPropuestas.single('archivo_revision'); // Para archivos de revisión
 export const uploadDocumento = uploadDocumentos.single('archivo');
+export const upload = uploadVersiones; // Exportar el objeto multer, no el middleware
+export const uploadVersion = uploadVersiones;
+export const uploadPlantilla = uploadPlantillas;

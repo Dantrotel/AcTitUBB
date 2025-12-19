@@ -225,11 +225,15 @@ CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     FOREIGN KEY (profesor_rut) REFERENCES usuarios(rut),
     FOREIGN KEY (rol_profesor_id) REFERENCES roles_profesores(id),
     FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
-    UNIQUE KEY unique_asignacion_activa (proyecto_id, rol_profesor_id, activo),
     INDEX idx_proyecto_activo (proyecto_id, activo),
     INDEX idx_profesor_activo (profesor_rut, activo),
     INDEX idx_rol_activo (rol_profesor_id, activo)
 );
+
+-- Índice único parcial: solo permite una asignación activa por proyecto y rol
+-- Esto previene duplicados cuando activo=TRUE, pero permite múltiples registros inactivos (historial)
+CREATE UNIQUE INDEX unique_asignacion_activa ON asignaciones_proyectos (proyecto_id, rol_profesor_id) 
+WHERE activo = TRUE;
 
 -- Tabla de Historial de Asignaciones (para auditoría)
 CREATE TABLE IF NOT EXISTS historial_asignaciones (
@@ -346,8 +350,12 @@ CREATE TABLE IF NOT EXISTS fechas (
     -- Información básica
     titulo VARCHAR(255) NOT NULL,
     descripcion TEXT,
-    fecha DATE NOT NULL COMMENT 'Fecha principal del evento',
-    hora_limite TIME DEFAULT '23:59:59' COMMENT 'Hora l�mite para entregas (por defecto fin del d�a)',
+    
+    -- Rango de fechas (período)
+    fecha_inicio DATE NULL COMMENT 'Fecha de inicio del período (opcional)',
+    hora_inicio TIME DEFAULT '00:00:00' COMMENT 'Hora de inicio del período',
+    fecha DATE NOT NULL COMMENT 'Fecha fin/límite del período (obligatorio)',
+    hora_limite TIME DEFAULT '23:59:59' COMMENT 'Hora límite para entregas (por defecto fin del día)',
     
     -- Tipo y categorización
     tipo_fecha ENUM(
@@ -1335,5 +1343,526 @@ CREATE TABLE IF NOT EXISTS mensajes_no_leidos (
     INDEX idx_usuario_no_leidos (usuario_rut)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =====================================================
+-- TABLA DE CONFIGURACIÓN DEL SISTEMA
+-- =====================================================
+-- Almacena parámetros configurables del sistema que pueden ser modificados
+-- por el Super Administrador desde el Panel de Configuración
+-- Usada por el scheduler de recordatorios automáticos y otras funcionalidades
+CREATE TABLE IF NOT EXISTS configuracion_sistema (
+    id_configuracion INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(100) NOT NULL UNIQUE COMMENT 'Identificador único de la configuración',
+    valor VARCHAR(500) NOT NULL COMMENT 'Valor de la configuración (se convierte según el tipo)',
+    tipo ENUM('entero', 'booleano', 'texto') NOT NULL COMMENT 'Tipo de dato del valor',
+    descripcion TEXT COMMENT 'Descripción de qué hace esta configuración',
+    categoria VARCHAR(50) DEFAULT 'general' COMMENT 'Categoría para agrupar configuraciones (alertas, sistema, validaciones, etc.)',
+    modificable BOOLEAN DEFAULT TRUE COMMENT 'Si false, no se puede modificar desde el panel (solo por DB)',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    modificado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del Super Admin que hizo el último cambio',
+    FOREIGN KEY (modificado_por) REFERENCES usuarios(rut),
+    INDEX idx_clave (clave),
+    INDEX idx_categoria (categoria)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- DATOS INICIALES DE CONFIGURACIÓN DEL SISTEMA
+-- =====================================================
+
+-- Configuraciones de Alertas y Recordatorios
+INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
+('dias_sin_actividad_alerta', '30', 'entero', 'Días sin actividad en un proyecto antes de enviar alerta de inactividad', 'alertas', TRUE),
+('dias_habiles_informante', '15', 'entero', 'Días máximos que tiene un profesor informante para evaluar (días hábiles)', 'evaluaciones', TRUE),
+('UMBRAL_INACTIVIDAD_DIAS', '30', 'entero', '[Alias] Días sin actividad - Usado por panel de configuración', 'alertas', TRUE),
+('DIAS_PREVIOS_ALERTA_FECHAS', '2', 'entero', 'Días de anticipación para enviar alertas de fechas límite (48h y 24h)', 'alertas', TRUE),
+('PLAZO_EVALUACION_DIAS', '15', 'entero', '[Alias] Plazo evaluación - Usado por panel de configuración', 'evaluaciones', TRUE),
+('DIAS_ALERTA_EVALUACION', '3', 'entero', 'Días antes del vencimiento del plazo para alertar sobre evaluación pendiente', 'alertas', TRUE),
+('HORA_RECORDATORIO_REUNIONES', '08:00', 'texto', 'Hora del día para enviar recordatorios de reuniones (formato HH:MM)', 'alertas', TRUE),
+('HORA_ALERTA_EVALUACIONES', '09:00', 'texto', 'Hora del día para enviar alertas de evaluaciones pendientes (formato HH:MM)', 'alertas', TRUE);
+
+-- Configuraciones de Validaciones y Límites
+INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
+('MAX_PROYECTOS_POR_PROFESOR', '5', 'entero', 'Número máximo de proyectos simultáneos que puede tener un profesor', 'validaciones', TRUE),
+('MAX_ESTUDIANTES_POR_PROPUESTA', '3', 'entero', 'Número máximo de estudiantes en una propuesta grupal', 'validaciones', TRUE),
+('MIN_CARACTERES_PROPUESTA', '200', 'entero', 'Mínimo de caracteres requeridos en la descripción de una propuesta', 'validaciones', TRUE),
+('DURACION_MAXIMA_PROYECTO_SEMESTRES', '2', 'entero', 'Duración máxima permitida de un proyecto de titulación en semestres', 'validaciones', TRUE);
+
+-- Configuraciones de Notificaciones
+INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
+('NOTIFICACIONES_EMAIL_ACTIVAS', 'true', 'booleano', 'Si se envían notificaciones por correo electrónico', 'notificaciones', TRUE),
+('NOTIFICACIONES_PUSH_ACTIVAS', 'true', 'booleano', 'Si se envían notificaciones push en tiempo real vía WebSocket', 'notificaciones', TRUE),
+('NOTIFICACIONES_NAVEGADOR_ACTIVAS', 'true', 'booleano', 'Si se muestran notificaciones del navegador (browser notifications)', 'notificaciones', TRUE);
+
+-- Configuraciones de Flujo de Trabajo
+INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
+('REQUIERE_APROBACION_JEFE_CARRERA', 'true', 'booleano', 'Si las propuestas requieren aprobación del jefe de carrera antes de asignar profesores', 'flujo', TRUE),
+('PERMITE_AUTOASIGNACION_PROFESORES', 'false', 'booleano', 'Si los profesores pueden autoasignarse a propuestas sin aprobación del admin', 'flujo', TRUE),
+('PERMITE_MODIFICACION_PROPUESTA_APROBADA', 'false', 'booleano', 'Si se permite modificar una propuesta después de ser aprobada', 'flujo', TRUE);
+
+-- Configuraciones de Sistema
+INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
+('NOMBRE_INSTITUCION', 'Universidad del Bío-Bío', 'texto', 'Nombre de la institución educativa', 'sistema', TRUE),
+('EMAIL_SOPORTE', 'soporte@actitubb.cl', 'texto', 'Email de contacto para soporte técnico', 'sistema', TRUE),
+('MANTENIMIENTO_ACTIVO', 'false', 'booleano', 'Modo mantenimiento - bloquea acceso a usuarios (excepto Super Admin)', 'sistema', TRUE),
+('VERSION_SISTEMA', '1.0.0', 'texto', 'Versión actual del sistema', 'sistema', FALSE);
+
+-- =====================================================
+-- TABLA DE ACTIVIDAD DEL SISTEMA
+-- =====================================================
+-- Almacena el registro de todas las actividades importantes realizadas en el sistema
+-- Usado para auditoría, estadísticas y dashboard de actividad en tiempo real
+CREATE TABLE IF NOT EXISTS actividad_sistema (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL COMMENT 'Tipo de actividad: login, logout, propuesta_creada, proyecto_aprobado, etc.',
+    descripcion TEXT COMMENT 'Descripción detallada de la actividad realizada',
+    usuario_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del usuario que realizó la acción',
+    detalles JSON COMMENT 'Detalles adicionales en formato JSON (ej: IP, navegador, datos específicos)',
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Momento exacto en que ocurrió la actividad',
+    FOREIGN KEY (usuario_rut) REFERENCES usuarios(rut) ON DELETE SET NULL,
+    INDEX idx_timestamp (timestamp),
+    INDEX idx_tipo (tipo),
+    INDEX idx_usuario (usuario_rut),
+    INDEX idx_tipo_timestamp (tipo, timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- SISTEMA DE COLABORADORES EXTERNOS (INVITADOS)
+-- =====================================================
+-- Para manejar personas externas que participan en proyectos (supervisores de empresas, mentores, etc.)
+-- NO requieren correo institucional ni roles en el sistema principal
+
+-- Tabla de Entidades Externas (Empresas, Instituciones, Organizaciones)
+CREATE TABLE IF NOT EXISTS entidades_externas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL COMMENT 'Nombre de la empresa/institución',
+    razon_social VARCHAR(200) NULL COMMENT 'Razón social completa',
+    rut_empresa VARCHAR(12) NULL COMMENT 'RUT de la empresa (formato: 12345678-9)',
+    tipo ENUM('empresa_privada', 'empresa_publica', 'institucion_educativa', 'ong', 'organismo_publico', 'otra') NOT NULL DEFAULT 'empresa_privada',
+    
+    -- Información de contacto
+    email_contacto VARCHAR(100) NULL,
+    telefono VARCHAR(20) NULL,
+    direccion TEXT NULL,
+    sitio_web VARCHAR(200) NULL,
+    
+    -- Información adicional
+    descripcion TEXT NULL COMMENT 'Descripción de la entidad',
+    area_actividad VARCHAR(100) NULL COMMENT 'Área de actividad (tecnología, salud, educación, etc.)',
+    
+    -- Control
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_nombre (nombre),
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Colaboradores Externos (Personas que trabajan en las entidades)
+CREATE TABLE IF NOT EXISTS colaboradores_externos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Información personal (NO requiere RUT institucional)
+    nombre_completo VARCHAR(150) NOT NULL,
+    rut VARCHAR(12) NULL COMMENT 'RUT opcional (puede ser extranjero sin RUT)',
+    email VARCHAR(100) NOT NULL COMMENT 'Email personal o corporativo (NO institucional UBB)',
+    telefono VARCHAR(20) NULL,
+    
+    -- Relación con entidad externa
+    entidad_id INT NULL COMMENT 'Empresa/institución a la que pertenece',
+    cargo VARCHAR(100) NULL COMMENT 'Cargo en la empresa (ej: Supervisor, Gerente de Proyectos)',
+    area_departamento VARCHAR(100) NULL COMMENT 'Área o departamento dentro de la empresa',
+    
+    -- Información profesional
+    especialidad VARCHAR(100) NULL COMMENT 'Especialidad o área de expertise',
+    anos_experiencia INT NULL COMMENT 'Años de experiencia profesional',
+    linkedin VARCHAR(200) NULL COMMENT 'Perfil de LinkedIn',
+    
+    -- Tipo de colaboración
+    tipo_colaborador ENUM('supervisor_empresa', 'mentor', 'asesor_tecnico', 'cliente', 'evaluador_externo', 'otro') NOT NULL DEFAULT 'supervisor_empresa',
+    
+    -- Información adicional
+    biografia TEXT NULL COMMENT 'Breve biografía o descripción profesional',
+    observaciones TEXT NULL,
+    
+    -- Control
+    activo BOOLEAN DEFAULT TRUE COMMENT 'Si el colaborador está activo para nuevas asignaciones',
+    verificado BOOLEAN DEFAULT FALSE COMMENT 'Si se ha verificado la identidad del colaborador',
+    fecha_verificacion TIMESTAMP NULL,
+    verificado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT del admin que verificó',
+    
+    -- Auditoría
+    creado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'RUT del admin/profesor que registró al colaborador',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (entidad_id) REFERENCES entidades_externas(id) ON DELETE SET NULL,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(rut),
+    FOREIGN KEY (verificado_por) REFERENCES usuarios(rut),
+    
+    INDEX idx_email (email),
+    INDEX idx_entidad (entidad_id),
+    INDEX idx_activo (activo),
+    INDEX idx_tipo (tipo_colaborador),
+    
+    -- Email único para evitar duplicados
+    UNIQUE KEY unique_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Participación de Colaboradores Externos en Proyectos
+CREATE TABLE IF NOT EXISTS colaboradores_proyectos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Referencias
+    proyecto_id INT NOT NULL,
+    colaborador_id INT NOT NULL,
+    
+    -- Rol específico en el proyecto
+    rol_en_proyecto VARCHAR(100) NOT NULL COMMENT 'Ej: Supervisor de Empresa, Mentor, Asesor Técnico',
+    descripcion_rol TEXT NULL COMMENT 'Descripción detallada de sus responsabilidades',
+    
+    -- Fechas de participación
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NULL COMMENT 'NULL si aún está activo',
+    
+    -- Detalles de participación
+    horas_dedicadas DECIMAL(6,2) NULL COMMENT 'Horas estimadas/reales dedicadas al proyecto',
+    frecuencia_interaccion ENUM('diaria', 'semanal', 'quincenal', 'mensual', 'por_demanda') NULL,
+    
+    -- Evaluación y retroalimentación
+    puede_evaluar BOOLEAN DEFAULT FALSE COMMENT 'Si puede evaluar al estudiante',
+    evaluacion_realizada BOOLEAN DEFAULT FALSE,
+    comentarios_participacion TEXT NULL,
+    
+    -- Estado
+    activo BOOLEAN DEFAULT TRUE,
+    motivo_desvinculacion TEXT NULL COMMENT 'Si se desvinculó, explicar por qué',
+    
+    -- Auditoría
+    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Quién lo asignó al proyecto',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (colaborador_id) REFERENCES colaboradores_externos(id) ON DELETE CASCADE,
+    FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
+    
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_colaborador (colaborador_id),
+    INDEX idx_activo (activo),
+    
+    -- Un colaborador solo puede tener un rol activo por proyecto
+    UNIQUE KEY unique_colaborador_proyecto_activo (proyecto_id, colaborador_id, activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Evaluaciones de Colaboradores Externos
+-- Para cuando un supervisor de empresa evalúa el desempeño del estudiante
+CREATE TABLE IF NOT EXISTS evaluaciones_colaboradores_externos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Referencias
+    colaborador_proyecto_id INT NOT NULL COMMENT 'Relación entre colaborador y proyecto',
+    proyecto_id INT NOT NULL,
+    colaborador_id INT NOT NULL,
+    estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    
+    -- Evaluación
+    fecha_evaluacion DATE NOT NULL,
+    calificacion DECIMAL(3,1) NULL COMMENT 'Nota de 1.0 a 7.0 (sistema chileno)',
+    
+    -- Criterios de evaluación
+    asistencia_puntualidad INT NULL COMMENT 'Escala 1-10',
+    calidad_trabajo INT NULL COMMENT 'Escala 1-10',
+    proactividad INT NULL COMMENT 'Escala 1-10',
+    trabajo_equipo INT NULL COMMENT 'Escala 1-10',
+    comunicacion INT NULL COMMENT 'Escala 1-10',
+    cumplimiento_plazos INT NULL COMMENT 'Escala 1-10',
+    
+    -- Retroalimentación
+    fortalezas TEXT NULL,
+    areas_mejora TEXT NULL,
+    comentarios_generales TEXT NULL,
+    recomendaria_estudiante BOOLEAN NULL COMMENT '¿Recomendaría contratar al estudiante?',
+    
+    -- Archivos adjuntos
+    documento_evaluacion VARCHAR(255) NULL COMMENT 'Documento PDF de evaluación formal',
+    
+    -- Control
+    aprobada_por_profesor VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+    fecha_aprobacion TIMESTAMP NULL,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (colaborador_proyecto_id) REFERENCES colaboradores_proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (colaborador_id) REFERENCES colaboradores_externos(id),
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (aprobada_por_profesor) REFERENCES usuarios(rut),
+    
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_colaborador (colaborador_id),
+    INDEX idx_estudiante (estudiante_rut),
+    INDEX idx_fecha (fecha_evaluacion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- SISTEMA DE VERSIONES DE DOCUMENTOS Y PLANTILLAS
+-- =====================================================
+
+-- Tabla de Versiones de Documentos/Avances
+-- Almacena todas las versiones de archivos subidos (estudiantes y profesores)
+CREATE TABLE IF NOT EXISTS versiones_documento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    avance_id INT NOT NULL COMMENT 'Referencia al avance/entrega',
+    proyecto_id INT NOT NULL,
+    
+    -- Información de la versión
+    numero_version VARCHAR(20) NOT NULL COMMENT 'v1.0, v1.1, v2.0, etc.',
+    tipo_version ENUM('estudiante', 'profesor_revision', 'profesor_comentarios', 'version_final') DEFAULT 'estudiante',
+    
+    -- Archivo
+    archivo_nombre VARCHAR(255) NOT NULL,
+    archivo_ruta VARCHAR(500) NOT NULL,
+    archivo_tamano_kb INT NULL,
+    archivo_tipo VARCHAR(100) NULL COMMENT 'application/pdf, application/docx, etc.',
+    
+    -- Descripción de cambios
+    descripcion_cambios TEXT NULL COMMENT 'Qué se modificó en esta versión',
+    cambios_principales TEXT NULL COMMENT 'Lista de cambios principales',
+    
+    -- Autor
+    autor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    autor_rol ENUM('estudiante', 'profesor_guia', 'profesor_informante', 'admin') NOT NULL,
+    
+    -- Comentarios generales del profesor (si es revisión)
+    comentarios_generales TEXT NULL COMMENT 'Comentarios generales sobre esta versión',
+    
+    -- Estado de la versión
+    estado ENUM('borrador', 'enviado', 'en_revision', 'revisado', 'aprobado', 'rechazado') DEFAULT 'enviado',
+    requiere_correccion BOOLEAN DEFAULT FALSE,
+    es_version_final BOOLEAN DEFAULT FALSE COMMENT 'Marca si es la versión final aprobada',
+    
+    -- Metadatos
+    etiquetas VARCHAR(500) NULL COMMENT 'Tags separados por coma',
+    visible_para_estudiante BOOLEAN DEFAULT TRUE,
+    
+    -- Timestamps
+    fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_revision TIMESTAMP NULL,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (avance_id) REFERENCES avances(id) ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (autor_rut) REFERENCES usuarios(rut),
+    
+    INDEX idx_avance (avance_id),
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_autor (autor_rut),
+    INDEX idx_version (numero_version),
+    INDEX idx_estado (estado),
+    INDEX idx_fecha (fecha_subida)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Comentarios por Versión
+-- Comentarios que profesores o estudiantes dejan sobre una versión específica
+CREATE TABLE IF NOT EXISTS comentarios_version (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    version_id INT NOT NULL,
+    
+    -- Autor del comentario
+    autor_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    autor_nombre VARCHAR(200) NULL,
+    autor_rol ENUM('estudiante', 'profesor_guia', 'profesor_informante', 'admin') NOT NULL,
+    
+    -- Contenido
+    comentario TEXT NOT NULL,
+    tipo_comentario ENUM('general', 'sugerencia', 'error', 'aprobacion', 'rechazo') DEFAULT 'general',
+    prioridad ENUM('baja', 'media', 'alta') DEFAULT 'media',
+    
+    -- Referencia específica (opcional)
+    seccion_referencia VARCHAR(200) NULL COMMENT 'Capítulo 3, Página 15, etc.',
+    
+    -- Estado
+    resuelto BOOLEAN DEFAULT FALSE,
+    fecha_resolucion TIMESTAMP NULL,
+    
+    -- Respuesta (si aplica)
+    respuesta_comentario_id INT NULL COMMENT 'ID del comentario al que responde',
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (version_id) REFERENCES versiones_documento(id) ON DELETE CASCADE,
+    FOREIGN KEY (autor_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (respuesta_comentario_id) REFERENCES comentarios_version(id) ON DELETE SET NULL,
+    
+    INDEX idx_version (version_id),
+    INDEX idx_autor (autor_rut),
+    INDEX idx_fecha (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Plantillas de Documentos
+-- Plantillas que el admin sube para que los estudiantes las descarguen y sigan
+CREATE TABLE IF NOT EXISTS plantillas_documentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Información de la plantilla
+    nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT NULL,
+    tipo_documento ENUM('propuesta', 'informe_avance', 'informe_final', 'presentacion', 'poster', 'acta', 'otro') NOT NULL,
+    
+    -- Archivo de la plantilla
+    archivo_nombre VARCHAR(255) NOT NULL,
+    archivo_ruta VARCHAR(500) NOT NULL,
+    archivo_tipo VARCHAR(100) NULL COMMENT '.docx, .pdf, .pptx, etc.',
+    archivo_tamano_kb INT NULL,
+    
+    -- Alcance
+    carrera_id INT NULL COMMENT 'Si es NULL, aplica para todas las carreras',
+    departamento_id INT NULL COMMENT 'Si es NULL, aplica para todos los departamentos',
+    facultad_id INT NULL COMMENT 'Si es NULL, aplica para todas las facultades',
+    
+    -- Metadata
+    version_plantilla VARCHAR(20) DEFAULT '1.0',
+    formato_requerido VARCHAR(100) NULL COMMENT 'APA, IEEE, Vancouver, etc.',
+    instrucciones TEXT NULL COMMENT 'Instrucciones de uso de la plantilla',
+    ejemplo_url VARCHAR(500) NULL COMMENT 'URL a ejemplo de uso',
+    
+    -- Estado
+    activa BOOLEAN DEFAULT TRUE,
+    obligatoria BOOLEAN DEFAULT FALSE COMMENT 'Si es obligatorio usar esta plantilla',
+    orden_visualizacion INT DEFAULT 0,
+    
+    -- Auditoría
+    creado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    actualizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+    descargas INT DEFAULT 0 COMMENT 'Contador de descargas',
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (carrera_id) REFERENCES carreras(id) ON DELETE SET NULL,
+    FOREIGN KEY (departamento_id) REFERENCES departamentos(id) ON DELETE SET NULL,
+    FOREIGN KEY (facultad_id) REFERENCES facultades(id) ON DELETE SET NULL,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(rut),
+    FOREIGN KEY (actualizado_por) REFERENCES usuarios(rut),
+    
+    INDEX idx_tipo (tipo_documento),
+    INDEX idx_carrera (carrera_id),
+    INDEX idx_activa (activa),
+    INDEX idx_orden (orden_visualizacion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Resultados Finales de Proyectos
+-- Almacena el resultado final y estado de cierre del proyecto
+CREATE TABLE IF NOT EXISTS resultados_finales_proyecto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL UNIQUE,
+    
+    -- Estado final
+    estado_final ENUM('aprobado', 'aprobado_con_distincion', 'aprobado_con_observaciones', 'reprobado', 'abandonado', 'anulado') NOT NULL,
+    
+    -- Calificaciones (sin nota numérica, solo observaciones)
+    evaluacion_profesor_guia TEXT NULL COMMENT 'Evaluación final del profesor guía',
+    evaluacion_profesor_informante TEXT NULL COMMENT 'Evaluación del profesor informante',
+    evaluacion_comision TEXT NULL COMMENT 'Evaluación de la comisión',
+    
+    -- Observaciones finales
+    observaciones_finales TEXT NULL,
+    recomendaciones TEXT NULL,
+    areas_destacadas TEXT NULL,
+    
+    -- Documentación final
+    documento_final VARCHAR(255) NULL COMMENT 'Ruta al documento final aprobado',
+    acta_aprobacion VARCHAR(255) NULL COMMENT 'Ruta al acta de aprobación',
+    
+    -- Menciones y reconocimientos
+    mencion_honores BOOLEAN DEFAULT FALSE,
+    mencion_excelencia BOOLEAN DEFAULT FALSE,
+    publicacion_recomendada BOOLEAN DEFAULT FALSE COMMENT 'Si se recomienda publicar',
+    
+    -- Fechas importantes
+    fecha_aprobacion DATE NULL,
+    fecha_cierre TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Auditoría
+    cerrado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (cerrado_por) REFERENCES usuarios(rut),
+    
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_estado (estado_final),
+    INDEX idx_fecha_cierre (fecha_cierre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Historial de Estados del Proyecto
+-- Para seguimiento completo de cambios de estado
+CREATE TABLE IF NOT EXISTS historial_estados_proyecto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    
+    estado_anterior VARCHAR(100) NULL,
+    estado_nuevo VARCHAR(100) NOT NULL,
+    
+    motivo TEXT NULL COMMENT 'Razón del cambio de estado',
+    observaciones TEXT NULL,
+    
+    -- Autor del cambio
+    cambiado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    
+    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (cambiado_por) REFERENCES usuarios(rut),
+    
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_fecha (fecha_cambio)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ===== BASE DE DATOS CREADA EXITOSAMENTE =====
-SELECT 'Base de datos AcTitUBB creada exitosamente con estructura academica completa' as status;
+
+-- =====================================================
+-- MIGRACIÓN: Corrección de restricción unique_asignacion_activa
+-- Fecha: 2025-12-19
+-- Descripción: Cambiar la restricción UNIQUE para que solo aplique cuando activo=TRUE
+--              Esto permite mantener historial de asignaciones inactivas sin conflictos
+-- =====================================================
+
+-- IMPORTANTE: Ejecuta estos comandos manualmente en tu base de datos MySQL:
+
+/*
+-- Paso 1: Eliminar la restricción UNIQUE antigua
+ALTER TABLE asignaciones_proyectos DROP INDEX unique_asignacion_activa;
+
+-- Paso 2: Limpiar duplicados inactivos antes de crear el nuevo índice (opcional)
+-- Esto mantiene solo la asignación inactiva más reciente por proyecto y rol
+DELETE ap1 FROM asignaciones_proyectos ap1
+INNER JOIN asignaciones_proyectos ap2 
+WHERE ap1.proyecto_id = ap2.proyecto_id 
+  AND ap1.rol_profesor_id = ap2.rol_profesor_id
+  AND ap1.activo = FALSE 
+  AND ap2.activo = FALSE
+  AND ap1.fecha_asignacion < ap2.fecha_asignacion;
+
+-- Paso 3: Crear el nuevo índice único parcial (solo para activo=TRUE)
+-- Nota: MySQL 8.0.13+ soporta índices con WHERE. Para versiones anteriores, se mantiene el comportamiento actual.
+-- Si tu versión de MySQL no soporta WHERE, comenta esta línea y ejecuta la alternativa del Paso 4
+CREATE UNIQUE INDEX unique_asignacion_activa ON asignaciones_proyectos (proyecto_id, rol_profesor_id) 
+WHERE activo = TRUE;
+
+-- Paso 4: ALTERNATIVA para MySQL < 8.0.13 (si el Paso 3 falla)
+-- Usar un índice funcional con IF
+-- ALTER TABLE asignaciones_proyectos 
+-- ADD UNIQUE INDEX unique_asignacion_activa (proyecto_id, rol_profesor_id, (IF(activo = TRUE, 1, NULL)));
+
+-- Verificar que el índice se creó correctamente
+SHOW INDEX FROM asignaciones_proyectos WHERE Key_name = 'unique_asignacion_activa';
+*/
+SELECT 'Base de datos AcTitUBB creada exitosamente con estructura academica completa y sistema de versiones' as status;

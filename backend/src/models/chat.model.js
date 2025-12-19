@@ -1,4 +1,4 @@
-import pool from '../db/connectionDB.js';
+import { pool } from '../db/connectionDB.js';
 import logger from '../config/logger.js';
 
 const chatModel = {

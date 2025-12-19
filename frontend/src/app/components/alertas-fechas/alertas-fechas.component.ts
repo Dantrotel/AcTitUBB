@@ -398,7 +398,6 @@ export class AlertasFechasComponent implements OnInit {
         this.cargando = false;
       },
       error: (error) => {
-        console.error('Error al cargar alertas:', error);
         this.cargando = false;
       }
     });
@@ -409,11 +408,9 @@ export class AlertasFechasComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.alertas = [];
-          console.log('✅ Todas las alertas marcadas como leídas');
         }
       },
       error: (error) => {
-        console.error('Error al marcar alertas como leídas:', error);
       }
     });
   }
@@ -471,6 +468,5 @@ export class AlertasFechasComponent implements OnInit {
 
   verTodasAlertas() {
     // Navegar a una página de todas las alertas (implementar según necesidad)
-    console.log('Ver todas las alertas');
   }
 }

@@ -72,7 +72,7 @@ export const crearSolicitudExtension = async ({
         return result.insertId;
     } catch (error) {
         await connection.rollback();
-        console.error('Error al crear solicitud de extensión:', error);
+        
         throw error;
     } finally {
         connection.release();
@@ -115,7 +115,7 @@ export const obtenerSolicitudesPorProyecto = async (proyectoId, estado = null) =
         const [rows] = await pool.query(query, params);
         return rows;
     } catch (error) {
-        console.error('Error al obtener solicitudes por proyecto:', error);
+        
         throw error;
     }
 };
@@ -146,7 +146,7 @@ export const obtenerSolicitudesPendientes = async () => {
 
         return rows;
     } catch (error) {
-        console.error('Error al obtener solicitudes pendientes:', error);
+        
         throw error;
     }
 };
@@ -184,7 +184,7 @@ export const marcarEnRevision = async (solicitudId, revisadoPor) => {
         return result.affectedRows > 0;
     } catch (error) {
         await connection.rollback();
-        console.error('Error al marcar en revisión:', error);
+        
         throw error;
     } finally {
         connection.release();
@@ -256,7 +256,7 @@ export const aprobarSolicitud = async (solicitudId, aprobadoPor, comentarios = n
         };
     } catch (error) {
         await connection.rollback();
-        console.error('Error al aprobar solicitud:', error);
+        
         throw error;
     } finally {
         connection.release();
@@ -311,7 +311,7 @@ export const rechazarSolicitud = async (solicitudId, rechazadoPor, comentarios) 
         return result.affectedRows > 0;
     } catch (error) {
         await connection.rollback();
-        console.error('Error al rechazar solicitud:', error);
+        
         throw error;
     } finally {
         connection.release();
@@ -337,7 +337,7 @@ export const obtenerHistorialSolicitud = async (solicitudId) => {
 
         return rows;
     } catch (error) {
-        console.error('Error al obtener historial:', error);
+        
         throw error;
     }
 };
@@ -362,7 +362,7 @@ export const obtenerEstadisticasExtensiones = async () => {
 
         return stats[0];
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        
         throw error;
     }
 };

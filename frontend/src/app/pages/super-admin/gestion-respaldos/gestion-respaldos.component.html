@@ -1,0 +1,76 @@
+<div class="respaldos-container">
+  <div class="header">
+    <h1><i class="fas fa-database"></i> Gestión de Respaldos</h1>
+    <button class="btn btn-primary" (click)="crearBackup()" [disabled]="realizandoBackup">
+      <i class="fas fa-plus-circle"></i>
+      {{ realizandoBackup ? 'Creando...' : 'Crear Backup Manual' }}
+    </button>
+  </div>
+
+  <!-- Mensajes -->
+  <div class="alert alert-success" *ngIf="mensajeExito">
+    <i class="fas fa-check-circle"></i> {{ mensajeExito }}
+  </div>
+  <div class="alert alert-error" *ngIf="mensajeError">
+    <i class="fas fa-exclamation-circle"></i> {{ mensajeError }}
+  </div>
+
+  <!-- Info Box -->
+  <div class="info-box">
+    <i class="fas fa-info-circle"></i>
+    <div>
+      <strong>Sistema de Respaldo Automático Activo</strong>
+      <p>Los backups automáticos se realizan diariamente a las 2:00 AM. Se mantienen los últimos 30 backups.</p>
+    </div>
+  </div>
+
+  <!-- Lista de Backups -->
+  <div class="backups-list" *ngIf="!cargando && backups.length > 0">
+    <div class="backup-card" *ngFor="let backup of backups">
+      <div class="backup-icon">
+        <i class="fas fa-archive"></i>
+      </div>
+      
+      <div class="backup-info">
+        <h3>{{ backup.nombre }}</h3>
+        <div class="backup-details">
+          <span><i class="fas fa-calendar"></i> {{ formatearFecha(backup.fecha) }}</span>
+          <span><i class="fas fa-database"></i> DB: {{ backup.tamano_db }}</span>
+          <span><i class="fas fa-folder"></i> Archivos: {{ backup.tamano_archivos }}</span>
+          <span><i class="fas fa-clock"></i> {{ backup.duracion }}s</span>
+        </div>
+      </div>
+      
+      <div class="backup-actions">
+        <button 
+          class="btn btn-secondary"
+          (click)="restaurarBackup(backup.nombre)"
+          [disabled]="restaurando"
+          title="Restaurar backup">
+          <i class="fas fa-undo"></i>
+          Restaurar
+        </button>
+        
+        <button 
+          class="btn btn-danger"
+          (click)="eliminarBackup(backup.nombre)"
+          title="Eliminar backup">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!cargando && backups.length === 0">
+    <i class="fas fa-inbox"></i>
+    <p>No hay backups disponibles</p>
+    <button class="btn btn-primary" (click)="crearBackup()">
+      <i class="fas fa-plus"></i> Crear Primer Backup
+    </button>
+  </div>
+
+  <div class="loading-spinner" *ngIf="cargando">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Cargando backups...</p>
+  </div>
+</div>

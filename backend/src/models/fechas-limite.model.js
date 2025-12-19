@@ -225,7 +225,7 @@ export const obtenerEstadoFechasProyecto = async (proyectoId, estudianteRut) => 
                 fi.permite_extension,
                 fi.requiere_entrega,
                 fi.completada,
-                fi.creado_por,
+                fi.creado_por_rut,
                 u.nombre as creado_por_nombre,
                 DATEDIFF(fi.fecha, CURDATE()) as dias_restantes,
                 CASE 
@@ -234,7 +234,7 @@ export const obtenerEstadoFechasProyecto = async (proyectoId, estudianteRut) => 
                     ELSE 'vencida'
                 END as estado
             FROM fechas fi
-            LEFT JOIN usuarios u ON fi.creado_por = u.rut
+            LEFT JOIN usuarios u ON fi.creado_por_rut = u.rut
             WHERE fi.proyecto_id = ?
             ORDER BY fi.fecha ASC
         `, [proyectoId]);

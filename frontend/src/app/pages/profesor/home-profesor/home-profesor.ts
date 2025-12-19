@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -72,7 +72,7 @@ export class HomeProfesor implements OnInit {
     es_critico: false
   };
 
-  constructor(private ApiService: ApiService, private router: Router) {}
+  constructor(private ApiService: ApiService, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     // Obtener información del profesor desde token
@@ -169,6 +169,7 @@ export class HomeProfesor implements OnInit {
               pendientes: data.data.filter((p: any) => p.estado === 'pendiente').length || 0,
               revisadas: data.data.filter((p: any) => p.estado === 'revisada').length || 0
             };
+            this.cdr.detectChanges();
           }
         },
         error: (err: any) => {
@@ -192,6 +193,7 @@ export class HomeProfesor implements OnInit {
           
           // Calcular evaluaciones pendientes basado en avances
           this.calcularEvaluacionesPendientes(listaProyectos);
+          this.cdr.detectChanges();
         }
       },
       error: (error: any) => {
@@ -393,25 +395,38 @@ export class HomeProfesor implements OnInit {
         // ✅ FIX: Backend devuelve { total, projects }, no { success, data }
         if (response && response.projects) {
           response.projects.forEach((proyecto: any) => {
-            this.ApiService.getHitosProyecto(proyecto.id.toString()).subscribe({
-              next: (hitos: any) => {
-                if (hitos && hitos.success) {
-                  const hitosProximos = hitos.data
-                    .filter((hito: any) => {
-                      const fechaObjetivo = new Date(hito.fecha_objetivo);
-                      const hoy = new Date();
-                      const diasDiferencia = Math.ceil((fechaObjetivo.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-                      return diasDiferencia <= 30 && diasDiferencia >= 0;
-                    })
-                    .slice(0, 5);
+            // Usar el nuevo sistema de cronogramas
+            this.ApiService.getCronogramaProyecto(proyecto.id.toString()).subscribe({
+              next: (cronogramaResponse: any) => {
+                if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.data?.cronograma) {
+                  const cronogramaId = cronogramaResponse.data.cronograma.id;
                   
-                  this.proximosHitos = [...this.proximosHitos, ...hitosProximos]
-                    .sort((a, b) => new Date(a.fecha_objetivo).getTime() - new Date(b.fecha_objetivo).getTime())
-                    .slice(0, 5);
+                  // Obtener hitos del cronograma
+                  this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
+                    next: (hitosResponse: any) => {
+                      if (hitosResponse && hitosResponse.success && hitosResponse.hitos) {
+                        const hitosProximos = hitosResponse.hitos
+                          .filter((hito: any) => {
+                            const fechaLimite = new Date(hito.fecha_limite);
+                            const hoy = new Date();
+                            const diasDiferencia = Math.ceil((fechaLimite.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                            return diasDiferencia <= 30 && diasDiferencia >= 0 && hito.estado !== 'completado';
+                          })
+                          .slice(0, 5);
+                        
+                        this.proximosHitos = [...this.proximosHitos, ...hitosProximos]
+                          .sort((a, b) => new Date(a.fecha_limite).getTime() - new Date(b.fecha_limite).getTime())
+                          .slice(0, 5);
+                      }
+                    },
+                    error: () => {
+                      // Error manejado silenciosamente
+                    }
+                  });
                 }
               },
               error: () => {
-                // Error manejado silenciosamente
+                // Error manejado silenciosamente - proyecto sin cronograma
               }
             });
           });
@@ -464,7 +479,7 @@ export class HomeProfesor implements OnInit {
   }
 
   navegarAProyectos() {
-    this.router.navigate(['/profesor/proyectos']);
+    this.router.navigate(['/profesor/reportes']);
   }
 
   navegarAProyecto(proyectoId: number) {

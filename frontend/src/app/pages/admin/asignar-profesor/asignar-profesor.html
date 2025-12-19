@@ -92,7 +92,13 @@
       </div>
       
       <div class="card-content">
-        <div class="form-group">
+        <!-- Mensaje especial para profesores -->
+        <div *ngIf="esProfesor" class="info-message">
+          <i class="fas fa-info-circle"></i>
+          <p>Como profesor, puedes asignarte a ti mismo a esta propuesta sin seleccionar un profesor de la lista.</p>
+        </div>
+
+        <div class="form-group" *ngIf="esAdmin">
           <label for="profesorSelect">Seleccionar Profesor:</label>
           <select 
             id="profesorSelect" 
@@ -108,7 +114,20 @@
         </div>
 
         <div class="form-actions">
+          <!-- Botón para profesor: asignarse a sí mismo -->
           <button 
+            *ngIf="esProfesor"
+            class="btn-primary" 
+            (click)="asignarmeAMiMismo()"
+            [disabled]="guardando"
+          >
+            <i class="fas fa-user-check"></i>
+            {{ guardando ? 'Asignándome...' : 'Asignarme a Esta Propuesta' }}
+          </button>
+
+          <!-- Botón para admin: asignar profesor seleccionado -->
+          <button 
+            *ngIf="esAdmin"
             class="btn-primary" 
             (click)="asignarProfesor()"
             [disabled]="!profesorSeleccionado || guardando"

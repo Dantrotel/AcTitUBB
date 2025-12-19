@@ -56,7 +56,6 @@ export class ComisionProyectoComponent implements OnInit {
         this.loading = false;
       },
       error: (error: any) => {
-        console.error('Error cargando comisión:', error);
         this.error = error.error?.mensaje || error.message || 'Error al cargar la comisión';
         this.loading = false;
       }

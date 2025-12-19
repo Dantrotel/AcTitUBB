@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api';
 import { RevisionEntregaComponent } from '../revision-entrega/revision-entrega.component';
+import { NotificationService } from '../../services/notification.service';
 import { 
   Hito, 
   Entrega, 
@@ -341,7 +342,8 @@ export class GestionHitosComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private notificationService: NotificationService
   ) {
     this.formHito = this.fb.group({
       nombre_hito: ['', [Validators.required, Validators.minLength(HITO_CONSTRAINTS.NOMBRE_MIN_LENGTH), Validators.maxLength(HITO_CONSTRAINTS.NOMBRE_MAX_LENGTH)]],
@@ -368,7 +370,6 @@ export class GestionHitosComponent implements OnInit {
         this.cargarEntregasParaTodosLosHitos();
       },
       error: (error: any) => {
-        console.error('Error al cargar hitos:', error);
         this.mostrarError('No se pudieron cargar los hitos del proyecto');
       }
     });
@@ -393,7 +394,6 @@ export class GestionHitosComponent implements OnInit {
         this.entregas[hitoId] = response.data || [];
       },
       error: (error: any) => {
-        console.error(`Error al cargar entregas del hito ${hitoId}:`, error);
       }
     });
   }
@@ -511,7 +511,6 @@ export class GestionHitosComponent implements OnInit {
         this.hitosActualizados.emit();
       },
       error: (error) => {
-        console.error('Error al guardar hito:', error);
         this.erroresValidacion = ['Error al guardar el hito. Intente nuevamente.'];
       },
       complete: () => {
@@ -526,8 +525,15 @@ export class GestionHitosComponent implements OnInit {
     this.erroresValidacion = [];
   }
 
-  eliminarHito(hito: Hito) {
-    if (!confirm(`¿Está seguro de eliminar el hito "${hito.nombre}"?`)) return;
+  async eliminarHito(hito: Hito): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      `¿Está seguro de eliminar el hito "${hito.nombre}"?`,
+      'Confirmar eliminación',
+      'Sí, eliminar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) return;
 
     this.apiService.eliminarHitoCronograma(this.cronogramaId, hito.id.toString()).subscribe({
       next: () => {
@@ -535,7 +541,6 @@ export class GestionHitosComponent implements OnInit {
         this.hitosActualizados.emit();
       },
       error: (error) => {
-        console.error('Error al eliminar hito:', error);
         alert('Error al eliminar el hito');
       }
     });
@@ -585,7 +590,6 @@ export class GestionHitosComponent implements OnInit {
         this.cargarEntregasHito(this.hitoSeleccionado!.id.toString());
       },
       error: (error) => {
-        console.error('Error al subir entrega:', error);
         this.erroresEntrega = ['Error al subir la entrega. Intente nuevamente.'];
       },
       complete: () => {
@@ -605,8 +609,15 @@ export class GestionHitosComponent implements OnInit {
     window.open(entrega.archivo_url, '_blank');
   }
 
-  eliminarEntrega(entrega: Entrega) {
-    if (!confirm('¿Está seguro de eliminar esta entrega?')) return;
+  async eliminarEntrega(entrega: Entrega): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Está seguro de eliminar esta entrega?',
+      'Confirmar eliminación',
+      'Sí, eliminar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) return;
 
     this.apiService.eliminarEntregaHito(
       this.projectId, 
@@ -618,7 +629,6 @@ export class GestionHitosComponent implements OnInit {
         this.cargarEntregasHito(entrega.hito_id);
       },
       error: (error) => {
-        console.error('Error al eliminar entrega:', error);
         alert('Error al eliminar la entrega');
       }
     });

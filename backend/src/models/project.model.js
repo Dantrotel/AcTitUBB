@@ -262,11 +262,39 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 SELECT p.*, 
                        u.nombre AS nombre_estudiante,
                        u.email AS email_estudiante,
-                       prop.titulo AS titulo_propuesta
+                       prop.titulo AS titulo_propuesta,
+                       GROUP_CONCAT(DISTINCT CONCAT(prof.nombre, ' (', rp.nombre, ')') SEPARATOR ', ') AS profesores_asignados,
+                       (SELECT prof_guia.nombre 
+                        FROM asignaciones_proyectos ap_guia
+                        INNER JOIN usuarios prof_guia ON ap_guia.profesor_rut = prof_guia.rut
+                        INNER JOIN roles_profesores rp_guia ON ap_guia.rol_profesor_id = rp_guia.id
+                        WHERE ap_guia.proyecto_id = p.id 
+                        AND rp_guia.nombre = 'Profesor Guía' 
+                        AND ap_guia.activo = TRUE
+                        LIMIT 1) AS profesor_guia_nombre,
+                       (SELECT prof_guia.rut 
+                        FROM asignaciones_proyectos ap_guia
+                        INNER JOIN usuarios prof_guia ON ap_guia.profesor_rut = prof_guia.rut
+                        INNER JOIN roles_profesores rp_guia ON ap_guia.rol_profesor_id = rp_guia.id
+                        WHERE ap_guia.proyecto_id = p.id 
+                        AND rp_guia.nombre = 'Profesor Guía' 
+                        AND ap_guia.activo = TRUE
+                        LIMIT 1) AS profesor_guia_rut,
+                       (SELECT prof_guia.email 
+                        FROM asignaciones_proyectos ap_guia
+                        INNER JOIN usuarios prof_guia ON ap_guia.profesor_rut = prof_guia.rut
+                        INNER JOIN roles_profesores rp_guia ON ap_guia.rol_profesor_id = rp_guia.id
+                        WHERE ap_guia.proyecto_id = p.id 
+                        AND rp_guia.nombre = 'Profesor Guía' 
+                        AND ap_guia.activo = TRUE
+                        LIMIT 1) AS profesor_guia_email
                 FROM proyectos p
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
                 INNER JOIN estudiantes_proyectos ep_join ON p.id = ep_join.proyecto_id
+                LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+                LEFT JOIN usuarios prof ON ap.profesor_rut = prof.rut
+                LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
                 WHERE ep_join.estudiante_rut = ?
                 GROUP BY p.id
                 ORDER BY p.fecha_inicio DESC
@@ -379,160 +407,13 @@ const obtenerProyectoPorIdConPermisos = async (proyecto_id, usuario_rut, rol_usu
 
 // ========== GESTIÓN DE HITOS ==========
 
-// Crear hito de proyecto
-const crearHitoProyecto = async (hitoData) => {
-    const { proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut } = hitoData;
-    
-    const query = `
-        INSERT INTO hitos_proyecto (
-            proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo, 
-            peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const [result] = await pool.execute(query, [
-        proyecto_id, nombre, descripcion, tipo_hito, fecha_objetivo,
-        peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut
-    ]);
-    
-    return result.insertId;
-};
+// HITOS DEPRECATED - Sistema removido, ahora se usa "Fechas Importantes"
 
-// Obtener hitos de un proyecto
-const obtenerHitosProyecto = async (proyecto_id) => {
-    const query = `
-        SELECT h.*, 
-               hp.nombre AS hito_predecesor_nombre,
-               uc.nombre AS creado_por_nombre,
-               ua.nombre AS actualizado_por_nombre
-        FROM hitos_proyecto h
-        LEFT JOIN hitos_proyecto hp ON h.hito_predecesor_id = hp.id
-        LEFT JOIN usuarios uc ON h.creado_por_rut = uc.rut
-        LEFT JOIN usuarios ua ON h.actualizado_por_rut = ua.rut
-        WHERE h.proyecto_id = ?
-        ORDER BY h.fecha_objetivo ASC, h.tipo_hito ASC
-    `;
-    
-    const [rows] = await pool.execute(query, [proyecto_id]);
-    return rows;
-};
-
-// Actualizar hito de proyecto
-const actualizarHitoProyecto = async (hito_id, hitoData, actualizado_por_rut) => {
-    const { nombre, descripcion, fecha_objetivo, estado, porcentaje_completado, fecha_completado, comentarios_estudiante, comentarios_profesor, calificacion } = hitoData;
-    
-    const query = `
-        UPDATE hitos_proyecto 
-        SET nombre = ?, descripcion = ?, fecha_objetivo = ?, estado = ?, 
-            porcentaje_completado = ?, fecha_completado = ?, 
-            comentarios_estudiante = ?, comentarios_profesor = ?, calificacion = ?,
-            actualizado_por_rut = ?, updated_at = NOW()
-        WHERE id = ?
-    `;
-    
-    const [result] = await pool.execute(query, [
-        nombre, descripcion, fecha_objetivo, estado, 
-        porcentaje_completado, fecha_completado,
-        comentarios_estudiante, comentarios_profesor, calificacion,
-        actualizado_por_rut, hito_id
-    ]);
-    
-    return result.affectedRows > 0;
-};
-
-// Completar hito
-const completarHito = async (hito_id, datos_completado, actualizado_por_rut) => {
-    const { archivo_entregable, comentarios_estudiante } = datos_completado;
-    
-    const query = `
-        UPDATE hitos_proyecto 
-        SET estado = 'completado', 
-            porcentaje_completado = 100, 
-            fecha_completado = CURDATE(),
-            archivo_entregable = ?,
-            comentarios_estudiante = ?,
-            actualizado_por_rut = ?,
-            updated_at = NOW()
-        WHERE id = ?
-    `;
-    
-    const [result] = await pool.execute(query, [
-        archivo_entregable, comentarios_estudiante, actualizado_por_rut, hito_id
-    ]);
-    
-    return result.affectedRows > 0;
-};
-
-// Obtener estadísticas de hitos de un proyecto
-const obtenerEstadisticasHitos = async (proyecto_id) => {
-    const query = `
-        SELECT 
-            COUNT(*) as total_hitos,
-            SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completados,
-            SUM(CASE WHEN estado = 'en_progreso' THEN 1 ELSE 0 END) as en_progreso,
-            SUM(CASE WHEN estado = 'retrasado' THEN 1 ELSE 0 END) as retrasados,
-            AVG(porcentaje_completado) as avance_promedio,
-            SUM(CASE WHEN es_critico = TRUE THEN 1 ELSE 0 END) as criticos
-        FROM hitos_proyecto
-        WHERE proyecto_id = ?
-    `;
-    
-    try {
-        const [rows] = await pool.execute(query, [proyecto_id]);
-        return rows[0] || {
-            total_hitos: 0,
-            completados: 0,
-            en_progreso: 0,
-            retrasados: 0,
-            avance_promedio: 0,
-            criticos: 0
-        };
-    } catch (error) {
-        console.error('Error al obtener estadísticas de hitos:', error);
-        // Retornar valores por defecto si hay error
-        return {
-            total_hitos: 0,
-            completados: 0,
-            en_progreso: 0,
-            retrasados: 0,
-            avance_promedio: 0,
-            criticos: 0
-        };
-    }
-};
+// HITOS DEPRECATED - Sistema removido
 
 
 
-// Actualizar progreso del proyecto basado en hitos
-const actualizarProgresoProyecto = async (proyecto_id) => {
-    // Calcular el progreso basado en los hitos completados
-    const queryProgreso = `
-        UPDATE proyectos p
-        SET porcentaje_avance = (
-            SELECT COALESCE(
-                SUM(CASE WHEN h.estado = 'completado' THEN h.peso_en_proyecto ELSE 0 END), 0
-            )
-            FROM hitos_proyecto h
-            WHERE h.proyecto_id = p.id
-        ),
-        ultimo_avance_fecha = (
-            SELECT MAX(h.fecha_completado)
-            FROM hitos_proyecto h
-            WHERE h.proyecto_id = p.id AND h.estado = 'completado'
-        ),
-        proximo_hito_fecha = (
-            SELECT MIN(h.fecha_objetivo)
-            FROM hitos_proyecto h
-            WHERE h.proyecto_id = p.id AND h.estado IN ('pendiente', 'en_progreso')
-        ),
-        ultima_actividad = NOW()
-        WHERE p.id = ?
-    `;
-    
-    const [result] = await pool.execute(queryProgreso, [proyecto_id]);
-    return result.affectedRows > 0;
-};
+// HITOS DEPRECATED - Sistema removido
 
 // Obtener dashboard completo del proyecto
 const obtenerDashboardProyecto = async (proyecto_id) => {
@@ -541,60 +422,9 @@ const obtenerDashboardProyecto = async (proyecto_id) => {
         const proyecto = await obtenerProyectoPorIdConPermisos(proyecto_id, null, 'admin');
         if (!proyecto) return null;
         
-        // Estadísticas de hitos
-        const estadisticasHitos = await obtenerEstadisticasHitos(proyecto_id);
-    
-        // Hitos recientes
-        let hitosRecientes = [];
-        try {
-            const [hitosRows] = await pool.execute(`
-                SELECT * FROM hitos_proyecto 
-                WHERE proyecto_id = ? 
-                ORDER BY updated_at DESC 
-                LIMIT 5
-            `, [proyecto_id]);
-            hitosRecientes = hitosRows;
-        } catch (error) {
-            console.warn('Error al obtener hitos recientes:', error.message);
-        }
-        
-        // Evaluaciones recientes
-        let evaluacionesRecientes = [];
-        try {
-            const [evalRows] = await pool.execute(`
-                SELECT e.*, u.nombre AS evaluador_nombre
-                FROM evaluaciones_proyecto e
-                LEFT JOIN usuarios u ON e.profesor_evaluador_rut = u.rut
-                WHERE e.proyecto_id = ? 
-                ORDER BY e.fecha_evaluacion DESC 
-                LIMIT 3
-            `, [proyecto_id]);
-            evaluacionesRecientes = evalRows;
-        } catch (error) {
-            console.warn('Error al obtener evaluaciones recientes:', error.message);
-        }
-        
-        // Próximos hitos
-        let proximosHitos = [];
-        try {
-            const [proximosRows] = await pool.execute(`
-                SELECT * FROM hitos_proyecto 
-                WHERE proyecto_id = ? AND estado IN ('pendiente', 'en_progreso')
-                AND fecha_objetivo >= CURDATE()
-                ORDER BY fecha_objetivo ASC 
-                LIMIT 5
-            `, [proyecto_id]);
-            proximosHitos = proximosRows;
-        } catch (error) {
-            console.warn('Error al obtener próximos hitos:', error.message);
-        }
-    
+        // HITOS Y EVALUACIONES REMOVIDOS - ahora se usa "Fechas Importantes"
         return {
-            proyecto,
-            estadisticas_hitos: estadisticasHitos,
-            hitos_recientes: hitosRecientes,
-            evaluaciones_recientes: evaluacionesRecientes,
-            proximos_hitos: proximosHitos
+            proyecto
         };
     } catch (error) {
         console.error('Error al obtener dashboard del proyecto:', error);
@@ -619,16 +449,6 @@ export const ProjectModel = {
     puedeVerProyecto,
     obtenerProyectosPorPermisos,
     obtenerProyectoPorIdConPermisos,
-    
-    // Gestión de hitos
-    crearHitoProyecto,
-    obtenerHitosProyecto,
-    actualizarHitoProyecto,
-    completarHito,
-    obtenerEstadisticasHitos,
-    
-    // Gestión de progreso
-    actualizarProgresoProyecto,
     obtenerDashboardProyecto
 };
 
@@ -712,11 +532,11 @@ const obtenerCargaProfesores = async (carrera_id = null) => {
             INNER JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.fecha_salida IS NULL
             INNER JOIN departamentos d ON pd.departamento_id = d.id
             INNER JOIN carreras c ON d.facultad_id = c.facultad_id
-            WHERE u.rol_id = 2 AND c.id = ?  -- Solo profesores del departamento de la carrera
+            WHERE u.rol_id IN (2, 3) AND c.id = ?  -- Profesores y administradores del departamento de la carrera
             `;
             params.push(carrera_id);
         } else {
-            query += ` WHERE u.rol_id = 2  -- Solo profesores `;
+            query += ` WHERE u.rol_id IN (2, 3)  -- Profesores y administradores `;
         }
         
         query += `
@@ -763,11 +583,11 @@ const obtenerEstadisticasCarga = async (carrera_id = null) => {
             INNER JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.fecha_salida IS NULL
             INNER JOIN departamentos d ON pd.departamento_id = d.id
             INNER JOIN carreras c ON d.facultad_id = c.facultad_id
-            WHERE u.rol_id = 2 AND c.id = ?
+            WHERE u.rol_id IN (2, 3) AND c.id = ?
             `;
             params.push(carrera_id);
         } else {
-            query += ` WHERE u.rol_id = 2 `;
+            query += ` WHERE u.rol_id IN (2, 3) `;
         }
         
         const [rows] = await pool.execute(query, params);
@@ -843,44 +663,7 @@ const actualizarUltimaActividad = async (proyecto_id) => {
  * @param {string} fecha_entrega - Fecha de entrega
  * @returns {Promise<boolean>}
  */
-const registrarEntregaInformeFinal = async (hito_id, fecha_entrega) => {
-    try {
-        const [result] = await pool.execute(`
-            UPDATE hitos_proyecto 
-            SET fecha_entrega_estudiante = ?,
-                informante_notificado = FALSE,
-                updated_at = NOW()
-            WHERE id = ? AND tipo_hito = 'entrega_final'
-        `, [fecha_entrega, hito_id]);
-        return result.affectedRows > 0;
-    } catch (error) {
-        console.error('Error al registrar entrega de informe final:', error);
-        throw error;
-    }
-};
-
-/**
- * Calcular y establecer fecha límite para Informante
- * @param {number} hito_id - ID del hito
- * @param {string} fecha_limite - Fecha límite calculada
- * @returns {Promise<boolean>}
- */
-const establecerFechaLimiteInformante = async (hito_id, fecha_limite) => {
-    try {
-        const [result] = await pool.execute(`
-            UPDATE hitos_proyecto 
-            SET fecha_limite_informante = ?,
-                fecha_notificacion_informante = NOW(),
-                informante_notificado = TRUE,
-                updated_at = NOW()
-            WHERE id = ?
-        `, [fecha_limite, hito_id]);
-        return result.affectedRows > 0;
-    } catch (error) {
-        console.error('Error al establecer fecha límite informante:', error);
-        throw error;
-    }
-};
+// HITOS DEPRECATED - Sistema removido
 
 /**
  * Crear alerta de abandono
@@ -997,7 +780,7 @@ const obtenerConfiguracionAbandono = async () => {
     }
 };
 
-// Exportar también las nuevas funciones
+// Exportar funciones de monitoreo y gestión de proyectos
 export { 
     actualizarEstadoProyecto, 
     obtenerProfesoresProyecto, 
@@ -1007,8 +790,6 @@ export {
     obtenerProyectosRiesgoAbandono,
     obtenerInformantesPendientes,
     actualizarUltimaActividad,
-    registrarEntregaInformeFinal,
-    establecerFechaLimiteInformante,
     crearAlertaAbandono,
     obtenerAlertasAbandono,
     marcarAlertaAtendida,

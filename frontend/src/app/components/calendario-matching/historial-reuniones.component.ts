@@ -82,7 +82,6 @@ export class HistorialReunionesComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error al cargar historial:', error);
         this.errorMessage = 'Error al cargar el historial de reuniones';
         this.isLoading = false;
       }

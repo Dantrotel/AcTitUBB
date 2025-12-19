@@ -56,8 +56,8 @@ export const initializeSocketIO = (httpServer, allowedOrigins) => {
   });
 
   // Eventos de conexión
-  io.on('connection', (socket) => {
-    const { rut, rol } = socket.user;
+  io.on('connection', async (socket) => {
+    const { rut, rol, rol_id } = socket.user;
     
     // Unir a sala personal
     socket.join(`user_${rut}`);
@@ -71,6 +71,18 @@ export const initializeSocketIO = (httpServer, allowedOrigins) => {
       rol,
       salas: [`user_${rut}`, `role_${rol}`]
     });
+
+    // Registrar usuario activo en el sistema de actividad
+    const { registrarUsuarioActivo } = await import('../services/actividad.service.js');
+    const estadisticas = await registrarUsuarioActivo(socket.id, {
+      rut,
+      rol_id,
+      rol,
+      conectado_en: new Date().toISOString()
+    });
+    
+    // Emitir estadísticas actualizadas solo a Super Admins
+    io.to('role_superadmin').emit('usuarios-activos-update', estadisticas);
 
     // Enviar confirmación de conexión
     socket.emit('connected', {
@@ -232,12 +244,26 @@ export const initializeSocketIO = (httpServer, allowedOrigins) => {
     });
 
     // Evento: Desconexión
-    socket.on('disconnect', (reason) => {
+    // Evento: Usuario cambia de página (para tracking de actividad)
+    socket.on('page-change', async (paginaActual) => {
+      const { actualizarActividadUsuario } = await import('../services/actividad.service.js');
+      await actualizarActividadUsuario(socket.id, paginaActual);
+      logger.debug('Página actualizada', { rut, paginaActual });
+    });
+
+    socket.on('disconnect', async (reason) => {
       logger.info('Usuario desconectado de WebSocket', {
         socketId: socket.id,
         rut,
         reason
       });
+      
+      // Eliminar usuario de activos
+      const { eliminarUsuarioActivo } = await import('../services/actividad.service.js');
+      const estadisticas = await eliminarUsuarioActivo(socket.id);
+      
+      // Emitir estadísticas actualizadas solo a Super Admins
+      io.to('role_superadmin').emit('usuarios-activos-update', estadisticas);
     });
 
     // Manejo de errores
