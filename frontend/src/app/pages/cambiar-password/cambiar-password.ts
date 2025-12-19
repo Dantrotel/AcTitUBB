@@ -87,7 +87,6 @@ export class CambiarPasswordComponent {
         }, 2000);
       },
       error: (err) => {
-        console.error('Error al cambiar contraseña:', err);
         this.error = err.error?.message || 'Error al cambiar la contraseña';
         this.procesando = false;
       }

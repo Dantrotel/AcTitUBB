@@ -1,0 +1,183 @@
+<div class="actividad-container">
+  <div class="header">
+    <h1><i class="fas fa-chart-line"></i> Actividad en Tiempo Real</h1>
+    <div class="header-actions">
+      <button 
+        class="btn-icon" 
+        (click)="refrescarDatos()" 
+        title="Refrescar">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+      
+      <button 
+        class="btn-toggle" 
+        [class.active]="actualizacionAutomatica"
+        (click)="toggleActualizacionAutomatica()"
+        title="Actualización automática">
+        <i class="fas fa-bolt"></i>
+        {{ actualizacionAutomatica ? 'Auto ON' : 'Auto OFF' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Usuarios Activos en Tiempo Real -->
+  <div class="section">
+    <h2><i class="fas fa-users"></i> Usuarios Conectados Ahora</h2>
+    
+    <div class="stats-overview">
+      <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+        <div class="stat-content">
+          <div class="stat-value">{{ estadisticasActivos.total_usuarios }}</div>
+          <div class="stat-label">Usuarios Activos</div>
+        </div>
+      </div>
+      
+      <div class="stat-card" *ngFor="let rol of objectKeys(estadisticasActivos.por_rol)">
+        <div class="stat-content">
+          <div class="stat-value">{{ estadisticasActivos.por_rol[rol] }}</div>
+          <div class="stat-label">{{ rol }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Lista de usuarios activos -->
+    <div class="usuarios-activos-list" *ngIf="estadisticasActivos.usuarios.length > 0">
+      <h3>Usuarios en Línea</h3>
+      <div class="usuario-activo-card" *ngFor="let usuario of estadisticasActivos.usuarios">
+        <div class="usuario-avatar">
+          <i class="fas fa-user-circle"></i>
+          <span class="status-dot"></span>
+        </div>
+        <div class="usuario-info">
+          <div class="usuario-nombre">{{ usuario.nombre }}</div>
+          <div class="usuario-detalle">
+            <span class="rol-badge">{{ usuario.rol }}</span>
+            <span class="pagina-actual">
+              <i class="fas fa-map-marker-alt"></i> {{ usuario.pagina_actual || 'Dashboard' }}
+            </span>
+          </div>
+        </div>
+        <div class="usuario-tiempo">
+          {{ formatearFechaRelativa(usuario.ultima_actividad) }}
+        </div>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="estadisticasActivos.usuarios.length === 0">
+      <i class="fas fa-user-slash"></i>
+      <p>No hay usuarios activos en este momento</p>
+    </div>
+  </div>
+
+  <!-- Actividad Reciente -->
+  <div class="section">
+    <h2><i class="fas fa-history"></i> Actividad Reciente</h2>
+    
+    <div class="actividad-timeline">
+      <div 
+        class="actividad-item" 
+        *ngFor="let actividad of actividadReciente"
+        [style.--color]="getColorActividad(actividad.tipo)">
+        
+        <div class="actividad-icon">
+          <i [class]="getIconoActividad(actividad.tipo)"></i>
+        </div>
+        
+        <div class="actividad-content">
+          <div class="actividad-descripcion">{{ actividad.descripcion }}</div>
+          <div class="actividad-meta">
+            <span class="actividad-usuario" *ngIf="actividad.usuario_nombre">
+              <i class="fas fa-user"></i> {{ actividad.usuario_nombre }}
+            </span>
+            <span class="actividad-tiempo">
+              <i class="fas fa-clock"></i> {{ formatearFechaRelativa(actividad.timestamp) }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="actividad-tipo-badge">{{ actividad.tipo }}</div>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="actividadReciente.length === 0">
+      <i class="fas fa-inbox"></i>
+      <p>No hay actividad reciente registrada</p>
+    </div>
+  </div>
+
+  <!-- Estadísticas Históricas -->
+  <div class="section" *ngIf="estadisticasHistoricas">
+    <h2><i class="fas fa-chart-bar"></i> Estadísticas (últimos 7 días)</h2>
+    
+    <div class="estadisticas-grid">
+      <!-- Tiempo promedio de sesión -->
+      <div class="estadistica-card destacada">
+        <div class="estadistica-header">
+          <i class="fas fa-clock"></i>
+          <h3>Tiempo Promedio de Sesión</h3>
+        </div>
+        <div class="estadistica-valor grande">
+          {{ formatearTiempoSesion(estadisticasHistoricas.tiempo_promedio_sesion) }}
+        </div>
+      </div>
+      
+      <!-- Actividad por día -->
+      <div class="estadistica-card">
+        <div class="estadistica-header">
+          <i class="fas fa-calendar-day"></i>
+          <h3>Actividad por Día</h3>
+        </div>
+        <div class="mini-chart">
+          <div 
+            class="chart-bar" 
+            *ngFor="let dia of estadisticasHistoricas.por_dia"
+            [style.height.%]="(dia.cantidad / getMaxValue(estadisticasHistoricas.por_dia)) * 100"
+            [title]="dia.fecha + ': ' + dia.cantidad + ' actividades'">
+            <span class="chart-label">{{ dia.fecha.substring(5) }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Actividad por tipo -->
+      <div class="estadistica-card">
+        <div class="estadistica-header">
+          <i class="fas fa-list"></i>
+          <h3>Por Tipo de Actividad</h3>
+        </div>
+        <div class="tipo-list">
+          <div class="tipo-item" *ngFor="let tipo of estadisticasHistoricas.por_tipo">
+            <span class="tipo-nombre">{{ tipo.tipo }}</span>
+            <span class="tipo-cantidad">{{ tipo.cantidad }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Horas pico -->
+      <div class="estadistica-card">
+        <div class="estadistica-header">
+          <i class="fas fa-fire"></i>
+          <h3>Horas Pico</h3>
+        </div>
+        <div class="horas-pico-list">
+          <div class="hora-item" *ngFor="let hora of estadisticasHistoricas.horas_pico.slice(0, 5)">
+            <span class="hora-label">{{ hora.hora }}:00h</span>
+            <div class="hora-bar">
+              <div 
+                class="hora-fill" 
+                [style.width.%]="(hora.cantidad / getMaxValue(estadisticasHistoricas.horas_pico)) * 100">
+              </div>
+            </div>
+            <span class="hora-cantidad">{{ hora.cantidad }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading spinner -->
+  <div class="loading-overlay" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando estadísticas...</p>
+  </div>
+</div>

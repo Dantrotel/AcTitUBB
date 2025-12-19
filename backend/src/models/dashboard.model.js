@@ -87,7 +87,7 @@ export const obtenerDashboardEstudiante = async (estudiante_rut) => {
             propuestas
         };
     } catch (error) {
-        console.error('Error al obtener dashboard estudiante:', error);
+        
         throw error;
     }
 };
@@ -184,7 +184,7 @@ export const obtenerDashboardProfesor = async (profesor_rut) => {
             }
         };
     } catch (error) {
-        console.error('Error al obtener dashboard profesor:', error);
+        
         throw error;
     }
 };
@@ -295,7 +295,7 @@ export const obtenerDashboardAdmin = async () => {
             carga_profesores: cargaProfesores
         };
     } catch (error) {
-        console.error('Error al obtener dashboard admin:', error);
+        
         throw error;
     }
 };

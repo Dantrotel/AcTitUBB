@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
@@ -47,7 +47,8 @@ export class HomeAdminComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -60,6 +61,7 @@ export class HomeAdminComponent implements OnInit {
   
   async cargarDatosRegulatorios() {
     this.loadingRegulatorio = true;
+    this.cdr.detectChanges();
     try {
       // Cargar proyectos en riesgo
       const riesgoResponse = await this.apiService.getProyectosRiesgo();
@@ -82,11 +84,13 @@ export class HomeAdminComponent implements OnInit {
       console.error('Error al cargar datos regulatorios:', error);
     } finally {
       this.loadingRegulatorio = false;
+      this.cdr.detectChanges();
     }
   }
   
   async cargarDashboard() {
     this.loadingDashboard = true;
+    this.cdr.detectChanges();
     try {
       const response = await this.apiService.getDashboardAdmin();
       if (response && response.success) {
@@ -96,6 +100,7 @@ export class HomeAdminComponent implements OnInit {
       console.error('Error al cargar dashboard:', error);
     } finally {
       this.loadingDashboard = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -113,8 +118,11 @@ export class HomeAdminComponent implements OnInit {
           nombre: this.userName,
           rol: this.userRole
         });
+        
+        this.cdr.detectChanges();
       } catch (error) {
         console.error('Error al decodificar token:', error);
+        this.cdr.detectChanges();
       }
     }
   }
@@ -147,6 +155,10 @@ export class HomeAdminComponent implements OnInit {
     this.router.navigate(['/admin/propuestas']);
   }
 
+  irAGestionProyectos(): void {
+    this.router.navigate(['/admin/proyectos']);
+  }
+
   irAGestionUsuarios(): void {
     this.router.navigate(['/admin/usuarios']);
   }
@@ -157,6 +169,14 @@ export class HomeAdminComponent implements OnInit {
 
   irAGestionCalendario(): void {
     this.router.navigate(['/admin/calendario']);
+  }
+
+  irAEntidadesExternas(): void {
+    this.router.navigate(['/admin/entidades-externas']);
+  }
+
+  irAColaboradoresExternos(): void {
+    this.router.navigate(['/admin/colaboradores-externos']);
   }
 
   irAGestionPeriodoPropuestas(): void {

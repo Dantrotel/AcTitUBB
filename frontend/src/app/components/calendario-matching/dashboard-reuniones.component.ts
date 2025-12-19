@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { NotificationService } from '../../services/notification.service';
 
 interface Reunion {
   id: number;
@@ -94,7 +95,8 @@ export class DashboardReunionesComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     // Obtener rol del usuario desde localStorage
     const userData = localStorage.getItem('userData');
@@ -104,9 +106,7 @@ export class DashboardReunionesComponent implements OnInit {
       const roleId = user.rol_id || user.role_id;
       this.userRole = roleId === 1 ? 'estudiante' : 
                     roleId === 2 ? 'profesor' : 'admin';
-      console.log('👤 User Role detectado en constructor:', this.userRole, '(rol_id:', roleId, ')');
     } else {
-      console.warn('⚠️  No hay userData en localStorage');
     }
   }
 
@@ -121,7 +121,6 @@ export class DashboardReunionesComponent implements OnInit {
     this.apiService.getDashboardReuniones().subscribe({
       next: (response: any) => {
         const data = response.data || response;
-        console.log('📊 Datos del dashboard recibidos:', data);
         
         // Mapear la estructura del backend al frontend
         // Backend: { solicitudes: { pendientes: [] }, reuniones: { proximas: [] } }
@@ -138,58 +137,29 @@ export class DashboardReunionesComponent implements OnInit {
             disponibilidades_activas: 0
           }
         };
-        
-        console.log('✅ Dashboard procesado:', {
-          solicitudes: this.dashboardData.solicitudes_pendientes.length,
-          reuniones: this.dashboardData.reuniones_proximas.length
-        });
-        
-        // Debugging de reuniones
+        // Opcional: logs de depuración seguros (no usar literales sueltos)
+        // const resumen = {
+        //   solicitudes: this.dashboardData.solicitudes_pendientes.length,
+        //   reuniones: this.dashboardData.reuniones_proximas.length
+        // };
+        // console.debug('Resumen dashboard', resumen);
+
+        // Debug: listar reuniones próximas (si es necesario para depuración)
         if (this.dashboardData.reuniones_proximas.length > 0) {
-          console.log('📅 DETALLE DE REUNIONES PRÓXIMAS:');
           this.dashboardData.reuniones_proximas.forEach((reunion, idx) => {
-            console.log(`  Reunión ${idx + 1}:`, {
-              id: reunion.id,
-              titulo: reunion.titulo,
-              fecha: reunion.fecha,
-              hora: `${reunion.hora_inicio} - ${reunion.hora_fin}`,
-              estado: reunion.estado,
-              profesor: reunion.profesor_nombre,
-              estudiante: reunion.estudiante_nombre
-            });
+            // console.debug(`Reunión ${idx}`, reunion);
           });
-        } else {
-          console.log('⚠️  No hay reuniones próximas en dashboardData.reuniones_proximas');
-          console.log('   Datos backend reuniones:', data.reuniones);
         }
-        
-        // Debugging adicional para solicitudes
+
+        // Debug: listar solicitudes pendientes
         if (this.dashboardData.solicitudes_pendientes.length > 0) {
-          console.log('🔍 DETALLE DE SOLICITUDES:');
           this.dashboardData.solicitudes_pendientes.forEach((sol, idx) => {
-            console.log(`  Solicitud ${idx + 1}:`, {
-              id: sol.id,
-              estudiante: sol.estudiante_nombre,
-              estado: sol.estado,
-              puede_responder: this.puedeResponderSolicitud(sol),
-              campos: {
-                created_at: sol.created_at,
-                fecha_propuesta: sol.fecha_propuesta,
-                hora_propuesta: sol.hora_propuesta,
-                tipo_reunion: sol.tipo_reunion,
-                descripcion: sol.descripcion?.substring(0, 30)
-              }
-            });
+            // console.debug(`Solicitud ${idx}`, sol);
           });
-          console.log('👤 User Role:', this.userRole);
-        } else {
-          console.log('⚠️  No hay solicitudes en dashboardData.solicitudes_pendientes');
         }
-        
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error al cargar dashboard:', error);
         this.errorMessage = 'Error al cargar la información del dashboard';
         this.isLoading = false;
       }
@@ -206,14 +176,26 @@ export class DashboardReunionesComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al confirmar reunión:', error);
         this.errorMessage = 'Error al confirmar la reunión';
       }
     });
   }
 
-  cancelarReunion(reunionId: number, motivo?: string) {
-    const motivoCancelacion = motivo || prompt('Motivo de cancelación (opcional):') || '';
+  async cancelarReunion(reunionId: number, motivo?: string): Promise<void> {
+    let motivoCancelacion = motivo || '';
+    
+    if (!motivo) {
+      const inputMotivo = await this.notificationService.prompt(
+        'Motivo de cancelación (opcional):',
+        'Cancelar reunión',
+        '',
+        'Cancelar',
+        'No cancelar'
+      );
+      
+      if (inputMotivo === null) return;
+      motivoCancelacion = inputMotivo;
+    }
     
     this.apiService.cancelarReunion(reunionId.toString(), {
       motivo: motivoCancelacion
@@ -224,14 +206,21 @@ export class DashboardReunionesComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al cancelar reunión:', error);
         this.errorMessage = 'Error al cancelar la reunión';
       }
     });
   }
 
-  marcarReunionRealizada(reunionId: number) {
-    const acta = prompt('Resumen de la reunión (opcional):') || '';
+  async marcarReunionRealizada(reunionId: number): Promise<void> {
+    const acta = await this.notificationService.prompt(
+      'Resumen de la reunión (opcional):',
+      'Marcar como realizada',
+      '',
+      'Guardar',
+      'Cancelar'
+    );
+    
+    if (acta === null) return;
     
     this.apiService.marcarReunionRealizada(reunionId.toString(), {
       acta_reunion: acta
@@ -242,17 +231,26 @@ export class DashboardReunionesComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al marcar reunión como realizada:', error);
         this.errorMessage = 'Error al actualizar la reunión';
         setTimeout(() => this.errorMessage = '', 3000);
       }
     });
   }
 
-  responderSolicitud(solicitudId: number, respuesta: 'aceptada' | 'rechazada') {
+  async responderSolicitud(solicitudId: number, respuesta: 'aceptada' | 'rechazada'): Promise<void> {
     let comentarios = '';
     if (respuesta === 'rechazada') {
-      comentarios = prompt('Motivo del rechazo:') || '';
+      const motivo = await this.notificationService.prompt(
+        'Motivo del rechazo:',
+        'Rechazar solicitud',
+        '',
+        'Rechazar',
+        'Cancelar'
+      );
+      
+      if (motivo === null) return;
+      
+      comentarios = motivo;
       if (!comentarios.trim()) {
         this.errorMessage = 'Debe especificar el motivo del rechazo';
         setTimeout(() => this.errorMessage = '', 3000);
@@ -284,7 +282,6 @@ export class DashboardReunionesComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        console.error('Error al responder solicitud:', error);
         this.errorMessage = error.error?.message || 'Error al responder la solicitud';
         setTimeout(() => this.errorMessage = '', 3000);
       }

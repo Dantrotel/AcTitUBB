@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, ApplicationRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   standalone: true,
@@ -55,7 +56,11 @@ export class AsignacionesComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService,
+    private ngZone: NgZone,
+    private appRef: ApplicationRef
   ) {}
 
   ngOnInit() {
@@ -169,6 +174,7 @@ export class AsignacionesComponent implements OnInit {
 
   cargarEstadisticas() {
     this.loadingEstadisticas = true;
+    this.cdr.detectChanges();
     console.log('🔄 Cargando estadísticas de asignaciones de profesores...');
     
     // Usar el método específico para estadísticas de asignaciones-profesores
@@ -177,6 +183,7 @@ export class AsignacionesComponent implements OnInit {
         console.log('✅ Estadísticas de asignaciones-profesores cargadas:', response);
         this.estadisticasAsignaciones = response.data || response.estadisticas || response;
         this.loadingEstadisticas = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('❌ Error cargando estadísticas asignaciones-profesores:', err);
@@ -192,16 +199,19 @@ export class AsignacionesComponent implements OnInit {
         console.log('⚠️ Estadísticas cargadas con fallback:', data);
         this.estadisticasAsignaciones = data.estadisticas || null;
         this.loadingEstadisticas = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('❌ Error cargando estadísticas fallback:', err);
         this.loadingEstadisticas = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   cargarHistorial() {
     this.loadingHistorial = true;
+    this.cdr.detectChanges();
     console.log('🔄 Cargando historial de asignaciones...');
     
     this.apiService.getHistorialAsignaciones().subscribe({
@@ -209,10 +219,12 @@ export class AsignacionesComponent implements OnInit {
         console.log('✅ Historial cargado:', data);
         this.historialAsignaciones = data.historial || [];
         this.loadingHistorial = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('❌ Error cargando historial:', err);
         this.loadingHistorial = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -221,6 +233,7 @@ export class AsignacionesComponent implements OnInit {
   cargarAsignaciones(): void {
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     // Usar el método específico para asignaciones de profesores
     this.apiService.getAllAsignacionesProfesores().subscribe({
@@ -228,6 +241,7 @@ export class AsignacionesComponent implements OnInit {
         console.log('✅ Asignaciones de profesores cargadas:', response);
         this.asignaciones = response.data || response || [];
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('❌ Error cargando asignaciones de profesores:', err);
@@ -244,11 +258,13 @@ export class AsignacionesComponent implements OnInit {
       next: (data: any) => {
         this.asignaciones = data;
         this.loading = false;
+        this.cdr.detectChanges();
         console.log('⚠️ Asignaciones cargadas con fallback:', data);
       },
       error: (err) => {
         this.error = 'Error al cargar las asignaciones. Verifique su conexión.';
         this.loading = false;
+        this.cdr.detectChanges();
         console.error('❌ Error cargando asignaciones fallback:', err);
       }
     });
@@ -302,19 +318,25 @@ export class AsignacionesComponent implements OnInit {
     });
   }
 
-  eliminarAsignacion(asignacion: any) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta asignación? Esta acción no se puede deshacer.')) {
-      this.apiService.eliminarAsignacion(asignacion.asignacion_id).subscribe({
-        next: () => {
-          alert('Asignación eliminada correctamente');
-          this.cargarAsignaciones(); // Recargar la lista
-        },
-        error: (err) => {
-          console.error('Error al eliminar asignación:', err);
-          alert('Error al eliminar la asignación');
-        }
-      });
-    }
+  async eliminarAsignacion(asignacion: any): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que quieres eliminar esta asignación? Esta acción no se puede deshacer.',
+      'Eliminar Asignación',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
+
+    this.apiService.eliminarAsignacion(asignacion.asignacion_id).subscribe({
+      next: () => {
+        this.notificationService.success('Asignación eliminada correctamente');
+        this.cargarAsignaciones();
+      },
+      error: (err) => {
+        console.error('Error al eliminar asignación:', err);
+        this.notificationService.error('Error al eliminar la asignación');
+      }
+    });
   }
 
   // ============= MÉTODOS PARA NUEVAS ASIGNACIONES CON ROLES =============
@@ -366,7 +388,7 @@ export class AsignacionesComponent implements OnInit {
     // Validar después de la conversión
     if (!proyecto_id || !this.nuevaAsignacion.profesor_rut || !rol_profesor_id) {
       console.log('❌ Validación falló:', { proyecto_id, profesor_rut: this.nuevaAsignacion.profesor_rut, rol_profesor_id });
-      alert('Por favor complete todos los campos obligatorios');
+      this.notificationService.warning('Por favor complete todos los campos obligatorios');
       return;
     }
     
@@ -378,40 +400,95 @@ export class AsignacionesComponent implements OnInit {
     };
     
     this.loadingAsignacion = true;
+    this.cdr.detectChanges();
+    
     console.log('🔄 Creando asignación profesor-proyecto:', asignacionData);
     this.apiService.asignarProfesorAProyecto(asignacionData).subscribe({
       next: (response: any) => {
         console.log('✅ Asignación profesor-proyecto creada:', response);
-        alert('Profesor asignado exitosamente al proyecto');
+        this.notificationService.success('Profesor asignado exitosamente al proyecto');
         this.ocultarFormularioAsignacion();
         this.cargarAsignaciones();
         this.cargarEstadisticas();
         this.loadingAsignacion = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('❌ Error al crear asignación profesor-proyecto:', err);
-        alert(`Error al asignar profesor: ${err.error?.message || err.message || 'Error desconocido'}`);
+        this.notificationService.error('Error al asignar profesor', err.error?.message || err.message || 'Error desconocido');
         this.loadingAsignacion = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  desasignarProfesor(asignacion: any) {
-    if (confirm(`¿Está seguro de desasignar a ${asignacion.profesor_nombre} del proyecto ${asignacion.proyecto_titulo}?`)) {
-      console.log('🔄 Desasignando profesor de proyecto:', asignacion);
-      this.apiService.desasignarProfesorDeProyecto(asignacion.proyecto_id, asignacion.profesor_rut).subscribe({
-        next: (response: any) => {
-          console.log('✅ Profesor desasignado del proyecto exitosamente:', response);
-          alert('Profesor desasignado exitosamente del proyecto');
-          this.cargarAsignaciones();
-          this.cargarEstadisticas();
-        },
-        error: (err: any) => {
-          console.error('❌ Error al desasignar profesor del proyecto:', err);
-          alert(`Error al desasignar profesor: ${err.error?.message || err.message || 'Error desconocido'}`);
+  async desasignarProfesor(asignacion: any): Promise<void> {
+    console.log('🎯 Botón desasignar presionado para:', asignacion);
+    
+    // Ejecutar dentro de NgZone para asegurar que Angular detecte los cambios
+    this.ngZone.run(async () => {
+      try {
+        // Forzar actualización de la UI antes del modal
+        this.appRef.tick();
+        this.cdr.detectChanges();
+        
+        // Pequeño delay para asegurar que la UI esté lista
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        const confirmed = await this.notificationService.confirm(
+          `¿Está seguro de desasignar a ${asignacion.profesor_nombre} del proyecto ${asignacion.proyecto_titulo}?`,
+          'Desasignar Profesor',
+          'Desasignar',
+          'Cancelar'
+        );
+        
+        console.log('📋 Usuario confirmó:', confirmed);
+        
+        if (!confirmed) {
+          console.log('❌ Operación cancelada por el usuario');
+          return;
         }
-      });
-    }
+
+        console.log('🔄 Desasignando profesor de proyecto:', asignacion);
+        
+        // Mostrar indicador de carga
+        this.loadingAsignacion = true;
+        this.cdr.detectChanges();
+        
+        this.apiService.desasignarProfesorDeProyecto(asignacion.proyecto_id, asignacion.profesor_rut).subscribe({
+          next: (response: any) => {
+            console.log('✅ Profesor desasignado del proyecto exitosamente:', response);
+            
+            this.ngZone.run(() => {
+              this.notificationService.success('Profesor desasignado exitosamente del proyecto');
+              
+              // Recargar asignaciones
+              this.cargarAsignaciones();
+              this.cargarEstadisticas();
+              
+              // Si hay un modal abierto con asignaciones del proyecto, recargarlo también
+              if (this.mostrarModalProyecto && this.proyectoSeleccionado) {
+                this.cargarAsignacionesProyecto(this.proyectoSeleccionado.id);
+              }
+              
+              // Forzar detección de cambios
+              this.loadingAsignacion = false;
+              this.cdr.detectChanges();
+            });
+          },
+          error: (err: any) => {
+            console.error('❌ Error al desasignar profesor del proyecto:', err);
+            this.ngZone.run(() => {
+              this.notificationService.error('Error al desasignar profesor', err.error?.message || err.message || 'Error desconocido');
+              this.loadingAsignacion = false;
+              this.cdr.detectChanges();
+            });
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error en desasignarProfesor:', error);
+      }
+    });
   }
 
   // ============= MÉTODOS PARA VISTA POR PROYECTO =============
@@ -428,10 +505,12 @@ export class AsignacionesComponent implements OnInit {
       next: (response: any) => {
         console.log('✅ Profesores del proyecto cargados:', response);
         this.asignacionesProyecto = response.data || response || [];
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('❌ Error cargando profesores del proyecto:', err);
         this.asignacionesProyecto = [];
+        this.cdr.detectChanges();
       }
     });
   }

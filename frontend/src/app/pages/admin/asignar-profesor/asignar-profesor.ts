@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   standalone: true,
@@ -18,31 +19,54 @@ export class AsignarProfesorComponent implements OnInit {
   loading = true;
   error = '';
   guardando = false;
+  
+  // Usuario actual
+  usuarioActual: any = null;
+  esProfesor = false;
+  esAdmin = false;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    this.obtenerUsuarioActual();
     const propuestaId = this.route.snapshot.paramMap.get('id');
     if (propuestaId) {
       this.cargarPropuesta(propuestaId);
       this.cargarProfesores();
     }
   }
+  
+  private obtenerUsuarioActual(): void {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.usuarioActual = payload;
+        this.esProfesor = String(payload.rol_id) === '2';
+        this.esAdmin = String(payload.rol_id) === '3' || String(payload.rol_id) === '4';
+      } catch (error) {
+      }
+    }
+  }
 
   private cargarPropuesta(id: string): void {
+    this.loading = true;
     this.apiService.getPropuestaById(id).subscribe({
       next: (data: any) => {
-        console.log('🔍 Admin - Propuesta cargada:', data);
+        
         this.propuesta = data;
         this.loading = false;
+        this.cdr.detectChanges();
+        
       },
       error: (err) => {
-        console.error('🔍 Admin - Error al cargar propuesta:', err);
-        this.error = 'Error al cargar la propuesta';
+        this.error = 'Error al cargar la propuesta: ' + (err.error?.message || err.message);
         this.loading = false;
       }
     });
@@ -54,24 +78,30 @@ export class AsignarProfesorComponent implements OnInit {
         const usuarios = Array.isArray(data) ? data : [];
         // Filtrar solo profesores (rol_nombre = 'profesor' o rol_id = 2)
         this.profesores = usuarios.filter((u: any) => 
-          u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2
+          u.rol_nombre?.toLowerCase() === 'profesor' || String(u.rol_id) === '2' || u.rol_id === 2
         );
-        console.log('Profesores cargados:', this.profesores);
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error al cargar profesores:', err);
         this.error = 'Error al cargar los profesores';
+        this.cdr.detectChanges();
       }
     });
   }
 
-  asignarProfesor(): void {
+  async asignarProfesor(): Promise<void> {
+    // Si es profesor y no seleccionó ninguno, asignarse a sí mismo
     if (!this.profesorSeleccionado) {
-      alert('Por favor selecciona un profesor');
-      return;
+      if (this.esProfesor) {
+        return this.asignarmeAMiMismo();
+      } else {
+        this.notificationService.warning('Por favor selecciona un profesor');
+        return;
+      }
     }
 
     this.guardando = true;
+    this.cdr.detectChanges();
 
     const datosAsignacion = {
       propuesta_id: this.propuesta.id,
@@ -80,41 +110,70 @@ export class AsignarProfesorComponent implements OnInit {
 
     this.apiService.crearAsignacion(datosAsignacion).subscribe({
       next: (response: any) => {
-        console.log('🔍 Admin - Profesor asignado exitosamente:', response);
         this.guardando = false;
-        alert('Profesor asignado exitosamente');
-        this.volver();
+        this.notificationService.success('Profesor asignado exitosamente');
+        setTimeout(() => this.volver(), 1500);
       },
       error: (err) => {
-        console.error('🔍 Admin - Error al asignar profesor:', err);
+        
         this.guardando = false;
-        alert('Error al asignar el profesor');
+        
+        let errorMsg = 'Error al asignar el profesor';
+        if (err.error?.message) {
+          errorMsg = err.error.message;
+        } else if (err.status === 0) {
+          errorMsg = 'No se pudo conectar al servidor. Verifica que el backend esté ejecutándose.';
+        } else if (err.status === 404) {
+          errorMsg = 'Propuesta o profesor no encontrado';
+        } else if (err.status === 409) {
+          errorMsg = 'El profesor ya está asignado a esta propuesta';
+        }
+        
+        this.notificationService.error(errorMsg);
+        this.cdr.detectChanges();
       }
     });
   }
 
-  quitarAsignacion(): void {
-    if (confirm('¿Estás seguro de que quieres quitar la asignación del profesor?')) {
-      this.guardando = true;
+  async asignarmeAMiMismo(): Promise<void> {
+    
+    this.guardando = true;
+    this.cdr.detectChanges();
 
-      const datosAsignacion = {
-        profesor_rut: null
-      };
-
-      this.apiService.asignarPropuesta(this.propuesta.id.toString(), datosAsignacion).subscribe({
-        next: (response: any) => {
-          console.log('🔍 Admin - Asignación removida exitosamente:', response);
-          this.guardando = false;
-          alert('Asignación removida exitosamente');
-          this.volver();
-        },
-        error: (err) => {
-          console.error('🔍 Admin - Error al remover asignación:', err);
-          this.guardando = false;
-          alert('Error al remover la asignación');
+    // Usar el endpoint que toma el RUT del token JWT
+    this.apiService.asignarPropuesta(this.propuesta.id.toString(), {}).subscribe({
+      next: (response: any) => {
+        this.guardando = false;
+        this.notificationService.success('Te has asignado exitosamente a esta propuesta');
+        setTimeout(() => this.volver(), 1500);
+      },
+      error: (err) => {
+        
+        this.guardando = false;
+        
+        let errorMsg = 'Error al asignarse a la propuesta';
+        if (err.error?.message) {
+          errorMsg = err.error.message;
+        } else if (err.status === 0) {
+          errorMsg = 'No se pudo conectar al servidor. Verifica que el backend esté ejecutándose.';
+        } else if (err.status === 400) {
+          errorMsg = 'Datos incompletos para la asignación';
         }
-      });
-    }
+        
+        this.notificationService.error(errorMsg);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  async quitarAsignacion(): Promise<void> {
+    // Para quitar una asignación, necesitamos el ID de la asignación
+    // Redireccionar a la página de gestión de asignaciones
+    this.notificationService.info(
+      'Para quitar una asignación, dirígete a la página de "Gestión de Asignaciones"',
+      'Información'
+    );
+    this.router.navigate(['/admin/asignaciones']);
   }
 
   volver() {

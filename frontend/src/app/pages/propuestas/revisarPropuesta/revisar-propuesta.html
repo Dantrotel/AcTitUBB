@@ -1,25 +1,258 @@
-<!-- Nuevo archivo sugerido: revisar-propuesta.html -->
-<div class="revisar-propuesta-container" *ngIf="puedeRevisar && propuesta; else errorTpl">
-  <h2>Revisar Propuesta</h2>
-  <div>
-    <strong>Título:</strong> {{ propuesta.titulo }}<br>
-    <strong>Descripción:</strong> {{ propuesta.descripcion }}<br>
-    <strong>Estado actual:</strong> {{ propuesta.estado }}
+<!-- Navbar con navegación -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-graduation-cap"></i>
+    <span>AcTitUBB</span>
   </div>
-  <form (ngSubmit)="guardarRevision()">
-    <div>
-      <label for="estado">Nuevo Estado:</label>
-      <select id="estado" [(ngModel)]="estado" name="estado" required>
-        <option *ngFor="let est of estados" [value]="est">{{ est }}</option>
-      </select>
+  
+  <div class="navbar-actions">
+    <div class="action-item" (click)="router.navigate(['/profesor/propuestas-asignadas'])" matTooltip="Volver">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver</span>
     </div>
-    <div>
-      <label for="comentarios">Comentarios:</label>
-      <textarea id="comentarios" [(ngModel)]="comentarios" name="comentarios" required></textarea>
+    
+    <div class="action-item" (click)="toggleHistorial()" matTooltip="Ver historial de revisiones">
+      <i class="fas fa-history"></i>
+      <span>{{ mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial' }}</span>
     </div>
-    <button type="submit">Guardar Revisión</button>
+  </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="main-container" *ngIf="puedeRevisar && propuesta; else errorTpl">
+  <!-- Header de la propuesta -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1><i class="fas fa-file-signature"></i> Revisar Propuesta</h1>
+      <p>Evalúa y proporciona retroalimentación sobre esta propuesta</p>
+    </div>
+  </div>
+
+  <!-- Información de la propuesta -->
+  <div class="info-card">
+    <div class="card-header">
+      <h2><i class="fas fa-info-circle"></i> Información de la Propuesta</h2>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <label><i class="fas fa-heading"></i> Título:</label>
+          <span>{{ propuesta.titulo }}</span>
+        </div>
+        <div class="info-item">
+          <label><i class="fas fa-user-graduate"></i> Estudiante:</label>
+          <span>{{ propuesta.nombre_estudiante }}</span>
+        </div>
+        <div class="info-item">
+          <label><i class="fas fa-flag"></i> Estado actual:</label>
+          <span class="estado-badge" [class]="'estado-' + propuesta.estado">
+            {{ obtenerNombreEstado(propuesta.estado) }}
+          </span>
+        </div>
+        <div class="info-item full-width">
+          <label><i class="fas fa-align-left"></i> Descripción:</label>
+          <p class="descripcion-text">{{ propuesta.descripcion }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial de Revisiones -->
+  <div class="history-card" *ngIf="mostrarHistorial">
+    <div class="card-header">
+      <h2><i class="fas fa-history"></i> Historial de Revisiones</h2>
+    </div>
+    <div class="card-body">
+      <div class="loading-state" *ngIf="cargandoHistorial">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando historial...</p>
+      </div>
+
+      <div class="timeline" *ngIf="!cargandoHistorial && historialRevisiones.length > 0">
+        <div class="timeline-item" *ngFor="let revision of historialRevisiones">
+          <div class="timeline-marker">
+            <i class="fas fa-circle"></i>
+          </div>
+          <div class="timeline-content">
+            <div class="revision-header">
+              <div class="profesor-info">
+                <i class="fas fa-user-tie"></i>
+                <strong>{{ revision.profesor_nombre || 'Profesor' }}</strong>
+              </div>
+              <span class="fecha-badge">{{ formatearFecha(revision.fecha_accion) }}</span>
+            </div>
+            
+            <div class="decision-badge" [class]="'decision-' + revision.decision">
+              {{ revision.decision || revision.accion }}
+            </div>
+            
+            <p class="comentarios" *ngIf="revision.comentarios">
+              <i class="fas fa-comment-dots"></i>
+              {{ revision.comentarios }}
+            </p>
+            
+            <button 
+              class="btn-download" 
+              *ngIf="revision.archivo_revision"
+              (click)="descargarArchivoRevision(revision)"
+            >
+              <i class="fas fa-file-download"></i>
+              {{ revision.nombre_archivo_original }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!cargandoHistorial && historialRevisiones.length === 0">
+        <i class="fas fa-inbox"></i>
+        <p>No hay revisiones previas para esta propuesta</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archivos Versionados -->
+  <div class="info-card" *ngIf="archivosVersionados.length > 0">
+    <div class="card-header">
+      <h2><i class="fas fa-file-archive"></i> Archivos de la Propuesta (Historial Completo)</h2>
+    </div>
+    <div class="card-body">
+      <div class="archivos-list">
+        <div class="archivo-item" *ngFor="let archivo of archivosVersionados">
+          <div class="archivo-info">
+            <div class="archivo-icono" [class]="'tipo-' + archivo.tipo_archivo">
+              <i class="fas fa-file-pdf" *ngIf="archivo.nombre_archivo_original.endsWith('.pdf')"></i>
+              <i class="fas fa-file-word" *ngIf="!archivo.nombre_archivo_original.endsWith('.pdf')"></i>
+            </div>
+            <div class="archivo-detalles">
+              <div class="archivo-nombre">
+                {{ archivo.nombre_archivo_original }}
+              </div>
+              <div class="archivo-meta">
+                <span class="badge-tipo">{{ obtenerTipoArchivoLabel(archivo.tipo_archivo) }}</span>
+                <span class="version-badge">Versión {{ archivo.version }}</span>
+                <span class="fecha-badge">{{ formatearFecha(archivo.created_at) }}</span>
+                <span class="autor-badge">{{ archivo.nombre_usuario }}</span>
+              </div>
+              <p class="archivo-comentario" *ngIf="archivo.comentario">
+                <i class="fas fa-comment"></i> {{ archivo.comentario }}
+              </p>
+            </div>
+          </div>
+          <button 
+            class="btn-download-archivo" 
+            (click)="descargarArchivoVersionado(archivo.id, archivo.nombre_archivo_original)"
+            type="button"
+          >
+            <i class="fas fa-download"></i>
+            Descargar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario de Revisión -->
+  <form class="form-card" (ngSubmit)="guardarRevision()">
+    <div class="card-header">
+      <h2><i class="fas fa-edit"></i> Nueva Revisión</h2>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label for="estado">
+          <i class="fas fa-tasks"></i>
+          Decisión sobre la propuesta
+        </label>
+        <select id="estado" [(ngModel)]="estado" name="estado" class="form-control" required>
+          <option value="">-- Selecciona una decisión --</option>
+          <option *ngFor="let est of estados" [value]="est">{{ obtenerNombreEstado(est) }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="comentarios">
+          <i class="fas fa-comment-alt"></i>
+          Comentarios y observaciones
+        </label>
+        <textarea 
+          id="comentarios" 
+          [(ngModel)]="comentarios" 
+          name="comentarios" 
+          class="form-control"
+          rows="6"
+          placeholder="Describe las correcciones necesarias, observaciones o felicitaciones para el estudiante..."
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <i class="fas fa-file-upload"></i>
+          Archivo Revisado (Opcional)
+        </label>
+        
+        <div 
+          class="file-upload-area"
+          [class.drag-over]="isDragOver"
+          [class.has-file]="archivoRevisado"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
+          <input 
+            #fileInput
+            type="file" 
+            accept=".pdf,.doc,.docx"
+            (change)="onFileSelected($event)"
+            hidden
+          />
+          
+          <div class="upload-prompt" *ngIf="!archivoRevisado">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Arrastra tu archivo aquí o haz clic para seleccionar</p>
+            <small>PDF, DOC, DOCX (máx. 10MB)</small>
+          </div>
+
+          <div class="file-selected" *ngIf="archivoRevisado">
+            <i class="fas fa-file-pdf"></i>
+            <div class="file-details">
+              <strong>{{ archivoRevisado.name }}</strong>
+              <small>{{ (archivoRevisado.size / 1024 / 1024).toFixed(2) }} MB</small>
+            </div>
+            <button 
+              type="button" 
+              class="btn-remove" 
+              (click)="removerArchivo(); $event.stopPropagation()"
+              matTooltip="Eliminar archivo"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="alert alert-error" *ngIf="archivoError">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ archivoError }}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="!estado || (estado !== 'aprobada' && !comentarios)">
+          <i class="fas fa-check"></i>
+          Guardar Revisión
+        </button>
+        <button type="button" class="btn-secondary" (click)="router.navigate(['/profesor/propuestas-asignadas'])">
+        <i class="fas fa-times"></i>
+        Cancelar
+      </button>
+    </div>
   </form>
 </div>
+
 <ng-template #errorTpl>
-  <div class="error">{{ error || 'Cargando...' }}</div>
+  <div class="error-container">
+    <i class="fas fa-exclamation-circle"></i>
+    <h3>{{ error || 'Cargando...' }}</h3>
+  </div>
 </ng-template>

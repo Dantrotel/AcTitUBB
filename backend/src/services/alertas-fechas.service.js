@@ -11,7 +11,7 @@ import * as avanceModel from '../models/avance.model.js';
  * Este servicio debe ejecutarse diariamente (cron job o similar)
  */
 export const generarAlertasAutomaticas = async () => {
-    console.log('🔔 Iniciando generación de alertas automáticas de fechas importantes...');
+    
     
     try {
         // Obtener todas las fechas importantes NO completadas
@@ -64,11 +64,11 @@ export const generarAlertasAutomaticas = async () => {
             }
         }
 
-        console.log('✅ Alertas generadas:', alertasGeneradas);
+        
         return alertasGeneradas;
 
     } catch (error) {
-        console.error('❌ Error al generar alertas automáticas:', error);
+        
         throw error;
     }
 };
@@ -101,7 +101,7 @@ const crearAlertaFecha = async (fecha, tipoAlerta, nivelAlerta) => {
         `, [fecha.proyecto_id, tipoAlerta]);
 
         if (alertasExistentes.length > 0) {
-            console.log(`⏭️ Alerta ${tipoAlerta} ya existe para proyecto ${fecha.proyecto_id}`);
+            
             return; // No duplicar alertas del mismo día
         }
 
@@ -138,10 +138,10 @@ const crearAlertaFecha = async (fecha, tipoAlerta, nivelAlerta) => {
             });
         }
 
-        console.log(`✅ Alerta creada: ${tipoAlerta} para proyecto ${fecha.proyecto_id}`);
+        
 
     } catch (error) {
-        console.error(`❌ Error al crear alerta ${tipoAlerta}:`, error);
+        
     }
 };
 
@@ -251,7 +251,7 @@ export const obtenerAlertasUsuario = async (rut, rol_id) => {
         return alertas;
 
     } catch (error) {
-        console.error('❌ Error al obtener alertas de usuario:', error);
+        
         throw error;
     }
 };
@@ -277,7 +277,7 @@ export const obtenerResumenAlertasProyecto = async (proyecto_id) => {
         return fechas[0];
 
     } catch (error) {
-        console.error('❌ Error al obtener resumen de alertas:', error);
+        
         throw error;
     }
 };
@@ -299,7 +299,7 @@ export const marcarTodasAlertasLeidas = async (rut) => {
         return result.affectedRows > 0;
 
     } catch (error) {
-        console.error('❌ Error al marcar alertas como leídas:', error);
+        
         throw error;
     }
 };

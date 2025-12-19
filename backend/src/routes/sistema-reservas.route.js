@@ -61,7 +61,7 @@ router.post('/disponibilidades', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error creando disponibilidad:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -98,7 +98,7 @@ router.get('/mis-disponibilidades', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo disponibilidades:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -141,7 +141,7 @@ router.put('/disponibilidades/:id', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error actualizando disponibilidad:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -173,7 +173,7 @@ router.delete('/disponibilidades/:id', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error eliminando disponibilidad:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -205,7 +205,7 @@ router.get('/solicitudes-pendientes', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo solicitudes:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -247,7 +247,7 @@ router.post('/responder-reserva/:id', async (req, res) => {
         res.json(resultado);
         
     } catch (error) {
-        console.error('Error respondiendo reserva:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -316,7 +316,7 @@ router.get('/horarios-disponibles/:profesor_rut', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo horarios disponibles:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -383,7 +383,7 @@ router.post('/reservar', async (req, res) => {
         res.status(201).json(resultado);
         
     } catch (error) {
-        console.error('Error reservando horario:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -420,7 +420,7 @@ router.get('/mis-solicitudes', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo solicitudes:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -473,7 +473,7 @@ router.delete('/cancelar-reserva/:id', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error cancelando reserva:', error);
+        
         res.status(400).json({
             success: false,
             message: error.message
@@ -529,7 +529,7 @@ router.get('/profesores-asignados', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error obteniendo profesores:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message
@@ -604,7 +604,7 @@ router.get('/dashboard', async (req, res) => {
         }
         
     } catch (error) {
-        console.error('Error obteniendo dashboard:', error);
+        
         res.status(500).json({
             success: false,
             message: error.message

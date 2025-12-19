@@ -18,7 +18,7 @@ const createRole = async (req, res) => {
         const newRole = await RoleModel.createRole(nombre);
         return res.json({ ok: true, message: "New role created", role: newRole });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -39,7 +39,7 @@ const findRoleByName = async (req, res) => {
 
         return res.json({ ok: true, role });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -62,7 +62,7 @@ const updateRole = async (req, res) => {
         const updatedRole = await RoleModel.updateRole(nombre, newName);
         return res.json({ ok: true, message: "Role updated", role: updatedRole });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -84,7 +84,7 @@ const deleteRole = async (req, res) => {
         await RoleModel.deleteRole(nombre);
         return res.json({ ok: true, message: "Role deleted" });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -96,7 +96,7 @@ const getRolesProfesores = async (req, res) => {
         const roles = await RoleModel.getAllRolesProfesores();
         return res.json({ ok: true, roles });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -126,10 +126,10 @@ const asignarProfesorAProyecto = async (req, res) => {
         try {
             const proyectoActivado = await ProjectService.verificarYActivarProyectoSiCompleto(proyecto_id);
             if (proyectoActivado) {
-                console.log(`🎉 Proyecto ${proyecto_id} activado automáticamente tras asignación completa de roles`);
+                
             }
         } catch (activacionError) {
-            console.error('⚠️ Error al verificar/activar proyecto:', activacionError);
+            
             // No afecta la respuesta de la asignación
         }
 
@@ -139,7 +139,7 @@ const asignarProfesorAProyecto = async (req, res) => {
             asignacion_id: resultado.id 
         });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ 
             message: error.message || "Error interno del servidor" 
         });
@@ -169,7 +169,7 @@ const desasignarProfesorDeProyecto = async (req, res) => {
             message: resultado.mensaje 
         });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ 
             message: error.message || "Error interno del servidor" 
         });
@@ -192,7 +192,7 @@ const getAsignacionesProyecto = async (req, res) => {
             asignaciones 
         });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Error interno del servidor" });
     }
 };
@@ -208,7 +208,7 @@ const getProyectosAsignadosProfesor = async (req, res) => {
             projects: proyectos 
         });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Error interno del servidor" });
     }
 };
@@ -221,7 +221,7 @@ const getEstadisticasAsignaciones = async (req, res) => {
             estadisticas 
         });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Error interno del servidor" });
     }
 };
@@ -241,7 +241,7 @@ const getHistorialAsignaciones = async (req, res) => {
             historial 
         });
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).json({ message: "Error interno del servidor" });
     }
 };

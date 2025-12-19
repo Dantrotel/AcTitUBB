@@ -19,7 +19,7 @@ export const obtenerComision = async (req, res) => {
             estado_comision: estado
         });
     } catch (error) {
-        console.error('Error al obtener comisión:', error);
+        
         res.status(500).json({ message: 'Error al obtener comisión evaluadora' });
     }
 };
@@ -70,7 +70,7 @@ export const agregarMiembro = async (req, res) => {
             estado_comision: estado
         });
     } catch (error) {
-        console.error('Error al agregar miembro:', error);
+        
         
         if (error.message.includes('Ya existe')) {
             return res.status(409).json({ message: error.message });
@@ -113,7 +113,7 @@ export const removerMiembro = async (req, res) => {
             comision_id: comisionId
         });
     } catch (error) {
-        console.error('Error al remover miembro:', error);
+        
         res.status(500).json({ message: 'Error al remover miembro de la comisión' });
     }
 };
@@ -155,7 +155,7 @@ export const actualizarRol = async (req, res) => {
             nuevo_rol
         });
     } catch (error) {
-        console.error('Error al actualizar rol:', error);
+        
         
         if (error.message.includes('Ya existe')) {
             return res.status(409).json({ message: error.message });
@@ -184,7 +184,7 @@ export const obtenerProyectosConComision = async (req, res) => {
             proyectos
         });
     } catch (error) {
-        console.error('Error al obtener proyectos:', error);
+        
         res.status(500).json({ message: 'Error al obtener proyectos con comisión' });
     }
 };
@@ -213,7 +213,7 @@ export const obtenerProfesoresDisponibles = async (req, res) => {
             profesores
         });
     } catch (error) {
-        console.error('Error al obtener profesores:', error);
+        
         res.status(500).json({ message: 'Error al obtener profesores disponibles' });
     }
 };

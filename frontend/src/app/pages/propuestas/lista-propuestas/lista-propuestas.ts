@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
@@ -59,7 +59,8 @@ export class ListarPropuestasComponent implements OnInit {
   constructor(
     private api: ApiService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -74,25 +75,18 @@ export class ListarPropuestasComponent implements OnInit {
   const token = localStorage.getItem('token');
 
   if (token) {
-      try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-        this.userRut = payload.rut || '';
-        this.userRole = payload.rol_id || '';
-        this.esEstudiante = String(this.userRole) === '1'; // 1 para estudiante
-        this.esProfesor = String(this.userRole) === '2'; // 2 para profesor
-        this.esAdmin = String(this.userRole) === '3'; // 3 para admin
-        
-        console.log('🔍 Usuario detectado:', {
-          rut: this.userRut,
-          rol_id: this.userRole,
-          tipo_rol_id: typeof this.userRole,
-          esEstudiante: this.esEstudiante,
-          esProfesor: this.esProfesor,
-          esAdmin: this.esAdmin
-        });
-      } catch {
-        console.error('Error al decodificar token');
-      }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this.userRut = payload.rut || '';
+      this.userRole = payload.rol_id || '';
+      this.esEstudiante = String(this.userRole) === '1'; // 1 para estudiante
+      this.esProfesor = String(this.userRole) === '2'; // 2 para profesor
+      this.esAdmin = String(this.userRole) === '3'; // 3 para admin
+      // Puedes agregar un log si necesitas debug, pero no un objeto suelto
+      // console.log({ rut: this.userRut, rol_id: this.userRole, tipo_rol_id: typeof this.userRole, esEstudiante: this.esEstudiante, esProfesor: this.esProfesor, esAdmin: this.esAdmin });
+    } catch {
+      // Manejo de error opcional
+    }
     }
 
     if (!this.userRut) {
@@ -104,18 +98,15 @@ export class ListarPropuestasComponent implements OnInit {
     // Primero obtener las propuestas del estudiante usando buscaruserByrut
     this.api.buscaruserByrut(this.userRut).subscribe({
       next: (userData: any) => {
-        console.log('Datos del usuario obtenidos:', userData);
         
         // Usar el endpoint específico para estudiantes
         if (this.esEstudiante) {
           this.api.getMisPropuestas().subscribe({
             next: (propuestasData: any) => {
-              console.log('✅ Propuestas del estudiante (endpoint específico):', propuestasData);
               this.propuestas = Array.isArray(propuestasData) ? propuestasData : [];
               this.procesarPropuestasCargadas();
             },
             error: (error: any) => {
-              console.error('❌ Error al cargar propuestas del estudiante:', error);
               // Fallback al método anterior
               this.cargarPropuestasFallback();
             }
@@ -124,67 +115,43 @@ export class ListarPropuestasComponent implements OnInit {
           // Para profesores y admins, usar el endpoint general
           this.api.getPropuestas().subscribe({
           next: (propuestasData: any) => {
-            console.log('🔍 Backend response completo:', propuestasData);
-            console.log('🔍 Tipo de respuesta:', typeof propuestasData);
-            console.log('🔍 Es array:', Array.isArray(propuestasData));
-            console.log('🔍 Longitud del array:', Array.isArray(propuestasData) ? propuestasData.length : 'No es array');
             
             const todasLasPropuestas = Array.isArray(propuestasData) ? propuestasData : [];
             
-            console.log('🔍 Todas las propuestas procesadas:', todasLasPropuestas);
-            console.log('🔍 Total de propuestas antes del filtro:', todasLasPropuestas.length);
             
             // Filtrar propuestas según el rol del usuario
             if (this.esEstudiante) {
-              console.log('🔍 Filtrando propuestas para estudiante');
-              console.log('🔍 RUT del estudiante:', this.userRut);
               
               // Estudiantes ven solo sus propias propuestas
               this.propuestas = todasLasPropuestas.filter(propuesta => {
-                console.log('🔍 Comparando propuesta:', {
-                  propuesta_estudiante_rut: propuesta.estudiante_rut,
-                  user_rut: this.userRut,
-                  coincide: propuesta.estudiante_rut === this.userRut,
-                  coincide_trim: propuesta.estudiante_rut?.trim() === this.userRut?.trim()
-                });
-                
                 // Comparar con y sin espacios
                 const propuestaRut = propuesta.estudiante_rut?.trim();
                 const userRut = this.userRut?.trim();
                 return propuestaRut === userRut;
               });
               
-              console.log('🔍 Propuestas filtradas para estudiante:', this.propuestas.length);
               
               // Verificación temporal: si no se encontraron propuestas, mostrar todas para debugging
               if (this.propuestas.length === 0) {
-                console.log('⚠️ No se encontraron propuestas para el estudiante, mostrando todas para debugging');
                 this.propuestas = todasLasPropuestas;
               }
             } else if (this.esProfesor) {
-              console.log('🔍 Filtrando propuestas para profesor');
               // Profesores ven propuestas asignadas a ellos
               this.propuestas = todasLasPropuestas.filter(propuesta => {
                 return propuesta.profesor_rut === this.userRut;
               });
             } else if (this.esAdmin) {
-              console.log('🔍 Mostrando todas las propuestas para admin');
               // Administradores ven todas las propuestas
               this.propuestas = todasLasPropuestas;
             } else {
               // Fallback: si no se detectó ningún rol, mostrar todas las propuestas
-              console.log('⚠️ No se detectó rol específico, mostrando todas las propuestas como fallback');
               this.propuestas = todasLasPropuestas;
             }
             
-            console.log('Propuestas filtradas:', this.propuestas);
-            console.log('RUT del usuario:', this.userRut);
-            console.log('Rol del usuario:', this.userRole);
             
             this.procesarPropuestasCargadas();
           },
           error: (err: any) => {
-            console.error('Error al cargar propuestas:', err);
             this.error = 'No se pudieron cargar las propuestas';
             this.loading = false;
           }
@@ -192,7 +159,6 @@ export class ListarPropuestasComponent implements OnInit {
         }
       },
       error: (err: any) => {
-        console.error('Error al buscar usuario por RUT:', err);
         this.error = 'No se pudo verificar el usuario';
         this.loading = false;
       }
@@ -210,13 +176,12 @@ export class ListarPropuestasComponent implements OnInit {
       };
     });
     
-    console.log('✅ Propuestas procesadas:', this.propuestas);
     this.aplicarFiltros();
     this.loading = false;
+    this.cdr.detectChanges();
   }
 
   private cargarPropuestasFallback() {
-    console.warn('⚠️ Usando método fallback para cargar propuestas');
     this.api.getPropuestas().subscribe({
       next: (propuestasData: any) => {
         const todasLasPropuestas = Array.isArray(propuestasData) ? propuestasData : [];
@@ -224,7 +189,6 @@ export class ListarPropuestasComponent implements OnInit {
         this.procesarPropuestasCargadas();
       },
       error: (error: any) => {
-        console.error('❌ Error en método fallback:', error);
         this.error = 'Error al cargar las propuestas';
         this.loading = false;
       }
@@ -336,6 +300,7 @@ export class ListarPropuestasComponent implements OnInit {
     this.paginaActual = 1;
     this.calcularPaginas();
     this.aplicarPaginacion();
+    this.cdr.detectChanges();
   }
 
   calcularPaginas() {
@@ -346,6 +311,7 @@ export class ListarPropuestasComponent implements OnInit {
     const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
     const fin = inicio + this.elementosPorPagina;
     this.propuestasPaginadas = this.propuestasFiltradas.slice(inicio, fin);
+    this.cdr.detectChanges();
   }
 
   cambiarPagina(pagina: number) {
@@ -413,12 +379,10 @@ export class ListarPropuestasComponent implements OnInit {
     if (confirmed) {
       this.api.deletePropuesta(id).subscribe({
         next: () => {
-          console.log('Propuesta eliminada exitosamente');
           this.notificationService.success('Propuesta eliminada', 'La propuesta ha sido eliminada exitosamente');
           this.cargarPropuestas(); // Recargar la lista
         },
         error: (err) => {
-          console.error('Error al eliminar propuesta:', err);
           this.notificationService.error('Error', 'No se pudo eliminar la propuesta');
         }
       });
@@ -427,7 +391,6 @@ export class ListarPropuestasComponent implements OnInit {
 
   descargarArchivo(nombreArchivo: string) {
     if (!nombreArchivo) {
-      console.error('No hay archivo para descargar');
       return;
     }
 
@@ -443,7 +406,6 @@ export class ListarPropuestasComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
-        console.error('Error al descargar archivo:', err);
         this.notificationService.error('Error', 'No se pudo descargar el archivo');
       }
     });

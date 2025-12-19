@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 interface SolicitudExtension {
   id: number;
@@ -62,7 +63,8 @@ export class GestionExtensionesComponent implements OnInit {
 
   constructor(
     private api: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -116,11 +118,17 @@ export class GestionExtensionesComponent implements OnInit {
     this.solicitudSeleccionada = null;
   }
 
-  marcarEnRevision(solicitud: SolicitudExtension) {
-    // ✅ FIX: Usar confirm() es aceptable para confirmaciones simples, pero podríamos mejorarlo con un modal
-    if (confirm('¿Marcar esta solicitud como "En Revisión"?')) {
-      this.loading = true;
-      this.error = '';
+  async marcarEnRevision(solicitud: SolicitudExtension) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Marcar esta solicitud como "En Revisión"?',
+      'Marcar en Revisión',
+      'Marcar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
+    
+    this.loading = true;
+    this.error = '';
       
       this.api.put(`/extensiones/${solicitud.id}/revisar`, {}).subscribe({
         next: () => {
@@ -135,7 +143,6 @@ export class GestionExtensionesComponent implements OnInit {
           this.loading = false;
         }
       });
-    }
   }
 
   abrirModalAprobar(solicitud: SolicitudExtension) {
@@ -238,6 +245,6 @@ export class GestionExtensionesComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/admin']);
+    window.history.back();
   }
 }

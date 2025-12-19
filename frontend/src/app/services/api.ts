@@ -158,9 +158,10 @@ export class ApiService {
 
   // ===== MÉTODOS PARA FECHAS IMPORTANTES =====
 
-  // Obtener fechas importantes de un proyecto
+  // Obtener fechas importantes de un proyecto (funciona para profesor y estudiante)
   getFechasImportantesProyecto(proyectoId: string) {
-    return this.http.get(`${this.baseUrl}/fechas-importantes/proyecto/${proyectoId}`, {
+    // Usar la ruta general de proyectos que funciona con verificación de permisos
+    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/fechas-importantes`, {
       headers: this.getHeaders()
     });
   }
@@ -343,6 +344,24 @@ export class ApiService {
     });
   }
 
+  revisarPropuestaConArchivo(id: string, formData: FormData) {
+    const token = localStorage.getItem('token');
+    return this.http.put(`${this.baseUrl}/propuestas/${id}/revisar`, formData, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
+  subirCorreccion(id: number, formData: FormData) {
+    const token = localStorage.getItem('token');
+    return this.http.put(`${this.baseUrl}/propuestas/${id}/subir-correccion`, formData, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
   asignarPropuesta(id: string, data: any) {
     const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}/asignar-profesor`, data, {
@@ -361,6 +380,26 @@ export class ApiService {
     });
   }
 
+  // ========== PROYECTOS ==========
+
+  getProyectos() {
+    const token = localStorage.getItem('token');
+    return this.http.get(`${this.baseUrl}/projects/`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
+  deleteProyecto(id: string) {
+    const token = localStorage.getItem('token');
+    return this.http.delete(`${this.baseUrl}/projects/${id}`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+
   descargarArchivo(nombreArchivo: string) {
     const token = localStorage.getItem('token');
     const url = `${this.baseUrl}/descargar/${nombreArchivo}`;
@@ -369,6 +408,17 @@ export class ApiService {
         Authorization: `Bearer ${token}`
       }),
       responseType: 'blob' // Muy importante para descargar archivos binarios
+    });
+  }
+
+  descargarArchivoVersionado(archivoId: number) {
+    const token = localStorage.getItem('token');
+    const url = `${this.baseUrl}/propuestas/archivos/${archivoId}/download`;
+    return this.http.get(url, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      }),
+      responseType: 'blob'
     });
   }
 
@@ -1481,6 +1531,14 @@ export class ApiService {
     });
   }
 
+  // ===== GESTIÓN DE AVANCES POR PROYECTO =====
+  
+  getAvancesByProyecto(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/proyectos/${proyectoId}/avances`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // ===== MÉTODOS GENÉRICOS HTTP =====
   get(endpoint: string) {
     return this.http.get(`${this.baseUrl}${endpoint}`, {
@@ -1510,6 +1568,35 @@ export class ApiService {
 
   delete(endpoint: string) {
     return this.http.delete(`${this.baseUrl}${endpoint}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ==================== MÉTRICAS Y REPORTES DE PROFESOR ====================
+  
+  /**
+   * Obtener métricas completas del profesor
+   */
+  getMetricasProfesor(periodo: string = 'mes') {
+    return this.http.get<any>(`${this.baseUrl}/profesor/metricas?periodo=${periodo}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Obtener propuestas revisadas por el profesor
+   */
+  getPropuestasRevisadas() {
+    return this.http.get<any>(`${this.baseUrl}/profesor/propuestas-revisadas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Obtener reuniones del profesor
+   */
+  getReunionesProfesor() {
+    return this.http.get<any>(`${this.baseUrl}/profesor/reuniones`, {
       headers: this.getHeaders()
     });
   }

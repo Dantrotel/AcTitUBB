@@ -49,7 +49,7 @@ export const crearPropuesta = async ({
     );
     return result.insertId;
   } catch (error) {
-    console.error('Error en crearPropuesta:', error.message);
+    
     throw error;
   }
 };
@@ -116,6 +116,8 @@ export const actualizarPropuesta = async (id, {
 // Nuevo método: obtener propuestas de un estudiante específico (usa tabla estudiantes_propuestas)
 export const getPropuestasByEstudiante = async (estudiante_rut) => {
   try {
+    
+    
     const [rows] = await pool.execute(`
       SELECT 
         p.*,
@@ -125,37 +127,34 @@ export const getPropuestasByEstudiante = async (estudiante_rut) => {
         ap.profesor_rut,
         prof.nombre as profesor_nombre,
         prof.nombre as nombre_profesor,
-        prof.email as profesor_email,
-        (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
-         FROM estudiantes_propuestas est_p
-         INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
-         WHERE est_p.propuesta_id = p.id) as estudiantes_completo
+        prof.email as profesor_email
       FROM propuestas p
-      INNER JOIN estudiantes_propuestas ep_join ON p.id = ep_join.propuesta_id
       LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
       LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
       LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
       LEFT JOIN usuarios prof ON ap.profesor_rut = prof.rut
-      WHERE ep_join.estudiante_rut = ?
+      WHERE p.estudiante_rut = ?
       ORDER BY p.fecha_envio DESC
     `, [estudiante_rut]);
     
+    
+    
     return rows;
   } catch (error) {
-    console.error('Error en getPropuestasByEstudiante model:', error);
+    
     throw error;
   }
 };
 
-export const asignarProfesor = async (propuesta_id, profesor_rut) => {
+export const asignarProfesor = async (propuesta_id, profesor_rut, asignado_por) => {
   const [result] = await pool.execute(
-    `INSERT INTO asignaciones_propuestas (propuesta_id, profesor_rut) VALUES (?, ?)`,
-    [propuesta_id, profesor_rut]
+    `INSERT INTO asignaciones_propuestas (propuesta_id, profesor_rut, asignado_por) VALUES (?, ?, ?)`,
+    [propuesta_id, profesor_rut, asignado_por]
   );
   return result.affectedRows > 0;
 };
 
-export const revisarPropuesta = async (id, { comentarios_profesor, estado }) => {
+export const revisarPropuesta = async (id, { comentarios_profesor, estado, archivo_revision = null, nombre_archivo_original = null }) => {
   // Mapear el nombre del estado al ID correspondiente
   const estadoMap = {
     'pendiente': 1,
@@ -170,10 +169,22 @@ export const revisarPropuesta = async (id, { comentarios_profesor, estado }) => 
     throw new Error(`Estado inválido: ${estado}`);
   }
   
-  const [result] = await pool.execute(
-    `UPDATE propuestas SET comentarios_profesor = ?, estado_id = ?, fecha_revision = NOW() WHERE id = ?`,
-    [comentarios_profesor, estado_id, id]
-  );
+  // Si hay archivo, incluirlo en la actualización
+  let query, params;
+  if (archivo_revision) {
+    query = `UPDATE propuestas 
+             SET comentarios = ?, estado_id = ?, fecha_revision = NOW(), 
+                 archivo_revision = ?, nombre_archivo_original = ? 
+             WHERE id = ?`;
+    params = [comentarios_profesor, estado_id, archivo_revision, nombre_archivo_original, id];
+  } else {
+    query = `UPDATE propuestas 
+             SET comentarios = ?, estado_id = ?, fecha_revision = NOW() 
+             WHERE id = ?`;
+    params = [comentarios_profesor, estado_id, id];
+  }
+  
+  const [result] = await pool.execute(query, params);
   return result.affectedRows > 0;
 };
 
@@ -225,26 +236,33 @@ export const obtenerPropuestas = async (carrera_id = null) => {
     const [rows] = await pool.execute(query, params);
     return rows;
   } catch (error) {
-    console.error('Error en obtenerPropuestas:', error);
+    
     throw error;
   }
 };
 
 export const obtenerPropuestaPorId = async (id) => {
+  
+  
   const [rows] = await pool.execute(`
     SELECT 
       p.*, 
       ep.nombre AS estado,
+      ep.nombre AS estado_nombre,
       ue.nombre AS nombre_estudiante,
+      ue.nombre AS estudiante_nombre,
+      ue.email AS estudiante_email,
       GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
       GROUP_CONCAT(DISTINCT up.rut) AS profesores_ruts,
       (SELECT up2.rut FROM asignaciones_propuestas ap2 
        INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
        WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut,
-      (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
-       FROM estudiantes_propuestas est_p
-       INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
-       WHERE est_p.propuesta_id = p.id) as estudiantes_completo
+      (SELECT up2.nombre FROM asignaciones_propuestas ap2 
+       INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+       WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_nombre,
+      (SELECT up2.email FROM asignaciones_propuestas ap2 
+       INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+       WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_email
     FROM propuestas p
     LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN usuarios ue ON p.estudiante_rut = ue.rut
@@ -254,40 +272,39 @@ export const obtenerPropuestaPorId = async (id) => {
     GROUP BY p.id
   `, [id]);
 
-  // Obtener estudiantes como array separado
-  const [estudiantes] = await pool.execute(`
-    SELECT ep.estudiante_rut, ep.es_creador, ep.orden, u.nombre, u.email
-    FROM estudiantes_propuestas ep
-    INNER JOIN usuarios u ON ep.estudiante_rut = u.rut
-    WHERE ep.propuesta_id = ?
-    ORDER BY ep.orden ASC
-  `, [id]);
-
-  if (rows[0]) {
-    rows[0].estudiantes = estudiantes;
-  }
+  
 
   return rows[0];
 };
 
 export const obtenerPropuestasPorEstudiante = async (estudiante_rut) => {
+  
+  
   const [rows] = await pool.execute(`
     SELECT p.*, 
            ep.nombre AS estado,
+           ep.nombre AS estado_nombre,
+           u.nombre AS nombre_estudiante,
+           u.nombre AS estudiante_nombre,
            GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
-           (SELECT GROUP_CONCAT(CONCAT(u2.nombre, ' (', u2.rut, ')') ORDER BY est_p.orden SEPARATOR ', ')
-            FROM estudiantes_propuestas est_p
-            INNER JOIN usuarios u2 ON est_p.estudiante_rut = u2.rut
-            WHERE est_p.propuesta_id = p.id) as estudiantes_completo
+           (SELECT up2.nombre FROM asignaciones_propuestas ap2 
+            INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+            WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_nombre,
+           (SELECT up2.rut FROM asignaciones_propuestas ap2 
+            INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+            WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
     FROM propuestas p
-    INNER JOIN estudiantes_propuestas ep_join ON p.id = ep_join.propuesta_id
     LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
+    LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
     LEFT JOIN asignaciones_propuestas ap ON p.id = ap.propuesta_id
     LEFT JOIN usuarios up ON ap.profesor_rut = up.rut
-    WHERE ep_join.estudiante_rut = ?
+    WHERE p.estudiante_rut = ?
     GROUP BY p.id
     ORDER BY p.fecha_envio DESC
   `, [estudiante_rut]);
+  
+  
+  
   return rows;
 };
 
@@ -342,7 +359,7 @@ export const obtenerUsuariosPorRol = async (rol_id) => {
     );
     return rows;
   } catch (error) {
-    console.error('Error al obtener usuarios por rol:', error);
+    
     throw error;
   }
 };
@@ -382,7 +399,65 @@ export const crearNotificacion = async (notificacionData) => {
     
     return result.insertId;
   } catch (error) {
-    console.error('Error al crear notificación:', error);
+    
+    throw error;
+  }
+};
+
+// ===== HISTORIAL DE REVISIONES =====
+export const registrarRevisionEnHistorial = async (propuesta_id, profesor_rut, decision, comentarios, archivo_revision = null, nombre_archivo_original = null) => {
+  try {
+    // Primero obtener el ID de la asignación (si existe)
+    const [asignacion] = await pool.execute(
+      `SELECT id FROM asignaciones_propuestas WHERE propuesta_id = ? AND profesor_rut = ? LIMIT 1`,
+      [propuesta_id, profesor_rut]
+    );
+
+    const asignacion_id = asignacion.length > 0 ? asignacion[0].id : null;
+
+    // Mapear decisión
+    const decisionMap = {
+      'aprobada': 'aprobar',
+      'rechazada': 'rechazar',
+      'correcciones': 'solicitar_correcciones',
+      'pendiente': 'solicitar_correcciones',
+      'en_revision': 'solicitar_correcciones'
+    };
+
+    const decisionEnum = decisionMap[decision] || 'solicitar_correcciones';
+
+    // Registrar en historial
+    const [result] = await pool.execute(
+      `INSERT INTO historial_revisiones_propuestas 
+       (asignacion_id, propuesta_id, profesor_rut, accion, decision, comentarios, archivo_revision, nombre_archivo_original, realizado_por) 
+       VALUES (?, ?, ?, 'decision_tomada', ?, ?, ?, ?, ?)`,
+      [asignacion_id, propuesta_id, profesor_rut, decisionEnum, comentarios, archivo_revision, nombre_archivo_original, profesor_rut]
+    );
+
+    return result.insertId;
+  } catch (error) {
+    
+    throw error;
+  }
+};
+
+export const obtenerHistorialRevisiones = async (propuesta_id) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT 
+        hr.*,
+        u.nombre as profesor_nombre,
+        u.email as profesor_email
+       FROM historial_revisiones_propuestas hr
+       LEFT JOIN usuarios u ON hr.profesor_rut = u.rut
+       WHERE hr.propuesta_id = ?
+       ORDER BY hr.fecha_accion DESC`,
+      [propuesta_id]
+    );
+
+    return rows;
+  } catch (error) {
+    
     throw error;
   }
 };

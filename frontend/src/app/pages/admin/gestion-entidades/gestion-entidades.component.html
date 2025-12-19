@@ -1,0 +1,218 @@
+<div class="container-modern">
+  <!-- Header Hero -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-building"></i>
+      </div>
+      <div class="header-text">
+        <h1>Gestión de Entidades Externas</h1>
+        <p class="subtitle">Administra empresas, ONGs y organizaciones colaboradoras</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="toggleFormulario()">
+        <i class="fas" [ngClass]="mostrarFormulario() ? 'fa-times' : 'fa-plus'"></i>
+        {{ mostrarFormulario() ? 'Cancelar' : 'Nueva Entidad' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Card -->
+  <div class="content-card">
+
+    <!-- Formulario de Creación -->
+    @if (mostrarFormulario()) {
+      <div class="form-section-modern">
+        <div class="section-title">
+          <i class="fas fa-file-alt"></i>
+          <h3>Nueva Entidad Externa</h3>
+        </div>
+        <form (ngSubmit)="crearEntidad()" class="modern-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label><i class="fas fa-building"></i> Nombre *</label>
+              <input type="text" [(ngModel)]="nuevaEntidad.nombre" name="nombre" required 
+                     placeholder="Ingresa el nombre de la entidad" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-file-contract"></i> Razón Social</label>
+              <input type="text" [(ngModel)]="nuevaEntidad.razon_social" name="razon_social" 
+                     placeholder="Razón social completa" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-id-card"></i> RUT Empresa</label>
+              <input type="text" [(ngModel)]="nuevaEntidad.rut_empresa" name="rut_empresa" 
+                     placeholder="76123456-7" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-tag"></i> Tipo *</label>
+              <select [(ngModel)]="nuevaEntidad.tipo" name="tipo" required class="form-input">
+                <option value="">Selecciona un tipo</option>
+                @for (tipo of tiposEntidad; track tipo.value) {
+                  <option [value]="tipo.value">{{ tipo.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-envelope"></i> Email de Contacto</label>
+              <input type="email" [(ngModel)]="nuevaEntidad.email_contacto" name="email_contacto"
+                     placeholder="contacto@empresa.cl" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-phone"></i> Teléfono</label>
+              <input type="text" [(ngModel)]="nuevaEntidad.telefono" name="telefono" 
+                     placeholder="+56912345678" class="form-input">
+            </div>
+
+            <div class="form-group full-width">
+              <label><i class="fas fa-map-marker-alt"></i> Dirección</label>
+              <input type="text" [(ngModel)]="nuevaEntidad.direccion" name="direccion" 
+                     placeholder="Dirección completa" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-globe"></i> Sitio Web</label>
+              <input type="url" [(ngModel)]="nuevaEntidad.sitio_web" name="sitio_web" 
+                     placeholder="https://ejemplo.cl" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-briefcase"></i> Área de Actividad</label>
+              <input type="text" [(ngModel)]="nuevaEntidad.area_actividad" name="area_actividad" 
+                     placeholder="Tecnología, Salud, etc." class="form-input">
+            </div>
+
+            <div class="form-group full-width">
+              <label><i class="fas fa-align-left"></i> Descripción</label>
+              <textarea [(ngModel)]="nuevaEntidad.descripcion" name="descripcion" rows="3" 
+                        placeholder="Breve descripción de la entidad..." class="form-input"></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="toggleFormulario()">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="submit" class="btn-success" [disabled]="cargando()">
+              <i class="fas fa-save"></i> Guardar Entidad
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Lista de Entidades -->
+    <div class="entities-section">
+      @if (cargando()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando entidades...</p>
+        </div>
+      } @else if (entidades().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <h3>No hay entidades registradas</h3>
+          <p>Comienza agregando tu primera entidad externa</p>
+          <button class="btn-primary" (click)="toggleFormulario()">
+            <i class="fas fa-plus"></i> Crear Primera Entidad
+          </button>
+        </div>
+      } @else {
+        <div class="entities-grid">
+          @for (entidad of entidades(); track entidad.id) {
+            <div class="entity-card">
+              <div class="entity-header">
+                <div class="entity-icon">
+                  <i class="fas fa-building"></i>
+                </div>
+                <div class="entity-badge" [ngClass]="'badge-' + entidad.tipo">
+                  {{ getTipoLabel(entidad.tipo) }}
+                </div>
+              </div>
+              
+              <div class="entity-body">
+                <h3 class="entity-name">{{ entidad.nombre }}</h3>
+                @if (entidad.razon_social && entidad.razon_social !== entidad.nombre) {
+                  <p class="entity-razon">{{ entidad.razon_social }}</p>
+                }
+                @if (entidad.rut_empresa) {
+                  <p class="entity-rut"><i class="fas fa-id-card"></i> {{ entidad.rut_empresa }}</p>
+                }
+                @if (entidad.area_actividad) {
+                  <p class="entity-area"><i class="fas fa-briefcase"></i> {{ entidad.area_actividad }}</p>
+                }
+                @if (entidad.descripcion) {
+                  <p class="entity-description">{{ entidad.descripcion }}</p>
+                }
+              </div>
+
+              <div class="entity-contact">
+                @if (entidad.email_contacto) {
+                  <a [href]="'mailto:' + entidad.email_contacto" class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ entidad.email_contacto }}</span>
+                  </a>
+                }
+                @if (entidad.telefono) {
+                  <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ entidad.telefono }}</span>
+                  </div>
+                }
+                @if (entidad.sitio_web) {
+                  <a [href]="entidad.sitio_web" target="_blank" class="contact-item">
+                    <i class="fas fa-globe"></i>
+                    <span>Sitio web</span>
+                  </a>
+                }
+                @if (entidad.direccion) {
+                  <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ entidad.direccion }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="entity-footer">
+                <div class="entity-status" [ngClass]="entidad.activo ? 'status-active' : 'status-inactive'">
+                  <i class="fas" [ngClass]="entidad.activo ? 'fa-check-circle' : 'fa-times-circle'"></i>
+                  {{ entidad.activo ? 'Activa' : 'Inactiva' }}
+                </div>
+                <div class="entity-actions">
+                  <button class="btn-icon" title="Ver colaboradores de esta entidad" 
+                          (click)="verColaboradores(entidad)">
+                    <i class="fas fa-users"></i>
+                  </button>
+                  <button class="btn-icon" title="Ver detalles completos" 
+                          (click)="verDetalles(entidad)">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn-icon" title="Editar información" 
+                          (click)="editarEntidad(entidad)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+        <!-- Tabla Alternativa (opcional) -->
+      }
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="back-button-container">
+    <button class="btn-back" (click)="volver()">
+      <i class="fas fa-arrow-left"></i> Volver
+    </button>
+  </div>
+</div>

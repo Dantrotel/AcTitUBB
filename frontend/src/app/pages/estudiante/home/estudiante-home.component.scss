@@ -798,6 +798,18 @@ body {
             border-radius: 12px;
             font-size: 0.9rem;
             font-weight: 500;
+            margin-right: 0.5rem;
+          }
+
+          .rol-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 0.25rem;
           }
         }
       }
@@ -842,6 +854,38 @@ body {
 }
 
 // Sección de estadísticas
+// Sección de extensión
+.extension-section {
+  margin: 2rem 0;
+  text-align: center;
+
+  .btn-extension {
+    background: linear-gradient(135deg, $warning-color 0%, #fd7e14 100%);
+    color: $white-color;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    
+    i {
+      margin-right: 0.5rem;
+    }
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    }
+    
+    &:active {
+      transform: translateY(-1px);
+    }
+  }
+}
+
 .stats-section {
   background: $white-color;
   border-radius: 16px;

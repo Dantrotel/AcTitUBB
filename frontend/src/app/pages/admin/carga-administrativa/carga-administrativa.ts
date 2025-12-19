@@ -53,7 +53,6 @@ export class CargaAdministrativaComponent implements OnInit {
       this.estadisticas.set(response.estadisticas || null);
       
     } catch (error: any) {
-      console.error('Error al cargar carga administrativa:', error);
       this.error.set('Error al cargar la información de carga administrativa');
     } finally {
       this.loading.set(false);

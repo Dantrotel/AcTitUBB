@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-gestion-calendario',
@@ -58,7 +59,8 @@ export class GestionCalendarioComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -78,12 +80,10 @@ export class GestionCalendarioComponent implements OnInit {
     
     this.apiService.getFechasGlobales().subscribe({
       next: (response: any) => {
-        console.log('Fechas globales:', response);
         this.fechasGlobales = response;
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar fechas:', error);
         this.error = 'Error al cargar las fechas globales';
         this.loading = false;
       }
@@ -93,11 +93,9 @@ export class GestionCalendarioComponent implements OnInit {
   cargarEstadisticas() {
     this.apiService.getEstadisticasFechas().subscribe({
       next: (response: any) => {
-        console.log('Estadísticas:', response);
         this.estadisticas = response;
       },
       error: (error) => {
-        console.error('Error al cargar estadísticas:', error);
       }
     });
   }
@@ -107,7 +105,6 @@ export class GestionCalendarioComponent implements OnInit {
     
     this.apiService.getFechasImportantesTodosProyectos().subscribe({
       next: (response: any) => {
-        console.log('Fechas importantes de todos los proyectos:', response);
         if (response.success && response.data) {
           this.fechasImportantes = response.data;
         } else {
@@ -116,7 +113,6 @@ export class GestionCalendarioComponent implements OnInit {
         this.loadingFechasImportantes = false;
       },
       error: (error) => {
-        console.error('Error al cargar fechas importantes:', error);
         this.fechasImportantes = [];
         this.loadingFechasImportantes = false;
       }
@@ -201,31 +197,21 @@ export class GestionCalendarioComponent implements OnInit {
   }
 
   crearFecha() {
-    console.log('🔍 Intentando crear fecha global:', this.nuevaFecha);
     
     if (!this.nuevaFecha.titulo || !this.nuevaFecha.fecha || !this.nuevaFecha.tipo_fecha) {
-      console.error('❌ Validación fallida - campos faltantes:', {
-        titulo: this.nuevaFecha.titulo,
-        fecha: this.nuevaFecha.fecha,
-        tipo_fecha: this.nuevaFecha.tipo_fecha
-      });
-      alert('Por favor completa todos los campos requeridos');
+      // Mostrar advertencia si falta algún campo obligatorio
+      this.notificationService.warning('Por favor completa todos los campos requeridos');
       return;
     }
 
-    console.log('✅ Validación OK, enviando datos...');
-    console.log('🔍 Tipo de this.nuevaFecha.fecha:', typeof this.nuevaFecha.fecha);
-    console.log('🔍 Valor de this.nuevaFecha.fecha:', this.nuevaFecha.fecha);
     this.guardando = true;
     
     // Asegurar que la fecha se envíe en formato YYYY-MM-DD sin conversión timezone
     let fechaFormateada: string;
     if (typeof this.nuevaFecha.fecha === 'string') {
       fechaFormateada = this.nuevaFecha.fecha;
-      console.log('✅ Fecha ya es string:', fechaFormateada);
     } else {
       fechaFormateada = (this.nuevaFecha.fecha as Date).toISOString().split('T')[0];
-      console.log('⚠️ Fecha convertida desde Date:', fechaFormateada);
     }
     
     const fechaData = {
@@ -233,28 +219,17 @@ export class GestionCalendarioComponent implements OnInit {
       fecha: fechaFormateada
     };
     
-    console.log('📅 Fecha final a enviar:', fechaData.fecha);
-    console.log('📦 Objeto completo:', JSON.stringify(fechaData));
     
     this.apiService.crearFechaGlobal(fechaData).subscribe({
       next: (response: any) => {
-        console.log('✅ Fecha creada exitosamente:', response);
-        alert('Fecha global creada exitosamente');
+        this.notificationService.success('Fecha global creada exitosamente');
         this.limpiarFormulario();
         this.mostrarFormulario = false;
         this.cargarDatos(); // Recargar datos
         this.guardando = false;
       },
       error: (error) => {
-        console.error('❌ Error al crear fecha:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.error?.message,
-          error: error
-        });
-        
         let mensajeError = 'Error desconocido';
-        
         if (error.status === 401) {
           mensajeError = 'No estás autenticado. Por favor inicia sesión de nuevo.';
         } else if (error.status === 403) {
@@ -264,8 +239,7 @@ export class GestionCalendarioComponent implements OnInit {
         } else if (error.error?.message) {
           mensajeError = error.error.message;
         }
-        
-        alert('Error al crear la fecha: ' + mensajeError);
+        this.notificationService.error('Error al crear la fecha', mensajeError);
         this.guardando = false;
       }
     });
@@ -284,7 +258,7 @@ export class GestionCalendarioComponent implements OnInit {
 
   editarFecha(fecha: any) {
     // Por ahora mostrar la información de la fecha
-    alert(`Editar fecha: ${fecha.titulo}\nFecha: ${fecha.fecha}\nTipo: ${fecha.tipo_fecha}`);
+    this.notificationService.info('Editar fecha', `${fecha.titulo}\nFecha: ${fecha.fecha}\nTipo: ${fecha.tipo_fecha}`);
     // TODO: Implementar modal de edición
   }
 
@@ -306,14 +280,12 @@ export class GestionCalendarioComponent implements OnInit {
     
     this.apiService.eliminarFecha(this.fechaAEliminar.id).subscribe({
       next: (response: any) => {
-        console.log('Fecha eliminada:', response);
-        alert('Fecha eliminada exitosamente');
+        this.notificationService.success('Fecha eliminada exitosamente');
         this.cancelarEliminar();
         this.cargarDatos(); // Recargar datos
       },
       error: (error) => {
-        console.error('Error al eliminar fecha:', error);
-        alert('Error al eliminar la fecha: ' + (error.error?.message || 'Error desconocido'));
+        this.notificationService.error('Error al eliminar la fecha', error.error?.message || 'Error desconocido');
         this.eliminando = false;
       }
     });
@@ -359,35 +331,36 @@ export class GestionCalendarioComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.calendarioGeneral = response.data;
-          console.log('📅 Calendario general cargado:', this.calendarioGeneral);
         }
         this.cargandoCalendario = false;
       },
       error: (error) => {
-        console.error('❌ Error al cargar calendario general:', error);
         this.cargandoCalendario = false;
       }
     });
   }
 
-  generarAlertasManual() {
-    const confirmacion = confirm('¿Generar alertas automáticas para todas las fechas importantes?\n\nEsto creará notificaciones para fechas próximas (30, 10 días), hoy y vencidas.');
+  async generarAlertasManual() {
+    const confirmed = await this.notificationService.confirm(
+      '¿Generar alertas automáticas para todas las fechas importantes?\n\nEsto creará notificaciones para fechas próximas (30, 10 días), hoy y vencidas.',
+      'Generar Alertas',
+      'Generar',
+      'Cancelar'
+    );
     
-    if (!confirmacion) return;
+    if (!confirmed) return;
 
     this.apiService.post('/fechas-importantes/alertas/generar', {}).subscribe({
       next: (response: any) => {
         if (response.success) {
-          alert(`✅ Alertas generadas correctamente:\n\n` +
-                `• 30 días: ${response.data.alerta_30_dias}\n` +
-                `• 10 días: ${response.data.alerta_10_dias}\n` +
-                `• Hoy: ${response.data.alerta_hoy}\n` +
-                `• Vencidas: ${response.data.alerta_vencida}`);
+          this.notificationService.success(
+            'Alertas generadas correctamente',
+            `• 30 días: ${response.data.alerta_30_dias}\n• 10 días: ${response.data.alerta_10_dias}\n• Hoy: ${response.data.alerta_hoy}\n• Vencidas: ${response.data.alerta_vencida}`
+          );
         }
       },
       error: (error) => {
-        console.error('Error al generar alertas:', error);
-        alert('❌ Error al generar alertas: ' + (error.error?.message || 'Error desconocido'));
+        this.notificationService.error('Error al generar alertas', error.error?.message || 'Error desconocido');
       }
     });
   }

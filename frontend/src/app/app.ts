@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { NotificationsComponent } from './components/notifications/notifications.component';
-import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
-import { PromptDialogComponent } from './components/prompt-dialog/prompt-dialog.component';
 import { NotificationToastComponent } from './components/notification-toast/notification-toast.component';
+import { NotificacionesPushComponent } from './components/notificaciones-push/notificaciones-push.component';
 
 @Component({
   selector: 'app-root',
@@ -12,9 +11,8 @@ import { NotificationToastComponent } from './components/notification-toast/noti
     RouterModule, 
     RouterOutlet, 
     NotificationsComponent,
-    ConfirmDialogComponent,
-    PromptDialogComponent,
-    NotificationToastComponent
+    NotificationToastComponent,
+    NotificacionesPushComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'

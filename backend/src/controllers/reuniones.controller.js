@@ -67,7 +67,7 @@ export const responderSolicitud = async (req, res) => {
 
         res.json(resultado);
     } catch (error) {
-        console.error('Error al responder solicitud:', error);
+        
 
         if (error.message.includes('no encontrada') || error.message.includes('no encontrado')) {
             return res.status(404).json({ message: error.message });
@@ -100,7 +100,7 @@ export const obtenerReuniones = async (req, res) => {
             reuniones
         });
     } catch (error) {
-        console.error('Error al obtener reuniones:', error);
+        
         res.status(500).json({ message: 'Error al obtener reuniones' });
     }
 };
@@ -142,7 +142,7 @@ export const actualizarEstado = async (req, res) => {
             nuevo_estado
         });
     } catch (error) {
-        console.error('Error al actualizar estado:', error);
+        
         
         if (error.message.includes('permisos')) {
             return res.status(403).json({ message: error.message });
@@ -224,7 +224,7 @@ export const crearActa = async (req, res) => {
             acta_id: actaId
         });
     } catch (error) {
-        console.error('Error al crear acta:', error);
+        
 
         if (error.message.includes('no encontrada')) {
             return res.status(404).json({ message: error.message });
@@ -261,7 +261,7 @@ export const obtenerActa = async (req, res) => {
 
         res.json(acta);
     } catch (error) {
-        console.error('Error al obtener acta:', error);
+        
         res.status(500).json({ message: 'Error al obtener acta' });
     }
 };
@@ -284,7 +284,7 @@ export const obtenerActasPorProyecto = async (req, res) => {
             actas
         });
     } catch (error) {
-        console.error('Error al obtener actas:', error);
+        
         res.status(500).json({ message: 'Error al obtener actas del proyecto' });
     }
 };
@@ -308,7 +308,7 @@ export const obtenerActaPorReunion = async (req, res) => {
 
         res.json(acta);
     } catch (error) {
-        console.error('Error al obtener acta:', error);
+        
         res.status(500).json({ message: 'Error al obtener acta de reunión' });
     }
 };
@@ -336,7 +336,7 @@ export const actualizarActa = async (req, res) => {
             acta_id: actaId
         });
     } catch (error) {
-        console.error('Error al actualizar acta:', error);
+        
 
         if (error.message.includes('Solo el creador')) {
             return res.status(403).json({ message: error.message });
@@ -376,7 +376,7 @@ export const firmarActa = async (req, res) => {
             ...resultado
         });
     } catch (error) {
-        console.error('Error al firmar acta:', error);
+        
 
         if (error.message.includes('no encontrada')) {
             return res.status(404).json({ message: error.message });
@@ -417,7 +417,7 @@ export const publicarActa = async (req, res) => {
             acta_id: actaId
         });
     } catch (error) {
-        console.error('Error al publicar acta:', error);
+        
 
         if (error.message.includes('Solo el creador')) {
             return res.status(403).json({ message: error.message });
@@ -454,7 +454,7 @@ export const archivarActa = async (req, res) => {
             acta_id: actaId
         });
     } catch (error) {
-        console.error('Error al archivar acta:', error);
+        
 
         if (error.message.includes('Solo el profesor')) {
             return res.status(403).json({ message: error.message });

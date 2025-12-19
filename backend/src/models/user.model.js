@@ -95,7 +95,7 @@ const obtenerUsuariosPorRol = async (rolNombre) => {
 };
 
 const obtenerUsuariosPorCarrera = async (carreraId) => {
-    console.log(`🔍 obtenerUsuariosPorCarrera - Filtrando por carrera_id: ${carreraId}`);
+    
     
     const [rows] = await pool.execute(`
         SELECT DISTINCT 
@@ -132,12 +132,12 @@ const obtenerUsuariosPorCarrera = async (carreraId) => {
         ORDER BY u.nombre
     `, [carreraId, carreraId]);
     
-    console.log(`✅ obtenerUsuariosPorCarrera - Encontrados ${rows.length} usuarios`);
+    
     return rows;
 };
 
 const obtenerUsuariosPorCarreras = async (carreraIds) => {
-    console.log(`🔍 obtenerUsuariosPorCarreras - Filtrando por carreras: ${carreraIds.join(', ')}`);
+    console.log(`🎓 Buscando usuarios por carreras: ${JSON.stringify(carreraIds)}`);
     
     if (!carreraIds || carreraIds.length === 0) {
         return [];
@@ -180,7 +180,7 @@ const obtenerUsuariosPorCarreras = async (carreraIds) => {
         ORDER BY u.nombre
     `, [...carreraIds, ...carreraIds]);
     
-    console.log(`✅ obtenerUsuariosPorCarreras - Encontrados ${rows.length} usuarios`);
+    
     return rows;
 };
 

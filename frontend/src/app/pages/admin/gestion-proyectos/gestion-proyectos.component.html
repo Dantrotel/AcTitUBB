@@ -1,0 +1,196 @@
+<!-- Contenido principal -->
+<div class="main-container">
+  <!-- Header compacto con gradiente -->
+  <div class="page-header-compact">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-rocket"></i>
+        Gestión de Proyectos
+      </h1>
+      <p class="header-subtitle">Administra todos los proyectos activos del sistema</p>
+    </div>
+    <div class="header-right">
+      <div class="total-badge">
+        <span class="total-number">{{ proyectos.length }}</span>
+        <span class="total-label">Total</span>
+      </div>
+      <button class="btn-volver" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p>Cargando proyectos...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3>Error al cargar los proyectos</h3>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="cargarProyectos()">
+      <i class="fas fa-redo"></i>
+      Intentar de nuevo
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div *ngIf="!loading && !error" class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="filtroEstado">Estado:</label>
+        <select id="filtroEstado" [(ngModel)]="filtroEstado" class="filter-select">
+          <option value="">Todos los estados</option>
+          <option value="en_desarrollo">En Desarrollo</option>
+          <option value="en_revision">En Revisión</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="rechazado">Rechazado</option>
+          <option value="pausado">Pausado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroEstudiante">Estudiante:</label>
+        <input 
+          type="text" 
+          id="filtroEstudiante" 
+          [(ngModel)]="filtroEstudiante" 
+          placeholder="Buscar por nombre o RUT"
+          class="filter-input"
+        >
+      </div>
+
+      <div class="filter-group">
+        <label for="filtroProfesor">Profesor Guía:</label>
+        <input 
+          type="text" 
+          id="filtroProfesor" 
+          [(ngModel)]="filtroProfesor" 
+          placeholder="Buscar por nombre o RUT"
+          class="filter-input"
+        >
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn-secondary" (click)="limpiarFiltros()">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de proyectos -->
+  <div *ngIf="!loading && !error" class="proyectos-section">
+    <div class="section-header">
+      <h2>Proyectos ({{ proyectosFiltrados.length }})</h2>
+    </div>
+
+    <div *ngIf="proyectosFiltrados.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-rocket"></i>
+      </div>
+      <h3>No se encontraron proyectos</h3>
+      <p>No hay proyectos que coincidan con los filtros aplicados</p>
+    </div>
+
+    <div *ngIf="proyectosFiltrados.length > 0" class="proyectos-grid">
+      <div *ngFor="let proyecto of proyectosFiltrados" class="proyecto-card">
+        <div class="card-header">
+          <div class="proyecto-title">
+            <h3>{{ proyecto.titulo }}</h3>
+            <div class="estado-badges">
+              <div class="estado-badge" [class]="obtenerClaseEstado(proyecto.estado || proyecto.estado_nombre)">
+                {{ obtenerEstadoDisplay(proyecto.estado || proyecto.estado_nombre) }}
+              </div>
+              <!-- Barra de progreso -->
+              <div class="progreso-container">
+                <div class="progreso-bar">
+                  <div 
+                    class="progreso-fill" 
+                    [style.width.%]="calcularProgreso(proyecto)"
+                    [style.background-color]="obtenerColorProgreso(calcularProgreso(proyecto))">
+                  </div>
+                </div>
+                <span class="progreso-text">{{ calcularProgreso(proyecto) }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="proyecto-info">
+            <div class="info-item">
+              <i class="fas fa-user-graduate"></i>
+              <span><strong>Estudiante:</strong> {{ proyecto.estudiante_nombre || 'No especificado' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <i class="fas fa-chalkboard-teacher"></i>
+              <span><strong>Profesor Guía:</strong> {{ proyecto.profesor_guia || 'Sin asignar' }}</span>
+            </div>
+            
+            <div class="info-item">
+              <i class="fas fa-calendar-alt"></i>
+              <span><strong>Inicio:</strong> {{ formatearFecha(proyecto.fecha_inicio) }}</span>
+            </div>
+
+            <div class="info-item" *ngIf="proyecto.fecha_entrega_estimada">
+              <i class="fas fa-calendar-check"></i>
+              <span><strong>Entrega estimada:</strong> {{ formatearFecha(proyecto.fecha_entrega_estimada) }}</span>
+            </div>
+
+            <div class="info-item" *ngIf="proyecto.fecha_defensa">
+              <i class="fas fa-presentation"></i>
+              <span><strong>Defensa:</strong> {{ formatearFecha(proyecto.fecha_defensa) }}</span>
+            </div>
+          </div>
+
+          <div class="proyecto-description">
+            <p>{{ proyecto.descripcion }}</p>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-primary" (click)="asignarColaborador(proyecto.id)">
+            <i class="fas fa-user-friends"></i>
+            Colaboradores
+          </button>
+          
+          <button class="btn-info" (click)="verCronograma(proyecto.id)">
+            <i class="fas fa-tasks"></i>
+            Cronograma
+          </button>
+          
+          <button class="btn-accent" (click)="asignarProfesor(proyecto.id)">
+            <i class="fas fa-user-plus"></i>
+            Asignar Profesor
+          </button>
+          
+          <button class="btn-danger" (click)="eliminarProyecto(proyecto.id)">
+            <i class="fas fa-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+  <div class="footer-content">
+    <p>&copy; {{ fechaActual() | date:'yyyy' }} Universidad del Bío-Bío - Gestión de Proyectos</p>
+  </div>
+</footer>
+

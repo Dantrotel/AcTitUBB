@@ -15,7 +15,7 @@ async function agregarCampoDebeConvertirPassword() {
   });
 
   try {
-    console.log('🔍 Verificando si existe el campo debe_cambiar_password...\n');
+    
 
     // Verificar si el campo ya existe
     const [columns] = await connection.query(`
@@ -27,9 +27,9 @@ async function agregarCampoDebeConvertirPassword() {
     `);
 
     if (columns.length > 0) {
-      console.log('✅ El campo debe_cambiar_password ya existe');
+      
     } else {
-      console.log('➕ Agregando campo debe_cambiar_password...');
+      
       
       await connection.query(`
         ALTER TABLE usuarios 
@@ -37,17 +37,17 @@ async function agregarCampoDebeConvertirPassword() {
         AFTER confirmado
       `);
       
-      console.log('✅ Campo debe_cambiar_password agregado correctamente');
+      
     }
 
-    console.log('\n📋 Estructura actual de la tabla usuarios:');
+    
     const [tableColumns] = await connection.query(`
       DESCRIBE usuarios
     `);
     console.table(tableColumns);
 
   } catch (error) {
-    console.error('❌ Error:', error);
+    
   } finally {
     await connection.end();
   }

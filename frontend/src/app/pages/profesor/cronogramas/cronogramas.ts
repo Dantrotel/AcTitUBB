@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +16,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-cronogramas',
@@ -114,30 +115,89 @@ export class CronogramasComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private route: ActivatedRoute,
-    public router: Router
+    public router: Router,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.cargarProyectosAsignados();
   }
 
+  // Métodos de utilidad para fechas
+  esFechaPasada(fecha: string): boolean {
+    return new Date(fecha) < new Date();
+  }
+
+  getDiasRestantes(fecha: string): number {
+    const hoy = new Date();
+    const fechaLimite = new Date(fecha);
+    const diff = fechaLimite.getTime() - hoy.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  }
+
+  formatearFecha(fecha: string): string {
+    if (!fecha) return '';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  getIconoTipoFecha(tipo: string): string {
+    const iconos: any = {
+      'entrega': 'fas fa-file-upload',
+      'reunion': 'fas fa-users',
+      'evaluacion': 'fas fa-clipboard-check',
+      'hito': 'fas fa-flag-checkered',
+      'deadline': 'fas fa-exclamation-triangle',
+      'presentacion': 'fas fa-presentation'
+    };
+    return iconos[tipo] || 'fas fa-calendar';
+  }
+
+  getTipoFechaLabel(tipo: string): string {
+    const labels: any = {
+      'entrega': 'Entrega',
+      'reunion': 'Reunión',
+      'evaluacion': 'Evaluación',
+      'hito': 'Hito',
+      'deadline': 'Fecha límite',
+      'presentacion': 'Presentación'
+    };
+    return labels[tipo] || tipo;
+  }
+
   async cargarProyectosAsignados() {
     try {
       this.cargando = true;
       this.error = '';
-      const response = await this.apiService.getProyectosAsignados().toPromise();
-      this.proyectosAsignados = response as any[];
+      const response: any = await this.apiService.getProyectosAsignados().toPromise();
+      console.log('📦 Respuesta de proyectos asignados:', response);
+      
+      // El backend devuelve { total: X, projects: [...] }
+      this.proyectosAsignados = response?.projects || response || [];
+      console.log('✅ Proyectos asignados cargados:', this.proyectosAsignados.length);
+      console.log('📋 Lista de proyectos:', this.proyectosAsignados);
+      
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
     } catch (error: any) {
+      console.error('❌ Error al cargar proyectos:', error);
       this.error = 'Error al cargar proyectos: ' + (error.error?.message || error.message);
+      this.cdr.detectChanges();
     } finally {
       this.cargando = false;
+      this.cdr.detectChanges();
     }
   }
 
   async seleccionarProyecto(proyecto: any) {
     this.proyectoSeleccionado = proyecto;
-    await this.cargarCronogramas();
     await this.cargarFechasImportantes();
+    this.cdr.detectChanges();
   }
 
   async cargarCronogramas() {
@@ -210,7 +270,13 @@ export class CronogramasComponent implements OnInit {
   }
 
   async eliminarCronograma(cronogramId: number) {
-    if (!confirm('¿Está seguro de eliminar este cronograma?')) return;
+    const confirmed = await this.notificationService.confirm(
+      '¿Está seguro de eliminar este cronograma?',
+      'Eliminar Cronograma',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     try {
       this.cargando = true;
@@ -293,7 +359,13 @@ export class CronogramasComponent implements OnInit {
   }
 
   async eliminarHito(hitoId: number) {
-    if (!confirm('¿Está seguro de eliminar este hito?')) return;
+    const confirmed = await this.notificationService.confirm(
+      '¿Está seguro de eliminar este hito?',
+      'Eliminar Hito',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     try {
       this.cargando = true;
@@ -509,16 +581,6 @@ export class CronogramasComponent implements OnInit {
     }
   }
 
-  formatearFecha(fecha: string): string {
-    if (!fecha) return 'N/A';
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-CL', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  }
-
   obtenerIconoTipoHito(tipo: string): string {
     const iconos: { [key: string]: string } = {
       'entrega': 'fas fa-upload',
@@ -556,10 +618,13 @@ export class CronogramasComponent implements OnInit {
       } else {
         this.fechasImportantes = [];
       }
+      console.log('📅 Fechas importantes cargadas:', this.fechasImportantes.length);
+      this.cdr.detectChanges();
     } catch (error: any) {
       console.error('Error al cargar fechas importantes:', error);
       this.error = 'Error al cargar fechas importantes';
       this.fechasImportantes = [];
+      this.cdr.detectChanges();
     } finally {
       this.loadingFechas = false;
     }
@@ -614,7 +679,7 @@ export class CronogramasComponent implements OnInit {
 
       await this.apiService.crearFechaImportante(this.proyectoSeleccionado.id, fechaData).toPromise();
       
-      this.success = 'Fecha importante creada exitosamente';
+      this.notificationService.success('Fecha importante creada exitosamente');
       await this.cargarFechasImportantes();
       this.cerrarModalFecha();
     } catch (error: any) {
@@ -625,10 +690,32 @@ export class CronogramasComponent implements OnInit {
     }
   }
 
-  async eliminarFechaImportante(fechaId: string) {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta fecha importante?')) {
-      return;
+  async eliminarFecha(fecha: any) {
+    const confirmado = await this.notificationService.confirm(
+      `¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`,
+      'Eliminar Fecha',
+      'Eliminar',
+      'Cancelar'
+    );
+
+    if (!confirmado) return;
+
+    try {
+      this.notificationService.warning('Funcionalidad de eliminar en desarrollo');
+    } catch (error: any) {
+      console.error('Error al eliminar fecha:', error);
+      this.notificationService.error('Error al eliminar fecha');
     }
+  }
+
+  async eliminarFechaImportante(fechaId: string) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de que quieres eliminar esta fecha importante?',
+      'Eliminar Fecha',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     if (!this.proyectoSeleccionado?.id) {
       console.error('❌ No hay proyecto seleccionado');

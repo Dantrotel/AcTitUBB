@@ -2,7 +2,7 @@ import { pool } from '../db/connectionDB.js';
 
 // ===== NUEVO SISTEMA DE RESERVAS DE HORARIOS =====
 // Flujo simplificado:
-// 1. Profesor publica disponibilidades
+// 1. Profesor publica disponibilidad_horarios
 // 2. Estudiante ve horarios disponibles y reserva uno
 // 3. Horario queda reservado (bloqueado para otros)
 // 4. Profesor acepta/rechaza la reserva
@@ -21,64 +21,46 @@ export const crearDisponibilidad = async (disponibilidadData) => {
         usuario_rut, 
         dia_semana, 
         hora_inicio, 
-        hora_fin,
-        fecha_especifica = null // Si es NULL, es recurrente. Si tiene fecha, es específica.
+        hora_fin
     } = disponibilidadData;
     
-    // Validar que no se traslape con disponibilidades existentes
-    let verificarQuery;
-    let params;
+    // Validar que no se traslape con disponibilidad_horarios existentes
+    const verificarQuery = `
+        SELECT id FROM disponibilidad_horarios 
+        WHERE usuario_rut = ? 
+        AND dia_semana = ? 
+        AND ((hora_inicio <= ? AND hora_fin > ?) OR (hora_inicio < ? AND hora_fin >= ?))
+        AND activo = TRUE
+    `;
     
-    if (fecha_especifica) {
-        // Para horarios específicos, verificar solo esa fecha
-        verificarQuery = `
-            SELECT id FROM disponibilidades 
-            WHERE usuario_rut = ? 
-            AND fecha_especifica = ?
-            AND ((hora_inicio <= ? AND hora_fin > ?) OR (hora_inicio < ? AND hora_fin >= ?))
-            AND activo = TRUE
-        `;
-        params = [usuario_rut, fecha_especifica, hora_inicio, hora_inicio, hora_fin, hora_fin];
-    } else {
-        // Para horarios recurrentes, verificar ese día de la semana
-        verificarQuery = `
-            SELECT id FROM disponibilidades 
-            WHERE usuario_rut = ? 
-            AND dia_semana = ? 
-            AND fecha_especifica IS NULL
-            AND ((hora_inicio <= ? AND hora_fin > ?) OR (hora_inicio < ? AND hora_fin >= ?))
-            AND activo = TRUE
-        `;
-        params = [usuario_rut, dia_semana, hora_inicio, hora_inicio, hora_fin, hora_fin];
-    }
-    
-    const [existing] = await pool.execute(verificarQuery, params);
+    const [existing] = await pool.execute(verificarQuery, [
+        usuario_rut, dia_semana, hora_inicio, hora_inicio, hora_fin, hora_fin
+    ]);
     
     if (existing.length > 0) {
         throw new Error(`Ya existe una disponibilidad que se traslapa en este horario`);
     }
     
     const insertQuery = `
-        INSERT INTO disponibilidades (
-            usuario_rut, dia_semana, hora_inicio, hora_fin, 
-            fecha_especifica, reservado, activo
+        INSERT INTO disponibilidad_horarios (
+            usuario_rut, dia_semana, hora_inicio, hora_fin, activo
         )
-        VALUES (?, ?, ?, ?, ?, FALSE, TRUE)
+        VALUES (?, ?, ?, ?, TRUE)
     `;
     
     const [result] = await pool.execute(insertQuery, [
-        usuario_rut, dia_semana, hora_inicio, hora_fin, fecha_especifica
+        usuario_rut, dia_semana, hora_inicio, hora_fin
     ]);
     
     return result.insertId;
 };
 
 /**
- * Obtener disponibilidades de un profesor (SOLO NO RESERVADAS)
+ * Obtener disponibilidad_horarios de un profesor (SOLO NO RESERVADAS)
  * Para que el estudiante vea qué horarios puede reservar
  * @param {string} profesor_rut - RUT del profesor
  * @param {number} dias_adelante - Días hacia adelante a mostrar (default 14)
- * @returns {Promise<Array>} - Lista de disponibilidades disponibles
+ * @returns {Promise<Array>} - Lista de disponibilidad_horarios disponibles
  */
 export const obtenerHorariosDisponiblesProfesor = async (profesor_rut, dias_adelante = 14) => {
     // Empezar desde MAÑANA (no desde hoy)
@@ -89,53 +71,27 @@ export const obtenerHorariosDisponiblesProfesor = async (profesor_rut, dias_adel
     const fechaLimite = new Date(fechaInicio);
     fechaLimite.setDate(fechaLimite.getDate() + dias_adelante);
     
-    // Obtener disponibilidades recurrentes (sin fecha específica)
-    const queryRecurrentes = `
+    // Obtener disponibilidad_horarios del profesor (solo horarios recurrentes por día de la semana)
+    const query = `
         SELECT 
             id,
             usuario_rut,
             dia_semana,
             hora_inicio,
             hora_fin,
-            fecha_especifica,
-            reservado,
             'recurrente' as tipo
-        FROM disponibilidades
+        FROM disponibilidad_horarios
         WHERE usuario_rut = ?
         AND activo = TRUE
-        AND reservado = FALSE
-        AND fecha_especifica IS NULL
         ORDER BY 
             FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
             hora_inicio
     `;
     
-    // Obtener disponibilidades específicas dentro del rango de fechas
-    const queryEspecificas = `
-        SELECT 
-            id,
-            usuario_rut,
-            dia_semana,
-            hora_inicio,
-            hora_fin,
-            fecha_especifica,
-            reservado,
-            'especifica' as tipo
-        FROM disponibilidades
-        WHERE usuario_rut = ?
-        AND activo = TRUE
-        AND reservado = FALSE
-        AND fecha_especifica IS NOT NULL
-        AND fecha_especifica BETWEEN ? AND ?
-        ORDER BY fecha_especifica, hora_inicio
-    `;
+    const [recurrentes] = await pool.execute(query, [profesor_rut]);
     
-    const [recurrentes] = await pool.execute(queryRecurrentes, [profesor_rut]);
-    const [especificas] = await pool.execute(queryEspecificas, [
-        profesor_rut,
-        fechaInicio.toISOString().split('T')[0],
-        fechaLimite.toISOString().split('T')[0]
-    ]);
+    // No hay horarios específicos, solo recurrentes
+    const especificas = [];
     
     // Expandir horarios recurrentes a fechas concretas
     const horariosExpandidos = [];
@@ -219,10 +175,10 @@ export const obtenerHorariosDisponiblesProfesor = async (profesor_rut, dias_adel
 };
 
 /**
- * Obtener TODAS las disponibilidades de un profesor (incluidas reservadas)
+ * Obtener TODAS las disponibilidad_horarios de un profesor
  * Para que el profesor vea su calendario completo
  * @param {string} profesor_rut - RUT del profesor
- * @returns {Promise<Array>} - Lista de todas las disponibilidades
+ * @returns {Promise<Array>} - Lista de todas las disponibilidad_horarios
  */
 export const obtenerTodasDisponibilidadesProfesor = async (profesor_rut) => {
     const query = `
@@ -232,21 +188,12 @@ export const obtenerTodasDisponibilidadesProfesor = async (profesor_rut) => {
             d.dia_semana,
             d.hora_inicio,
             d.hora_fin,
-            d.fecha_especifica,
-            d.reservado,
-            d.reservado_por,
-            d.fecha_reserva,
-            d.solicitud_id,
             d.activo,
-            u.nombre as reservado_por_nombre,
-            sr.estado as estado_solicitud
-        FROM disponibilidades d
-        LEFT JOIN usuarios u ON d.reservado_por = u.rut
-        LEFT JOIN solicitudes_reunion sr ON d.solicitud_id = sr.id
+            d.created_at,
+            d.updated_at
+        FROM disponibilidad_horarios d
         WHERE d.usuario_rut = ?
         ORDER BY 
-            d.fecha_especifica IS NULL DESC,
-            d.fecha_especifica,
             FIELD(d.dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
             d.hora_inicio
     `;
@@ -260,7 +207,7 @@ export const obtenerTodasDisponibilidadesProfesor = async (profesor_rut) => {
 /**
  * Reservar un horario disponible
  * @param {Object} reservaData - Datos de la reserva
- * @returns {Promise<Object>} - Resultado con solicitud_id y disponibilidad_id
+ * @returns {Promise<Object>} - Resultado con solicitud_id
  */
 export const reservarHorario = async (reservaData) => {
     const {
@@ -286,7 +233,7 @@ export const reservarHorario = async (reservaData) => {
         
         // 1. Obtener información de la disponibilidad padre
         const [dispRows] = await connection.execute(
-            `SELECT * FROM disponibilidades WHERE id = ?`,
+            `SELECT * FROM disponibilidad_horarios WHERE id = ?`,
             [disponibilidad_id]
         );
         
@@ -338,9 +285,9 @@ export const reservarHorario = async (reservaData) => {
             INSERT INTO solicitudes_reunion (
                 proyecto_id, profesor_rut, estudiante_rut, fecha_propuesta,
                 hora_propuesta, duracion_minutos, tipo_reunion, descripcion,
-                estado, creado_por, disponibilidad_id
+                estado, creado_por
             )
-            VALUES (?, ?, ?, ?, ?, 30, ?, ?, 'pendiente', 'estudiante', ?)
+            VALUES (?, ?, ?, ?, ?, 30, ?, ?, 'pendiente', 'estudiante')
         `;
         
         const [solicitudResult] = await connection.execute(insertSolicitudQuery, [
@@ -350,8 +297,7 @@ export const reservarHorario = async (reservaData) => {
             fecha_propuesta,
             hora_inicio_bloque,
             tipo_reunion,
-            descripcion,
-            disponibilidad_id
+            descripcion
         ]);
         
         const solicitud_id = solicitudResult.insertId;
@@ -399,22 +345,11 @@ export const reservarHorario = async (reservaData) => {
 
 /**
  * Liberar horario cuando se rechaza una solicitud
- * @param {number} solicitud_id - ID de la solicitud rechazada
- * @returns {Promise<boolean>} - true si se liberó correctamente
+ * DEPRECATED: La tabla solicitudes_reunion no tiene relación directa con disponibilidad_horarios
+ * Los horarios recurrentes no se "reservan", simplemente se crean solicitudes de reunión
  */
 export const liberarHorarioReservado = async (solicitud_id) => {
-    const query = `
-        UPDATE disponibilidades d
-        INNER JOIN solicitudes_reunion sr ON d.id = sr.disponibilidad_id
-        SET d.reservado = FALSE,
-            d.reservado_por = NULL,
-            d.fecha_reserva = NULL,
-            d.solicitud_id = NULL
-        WHERE sr.id = ? AND d.reservado = TRUE
-    `;
-    
-    const [result] = await pool.execute(query, [solicitud_id]);
-    return result.affectedRows > 0;
+    return true;
 };
 
 // ===== RESPONDER RESERVA (PROFESOR) =====
@@ -671,7 +606,7 @@ function calcularHoraFin(hora_inicio, duracion_minutos) {
  * Actualizar disponibilidad
  */
 export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, updateData) => {
-    const { dia_semana, hora_inicio, hora_fin, fecha_especifica, activo } = updateData;
+    const { dia_semana, hora_inicio, hora_fin, activo } = updateData;
     
     let campos = [];
     let valores = [];
@@ -691,11 +626,6 @@ export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, u
         valores.push(hora_fin);
     }
     
-    if (fecha_especifica !== undefined) {
-        campos.push('fecha_especifica = ?');
-        valores.push(fecha_especifica);
-    }
-    
     if (activo !== undefined) {
         campos.push('activo = ?');
         valores.push(activo);
@@ -709,9 +639,9 @@ export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, u
     valores.push(disponibilidad_id, usuario_rut);
     
     const query = `
-        UPDATE disponibilidades 
+        UPDATE disponibilidad_horarios 
         SET ${campos.join(', ')}
-        WHERE id = ? AND usuario_rut = ? AND reservado = FALSE
+        WHERE id = ? AND usuario_rut = ?
     `;
     
     const [result] = await pool.execute(query, valores);
@@ -719,19 +649,19 @@ export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, u
 };
 
 /**
- * Eliminar disponibilidad (solo si no está reservada)
+ * Eliminar disponibilidad (marcando como inactiva)
  */
 export const eliminarDisponibilidad = async (disponibilidad_id, usuario_rut) => {
     const query = `
-        UPDATE disponibilidades 
+        UPDATE disponibilidad_horarios 
         SET activo = FALSE 
-        WHERE id = ? AND usuario_rut = ? AND reservado = FALSE
+        WHERE id = ? AND usuario_rut = ?
     `;
     
     const [result] = await pool.execute(query, [disponibilidad_id, usuario_rut]);
     
     if (result.affectedRows === 0) {
-        throw new Error('No se puede eliminar: disponibilidad no encontrada o está reservada');
+        throw new Error('No se puede eliminar: disponibilidad no encontrada');
     }
     
     return true;
@@ -774,22 +704,20 @@ export const obtenerSolicitudesEstudiante = async (estudiante_rut) => {
             sr.comentarios_estudiante,
             sr.created_at,
             sr.updated_at,
-            sr.disponibilidad_id,
             p.titulo as proyecto_titulo,
-            up.nombre as profesor_nombre,
-            d.dia_semana,
-            d.hora_inicio as hora_reservada,
-            d.hora_fin
+            up.nombre as profesor_nombre
         FROM solicitudes_reunion sr
         INNER JOIN proyectos p ON sr.proyecto_id = p.id
         INNER JOIN usuarios up ON sr.profesor_rut = up.rut
-        LEFT JOIN disponibilidades d ON sr.disponibilidad_id = d.id
         WHERE sr.estudiante_rut = ?
         ORDER BY 
             CASE sr.estado
                 WHEN 'pendiente' THEN 1
-                WHEN 'aceptada' THEN 2
-                WHEN 'rechazada' THEN 3
+                WHEN 'aceptada_profesor' THEN 2
+                WHEN 'aceptada_estudiante' THEN 3
+                WHEN 'confirmada' THEN 4
+                WHEN 'rechazada' THEN 5
+                WHEN 'cancelada' THEN 6
             END,
             sr.created_at DESC
     `;

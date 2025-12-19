@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-fechas-importantes',
@@ -42,7 +43,10 @@ export class FechasImportantesComponent implements OnInit {
     { value: 'critica', label: 'Crítica' }
   ];
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit() {
     this.cargarProyectos();
@@ -59,7 +63,6 @@ export class FechasImportantesComponent implements OnInit {
         this.cargarFechasImportantes();
       },
       error: (error) => {
-        console.error('Error al cargar proyectos:', error);
         this.proyectos = [];
         this.cargando = false;
       }
@@ -92,7 +95,6 @@ export class FechasImportantesComponent implements OnInit {
       this.fechas.sort((a, b) => new Date(a.fecha_limite).getTime() - new Date(b.fecha_limite).getTime());
       this.cargando = false;
     }).catch(error => {
-      console.error('Error al cargar fechas importantes:', error);
       this.cargando = false;
     });
   }
@@ -143,39 +145,50 @@ export class FechasImportantesComponent implements OnInit {
         this.cargarFechasImportantes();
       },
       error: (error) => {
-        console.error('Error al guardar fecha:', error);
-        alert('Error al guardar la fecha. Por favor intente nuevamente.');
+        this.notificationService.error('Error al guardar la fecha. Por favor intente nuevamente.');
         this.cargando = false;
       }
     });
   }
 
-  completarFecha(fecha: any) {
-    if (confirm('¿Marcar esta fecha como completada?')) {
-      this.apiService.marcarFechaCompletada(fecha.proyecto_id, fecha.id, true).subscribe({
-        next: () => {
-          this.cargarFechasImportantes();
-        },
-        error: (error) => {
-          console.error('Error al completar fecha:', error);
-          alert('Error al completar la fecha. Por favor intente nuevamente.');
-        }
-      });
-    }
+  async completarFecha(fecha: any): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Marcar esta fecha como completada?',
+      'Confirmar',
+      'Sí',
+      'Cancelar'
+    );
+    
+    if (!confirmed) return;
+    
+    this.apiService.marcarFechaCompletada(fecha.proyecto_id, fecha.id, true).subscribe({
+      next: () => {
+        this.cargarFechasImportantes();
+      },
+      error: (error) => {
+        this.notificationService.error('Error al completar la fecha. Por favor intente nuevamente.');
+      }
+    });
   }
 
-  eliminarFecha(fecha: any) {
-    if (confirm(`¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`)) {
-      this.apiService.eliminarFechaImportante(fecha.proyecto_id, fecha.id).subscribe({
-        next: () => {
-          this.cargarFechasImportantes();
-        },
-        error: (error) => {
-          console.error('Error al eliminar fecha:', error);
-          alert('Error al eliminar la fecha. Por favor intente nuevamente.');
-        }
-      });
-    }
+  async eliminarFecha(fecha: any): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      `¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`,
+      'Confirmar eliminación',
+      'Sí, eliminar',
+      'Cancelar'
+    );
+    
+    if (!confirmed) return;
+    
+    this.apiService.eliminarFechaImportante(fecha.proyecto_id, fecha.id).subscribe({
+      next: () => {
+        this.cargarFechasImportantes();
+      },
+      error: (error) => {
+        this.notificationService.error('Error al eliminar la fecha. Por favor intente nuevamente.');
+      }
+    });
   }
 
   cancelarFormulario() {
@@ -185,15 +198,15 @@ export class FechasImportantesComponent implements OnInit {
 
   validarFormulario(): boolean {
     if (!this.nuevaFecha.titulo.trim()) {
-      alert('El título es obligatorio');
+      this.notificationService.warning('El título es obligatorio');
       return false;
     }
     if (!this.nuevaFecha.fecha_limite) {
-      alert('La fecha límite es obligatoria');
+      this.notificationService.warning('La fecha límite es obligatoria');
       return false;
     }
     if (!this.nuevaFecha.proyecto_id) {
-      alert('Debe seleccionar un proyecto');
+      this.notificationService.warning('Debe seleccionar un proyecto');
       return false;
     }
     return true;

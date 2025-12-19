@@ -70,7 +70,6 @@ export class RegisterComponent implements OnInit {
         this.cargandoCarreras.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar carreras:', err);
         this.cargandoCarreras.set(false);
       }
     });
@@ -93,7 +92,6 @@ export class RegisterComponent implements OnInit {
         this.cargandoDepartamentos.set(false);
       },
       error: (err) => {
-        console.error('Error al cargar departamentos:', err);
         this.cargandoDepartamentos.set(false);
       }
     });
@@ -145,11 +143,9 @@ export class RegisterComponent implements OnInit {
     password: this.password,
   };
 
-  console.log('Payload enviado al backend:', payload);
 
   this.apiService.register(payload).subscribe({
     next: (res: any) => {
-      console.log('Registro exitoso:', res);
       
       // Si es estudiante, asignar a la carrera seleccionada
       if (this.isEstudiante() && this.carreraId) {
@@ -164,7 +160,6 @@ export class RegisterComponent implements OnInit {
 
         this.apiService.asignarEstudianteCarrera(this.carreraId, estudianteData).subscribe({
           next: () => {
-            console.log('Estudiante asignado a carrera exitosamente');
             this.mensaje = 'Registro exitoso! Has sido asignado a tu carrera.';
             this.limpiarFormulario();
             setTimeout(() => {
@@ -172,7 +167,6 @@ export class RegisterComponent implements OnInit {
             }, 2000);
           },
           error: (err) => {
-            console.error('Error al asignar estudiante a carrera:', err);
             this.mensaje = 'Registro exitoso, pero hubo un error al asignar la carrera. Contacta al administrador.';
             setTimeout(() => {
               this.router.navigate(['/login']);
@@ -188,7 +182,6 @@ export class RegisterComponent implements OnInit {
 
         this.apiService.asignarProfesorDepartamento(this.departamentoId, profesorData).subscribe({
           next: () => {
-            console.log('Profesor asignado a departamento exitosamente');
             this.mensaje = 'Registro exitoso! Has sido asignado a tu departamento.';
             this.limpiarFormulario();
             setTimeout(() => {
@@ -196,7 +189,6 @@ export class RegisterComponent implements OnInit {
             }, 2000);
           },
           error: (err) => {
-            console.error('Error al asignar profesor a departamento:', err);
             this.mensaje = 'Registro exitoso, pero hubo un error al asignar el departamento. Contacta al administrador.';
             setTimeout(() => {
               this.router.navigate(['/login']);
@@ -213,7 +205,6 @@ export class RegisterComponent implements OnInit {
       }
     },
     error: (err: any) => {
-      console.error('Error en registro:', err);
       this.mensaje = err.error?.message || 'Error al registrarse';
     }
   });
