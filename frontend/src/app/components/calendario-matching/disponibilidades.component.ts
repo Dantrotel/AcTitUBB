@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { NotificationService } from '../../services/notification.service';
 
 interface Disponibilidad {
   id?: number;
@@ -46,7 +47,9 @@ export class DisponibilidadesComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {
     this.generarHorasDisponibles();
   }
@@ -69,16 +72,21 @@ export class DisponibilidadesComponent implements OnInit {
   cargarDisponibilidades() {
     this.isLoading = true;
     this.errorMessage = '';
+    console.log('🔄 Cargando disponibilidades...');
 
     this.apiService.getDisponibilidades().subscribe({
       next: (response: any) => {
+        console.log('✅ Disponibilidades cargadas:', response);
         this.disponibilidades = response.data || response || [];
         this.isLoading = false;
+        this.cdr.detectChanges();
+        console.log('📊 Total disponibilidades:', this.disponibilidades.length);
       },
       error: (error) => {
-        console.error('Error al cargar disponibilidades:', error);
+        console.error('❌ Error al cargar disponibilidades:', error);
         this.errorMessage = 'Error al cargar las disponibilidades';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -94,15 +102,20 @@ export class DisponibilidadesComponent implements OnInit {
     this.apiService.createDisponibilidad(this.nuevaDisponibilidad).subscribe({
       next: (response: any) => {
         this.successMessage = 'Disponibilidad agregada exitosamente';
-        this.cargarDisponibilidades();
         this.limpiarFormulario();
+        this.cargarDisponibilidades();
         this.isLoading = false;
-        setTimeout(() => this.successMessage = '', 3000);
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.successMessage = '';
+          this.cdr.detectChanges();
+        }, 3000);
       },
       error: (error) => {
         console.error('Error al crear disponibilidad:', error);
         this.errorMessage = error.error?.message || 'Error al crear la disponibilidad';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -123,23 +136,32 @@ export class DisponibilidadesComponent implements OnInit {
     this.apiService.updateDisponibilidad(this.editandoId.toString(), this.nuevaDisponibilidad).subscribe({
       next: (response: any) => {
         this.successMessage = 'Disponibilidad actualizada exitosamente';
-        this.cargarDisponibilidades();
         this.cancelarEdicion();
+        this.cargarDisponibilidades();
         this.isLoading = false;
-        setTimeout(() => this.successMessage = '', 3000);
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.successMessage = '';
+          this.cdr.detectChanges();
+        }, 3000);
       },
       error: (error) => {
         console.error('Error al actualizar disponibilidad:', error);
         this.errorMessage = error.error?.message || 'Error al actualizar la disponibilidad';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  eliminarDisponibilidad(id: number) {
-    if (!confirm('¿Estás seguro de eliminar esta disponibilidad?')) {
-      return;
-    }
+  async eliminarDisponibilidad(id: number) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de eliminar esta disponibilidad?',
+      'Eliminar Disponibilidad',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -149,12 +171,17 @@ export class DisponibilidadesComponent implements OnInit {
         this.successMessage = 'Disponibilidad eliminada exitosamente';
         this.cargarDisponibilidades();
         this.isLoading = false;
-        setTimeout(() => this.successMessage = '', 3000);
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.successMessage = '';
+          this.cdr.detectChanges();
+        }, 3000);
       },
       error: (error) => {
         console.error('Error al eliminar disponibilidad:', error);
         this.errorMessage = error.error?.message || 'Error al eliminar la disponibilidad';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -219,11 +246,16 @@ export class DisponibilidadesComponent implements OnInit {
       next: (response: any) => {
         this.cargarDisponibilidades();
         this.successMessage = `Disponibilidad ${nuevaDisponibilidad.activa ? 'activada' : 'desactivada'}`;
-        setTimeout(() => this.successMessage = '', 3000);
+        this.cdr.detectChanges();
+        setTimeout(() => {
+          this.successMessage = '';
+          this.cdr.detectChanges();
+        }, 3000);
       },
       error: (error) => {
         console.error('Error al cambiar estado:', error);
         this.errorMessage = 'Error al cambiar el estado de la disponibilidad';
+        this.cdr.detectChanges();
       }
     });
   }

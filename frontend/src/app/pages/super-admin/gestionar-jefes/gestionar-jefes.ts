@@ -92,7 +92,6 @@ export class GestionarJefesComponent implements OnInit {
       this.loading.set(false);
     })
     .catch((error: any) => {
-      console.error('Error al cargar datos:', error);
       this.error.set('Error al cargar la información');
       this.loading.set(false);
     });
@@ -126,7 +125,6 @@ export class GestionarJefesComponent implements OnInit {
         this.cargarDatos();
       },
       error: (error: any) => {
-        console.error('Error al asignar jefe:', error);
         this.mostrarMensaje(error.message || 'Error al asignar jefe de carrera', 'error');
       }
     });
@@ -152,7 +150,6 @@ export class GestionarJefesComponent implements OnInit {
         this.cargarDatos();
       },
       error: (error: any) => {
-        console.error('Error al remover jefe:', error);
         this.mostrarMensaje(error.message || 'Error al remover jefe de carrera', 'error');
       }
     });

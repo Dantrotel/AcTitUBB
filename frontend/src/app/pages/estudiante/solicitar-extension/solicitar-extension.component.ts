@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -7,8 +7,12 @@ import { ApiService } from '../../../services/api';
 interface FechaImportante {
   id: number;
   tipo_fecha: string;
+  titulo?: string;
   descripcion: string;
   fecha_limite: string;
+  permite_extension?: boolean;
+  requiere_entrega?: boolean;
+  completada?: boolean;
 }
 
 @Component({
@@ -41,7 +45,8 @@ export class SolicitarExtensionComponent implements OnInit {
   constructor(
     private api: ApiService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -85,26 +90,32 @@ export class SolicitarExtensionComponent implements OnInit {
     this.loadingFechas = true;
     this.error = '';
     
-    this.api.get(`/project/${this.proyectoId}`).subscribe({
+    // Usar el método correcto del ApiService
+    this.api.getFechasImportantesProyecto(this.proyectoId.toString()).subscribe({
       next: (response: any) => {
-        if (response && response.fechas_importantes) {
-          this.fechasDisponibles = response.fechas_importantes.filter((f: FechaImportante) => {
-            // Solo mostrar fechas futuras o próximas
-            const fechaLimite = new Date(f.fecha_limite);
-            const hoy = new Date();
-            return fechaLimite >= hoy;
-          });
-          
-          if (response.titulo) {
-            this.proyectoTitulo = response.titulo;
-          }
+        // Manejar respuesta: { success: true, data: { fechas_importantes: [...] } }
+        let fechas = [];
+        if (response && response.success && response.data && response.data.fechas_importantes) {
+          fechas = response.data.fechas_importantes;
+        } else if (response && Array.isArray(response)) {
+          fechas = response;
         }
+        
+        this.fechasDisponibles = fechas.filter((f: FechaImportante) => {
+          // Solo mostrar fechas futuras o próximas que permitan extensión
+          const fechaLimite = new Date(f.fecha_limite);
+          const hoy = new Date();
+          return fechaLimite >= hoy && f.permite_extension;
+        });
+        
         this.loadingFechas = false;
+        this.cdr.detectChanges();
       },
       error: (error: any) => {
         console.error('Error cargando fechas:', error);
         this.error = 'Error al cargar las fechas del proyecto';
         this.loadingFechas = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -259,6 +270,6 @@ export class SolicitarExtensionComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/estudiante/proyecto']);
+    window.history.back();
   }
 }

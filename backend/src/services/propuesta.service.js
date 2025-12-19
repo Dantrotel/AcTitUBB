@@ -156,12 +156,12 @@ export const getPropuestasByEstudiante = async (estudiante_rut) => {
     
     return propuestasConPermisos || [];
   } catch (error) {
-    console.error('Error en getPropuestasByEstudiante service:', error);
+    
     throw error;
   }
 };
 
-export const asignarProfesor = async (id, profesor_rut) => {
+export const asignarProfesor = async (id, profesor_rut, asignado_por = null) => {
   try {
     if (isNaN(id)) throw new Error('ID de propuesta inválido');
 
@@ -169,7 +169,7 @@ export const asignarProfesor = async (id, profesor_rut) => {
       throw new Error('El RUT del profesor no es válido');
     }
 
-    const success = await PropuestasModel.asignarProfesor(id, profesor_rut);
+    const success = await PropuestasModel.asignarProfesor(id, profesor_rut, asignado_por);
     
     if (success) {
       // Obtener datos adicionales para notificación
@@ -197,8 +197,9 @@ export const revisarPropuesta = async (id, data) => {
     const comentario = data.comentario || data.comentarios_profesor;
     const { estado } = data;
 
-    if (!comentario || comentario.trim().length === 0) {
-      throw new Error('El comentario no puede estar vacío');
+    // Los comentarios son opcionales cuando el estado es 'aprobada'
+    if (estado !== 'aprobada' && (!comentario || comentario.trim().length === 0)) {
+      throw new Error('El comentario no puede estar vacío para estados que no sean "aprobada"');
     }
 
     if (!estado || !estadosValidos.includes(estado)) {
@@ -211,8 +212,19 @@ export const revisarPropuesta = async (id, data) => {
       throw new Error('Propuesta no encontrada');
     }
 
-    // Actualizar la propuesta
-    const actualizada = await PropuestasModel.revisarPropuesta(id, { comentarios_profesor: comentario, estado });
+    // Actualizar la propuesta (con archivo si existe)
+    const datosActualizacion = { 
+      comentarios_profesor: comentario, 
+      estado 
+    };
+    
+    // Agregar archivo si fue proporcionado
+    if (data.archivo_revision) {
+      datosActualizacion.archivo_revision = data.archivo_revision;
+      datosActualizacion.nombre_archivo_original = data.nombre_archivo_original;
+    }
+    
+    const actualizada = await PropuestasModel.revisarPropuesta(id, datosActualizacion);
     
     if (!actualizada) {
       throw new Error('Error al actualizar la propuesta');
@@ -221,7 +233,7 @@ export const revisarPropuesta = async (id, data) => {
     // Si el estado es "aprobada", crear automáticamente el proyecto
     if (estado === 'aprobada') {
       try {
-        console.log(`🚀 Propuesta ${id} aprobada. Creando proyecto automáticamente...`);
+        
         
         // Crear el proyecto desde la propuesta aprobada
         const proyectoId = await ProjectService.crearProyectoDesdeAprobacion(propuesta);
@@ -233,14 +245,14 @@ export const revisarPropuesta = async (id, data) => {
         // El profesor guía se asignará manualmente (por el profesor o por admin)
         // Los otros roles (revisor, informante) se asignan al final del semestre
         // El profesor de sala es opcional
-        console.log(`✅ Proyecto ${proyectoId} creado sin profesores. Esperando asignación manual del profesor guía.`);
+        
         
         // Crear notificación para administradores sobre el nuevo proyecto
         try {
           await crearNotificacionAdminProyectoCreado(proyectoId, propuesta.titulo);
-          console.log(`✅ Notificación enviada a administradores para proyecto ${proyectoId}`);
+          
         } catch (notifError) {
-          console.error('⚠️ Error al crear notificación para admins:', notifError);
+          
           // No falla el proceso, solo registra el error
         }
         
@@ -254,7 +266,7 @@ export const revisarPropuesta = async (id, data) => {
           message: 'Propuesta aprobada y proyecto creado. Pendiente de asignación de profesor guía.'
         };
       } catch (projectError) {
-        console.error('❌ Error al crear proyecto automáticamente:', projectError);
+        
         // La propuesta ya fue actualizada, pero no se pudo crear el proyecto
         throw new Error(`Propuesta aprobada pero error al crear proyecto: ${projectError.message}`);
       }
@@ -320,25 +332,25 @@ export const getPropuestasAsignadasAlProfesor = async (profesor_rut) => {
 
 // Métodos para verificar permisos
 export const verificarPermisosVisualizacion = async (propuesta, userRut, userRole) => {
-  console.log('🔍 verificarPermisosVisualizacion - userRole:', userRole, 'tipo:', typeof userRole);
-  console.log('🔍 verificarPermisosVisualizacion - propuesta.estudiante_rut:', propuesta.estudiante_rut);
-  console.log('🔍 verificarPermisosVisualizacion - userRut:', userRut);
+  
+  
+  
   
   // Los super administradores pueden ver absolutamente todo (verificar PRIMERO)
   if (userRole === 4 || userRole === '4') { // SuperAdmin
-    console.log('✅ SuperAdmin detectado - acceso completo');
+    
     return true;
   }
   
   // Los administradores pueden ver todas las propuestas
   if (userRole === 3 || userRole === '3') { // Admin
-    console.log('✅ Admin detectado - acceso completo');
+    
     return true;
   }
   
   // El creador siempre puede ver su propuesta
   if (propuesta.estudiante_rut === userRut) {
-    console.log('✅ Creador de la propuesta - acceso permitido');
+    
     return true;
   }
   
@@ -357,17 +369,17 @@ export const verificarPermisosVisualizacion = async (propuesta, userRut, userRol
   if (userRole === 2 || userRole === '2') { // Profesor
     // Si la propuesta no tiene profesor asignado, cualquier profesor puede verla
     if (!propuesta.profesor_rut || propuesta.profesor_rut === null) {
-      console.log('✅ Profesor - propuesta sin asignar - acceso permitido');
+      
       return true;
     }
     // Si ya tiene profesor asignado, solo ese profesor puede verla
     const puedeVer = propuesta.profesor_rut === userRut;
-    console.log(`${puedeVer ? '✅' : '❌'} Profesor - propuesta asignada - acceso ${puedeVer ? 'permitido' : 'denegado'}`);
+    
     return puedeVer;
   }
   
   // Otros estudiantes no pueden ver propuestas de otros estudiantes
-  console.log('❌ Sin permisos de visualización');
+  
   return false;
 };
 
@@ -397,7 +409,7 @@ const crearNotificacionAdminProyectoCreado = async (proyecto_id, titulo_proyecto
     const administradores = await PropuestasModel.obtenerUsuariosPorRol(3);
     
     if (!administradores || administradores.length === 0) {
-      console.log('⚠️ No hay administradores para notificar');
+      
       return;
     }
 
@@ -415,9 +427,91 @@ const crearNotificacionAdminProyectoCreado = async (proyecto_id, titulo_proyecto
       });
     }
 
-    console.log(`✅ Notificación enviada a ${administradores.length} administradores sobre proyecto ${proyecto_id}`);
+    
   } catch (error) {
-    console.error('Error al crear notificación para administradores:', error);
+    
+    throw error;
+  }
+};
+
+// ===== MÉTODOS PARA HISTORIAL DE REVISIONES =====
+export const registrarRevisionEnHistorial = async (propuesta_id, profesor_rut, decision, comentarios, archivo_revision = null, nombre_archivo_original = null) => {
+  try {
+    return await PropuestasModel.registrarRevisionEnHistorial(
+      propuesta_id,
+      profesor_rut,
+      decision,
+      comentarios,
+      archivo_revision,
+      nombre_archivo_original
+    );
+  } catch (error) {
+    
+    throw error;
+  }
+};
+
+export const obtenerHistorialRevisiones = async (propuesta_id) => {
+  try {
+    return await PropuestasModel.obtenerHistorialRevisiones(propuesta_id);
+  } catch (error) {
+    
+    throw error;
+  }
+};
+
+// Guardar archivo de propuesta sin sobrescribir
+export const guardarArchivoPropuesta = async (propuesta_id, tipo_archivo, archivo, nombre_archivo_original, subido_por, comentario = null) => {
+  try {
+    const ArchivosPropuestaModel = await import('../models/archivos-propuesta.model.js');
+    return await ArchivosPropuestaModel.guardarArchivoPropuesta(
+      propuesta_id,
+      tipo_archivo,
+      archivo,
+      nombre_archivo_original,
+      subido_por,
+      comentario
+    );
+  } catch (error) {
+    
+    throw error;
+  }
+};
+
+// Obtener todos los archivos de una propuesta
+export const obtenerArchivosPropuesta = async (propuesta_id) => {
+  try {
+    const ArchivosPropuestaModel = await import('../models/archivos-propuesta.model.js');
+    return await ArchivosPropuestaModel.obtenerArchivosPropuesta(propuesta_id);
+  } catch (error) {
+    
+    throw error;
+  }
+};
+
+// Actualizar estado de propuesta
+export const actualizarEstadoPropuesta = async (propuesta_id, estado) => {
+  try {
+    // Obtener estado_id basado en el nombre del estado
+    const connection = await pool.getConnection();
+    
+    try {
+      const [estados] = await connection.query('SELECT id FROM estados WHERE estado = ?', [estado]);
+      
+      if (estados.length === 0) {
+        throw new Error(`Estado '${estado}' no encontrado`);
+      }
+      
+      const estado_id = estados[0].id;
+      
+      await connection.query('UPDATE propuestas SET estado_id = ? WHERE id = ?', [estado_id, propuesta_id]);
+      
+      return { success: true, estado, estado_id };
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    
     throw error;
   }
 };

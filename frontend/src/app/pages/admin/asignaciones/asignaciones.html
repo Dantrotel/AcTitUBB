@@ -201,7 +201,8 @@
             <div class="asignacion-actions">
               <button 
                 class="btn-danger-small" 
-                (click)="desasignarProfesor(asignacion)"
+                (click)="desasignarProfesor(asignacion); $event.stopPropagation()"
+                [disabled]="loadingAsignacion"
                 title="Desasignar profesor">
                 <i class="fas fa-user-minus"></i>
               </button>
@@ -416,7 +417,8 @@
               <div class="asignacion-actions">
                 <button 
                   class="btn-danger-small" 
-                  (click)="desasignarProfesor(asignacion)"
+                  (click)="desasignarProfesor(asignacion); $event.stopPropagation()"
+                  [disabled]="loadingAsignacion"
                   title="Desasignar profesor">
                   <i class="fas fa-user-minus"></i>
                   Desasignar

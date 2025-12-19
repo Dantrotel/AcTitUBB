@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -96,7 +96,11 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     }
   ];
 
-  constructor(private router: Router, private ApiService: ApiService) {}
+  constructor(
+    private router: Router,
+    private ApiService: ApiService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
    ngOnInit() {
     // Verificar autenticación antes de cargar datos
@@ -156,50 +160,83 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       this.loadingDashboard = true;
       const response = await this.ApiService.getDashboardEstudiante();
       if (response && response.success) {
-        this.dashboard = response.data;
-        console.log('✅ Dashboard estudiante cargado:', this.dashboard);
+        // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+        setTimeout(() => {
+          this.dashboard = response.data;
+          console.log('✅ Dashboard estudiante cargado:', this.dashboard);
+          this.cdr.detectChanges();
+        }, 0);
       }
     } catch (error) {
       console.error('Error al cargar dashboard:', error);
     } finally {
       this.loadingDashboard = false;
+      this.cdr.detectChanges();
     }
   }
 
   buscarUserByRut(rut: string) {
     this.loadingEstudiante = true;
+    console.log('🔍 Buscando usuario con RUT:', rut);
+    
     this.ApiService.buscaruserByrut(rut).subscribe({
       next: (data: any) => {
+        console.log('✅ Respuesta del servidor:', data);
         this.estudiante = data;
         this.loadingEstudiante = false;
-        // // // // // // // // // // console.log('✅ Datos del estudiante cargados:', this.estudiante);
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error al obtener usuario:', err);
+        console.error('❌ Error al obtener usuario:', err);
         this.estudiante.nombre = 'Estudiante';
         this.loadingEstudiante = false;
+        this.cdr.detectChanges();
         this.mostrarError('No se pudo cargar la información del usuario');
+      },
+      complete: () => {
+        console.log('✅ Observable completado - loadingEstudiante:', this.loadingEstudiante);
+        // Asegurar que el flag se resetee incluso si hay problemas
+        setTimeout(() => {
+          if (this.loadingEstudiante) {
+            console.warn('⚠️ Forcing loadingEstudiante to false');
+            this.loadingEstudiante = false;
+            this.cdr.detectChanges();
+          }
+        }, 5000); // Timeout de seguridad de 5 segundos
       }
     });
   }
 
   cargarPropuestas(rut: string) {
     this.loadingPropuestas = true;
+    console.log('🔍 Cargando propuestas...');
+    
+    // Timeout de seguridad
+    setTimeout(() => {
+      if (this.loadingPropuestas) {
+        console.warn('⚠️ Forcing loadingPropuestas to false');
+        this.loadingPropuestas = false;
+        this.cdr.detectChanges();
+      }
+    }, 5000);
+    
     // Usar el nuevo endpoint específico para estudiantes
     this.ApiService.getMisPropuestas().subscribe({
       next: (data: any) => {
         this.propuestas = Array.isArray(data) ? data : [];
         this.loadingPropuestas = false;
+        this.cdr.detectChanges();
+        console.log('✅ Propuestas cargadas:', this.propuestas.length);
         // // // // // // // // // // console.log('✅ Propuestas del estudiante cargadas:', this.propuestas);
         
         // Debug información del profesor
         if (this.propuestas.length > 0) {
-          // // // // // // // // // // console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
-          // // // // // // // // // // console.log('🔍 Campos relacionados al profesor:');
-          // // // // // // // // // // console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
-          // // // // // // // // // // console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
-          // // // // // // // // // // console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
-          // // // // // // // // // // console.log('  - profesor_email:', this.propuestas[0].profesor_email);
+          console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
+          console.log('🔍 Campos relacionados al profesor:');
+          console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
+          console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
+          console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
+          console.log('  - profesor_email:', this.propuestas[0].profesor_email);
         }
         
         this.calcularEstadisticas();
@@ -210,42 +247,58 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error al cargar propuestas del estudiante:', err);
         this.loadingPropuestas = false;
-        // Fallback al método anterior en caso de error
-        this.cargarPropuestasFallback(rut);
+        this.propuestas = [];
+        this.cdr.detectChanges();
+        this.mostrarError('No se pudieron cargar las propuestas');
       }
     });
   }
 
   cargarProyectos() {
     this.loadingProyectos = true;
-    // // // // // // // // // // console.log('🔄 Cargando proyectos del estudiante...');
+    console.log('🔍 Cargando proyectos...');
+    
+    // Timeout de seguridad
+    setTimeout(() => {
+      if (this.loadingProyectos) {
+        console.warn('⚠️ Forcing loadingProyectos to false');
+        this.loadingProyectos = false;
+        this.cdr.detectChanges();
+      }
+    }, 5000);
     
     this.ApiService.getMisProyectos().subscribe({
       next: (response: any) => {
+        console.log('✅ Respuesta proyectos:', response);
         this.loadingProyectos = false;
-        // // // // // // // // // // console.log('✅ Respuesta proyectos:', response);
+        this.cdr.detectChanges();
         
         if (response && response.projects) {
           this.proyectos = response.projects;
-          // // // // // // // // // // console.log('📁 Proyectos cargados:', this.proyectos.length);
+          console.log('📁 Proyectos cargados:', this.proyectos.length);
           
           // Encontrar proyecto activo (el más reciente o el único)
           if (this.proyectos.length > 0) {
             this.proyectoActivo = this.proyectos[0];
-            // // // // // // // // // // console.log('🎯 Proyecto activo:', this.proyectoActivo);
+            console.log('🎯 Proyecto activo:', this.proyectoActivo);
             this.cargarDashboardProyecto();
             this.cargarFechasImportantes();
           }
         } else {
           this.proyectos = [];
-          // // // // // // // // // // console.log('📭 No se encontraron proyectos');
+          console.log('📭 No se encontraron proyectos');
         }
       },
       error: (error) => {
         console.error('❌ Error al cargar proyectos:', error);
+        console.error('❌ Detalles del error:', error.status, error.message);
         this.loadingProyectos = false;
+        this.cdr.detectChanges();
         this.proyectos = [];
         this.mostrarError('No se pudieron cargar los proyectos');
+      },
+      complete: () => {
+        console.log('✅ Observable getMisProyectos completado - loadingProyectos:', this.loadingProyectos);
       }
     });
   }
@@ -290,7 +343,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         // // // // // // // // // // console.log('✅ Fechas importantes cargadas:', response);
         this.loadingFechas = false;
         
-        if (response.success && response.data) {
+        if (response && response.success && response.data) {
           this.fechasImportantes = response.data.fechas_importantes || [];
           this.fechasProximas = response.data.fechas_proximas || [];
           
@@ -300,12 +353,14 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
           this.fechasImportantes = [];
           this.fechasProximas = [];
         }
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('❌ Error al cargar fechas importantes:', error);
         this.loadingFechas = false;
         this.fechasImportantes = [];
         this.fechasProximas = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -415,11 +470,11 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       });
       this.ultimaPropuesta = this.propuestas[0];
       
-      // // // // // // // // // // console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
-      // // // // // // // // // // console.log('🔍 Info profesor en última propuesta:');
-      // // // // // // // // // // console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
-      // // // // // // // // // // console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
-      // // // // // // // // // // console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
+      console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
+      console.log('🔍 Info profesor en última propuesta:');
+      console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
+      console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
+      console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
     }
   }
 
@@ -599,54 +654,55 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     this.loadingHitos = true;
     // // // // // // // // // // console.log('🔄 Cargando hitos del proyecto:', this.proyectoActivo.id);
 
-    this.ApiService.getHitosProyecto(this.proyectoActivo.id).subscribe({
-      next: (response: any) => {
-        this.loadingHitos = false;
-        // // // // // // // // // // console.log('✅ Hitos cargados:', response);
-        
-        if (response.success && response.hitos) {
-          this.hitosProyecto = response.hitos;
-          // // // // // // // // // // console.log('📋 Hitos del proyecto:', this.hitosProyecto.length);
+    // Usar el nuevo sistema de cronogramas
+    this.ApiService.getCronogramaProyecto(this.proyectoActivo.id).subscribe({
+      next: (cronogramaResponse: any) => {
+        if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.data?.cronograma) {
+          const cronogramaId = cronogramaResponse.data.cronograma.id;
+          
+          // Obtener hitos del cronograma
+          this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
+            next: (hitosResponse: any) => {
+              this.loadingHitos = false;
+              
+              if (hitosResponse && hitosResponse.success && hitosResponse.hitos) {
+                this.hitosProyecto = hitosResponse.hitos;
+                // // // // // // // // // // console.log('✅ Hitos cargados:', this.hitosProyecto);
+              } else {
+                this.hitosProyecto = [];
+              }
+              this.cdr.detectChanges();
+            },
+            error: (error) => {
+              console.error('❌ Error al cargar hitos:', error);
+              this.loadingHitos = false;
+              this.hitosProyecto = [];
+              this.mostrarError('No se pudieron cargar los hitos del cronograma');
+              this.cdr.detectChanges();
+            }
+          });
         } else {
+          // Proyecto sin cronograma
+          this.loadingHitos = false;
           this.hitosProyecto = [];
-          // // // // // // // // // // console.log('📭 No hay hitos en el proyecto');
+          // // // // // // // // // // console.log('📭 Proyecto sin cronograma activo');
+          this.cdr.detectChanges();
         }
       },
       error: (error) => {
-        console.error('❌ Error al cargar hitos:', error);
+        console.error('❌ Error al cargar cronograma:', error);
         this.loadingHitos = false;
         this.hitosProyecto = [];
-        this.mostrarError('No se pudieron cargar los hitos del proyecto');
+        this.mostrarError('No se pudo cargar el cronograma del proyecto');
+        this.cdr.detectChanges();
       }
     });
   }
 
   completarHitoEstudiante(hito: any) {
-    if (!this.proyectoActivo?.id || !hito.id) return;
-
-    // // // // // // // // // // console.log('🔄 Completando hito:', hito.titulo);
-
-    this.ApiService.completarHito(this.proyectoActivo.id, hito.id).subscribe({
-      next: (response: any) => {
-        // // // // // // // // // // console.log('✅ Hito completado:', response);
-        
-        // Actualizar el estado local del hito
-        const hitoIndex = this.hitosProyecto.findIndex(h => h.id === hito.id);
-        if (hitoIndex !== -1) {
-          this.hitosProyecto[hitoIndex].completado = true;
-          this.hitosProyecto[hitoIndex].fecha_completado = new Date().toISOString();
-        }
-        
-        // Recargar dashboard para actualizar estadísticas
-        this.cargarDashboardProyecto();
-        
-        // // // // // // // // // // console.log('🎉 Hito marcado como completado exitosamente');
-      },
-      error: (error) => {
-        console.error('❌ Error al completar hito:', error);
-        this.mostrarError('No se pudo completar el hito. Intenta nuevamente.');
-      }
-    });
+    // En el nuevo sistema, los hitos se completan mediante entregas
+    // Abrir modal para entregar el hito
+    this.abrirModalEntregarHito(hito);
   }
 
   // ===== MÉTODOS AVANZADOS PARA HITOS =====
@@ -661,16 +717,39 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     this.loadingHitos = true;
     this.errorCargaHitos = '';
 
-    this.ApiService.getHitosProyecto(this.proyectoActivo.id).subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
-          this.hitosProyecto = response.data;
-          // // // // // // // // // // console.log('Hitos cargados:', this.hitosProyecto);
+    // Usar el nuevo sistema de cronogramas
+    this.ApiService.getCronogramaProyecto(this.proyectoActivo.id).subscribe({
+      next: (cronogramaResponse: any) => {
+        if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.data?.cronograma) {
+          const cronogramaId = cronogramaResponse.data.cronograma.id;
+          
+          // Obtener hitos del cronograma
+          this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
+            next: (hitosResponse: any) => {
+              if (hitosResponse && hitosResponse.success && hitosResponse.hitos) {
+                this.hitosProyecto = hitosResponse.hitos;
+                // // // // // // // // // // console.log('Hitos cargados:', this.hitosProyecto);
+              } else {
+                this.hitosProyecto = [];
+                this.errorCargaHitos = 'No se pudieron cargar los hitos';
+              }
+              this.loadingHitos = false;
+              this.cdr.detectChanges();
+            },
+            error: (error: any) => {
+              console.error('Error al cargar hitos del cronograma:', error);
+              this.hitosProyecto = [];
+              this.errorCargaHitos = 'Error al cargar los hitos';
+              this.loadingHitos = false;
+              this.cdr.detectChanges();
+            }
+          });
         } else {
+          // Proyecto sin cronograma activo
           this.hitosProyecto = [];
-          this.errorCargaHitos = response.message || 'No se pudieron cargar los hitos';
+          this.loadingHitos = false;
+          this.cdr.detectChanges();
         }
-        this.loadingHitos = false;
       },
       error: (error: any) => {
         console.error('Error al cargar hitos:', error);
@@ -855,6 +934,10 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     this.showUserMenu = false; // Cerrar menú al navegar
     this.showCalendarioMenu = false; // Cerrar menú de calendario
     this.router.navigate([ruta]);
+  }
+
+  solicitarExtension() {
+    this.router.navigate(['/estudiante/solicitar-extension']);
   }
 
   cerrarSesion() {

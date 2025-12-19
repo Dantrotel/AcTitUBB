@@ -52,6 +52,14 @@ export class NotificationService {
       timestamp: new Date()
     };
 
+    console.log('🔔 NotificationService.show() llamado:', {
+      type,
+      title,
+      message,
+      duration,
+      notificationId: notification.id
+    });
+
     const current = this.notifications$.value;
     this.notifications$.next([...current, notification]);
 

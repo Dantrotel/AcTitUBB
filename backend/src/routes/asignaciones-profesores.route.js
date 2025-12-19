@@ -336,21 +336,31 @@ router.get('/admin/todas', verifySession, async (req, res) => {
         
         const query = `
             SELECT 
-                ap.*,
-                u.nombre as nombre_profesor,
-                u.email as email_profesor,
-                p.titulo as titulo_proyecto,
+                ap.id,
+                ap.proyecto_id,
+                ap.profesor_rut,
+                ap.rol_profesor_id,
+                ap.fecha_asignacion,
+                ap.fecha_desasignacion,
+                ap.activo,
+                ap.observaciones,
+                ap.asignado_por,
+                u.nombre as profesor_nombre,
+                u.email as profesor_email,
+                p.titulo as proyecto_titulo,
                 p.estudiante_rut,
-                ue.nombre as nombre_estudiante,
-                rp.nombre as nombre_rol,
-                rp.id as rol_id
+                ue.nombre as estudiante_nombre,
+                rp.nombre as rol_nombre,
+                rp.descripcion as rol_descripcion,
+                ua.nombre as asignado_por_nombre
             FROM asignaciones_proyectos ap
             INNER JOIN usuarios u ON ap.profesor_rut = u.rut
             INNER JOIN proyectos p ON ap.proyecto_id = p.id
             INNER JOIN usuarios ue ON p.estudiante_rut = ue.rut
             INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+            LEFT JOIN usuarios ua ON ap.asignado_por = ua.rut
             WHERE ap.activo = TRUE
-            ORDER BY p.titulo, rp.nombre
+            ORDER BY ap.fecha_asignacion DESC, p.titulo, rp.nombre
         `;
         
         const [asignaciones] = await pool.execute(query);
@@ -452,19 +462,36 @@ router.post('/', verifySession, async (req, res) => {
         
         // Verificar que no exista asignación duplicada
         const verificarQuery = `
-            SELECT id FROM asignaciones_proyectos 
+            SELECT id, profesor_rut FROM asignaciones_proyectos 
             WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE
         `;
         const [existente] = await pool.execute(verificarQuery, [proyectoIdNum, rolProfesorIdNum]);
         
+        // Si ya existe un profesor con este rol activo
         if (existente.length > 0) {
-            return res.status(409).json({
-                success: false,
-                message: 'Ya existe un profesor con este rol asignado al proyecto'
-            });
+            const profesorActual = existente[0].profesor_rut;
+            
+            // Si es el mismo profesor, no hacer nada (ya está asignado)
+            if (profesorActual === profesor_rut) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'El profesor ya está asignado con este rol al proyecto',
+                    data: { id: existente[0].id }
+                });
+            }
+            
+            // Si es diferente profesor, desasignar el anterior automáticamente
+            console.log(`🔄 Reemplazando profesor ${profesorActual} por ${profesor_rut} en rol ${rolProfesorIdNum} del proyecto ${proyectoIdNum}`);
+            
+            const desasignarQuery = `
+                UPDATE asignaciones_proyectos 
+                SET activo = FALSE, fecha_desasignacion = NOW() 
+                WHERE proyecto_id = ? AND rol_profesor_id = ? AND activo = TRUE
+            `;
+            await pool.execute(desasignarQuery, [proyectoIdNum, rolProfesorIdNum]);
         }
         
-        // Crear asignación
+        // Crear nueva asignación
         const insertQuery = `
             INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, asignado_por)
             VALUES (?, ?, ?, ?)

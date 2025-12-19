@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NotificationService } from '../../../services/notification.service';
 
 interface EstadoPeriodo {
   existe: boolean;
@@ -56,9 +57,9 @@ export class CalendarioUnificadoComponent implements OnInit {
     },
     { 
       id: 'propuestas', 
-      label: 'Período de Propuestas', 
+      label: 'Períodos Académicos', 
       icon: 'fas fa-calendar-check',
-      descripcion: 'Control del período de entrega'
+      descripcion: 'Gestión de todos los períodos académicos'
     },
     { 
       id: 'reuniones', 
@@ -76,7 +77,10 @@ export class CalendarioUnificadoComponent implements OnInit {
   nuevaFecha = {
     titulo: '',
     descripcion: '',
+    fecha_inicio: '',
+    hora_inicio: '00:00',
     fecha: '',
+    hora_limite: '23:59',
     tipo_fecha: '',
     es_global: false
   };
@@ -113,7 +117,9 @@ export class CalendarioUnificadoComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -142,15 +148,7 @@ export class CalendarioUnificadoComponent implements OnInit {
   }
 
   volver(): void {
-    // Detectar si es super admin basándose en la ruta o el rol del usuario
-    const userData = JSON.parse(localStorage.getItem('userData') || localStorage.getItem('usuario') || '{}');
-    const rolId = parseInt(userData.rol_id || userData.rol || '0');
-    
-    if (rolId === 4) {
-      this.router.navigate(['/super-admin']);
-    } else {
-      this.router.navigate(['/admin']);
-    }
+    window.history.back();
   }
 
   // ===========================
@@ -160,6 +158,7 @@ export class CalendarioUnificadoComponent implements OnInit {
   cargarFechasGlobales(): void {
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     Promise.all([
       this.apiService.get('/calendario/admin/globales').toPromise(),
@@ -168,10 +167,12 @@ export class CalendarioUnificadoComponent implements OnInit {
       this.fechasGlobales = fechasResponse || [];
       this.estadisticasFechas = estadisticasResponse || {};
       this.loading = false;
+      this.cdr.detectChanges();
     }).catch((error: any) => {
       console.error('Error al cargar fechas globales:', error);
       this.error = 'Error al cargar las fechas. Asegúrate de que el backend esté corriendo.';
       this.loading = false;
+      this.cdr.detectChanges();
     });
   }
 
@@ -186,7 +187,10 @@ export class CalendarioUnificadoComponent implements OnInit {
     this.nuevaFecha = {
       titulo: '',
       descripcion: '',
+      fecha_inicio: '',
+      hora_inicio: '00:00',
       fecha: '',
+      hora_limite: '23:59',
       tipo_fecha: '',
       es_global: false
     };
@@ -194,7 +198,42 @@ export class CalendarioUnificadoComponent implements OnInit {
 
   crearFechaGlobal(): void {
     if (!this.nuevaFecha.titulo || !this.nuevaFecha.fecha || !this.nuevaFecha.tipo_fecha) {
-      this.error = 'Por favor completa todos los campos obligatorios';
+      this.error = 'Por favor completa todos los campos obligatorios (título, fecha fin, tipo)';
+      return;
+    }
+
+    // Validar que fecha_inicio + hora_inicio sea anterior a fecha + hora_limite si existe
+    if (this.nuevaFecha.fecha_inicio && this.nuevaFecha.fecha) {
+      const horaInicio = this.nuevaFecha.hora_inicio || '00:00';
+      const horaFin = this.nuevaFecha.hora_limite || '23:59';
+      const fechaHoraInicio = new Date(this.nuevaFecha.fecha_inicio + 'T' + horaInicio);
+      const fechaHoraFin = new Date(this.nuevaFecha.fecha + 'T' + horaFin);
+      if (fechaHoraInicio >= fechaHoraFin) {
+        this.error = 'La fecha y hora de inicio deben ser anteriores a la fecha y hora fin';
+        this.cdr.detectChanges();
+        return;
+      }
+
+      // Validar que fecha_inicio no sea en el pasado (permite hoy)
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const inicioDate = new Date(this.nuevaFecha.fecha_inicio + 'T00:00:00');
+      inicioDate.setHours(0, 0, 0, 0);
+      if (inicioDate < hoy) {
+        this.error = 'La fecha de inicio no puede ser anterior a hoy';
+        this.cdr.detectChanges();
+        return;
+      }
+    }
+
+    // Validar que fecha_fin no sea en el pasado (permite hoy)
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaFinDate = new Date(this.nuevaFecha.fecha + 'T00:00:00');
+    fechaFinDate.setHours(0, 0, 0, 0);
+    if (fechaFinDate < hoy) {
+      this.error = 'La fecha fin no puede ser anterior a hoy';
+      this.cdr.detectChanges();
       return;
     }
 
@@ -333,6 +372,7 @@ export class CalendarioUnificadoComponent implements OnInit {
   cargarEstadoPeriodo(): void {
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     this.apiService.get('/periodo-propuestas/estado').subscribe({
       next: (response: any) => {
@@ -350,12 +390,14 @@ export class CalendarioUnificadoComponent implements OnInit {
         }
         
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error: any) => {
         console.error('❌ Error cargando estado del período:', error);
         this.error = 'Error al cargar el estado del período de propuestas';
         this.estadoPeriodo = null;
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
 
@@ -364,7 +406,7 @@ export class CalendarioUnificadoComponent implements OnInit {
   }
 
   cargarTodasFechasPropuestas(): void {
-    console.log('🔍 Cargando todas las fechas de entrega de propuestas...');
+    console.log('🔍 Cargando todas las fechas globales...');
     this.apiService.get('/fechas-importantes/globales').subscribe({
       next: (response: any) => {
         console.log('📦 Respuesta del servidor:', response);
@@ -377,23 +419,24 @@ export class CalendarioUnificadoComponent implements OnInit {
           console.warn('⚠️  La respuesta no es un array, limpiando fechas...');
           this.todasFechasPropuestas = [];
         } else {
-          // Filtrar solo las de tipo "entrega_propuesta" que sean globales
-          this.todasFechasPropuestas = todasFechas.filter((f: any) => 
-            f.tipo_fecha === 'entrega_propuesta'
-          );
+          // Mostrar TODAS las fechas globales (sin filtrar por tipo)
+          this.todasFechasPropuestas = todasFechas;
         }
         
-        console.log(`✅ Encontradas ${this.todasFechasPropuestas.length} fechas de entrega de propuestas`);
+        console.log(`✅ Encontradas ${this.todasFechasPropuestas.length} fechas globales`);
         
         if (this.todasFechasPropuestas.length === 0) {
-          console.log('📭 No hay fechas de entrega de propuestas en la base de datos');
+          console.log('📭 No hay fechas globales en la base de datos');
         } else {
           console.log('📋 Fechas:', this.todasFechasPropuestas);
         }
+        
+        this.cdr.detectChanges();
       },
       error: (error: any) => {
-        console.error('❌ Error cargando fechas de propuestas:', error);
+        console.error('❌ Error cargando fechas:', error);
         this.todasFechasPropuestas = []; // Limpiar en caso de error
+        this.cdr.detectChanges();
       }
     });
   }
@@ -408,19 +451,27 @@ export class CalendarioUnificadoComponent implements OnInit {
     return Math.ceil(diferencia / (1000 * 3600 * 24));
   }
 
-  habilitarPeriodo(): void {
+  async habilitarPeriodo(): Promise<void> {
     if (!this.estadoPeriodo?.id) {
       this.error = 'No hay período configurado para habilitar';
       return;
     }
 
-    if (!confirm('¿Estás seguro de habilitar el período de propuestas? Los estudiantes podrán crear nuevas propuestas.')) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de habilitar el período de propuestas? Los estudiantes podrán crear nuevas propuestas.',
+      'Habilitar Período',
+      'Habilitar',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
       return;
     }
 
     this.loading = true;
     this.error = '';
     this.mensaje = '';
+    this.cdr.detectChanges();
 
     this.apiService.put('/periodo-propuestas/habilitar', { 
       fecha_importante_id: this.estadoPeriodo.id 
@@ -434,23 +485,32 @@ export class CalendarioUnificadoComponent implements OnInit {
         console.error('Error:', error);
         this.error = error.error?.message || 'Error al habilitar el período';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  deshabilitarPeriodo(): void {
+  async deshabilitarPeriodo(): Promise<void> {
     if (!this.estadoPeriodo?.id) {
       this.error = 'No hay período configurado para deshabilitar';
       return;
     }
 
-    if (!confirm('¿Estás seguro de deshabilitar el período de propuestas? Los estudiantes NO podrán crear nuevas propuestas.')) {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de deshabilitar el período de propuestas? Los estudiantes NO podrán crear nuevas propuestas.',
+      'Deshabilitar Período',
+      'Deshabilitar',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
       return;
     }
 
     this.loading = true;
     this.error = '';
     this.mensaje = '';
+    this.cdr.detectChanges();
 
     this.apiService.put('/periodo-propuestas/deshabilitar', { 
       fecha_importante_id: this.estadoPeriodo.id 
@@ -464,18 +524,27 @@ export class CalendarioUnificadoComponent implements OnInit {
         console.error('Error:', error);
         this.error = error.error?.message || 'Error al deshabilitar el período';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  deshabilitarVencidos(): void {
-    if (!confirm('¿Deseas deshabilitar automáticamente todos los períodos vencidos?')) {
+  async deshabilitarVencidos(): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Deseas deshabilitar automáticamente todos los períodos vencidos?',
+      'Deshabilitar Vencidos',
+      'Deshabilitar',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
       return;
     }
 
     this.loading = true;
     this.error = '';
     this.mensaje = '';
+    this.cdr.detectChanges();
 
     this.apiService.post('/periodo-propuestas/deshabilitar-vencidos', {}).subscribe({
       next: (response: any) => {
@@ -487,6 +556,7 @@ export class CalendarioUnificadoComponent implements OnInit {
         console.error('Error:', error);
         this.error = error.error?.message || 'Error al deshabilitar períodos vencidos';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -537,6 +607,7 @@ export class CalendarioUnificadoComponent implements OnInit {
   cargarReuniones(): void {
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     this.apiService.get('/reuniones').subscribe({
       next: (response: any) => {
@@ -556,12 +627,14 @@ export class CalendarioUnificadoComponent implements OnInit {
         
         this.aplicarFiltrosReuniones();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error: any) => {
         console.error('Error al cargar reuniones:', error);
         this.error = 'Error al cargar las reuniones';
         this.reuniones = [];
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -652,7 +725,10 @@ export class CalendarioUnificadoComponent implements OnInit {
       id: fecha.id,
       titulo: fecha.titulo,
       descripcion: fecha.descripcion || '',
-      fecha_limite: this.convertirFechaParaInput(fecha.fecha_limite),
+      fecha_inicio: fecha.fecha_inicio ? this.convertirFechaParaInput(fecha.fecha_inicio) : '',
+      hora_inicio: fecha.hora_inicio || '00:00',
+      fecha_limite: this.convertirFechaParaInput(fecha.fecha_limite || fecha.fecha),
+      hora_limite: fecha.hora_limite || '23:59',
       habilitada: fecha.habilitada !== undefined ? fecha.habilitada : true,
       tipo_fecha: fecha.tipo_fecha || 'entrega_propuesta',
       es_global: fecha.es_global !== undefined ? fecha.es_global : true
@@ -682,7 +758,42 @@ export class CalendarioUnificadoComponent implements OnInit {
 
   guardarEdicionPropuesta() {
     if (!this.fechaPropuestaEditar.titulo || !this.fechaPropuestaEditar.fecha_limite) {
-      this.error = 'Por favor completa todos los campos obligatorios';
+      this.error = 'Por favor completa todos los campos obligatorios (título y fecha fin)';
+      return;
+    }
+
+    // Validar que fecha_inicio + hora_inicio sea anterior a fecha_limite + hora_limite si existe
+    if (this.fechaPropuestaEditar.fecha_inicio && this.fechaPropuestaEditar.fecha_limite) {
+      const horaInicio = this.fechaPropuestaEditar.hora_inicio || '00:00';
+      const horaFin = this.fechaPropuestaEditar.hora_limite || '23:59';
+      const fechaHoraInicio = new Date(this.fechaPropuestaEditar.fecha_inicio + 'T' + horaInicio);
+      const fechaHoraFin = new Date(this.fechaPropuestaEditar.fecha_limite + 'T' + horaFin);
+      if (fechaHoraInicio >= fechaHoraFin) {
+        this.error = 'La fecha y hora de inicio deben ser anteriores a la fecha y hora fin';
+        this.cdr.detectChanges();
+        return;
+      }
+
+      // Validar que fecha_inicio no sea en el pasado (permite hoy)
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const inicioDate = new Date(this.fechaPropuestaEditar.fecha_inicio + 'T00:00:00');
+      inicioDate.setHours(0, 0, 0, 0);
+      if (inicioDate < hoy) {
+        this.error = 'La fecha de inicio no puede ser anterior a hoy';
+        this.cdr.detectChanges();
+        return;
+      }
+    }
+
+    // Validar que fecha_fin no sea en el pasado (permite hoy)
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaFinDate = new Date(this.fechaPropuestaEditar.fecha_limite + 'T00:00:00');
+    fechaFinDate.setHours(0, 0, 0, 0);
+    if (fechaFinDate < hoy) {
+      this.error = 'La fecha fin no puede ser anterior a hoy';
+      this.cdr.detectChanges();
       return;
     }
 
@@ -695,9 +806,12 @@ export class CalendarioUnificadoComponent implements OnInit {
     const datosActualizar = {
       titulo: this.fechaPropuestaEditar.titulo,
       descripcion: this.fechaPropuestaEditar.descripcion,
+      fecha_inicio: this.fechaPropuestaEditar.fecha_inicio || null,
+      hora_inicio: this.fechaPropuestaEditar.hora_inicio || '00:00',
       fecha_limite: this.fechaPropuestaEditar.fecha_limite,
-      tipo_fecha: this.fechaPropuestaEditar.tipo_fecha || 'entrega_propuesta', // Asegurar que siempre se envíe
-      es_global: this.fechaPropuestaEditar.es_global !== undefined ? this.fechaPropuestaEditar.es_global : true, // Por defecto true
+      hora_limite: this.fechaPropuestaEditar.hora_limite || '23:59',
+      tipo_fecha: this.fechaPropuestaEditar.tipo_fecha || 'entrega_propuesta',
+      es_global: this.fechaPropuestaEditar.es_global !== undefined ? this.fechaPropuestaEditar.es_global : true,
       habilitada: this.fechaPropuestaEditar.habilitada
     };
 

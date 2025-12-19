@@ -20,7 +20,7 @@ const verificarAccesoProyecto = async (proyectoId, rut, rolId) => {
 
     return rows.length > 0;
   } catch (error) {
-    console.error('Error al verificar acceso:', error);
+    
     return false;
   }
 };
@@ -73,7 +73,7 @@ export const subirDocumento = async (req, res) => {
       version: nuevaVersion
     });
   } catch (error) {
-    console.error('Error al subir documento:', error);
+    
     res.status(500).json({ message: 'Error al subir el documento' });
   }
 };
@@ -99,7 +99,7 @@ export const obtenerDocumentosProyecto = async (req, res) => {
 
     res.json(documentos);
   } catch (error) {
-    console.error('Error al obtener documentos:', error);
+    
     res.status(500).json({ message: 'Error al obtener los documentos' });
   }
 };
@@ -124,7 +124,7 @@ export const obtenerDocumento = async (req, res) => {
 
     res.json(documento);
   } catch (error) {
-    console.error('Error al obtener documento:', error);
+    
     res.status(500).json({ message: 'Error al obtener el documento' });
   }
 };
@@ -155,7 +155,7 @@ export const descargarDocumento = async (req, res) => {
 
     res.download(filePath, documento.nombre_original);
   } catch (error) {
-    console.error('Error al descargar documento:', error);
+    
     res.status(500).json({ message: 'Error al descargar el documento' });
   }
 };
@@ -204,7 +204,7 @@ export const actualizarEstadoDocumento = async (req, res) => {
 
     res.json({ message: 'Estado actualizado exitosamente' });
   } catch (error) {
-    console.error('Error al actualizar estado:', error);
+    
     res.status(500).json({ message: 'Error al actualizar el estado del documento' });
   }
 };
@@ -248,7 +248,7 @@ export const eliminarDocumento = async (req, res) => {
 
     res.json({ message: 'Documento eliminado exitosamente' });
   } catch (error) {
-    console.error('Error al eliminar documento:', error);
+    
     res.status(500).json({ message: 'Error al eliminar el documento' });
   }
 };
@@ -269,7 +269,7 @@ export const obtenerVersionesDocumento = async (req, res) => {
 
     res.json(versiones);
   } catch (error) {
-    console.error('Error al obtener versiones:', error);
+    
     res.status(500).json({ message: 'Error al obtener las versiones del documento' });
   }
 };

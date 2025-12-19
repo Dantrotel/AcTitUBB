@@ -398,7 +398,7 @@ async function notificarReunionConfirmada(reunion_id) {
     // - Integración con calendarios externos (Google Calendar, Outlook)
     // - Webhooks
     
-    console.log(`📅 Reunión confirmada ID: ${reunion_id} - Notificación enviada`);
+    
 }
 
 /**

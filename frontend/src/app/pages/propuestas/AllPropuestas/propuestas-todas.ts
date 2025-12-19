@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './../../../services/api';
 import { Router } from '@angular/router';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-propuestas-todas',
@@ -47,7 +48,12 @@ export class PropuestasTodas implements OnInit {
     return this.propuestas.filter(p => p.estado === 'correcciones').length;
   }
 
-  constructor(private apiService: ApiService, private router: Router) {}
+  constructor(
+    private apiService: ApiService,
+    private router: Router,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.cargarPropuestas();
@@ -57,14 +63,14 @@ export class PropuestasTodas implements OnInit {
     this.loading = true;
     this.apiService.getPropuestas().subscribe({
       next: (res: any) => {
-        console.log('Propuestas obtenidas:', res);
         this.propuestas = Array.isArray(res) ? res : (res.propuestas || []);
         this.aplicarFiltros();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
-        console.error('Error al cargar propuestas:', err);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -107,6 +113,7 @@ export class PropuestasTodas implements OnInit {
     this.paginaActual = 1;
     this.calcularPaginas();
     this.aplicarPaginacion();
+    this.cdr.detectChanges();
   }
 
   calcularPaginas() {
@@ -117,6 +124,7 @@ export class PropuestasTodas implements OnInit {
     const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
     const fin = inicio + this.elementosPorPagina;
     this.propuestasPaginadas = this.propuestasFiltradas.slice(inicio, fin);
+    this.cdr.detectChanges();
   }
 
   cambiarPagina(pagina: number) {
@@ -167,8 +175,8 @@ export class PropuestasTodas implements OnInit {
 
   asignarPropuesta(id: string) {
     this.apiService.asignarPropuesta(id, {}).subscribe({
-      next: () => alert('Te has asignado esta propuesta correctamente.'),
-      error: () => alert('No se pudo asignar la propuesta.')
+      next: () => this.notificationService.success('Te has asignado esta propuesta correctamente.'),
+      error: () => this.notificationService.error('No se pudo asignar la propuesta.')
     });
   }
 

@@ -50,10 +50,8 @@ export class CronogramaCompletoComponent implements OnInit {
     this.apiService.obtenerCronograma(this.projectId).subscribe({
       next: (response: any) => {
         this.cronograma = response.cronograma;
-        console.log('Cronograma cargado:', this.cronograma);
       },
       error: (error: any) => {
-        console.error('Error al cargar cronograma:', error);
         this.cronograma = null;
       }
     });
@@ -61,7 +59,6 @@ export class CronogramaCompletoComponent implements OnInit {
 
   crearCronograma() {
     // Aquí podrías abrir un modal o navegar a una página para crear cronograma
-    console.log('Crear cronograma para proyecto:', this.projectId);
     // Por ahora, creamos un cronograma básico
     const cronogramaData = {
       nombre_cronograma: 'Cronograma Principal',
@@ -72,11 +69,9 @@ export class CronogramaCompletoComponent implements OnInit {
     
     this.apiService.crearCronograma(this.projectId, cronogramaData).subscribe({
       next: (response: any) => {
-        console.log('Cronograma creado:', response);
         this.cargarCronograma(); // Recargar el cronograma
       },
       error: (error: any) => {
-        console.error('Error al crear cronograma:', error);
       }
     });
   }
@@ -171,7 +166,6 @@ export class CronogramaCompletoComponent implements OnInit {
   // Métodos de acciones
   editarCronograma() {
     // Abrir modal de edición de cronograma
-    console.log('Editar cronograma:', this.cronograma?.id);
   }
 
   cambiarEstadoCronograma() {
@@ -197,7 +191,6 @@ export class CronogramaCompletoComponent implements OnInit {
         this.cargarCronograma();
       },
       error: (error: any) => {
-        console.error('Error al cambiar estado del cronograma:', error);
       }
     });
   }

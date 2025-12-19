@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { NotificationService } from '../../services/notification.service';
 
 interface Profesor {
   rut: string;
@@ -120,7 +121,9 @@ export class SolicitudesReunionComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {
     // Obtener rol del usuario desde localStorage
     const userData = localStorage.getItem('userData');
@@ -162,10 +165,13 @@ export class SolicitudesReunionComponent implements OnInit {
   }
 
   cargarSolicitudes() {
+    console.log('🔄 Cargando solicitudes...');
+    this.isLoading = true;
     this.apiService.getMisSolicitudes().subscribe({
       next: (response: any) => {
-        console.log('Mis solicitudes (raw):', response);
+        console.log('✅ Mis solicitudes (raw):', response);
         this.solicitudes = response.data || [];
+        this.isLoading = false;
         
         // Debug: Verificar fecha_propuesta de cada solicitud
         this.solicitudes.forEach((sol, index) => {
@@ -176,36 +182,47 @@ export class SolicitudesReunionComponent implements OnInit {
             estado: sol.estado
           });
         });
+        
+        console.log('📊 Total de solicitudes:', this.solicitudes.length);
+        this.cdr.detectChanges(); // Force UI update
       },
       error: (error) => {
-        console.error('Error al cargar solicitudes:', error);
+        console.error('❌ Error al cargar solicitudes:', error);
+        this.isLoading = false;
         this.errorMessage = 'Error al cargar las solicitudes';
+        this.cdr.detectChanges(); // Force UI update on error
       }
     });
   }
 
   cargarHorariosDisponibles(profesorRut: string) {
+    console.log('🔄 Cargando horarios disponibles para:', profesorRut);
     this.isCargandoHorarios = true;
     this.errorMessage = '';
     this.horariosDisponibles = [];
+    this.cdr.detectChanges();
 
     this.apiService.getHorariosDisponibles(profesorRut, this.diasAdelante).subscribe({
       next: (response: any) => {
-        console.log('Horarios disponibles:', response);
+        console.log('✅ Horarios disponibles recibidos:', response);
         this.horariosDisponibles = response.data || [];
         this.proyectoActual = response.proyecto || null;
         this.mostrarHorarios = true;
         this.isCargandoHorarios = false;
+        console.log('📊 Total horarios:', this.horariosDisponibles.length);
 
         if (this.horariosDisponibles.length === 0) {
           this.errorMessage = `${this.profesorSeleccionado?.nombre} no tiene horarios disponibles en los próximos ${this.diasAdelante} días.`;
         }
+        
+        this.cdr.detectChanges(); // Force UI update
       },
       error: (error) => {
-        console.error('Error al cargar horarios:', error);
+        console.error('❌ Error al cargar horarios:', error);
         this.errorMessage = error.error?.message || 'Error al cargar horarios disponibles';
         this.isCargandoHorarios = false;
         this.mostrarHorarios = false;
+        this.cdr.detectChanges(); // Force UI update on error
       }
     });
   }
@@ -235,7 +252,7 @@ export class SolicitudesReunionComponent implements OnInit {
   // RESERVAR HORARIO
   // ==========================================
 
-  seleccionarHorario(horario: HorarioDisponible) {
+  async seleccionarHorario(horario: HorarioDisponible): Promise<void> {
     if (!this.proyectoActual) {
       this.errorMessage = 'No se pudo identificar el proyecto';
       return;
@@ -247,12 +264,11 @@ export class SolicitudesReunionComponent implements OnInit {
     }
 
     // Confirmar reserva
-    const confirmacion = confirm(
-      `¿Deseas reservar este horario?\n\n` +
-      `Profesor: ${horario.profesor_nombre}\n` +
-      `Fecha: ${this.formatearFecha(horario.fecha_propuesta)}\n` +
-      `Hora: ${this.formatearHora(horario.hora_inicio)} - ${this.formatearHora(horario.hora_fin)}\n` +
-      `Día: ${this.capitalizarDia(horario.dia_semana)}`
+    const confirmacion = await this.notificationService.confirm(
+      `Profesor: ${this.profesorSeleccionado?.nombre || 'Profesor'}\nFecha: ${this.formatearFecha(horario.fecha_propuesta)}\nHora: ${this.formatearHora(horario.hora_inicio)} - ${this.formatearHora(horario.hora_fin)}\nDía: ${this.capitalizarDia(horario.dia_semana)}`,
+      '¿Deseas reservar este horario?',
+      'Reservar',
+      'Cancelar'
     );
 
     if (!confirmacion) return;
@@ -300,10 +316,15 @@ export class SolicitudesReunionComponent implements OnInit {
   // CANCELAR RESERVA
   // ==========================================
 
-  cancelarReserva(solicitudId: number) {
-    if (!confirm('¿Estás seguro de cancelar esta reserva? El horario quedará disponible nuevamente.')) {
-      return;
-    }
+  async cancelarReserva(solicitudId: number): Promise<void> {
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de cancelar esta reserva? El horario quedará disponible nuevamente.',
+      'Confirmar cancelación',
+      'Sí, cancelar',
+      'No'
+    );
+    
+    if (!confirmed) return;
 
     this.isLoading = true;
     this.apiService.cancelarReserva(solicitudId).subscribe({
@@ -330,10 +351,20 @@ export class SolicitudesReunionComponent implements OnInit {
   // RESPONDER SOLICITUD (PROFESOR)
   // ==========================================
 
-  responderSolicitud(solicitudId: number, respuesta: 'aceptar' | 'rechazar') {
+  async responderSolicitud(solicitudId: number, respuesta: 'aceptar' | 'rechazar'): Promise<void> {
     let comentarios = '';
     if (respuesta === 'rechazar') {
-      comentarios = prompt('Motivo del rechazo:') || '';
+      const motivo = await this.notificationService.prompt(
+        'Motivo del rechazo:',
+        'Rechazar solicitud',
+        '',
+        'Rechazar',
+        'Cancelar'
+      );
+      
+      if (motivo === null) return;
+      
+      comentarios = motivo;
       if (!comentarios.trim()) {
         this.errorMessage = 'Debe especificar el motivo del rechazo';
         setTimeout(() => this.errorMessage = '', 3000);
@@ -463,9 +494,24 @@ export class SolicitudesReunionComponent implements OnInit {
   getEstadoIcon(estado: string): string {
     switch (estado) {
       case 'pendiente': return '⏳';
-      case 'aceptada': return '✅';
+      case 'aceptada_profesor': return '👨‍🏫';
+      case 'aceptada_estudiante': return '🎓';
+      case 'confirmada': return '✅';
       case 'rechazada': return '❌';
+      case 'cancelada': return '🚫';
       default: return '❓';
+    }
+  }
+
+  getEstadoIconClass(estado: string): string {
+    switch (estado) {
+      case 'pendiente': return 'fas fa-clock';
+      case 'aceptada_profesor': return 'fas fa-user-check';
+      case 'aceptada_estudiante': return 'fas fa-user-graduate';
+      case 'confirmada': return 'fas fa-check-circle';
+      case 'rechazada': return 'fas fa-times-circle';
+      case 'cancelada': return 'fas fa-ban';
+      default: return 'fas fa-question-circle';
     }
   }
 

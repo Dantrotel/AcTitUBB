@@ -49,7 +49,7 @@ export const verificarPropuestaExiste = async (propuesta_id) => {
  */
 export const verificarProfesorExiste = async (profesor_rut) => {
   const [profesor] = await pool.execute(
-    'SELECT rut FROM usuarios WHERE rut = ? AND rol_id = (SELECT id FROM roles WHERE nombre = "profesor")',
+    'SELECT rut FROM usuarios WHERE rut = ? AND rol_id IN (2, 3)',
     [profesor_rut]
   );
   
@@ -139,11 +139,11 @@ export const obtenerEstadisticasUsuarios = async (carrera_id = null) => {
     paramsEstudiantes.push(carrera_id);
   }
   
-  // Profesores: filtrar por departamento de la carrera si aplica
+  // Profesores y administradores: filtrar por departamento de la carrera si aplica
   let queryProfesores = `
     SELECT COUNT(*) as total_profesores
     FROM usuarios u
-    WHERE u.rol_id = (SELECT id FROM roles WHERE nombre = 'profesor')
+    WHERE u.rol_id IN (2, 3)
   `;
   
   const paramsProfesores = [];

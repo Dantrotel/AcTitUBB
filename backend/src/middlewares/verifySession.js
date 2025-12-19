@@ -3,35 +3,35 @@ import { isBlacklisted } from './blacklist.js'; // ajusta la ruta según tu proy
 import { pool } from '../db/connectionDB.js';
 
 const verifySession = async (req, res, next) => {
-  console.log('🔍 verifySession - Método:', req.method, 'URL:', req.url);
-  console.log('🔍 verifySession - Headers Authorization:', req.headers.authorization ? 'Presente' : 'Ausente');
+  
+  
   
   let token = req.headers.authorization;
 
   if (!token) {
-    console.log('❌ verifySession - No se encontró token de autorización');
+    console.log('⚠️ No authorization header');
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  console.log('🔍 verifySession - Token completo:', token.substring(0, 30) + '...');
+  console.log('🔑 Token recibido (primeros 20 chars):', token.substring(0, 20) + '...');
   token = token.split(" ")[1];
-  console.log('🔍 verifySession - Token extraído:', token ? token.substring(0, 30) + '...' : 'UNDEFINED');
+  console.log('🔑 Token extraído:', token ? token.substring(0, 20) + '...' : 'UNDEFINED');
 
   // Verificar si el token está en la blacklist (IMPORTANTE: await porque isBlacklisted es async)
   const tokenBlacklisted = await isBlacklisted(token);
   if (tokenBlacklisted) {
-    console.log('❌ verifySession - Token en blacklist (revocado)');
+    console.log('🚫 Token en blacklist');
     return res.status(401).json({ 
       message: "Token revoked. Please login again.",
       code: "TOKEN_REVOKED"
     });
   }
-  console.log('✅ verifySession - Token NO está en blacklist');
+  
 
   try {
-    console.log('🔍 verifySession - Verificando token con JWT...');
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('✅ verifySession - Token verificado exitosamente:', decoded);
+    
     const { rut, rol_id, type } = decoded;
     
     // Verificar que es un access token válido
@@ -82,7 +82,7 @@ const verifySession = async (req, res, next) => {
         }
       }
     } catch (dbError) {
-      console.error('⚠️  Error al obtener datos adicionales del usuario:', dbError);
+      
       // Continuar sin estos datos, no es crítico
     }
     
@@ -97,19 +97,14 @@ const verifySession = async (req, res, next) => {
       carreras_administradas: carreras_administradas // NUEVO: Array con todas las carreras
     };
     
-    console.log('🔐 Usuario autenticado:', {
-      rut: req.user.rut,
-      rol_id: req.user.rol_id,
-      rol: req.user.rol,
-      carrera_administrada_id: req.user.carrera_administrada_id
-    });
+    
     
     next();
   } catch (error) {
-    console.error('❌ verifySession - Error al verificar token:', error.name, error.message);
+    
     
     if (error.name === 'TokenExpiredError') {
-      console.log('❌ verifySession - Token expirado');
+      
       return res.status(401).json({ 
         message: "Token expirado. Usa el refresh token para obtener uno nuevo.",
         code: "TOKEN_EXPIRED"
@@ -117,10 +112,10 @@ const verifySession = async (req, res, next) => {
     }
     
     if (error.name === 'JsonWebTokenError') {
-      console.log('❌ verifySession - Token JWT inválido:', error.message);
+      
     }
     
-    console.log('❌ verifySession - Error de verificación de token:', error.message);
+    
     return res.status(401).json({ 
       message: "Token inválido",
       code: "INVALID_TOKEN"
@@ -152,11 +147,18 @@ const puedeAcceder = (rolUsuario, rolRequerido) => {
 // Admin (3) puede acceder a rutas de profesores (2) y estudiantes (1)
 export const checkRole = (...rolesPermitidos) => {
   return (req, res, next) => {
+    
+    
+    
+    
+    
     if (!req.rol_id) {
+      
       return res.status(403).json({ message: "Sin rol definido" });
     }
 
     const rolUsuario = Number(req.rol_id);
+    console.log('🔐 checkRole - Verificando rol:', rolUsuario);
     
     // Super Admin siempre tiene acceso
     if (rolUsuario === 4) {

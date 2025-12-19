@@ -12,7 +12,7 @@ export const crearDisponibilidad = async (disponibilidadData) => {
     
     // Verificar si ya existe una disponibilidad para ese usuario en ese día y horario
     const verificarQuery = `
-        SELECT id FROM disponibilidades 
+        SELECT id FROM disponibilidad_horarios 
         WHERE usuario_rut = ? AND dia_semana = ? 
         AND ((hora_inicio <= ? AND hora_fin > ?) OR (hora_inicio < ? AND hora_fin >= ?))
         AND activo = TRUE
@@ -27,7 +27,7 @@ export const crearDisponibilidad = async (disponibilidadData) => {
     }
     
     const insertQuery = `
-        INSERT INTO disponibilidades (usuario_rut, dia_semana, hora_inicio, hora_fin)
+        INSERT INTO disponibilidad_horarios (usuario_rut, dia_semana, hora_inicio, hora_fin)
         VALUES (?, ?, ?, ?)
     `;
     
@@ -43,7 +43,7 @@ export const crearDisponibilidad = async (disponibilidadData) => {
 export const obtenerDisponibilidadesUsuario = async (usuario_rut) => {
     try {
         const query = `
-            SELECT * FROM disponibilidades 
+            SELECT * FROM disponibilidad_horarios 
             WHERE usuario_rut = ? AND activo = TRUE
             ORDER BY 
                 FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
@@ -66,7 +66,7 @@ export const obtenerDisponibilidadesUsuario = async (usuario_rut) => {
 export const obtenerTodasDisponibilidadesUsuario = async (usuario_rut) => {
     try {
         const query = `
-            SELECT * FROM disponibilidades 
+            SELECT * FROM disponibilidad_horarios 
             WHERE usuario_rut = ?
             ORDER BY 
                 FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'),
@@ -97,8 +97,8 @@ export const encontrarCoincidenciasDisponibilidad = async (profesor_rut, estudia
             dp.hora_fin as profesor_hora_fin,
             de.hora_inicio as estudiante_hora_inicio,
             de.hora_fin as estudiante_hora_fin
-        FROM disponibilidades dp
-        INNER JOIN disponibilidades de ON dp.dia_semana = de.dia_semana
+        FROM disponibilidad_horarios dp
+        INNER JOIN disponibilidad_horarios de ON dp.dia_semana = de.dia_semana
         WHERE dp.usuario_rut = ? 
         AND de.usuario_rut = ?
         AND dp.activo = TRUE 
@@ -429,7 +429,7 @@ export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, u
     valores.push(disponibilidad_id, usuario_rut);
     
     const query = `
-        UPDATE disponibilidades 
+        UPDATE disponibilidad_horarios 
         SET ${campos.join(', ')}
         WHERE id = ? AND usuario_rut = ?
     `;
@@ -443,7 +443,7 @@ export const actualizarDisponibilidad = async (disponibilidad_id, usuario_rut, u
  */
 export const eliminarDisponibilidad = async (disponibilidad_id, usuario_rut) => {
     const query = `
-        UPDATE disponibilidades 
+        UPDATE disponibilidad_horarios 
         SET activo = FALSE 
         WHERE id = ? AND usuario_rut = ?
     `;

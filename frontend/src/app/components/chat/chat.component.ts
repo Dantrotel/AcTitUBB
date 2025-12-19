@@ -57,7 +57,6 @@ export class ChatComponent implements OnInit, OnDestroy {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.rutUsuarioActual = payload.rut;
       } catch (e) {
-        console.error('Error al decodificar token:', e);
       }
     }
 
@@ -102,7 +101,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       await this.chatSrv.obtenerTotalNoLeidos();
       
     } catch (error) {
-      console.error('Error inicializando chat:', error);
     } finally {
       this.cargando.set(false);
     }
@@ -134,7 +132,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.scrollToBottom();
       
     } catch (error) {
-      console.error('Error al seleccionar conversación:', error);
     }
   }
 
@@ -155,7 +152,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.chatSrv.notificarEscribiendo(conversacion.id, false);
       
     } catch (error) {
-      console.error('Error enviando mensaje:', error);
     }
   }
 
@@ -196,7 +192,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       const usuarios = await this.chatSrv.buscarUsuarios(termino);
       this.usuariosBuscados.set(usuarios);
     } catch (error) {
-      console.error('Error buscando usuarios:', error);
     }
   }
 
@@ -219,7 +214,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.usuariosBuscados.set([]);
       
     } catch (error) {
-      console.error('Error iniciando conversación:', error);
     }
   }
 
@@ -259,7 +253,6 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.mensajesContainer.nativeElement.scrollHeight;
       }
     } catch (err) {
-      console.error('Error al hacer scroll:', err);
     }
   }
 

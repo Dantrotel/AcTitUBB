@@ -262,7 +262,7 @@ async function registrarEnHistorial(solicitud, accion, realizado_por, comentario
             comentarios
         ]);
     } catch (error) {
-        console.error('Error registrando en historial:', error);
+        
         // No lanzar error para no interrumpir el flujo principal
     }
 }
@@ -295,7 +295,7 @@ async function registrarEnHistorialDirecto(datos, accion, realizado_por, comenta
             comentarios
         ]);
     } catch (error) {
-        console.error('Error registrando en historial directo:', error);
+        
     }
 }
 
@@ -706,7 +706,7 @@ export const crearActaReunion = async ({
 
         return result.insertId;
     } catch (error) {
-        console.error('Error al crear acta:', error);
+        
         throw error;
     }
 };
@@ -748,7 +748,7 @@ export const obtenerActaPorId = async (actaId) => {
 
         return acta;
     } catch (error) {
-        console.error('Error al obtener acta:', error);
+        
         throw error;
     }
 };
@@ -779,7 +779,7 @@ export const obtenerActasPorProyecto = async (proyectoId) => {
 
         return rows;
     } catch (error) {
-        console.error('Error al obtener actas por proyecto:', error);
+        
         throw error;
     }
 };
@@ -811,7 +811,7 @@ export const obtenerActaPorReunion = async (reunionId) => {
 
         return acta;
     } catch (error) {
-        console.error('Error al obtener acta por reunión:', error);
+        
         throw error;
     }
 };
@@ -884,7 +884,7 @@ export const actualizarActa = async (actaId, data, usuario_rut) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        console.error('Error al actualizar acta:', error);
+        
         throw error;
     }
 };
@@ -956,7 +956,7 @@ export const firmarActa = async (actaId, usuario_rut, tipo) => {
             estado: actaActualizada[0].estado
         };
     } catch (error) {
-        console.error('Error al firmar acta:', error);
+        
         throw error;
     }
 };
@@ -993,7 +993,7 @@ export const publicarActa = async (actaId, usuario_rut) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        console.error('Error al publicar acta:', error);
+        
         throw error;
     }
 };
@@ -1038,7 +1038,7 @@ export const archivarActa = async (actaId, usuario_rut) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        console.error('Error al archivar acta:', error);
+        
         throw error;
     }
 };

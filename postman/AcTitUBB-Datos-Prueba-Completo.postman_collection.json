@@ -1,0 +1,855 @@
+{
+	"info": {
+		"_postman_id": "actitubb-datos-prueba-completo",
+		"name": "AcTitUBB - Datos de Prueba Completos",
+		"description": "Colección completa para crear todos los datos de prueba del sistema siguiendo el flujo lógico de la aplicación",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Setup y Autenticación",
+			"item": [
+				{
+					"name": "Login SuperAdmin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('superAdminToken', jsonData.accessToken);",
+									"    pm.environment.set('currentToken', jsonData.accessToken);",
+									"    console.log('✅ SuperAdmin token guardado');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"superadmin@ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "login"]
+						},
+						"description": "Login como SuperAdmin (rol 4) para crear estructura académica y usuarios"
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Estructura Académica",
+			"item": [
+				{
+					"name": "Crear Facultad de Ingeniería",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.facultad && jsonData.facultad.id) {",
+									"        pm.environment.set('facultadIngenieriaId', jsonData.facultad.id);",
+									"        console.log('✅ Facultad Ingeniería ID:', jsonData.facultad.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Facultad de Ingeniería\",\n    \"codigo\": \"FI\",\n    \"descripcion\": \"Facultad de Ingeniería de la Universidad del Bío-Bío\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/facultades",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "facultades"]
+						}
+					}
+				},
+				{
+					"name": "Crear Depto Sistemas de Información",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.departamento && jsonData.departamento.id) {",
+									"        pm.environment.set('deptoDSIId', jsonData.departamento.id);",
+									"        console.log('✅ Departamento DSI ID:', jsonData.departamento.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Departamento de Sistemas de Información\",\n    \"codigo\": \"DSI\",\n    \"facultad_id\": {{facultadIngenieriaId}},\n    \"descripcion\": \"Departamento de Sistemas de Información\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/departamentos",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "departamentos"]
+						}
+					}
+				},
+				{
+					"name": "Crear Depto Ciencias de la Computación",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.departamento && jsonData.departamento.id) {",
+									"        pm.environment.set('deptoDCCId', jsonData.departamento.id);",
+									"        console.log('✅ Departamento DCC ID:', jsonData.departamento.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Departamento de Ciencias de la Computación\",\n    \"codigo\": \"DCC\",\n    \"facultad_id\": {{facultadIngenieriaId}},\n    \"descripcion\": \"Departamento de Ciencias de la Computación\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/departamentos",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "departamentos"]
+						}
+					}
+				},
+				{
+					"name": "Crear Carrera ICI",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.carrera && jsonData.carrera.id) {",
+									"        pm.environment.set('carreraICIId', jsonData.carrera.id);",
+									"        console.log('✅ Carrera ICI ID:', jsonData.carrera.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Ingeniería Civil en Informática\",\n    \"codigo\": \"ICI\",\n    \"facultad_id\": {{facultadIngenieriaId}},\n    \"titulo_profesional\": \"Ingeniero Civil en Informática\",\n    \"duracion_semestres\": 12,\n    \"descripcion\": \"Carrera de Ingeniería Civil en Informática\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/carreras",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "carreras"]
+						}
+					}
+				},
+				{
+					"name": "Crear Carrera IECI",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.carrera && jsonData.carrera.id) {",
+									"        pm.environment.set('carreraIECIId', jsonData.carrera.id);",
+									"        console.log('✅ Carrera IECI ID:', jsonData.carrera.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Ingeniería de Ejecución en Computación e Informática\",\n    \"codigo\": \"IECI\",\n    \"facultad_id\": {{facultadIngenieriaId}},\n    \"titulo_profesional\": \"Ingeniero de Ejecución en Computación e Informática\",\n    \"duracion_semestres\": 8,\n    \"descripcion\": \"Carrera de Ingeniería de Ejecución\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/carreras",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "carreras"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Crear Profesores",
+			"item": [
+				{
+					"name": "Crear Dr. Juan Pérez (Profesor Guía)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"12345678-9\",\n    \"nombre\": \"Dr. Juan Pérez Soto\",\n    \"email\": \"juan.perez@ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 2,\n    \"confirmado\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Juan Pérez a DSI",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profesor_rut\": \"12345678-9\",\n    \"es_principal\": true,\n    \"fecha_ingreso\": \"2020-03-01\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/departamentos/{{deptoDSIId}}/profesores",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "departamentos", "{{deptoDSIId}}", "profesores"]
+						}
+					}
+				},
+				{
+					"name": "Crear Dra. María González",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"98765432-1\",\n    \"nombre\": \"Dra. María González López\",\n    \"email\": \"maria.gonzalez@ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 2,\n    \"confirmado\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Asignar María González a DSI",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profesor_rut\": \"98765432-1\",\n    \"es_principal\": false,\n    \"fecha_ingreso\": \"2019-08-01\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/departamentos/{{deptoDSIId}}/profesores",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "departamentos", "{{deptoDSIId}}", "profesores"]
+						}
+					}
+				},
+				{
+					"name": "Crear Dr. Carlos Ramírez",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"11223344-5\",\n    \"nombre\": \"Dr. Carlos Ramírez Torres\",\n    \"email\": \"carlos.ramirez@ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 2,\n    \"confirmado\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Carlos Ramírez a DCC",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profesor_rut\": \"11223344-5\",\n    \"es_principal\": true,\n    \"fecha_ingreso\": \"2018-03-01\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/departamentos/{{deptoDCCId}}/profesores",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "departamentos", "{{deptoDCCId}}", "profesores"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Crear Estudiantes",
+			"item": [
+				{
+					"name": "Crear Luis Morales",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"20111222-3\",\n    \"nombre\": \"Luis Andrés Morales Castro\",\n    \"email\": \"luis.morales@alumnos.ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 1,\n    \"confirmado\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Luis Morales a ICI",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estudiante_rut\": \"20111222-3\",\n    \"ano_ingreso\": 2020,\n    \"semestre_actual\": 8,\n    \"estado_estudiante\": \"regular\",\n    \"fecha_ingreso\": \"2020-03-01\",\n    \"es_carrera_principal\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/carreras/{{carreraICIId}}/estudiantes",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "carreras", "{{carreraICIId}}", "estudiantes"]
+						}
+					}
+				},
+				{
+					"name": "Crear Camila Rojas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"20222333-4\",\n    \"nombre\": \"Camila Andrea Rojas Fernández\",\n    \"email\": \"camila.rojas@alumnos.ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 1,\n    \"confirmado\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Camila Rojas a ICI",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estudiante_rut\": \"20222333-4\",\n    \"ano_ingreso\": 2020,\n    \"semestre_actual\": 8,\n    \"estado_estudiante\": \"regular\",\n    \"fecha_ingreso\": \"2020-03-01\",\n    \"es_carrera_principal\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/carreras/{{carreraICIId}}/estudiantes",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "carreras", "{{carreraICIId}}", "estudiantes"]
+						}
+					}
+				},
+				{
+					"name": "Crear Diego Vargas",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rut\": \"20333444-5\",\n    \"nombre\": \"Diego Sebastián Vargas Muñoz\",\n    \"email\": \"diego.vargas@alumnos.ubiobio.cl\",\n    \"password\": \"1234\",\n    \"rol_id\": 1,\n    \"confirmado\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/usuarios",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "usuarios"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Diego Vargas a IECI",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{currentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estudiante_rut\": \"20333444-5\",\n    \"ano_ingreso\": 2021,\n    \"semestre_actual\": 7,\n    \"estado_estudiante\": \"regular\",\n    \"fecha_ingreso\": \"2021-03-01\",\n    \"es_carrera_principal\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/estructura-academica/carreras/{{carreraIECIId}}/estudiantes",
+							"host": ["{{baseUrl}}"],
+							"path": ["estructura-academica", "carreras", "{{carreraIECIId}}", "estudiantes"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Login Estudiante",
+			"item": [
+				{
+					"name": "Login Luis Morales",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('studentToken', jsonData.accessToken);",
+									"    pm.environment.set('currentToken', jsonData.accessToken);",
+									"    console.log('✅ Token estudiante Luis Morales guardado');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"luis.morales@alumnos.ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Crear Propuestas",
+			"item": [
+				{
+					"name": "Crear Propuesta - Sistema Inventario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.propuesta && jsonData.propuesta.id) {",
+									"        pm.environment.set('propuesta1Id', jsonData.propuesta.id);",
+									"        console.log('✅ Propuesta 1 ID:', jsonData.propuesta.id);",
+									"    } else if (jsonData.id) {",
+									"        pm.environment.set('propuesta1Id', jsonData.id);",
+									"        console.log('✅ Propuesta 1 ID:', jsonData.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{studentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Sistema Web de Gestión de Inventario para PYMES\",\n    \"descripcion\": \"Desarrollo de un sistema web completo para la gestión de inventario, ventas y compras orientado a pequeñas y medianas empresas del sector retail. El sistema permitirá control de stock en tiempo real, gestión de proveedores, generación de reportes y análisis de ventas.\",\n    \"objetivos\": \"1. Implementar módulo de gestión de inventario con alertas de stock bajo\\n2. Desarrollar módulo de ventas con facturación electrónica\\n3. Crear módulo de compras y gestión de proveedores\\n4. Generar reportes y dashboards analíticos en tiempo real\\n5. Implementar sistema de usuarios y permisos granular\",\n    \"metodologia\": \"Se utilizará metodología ágil Scrum con sprints de 2 semanas. Stack tecnológico: Angular 18, Node.js, Express, MySQL. Se aplicarán patrones de diseño MVC y arquitectura en 3 capas. Integración con API del SII para facturación electrónica.\",\n    \"palabras_clave\": \"gestión inventario, sistema ventas, PYME, web application, facturación electrónica, Angular, Node.js\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/propuestas",
+							"host": ["{{baseUrl}}"],
+							"path": ["propuestas"]
+						},
+						"description": "Crea propuesta para proyecto de título"
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Gestión de Propuestas (Admin)",
+			"item": [
+				{
+					"name": "Login Admin para gestionar",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('adminToken', jsonData.accessToken);",
+									"    pm.environment.set('currentToken', jsonData.accessToken);",
+									"    console.log('✅ Token admin guardado');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "login"]
+						}
+					}
+				},
+				{
+					"name": "Asignar Profesor Guía a Propuesta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"propuesta_id\": {{propuesta1Id}},\n    \"profesor_rut\": \"12345678-9\",\n    \"rol_profesor_id\": 2\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/asignaciones",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "asignaciones"]
+						},
+						"description": "Asigna Dr. Juan Pérez como Profesor Guía (rol_profesor_id: 2)"
+					}
+				},
+				{
+					"name": "Asignar Profesor Informante",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"propuesta_id\": {{propuesta1Id}},\n    \"profesor_rut\": \"98765432-1\",\n    \"rol_profesor_id\": 4\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/asignaciones",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "asignaciones"]
+						},
+						"description": "Asigna Dra. María González como Profesora Informante (rol_profesor_id: 4)"
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Crear Fechas Importantes",
+			"item": [
+				{
+					"name": "Crear Fecha Global - Período Propuestas",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.fecha && jsonData.fecha.id) {",
+									"        pm.environment.set('fechaPeriodoId', jsonData.fecha.id);",
+									"        console.log('✅ Fecha Período ID:', jsonData.fecha.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Período de Entrega de Propuestas 2024-1\",\n    \"descripcion\": \"Período habilitado para que estudiantes envíen sus propuestas de proyectos de título\",\n    \"fecha_inicio\": \"2024-03-01\",\n    \"fecha\": \"2024-04-30\",\n    \"hora_limite\": \"23:59:59\",\n    \"tipo_fecha\": \"entrega_propuesta\",\n    \"ambito\": \"global\",\n    \"carrera_id\": null\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/calendario/admin/global",
+							"host": ["{{baseUrl}}"],
+							"path": ["calendario", "admin", "global"]
+						}
+					}
+				},
+				{
+					"name": "Crear Fecha Global - Entrega Final",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{adminToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"titulo\": \"Fecha Límite Entrega Final 2024\",\n    \"descripcion\": \"Fecha límite para entrega de proyectos finalizados\",\n    \"fecha\": \"2024-11-30\",\n    \"hora_limite\": \"18:00:00\",\n    \"tipo_fecha\": \"entrega_final\",\n    \"ambito\": \"global\",\n    \"carrera_id\": null\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/calendario/admin/global",
+							"host": ["{{baseUrl}}"],
+							"path": ["calendario", "admin", "global"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "9. Disponibilidades Profesores",
+			"item": [
+				{
+					"name": "Login Profesor Juan Pérez",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('profesorToken', jsonData.accessToken);",
+									"    pm.environment.set('currentToken', jsonData.accessToken);",
+									"    console.log('✅ Token profesor guardado');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"juan.perez@ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "login"]
+						}
+					}
+				},
+				{
+					"name": "Crear Disponibilidad Lunes 10-12",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{profesorToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dia_semana\": \"lunes\",\n    \"hora_inicio\": \"10:00:00\",\n    \"hora_fin\": \"12:00:00\",\n    \"activo\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/calendario-matching/disponibilidades",
+							"host": ["{{baseUrl}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				},
+				{
+					"name": "Crear Disponibilidad Miércoles 15-17",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{profesorToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dia_semana\": \"miercoles\",\n    \"hora_inicio\": \"15:00:00\",\n    \"hora_fin\": \"17:00:00\",\n    \"activo\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/calendario-matching/disponibilidades",
+							"host": ["{{baseUrl}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				},
+				{
+					"name": "Crear Disponibilidad Viernes 14-16",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{profesorToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dia_semana\": \"viernes\",\n    \"hora_inicio\": \"14:00:00\",\n    \"hora_fin\": \"16:00:00\",\n    \"activo\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/calendario-matching/disponibilidades",
+							"host": ["{{baseUrl}}"],
+							"path": ["calendario-matching", "disponibilidades"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "10. Solicitudes de Reunión",
+			"item": [
+				{
+					"name": "Login Estudiante nuevamente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('studentToken', jsonData.accessToken);",
+									"    pm.environment.set('currentToken', jsonData.accessToken);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"luis.morales@alumnos.ubiobio.cl\",\n    \"password\": \"1234\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "login"]
+						}
+					}
+				},
+				{
+					"name": "Crear Solicitud de Reunión",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.solicitud && jsonData.solicitud.id) {",
+									"        pm.environment.set('solicitudReunionId', jsonData.solicitud.id);",
+									"        console.log('✅ Solicitud Reunión ID:', jsonData.solicitud.id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{studentToken}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profesor_rut\": \"12345678-9\",\n    \"proyecto_id\": {{propuesta1Id}},\n    \"fecha_propuesta\": \"2024-12-23\",\n    \"hora_propuesta\": \"10:00:00\",\n    \"tipo_reunion\": \"orientacion\",\n    \"descripcion\": \"Necesito orientación sobre la integración del módulo de compras con el de inventario, específicamente en el manejo de transacciones y actualización de stock en tiempo real.\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseUrl}}/calendario-matching/solicitudes",
+							"host": ["{{baseUrl}}"],
+							"path": ["calendario-matching", "solicitudes"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		}
+	]
+}

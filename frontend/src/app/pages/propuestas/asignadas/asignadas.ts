@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   standalone: true,
@@ -51,7 +52,9 @@ export class PropuestasAsignadasComponent implements OnInit {
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -71,7 +74,6 @@ export class PropuestasAsignadasComponent implements OnInit {
         const payload = JSON.parse(atob(token.split('.')[1]));
         profesorRut = payload.rut || '';
       } catch {
-        console.error('Error al decodificar token');
       }
     }
 
@@ -83,15 +85,15 @@ export class PropuestasAsignadasComponent implements OnInit {
 
     this.api.getPropuestasAsignadasProfesor(profesorRut).subscribe({
       next: (data: any) => {
-        console.log('Propuestas asignadas obtenidas:', data);
         this.propuestas = Array.isArray(data) ? data : [];
         this.aplicarFiltros();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error al cargar propuestas asignadas:', err);
         this.error = 'No se pudieron cargar las propuestas asignadas';
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -133,6 +135,7 @@ export class PropuestasAsignadasComponent implements OnInit {
     this.paginaActual = 1;
     this.calcularPaginas();
     this.aplicarPaginacion();
+    this.cdr.detectChanges();
   }
 
   calcularPaginas() {
@@ -143,6 +146,7 @@ export class PropuestasAsignadasComponent implements OnInit {
     const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
     const fin = inicio + this.elementosPorPagina;
     this.propuestasPaginadas = this.propuestasFiltradas.slice(inicio, fin);
+    this.cdr.detectChanges();
   }
 
   cambiarPagina(pagina: number) {
@@ -197,7 +201,6 @@ export class PropuestasAsignadasComponent implements OnInit {
 
   descargarArchivo(nombreArchivo: string) {
     if (!nombreArchivo) {
-      console.error('No hay archivo para descargar');
       return;
     }
 
@@ -213,14 +216,13 @@ export class PropuestasAsignadasComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
-        console.error('Error al descargar archivo:', err);
-        alert('Error al descargar el archivo');
+        this.notificationService.error('Error al descargar el archivo');
       }
     });
   }
 
   volver() {
-    // Usar history.back() para volver a la página anterior sin activar guards
+    // Usar history.back() para volver a la pï¿½gina anterior sin activar guards
     window.history.back();
   }
 

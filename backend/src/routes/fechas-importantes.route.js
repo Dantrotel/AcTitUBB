@@ -15,7 +15,6 @@ const router = Router();
  */
 router.get('/globales', verifySession, async (req, res) => {
     try {
-        console.log('🔍 Consultando TODAS las fechas globales (sin filtros)...');
         const [fechas] = await pool.execute(
             `SELECT 
                 id,
@@ -36,15 +35,12 @@ router.get('/globales', verifySession, async (req, res) => {
              ORDER BY fecha ASC`
         );
         
-        console.log(`✅ Encontradas ${fechas.length} fechas globales (TODAS, sin filtros)`);
-        console.log('📋 Fechas:', fechas);
-        
         res.json({
             success: true,
             fechas: fechas
         });
     } catch (error) {
-        console.error('❌ Error al obtener fechas globales:', error);
+        console.error('Error obteniendo fechas globales:', error);
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -73,7 +69,7 @@ router.get('/admin/todas', verifySession, async (req, res) => {
             data: todasFechas
         });
     } catch (error) {
-        console.error('Error al obtener todas las fechas importantes:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -105,7 +101,7 @@ router.get('/proyecto/:proyecto_id', verifySession, async (req, res) => {
             data: fechasInfo
         });
     } catch (error) {
-        console.error('Error al obtener fechas importantes:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -156,7 +152,7 @@ router.post('/', verifySession, async (req, res) => {
             data: fechaCreada
         });
     } catch (error) {
-        console.error('Error al crear fecha importante:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -173,26 +169,26 @@ router.put('/:fecha_id', verifySession, async (req, res) => {
         const { fecha_id } = req.params;
         const { titulo, descripcion, fecha_limite, tipo_fecha, habilitada } = req.body;
         
-        console.log(`📝 Actualizando fecha importante ID: ${fecha_id}`);
-        console.log('📋 Datos recibidos:', { titulo, descripcion, fecha_limite, tipo_fecha, habilitada });
+        
+        
         
         // Verificar que la fecha existe
         const fecha = await fechasImportantesModel.obtenerFechaImportantePorId(parseInt(fecha_id));
         if (!fecha) {
-            console.log(`❌ Fecha ID ${fecha_id} no encontrada`);
+            
             return res.status(404).json({
                 success: false,
                 message: 'Fecha importante no encontrada'
             });
         }
         
-        console.log('✅ Fecha encontrada:', fecha);
+        
         
         // Verificar permisos
         // Si es una fecha global (es_global=true y proyecto_id=null), solo admin (rol 3) o super admin (rol 4) pueden modificarla
         if (fecha.es_global && !fecha.proyecto_id) {
             if (req.user.rol_id !== 3 && req.user.rol_id !== 4) {
-                console.log(`❌ Usuario con rol ${req.user.rol_id} no tiene permisos para modificar fechas globales`);
+                
                 return res.status(403).json({
                     success: false,
                     message: 'Solo los administradores pueden modificar fechas globales'
@@ -224,12 +220,12 @@ router.put('/:fecha_id', verifySession, async (req, res) => {
             datosActualizar.habilitada = habilitada;
         }
         
-        console.log('💾 Actualizando con datos:', datosActualizar);
+        
         
         const actualizado = await fechasImportantesModel.actualizarFechaImportante(parseInt(fecha_id), datosActualizar);
         
         if (!actualizado) {
-            console.log('❌ No se pudo actualizar la fecha');
+            
             return res.status(400).json({
                 success: false,
                 message: 'No se pudo actualizar la fecha importante'
@@ -237,7 +233,7 @@ router.put('/:fecha_id', verifySession, async (req, res) => {
         }
         
         const fechaActualizada = await fechasImportantesModel.obtenerFechaImportantePorId(parseInt(fecha_id));
-        console.log('✅ Fecha actualizada exitosamente:', fechaActualizada);
+        
         
         res.json({
             success: true,
@@ -245,7 +241,7 @@ router.put('/:fecha_id', verifySession, async (req, res) => {
             data: fechaActualizada
         });
     } catch (error) {
-        console.error('❌ Error al actualizar fecha importante:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor',
@@ -303,7 +299,7 @@ router.put('/:fecha_id/completar', verifySession, async (req, res) => {
             data: fechaActualizada
         });
     } catch (error) {
-        console.error('Error al completar fecha importante:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -350,7 +346,7 @@ router.delete('/:fecha_id', verifySession, async (req, res) => {
             message: 'Fecha importante eliminada exitosamente'
         });
     } catch (error) {
-        console.error('Error al eliminar fecha importante:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -389,7 +385,7 @@ router.get('/:fecha_id', verifySession, async (req, res) => {
             data: fecha
         });
     } catch (error) {
-        console.error('Error al obtener fecha importante:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -421,7 +417,7 @@ router.post('/alertas/generar', verifySession, async (req, res) => {
             data: resultado
         });
     } catch (error) {
-        console.error('Error al generar alertas:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -445,7 +441,7 @@ router.get('/alertas/mis-alertas', verifySession, async (req, res) => {
             data: alertas
         });
     } catch (error) {
-        console.error('Error al obtener alertas de usuario:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -477,7 +473,7 @@ router.get('/alertas/resumen-proyecto/:proyecto_id', verifySession, async (req, 
             data: resumen
         });
     } catch (error) {
-        console.error('Error al obtener resumen de alertas:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -499,7 +495,7 @@ router.put('/alertas/marcar-leidas', verifySession, async (req, res) => {
             data: { actualizado: resultado }
         });
     } catch (error) {
-        console.error('Error al marcar alertas como leídas:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -592,7 +588,7 @@ router.get('/admin/calendario-general', verifySession, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error al obtener calendario general:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'

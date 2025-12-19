@@ -11,35 +11,31 @@ export const obtenerTodosLosUsuarios = async (req, res) => {
   try {
     const { rol_id, carreras_administradas } = req.user || {};
     
-    console.log('📋 Obteniendo usuarios - Usuario:', {
-      rut: req.user?.rut,
-      rol_id: rol_id,
-      carreras_administradas: carreras_administradas
-    });
+    
     
     // Si es Admin de Carrera (rol 3), filtrar usuarios por TODAS sus carreras
     // Solo mostrar estudiantes (rol 1) y profesores (rol 2), excluir admins (rol 3) y super admins (rol 4)
     if (rol_id === 3 && carreras_administradas && carreras_administradas.length > 0) {
-      console.log(`🔍 Admin de Carrera - Filtrando por carreras: ${carreras_administradas.join(', ')}`);
+      console.log(`🎓 Admin de Carrera filtrando por carreras: ${JSON.stringify(carreras_administradas)}`);
       const usuarios = await UserModel.obtenerUsuariosPorCarreras(carreras_administradas);
-      console.log(`✅ Usuarios filtrados (solo estudiantes y profesores): ${usuarios.length}`);
+      console.log(`👥 Usuarios encontrados: ${usuarios.length}`);
       
       // Verificar que no haya admins o super admins en los resultados
       const adminsEncontrados = usuarios.filter(u => u.rol_id === 3 || u.rol_id === 4);
       if (adminsEncontrados.length > 0) {
-        console.warn(`⚠️ ADVERTENCIA: Se encontraron ${adminsEncontrados.length} admins/super admins en los resultados:`, adminsEncontrados.map(u => ({ rut: u.rut, nombre: u.nombre, rol_id: u.rol_id })));
+        console.warn('⚠️ Se encontraron admins en los resultados, filtrando...', adminsEncontrados.map(a => a.rut));
       }
       
       return res.json(usuarios);
     }
     
     // Super Admin (rol 4) ve todos los usuarios
-    console.log('🔓 Super Admin o sin carrera asignada - Mostrando todos los usuarios');
+    
     const usuarios = await UserModel.findpersonAll();
-    console.log(`✅ Total usuarios: ${usuarios.length}`);
+    
     res.json(usuarios);
   } catch (error) {
-    console.error('Error al obtener usuarios:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -71,7 +67,7 @@ export const actualizarUsuario = async (req, res) => {
       res.status(404).json({ message: 'Usuario no encontrado' });
     }
   } catch (error) {
-    console.error('Error al actualizar usuario:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -88,7 +84,7 @@ export const eliminarUsuario = async (req, res) => {
       res.status(404).json({ message: 'Usuario no encontrado' });
     }
   } catch (error) {
-    console.error('Error al eliminar usuario:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -112,7 +108,7 @@ export const cambiarEstadoUsuario = async (req, res) => {
       res.status(404).json({ message: 'Usuario no encontrado' });
     }
   } catch (error) {
-    console.error('Error al cambiar estado del usuario:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -139,7 +135,7 @@ export const cambiarRolUsuario = async (req, res) => {
       res.status(404).json({ message: 'Usuario no encontrado' });
     }
   } catch (error) {
-    console.error('Error al cambiar rol del usuario:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -192,72 +188,70 @@ export const crearUsuario = async (req, res) => {
       id: userId
     });
   } catch (error) {
-    console.error('Error al crear usuario:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
 export const resetearPasswordUsuario = async (req, res) => {
   try {
-    console.log('🔑 RESET PASSWORD - Inicio del controlador');
-    console.log('📋 req.params:', req.params);
-    console.log('📋 req.body:', req.body);
-    console.log('👤 req.user:', req.user);
+    
+    
+    
+    
     
     const { rut } = req.params;
     const { nueva_password } = req.body;
     
-    console.log(`🔍 RUT extraído: ${rut}`);
-    console.log(`🔍 Nueva password: ${nueva_password ? nueva_password.substring(0, 5) + '...' : 'UNDEFINED'}`);
+    console.log(`🔑 Cambio de contraseña para RUT: ${rut}, password: ${nueva_password ? '***' + nueva_password.slice(-3) : 'UNDEFINED'}`);
     
     if (!nueva_password) {
-      console.log('❌ Nueva password no proporcionada');
+      console.log('⚠️ Nueva contraseña no proporcionada');
       return res.status(400).json({ message: 'La nueva contraseña es requerida' });
     }
     
     // Obtener datos del usuario
     const usuario = await UserModel.obtenerUsuarioCompleto(rut);
     if (!usuario) {
-      console.log('❌ Usuario no encontrado');
+      
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
     
     // 🔐 HASHEAR LA CONTRASEÑA CON BCRYPT
-    console.log('� Hasheando contraseña con bcrypt...');
+    
     const bcrypt = await import('bcryptjs');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(nueva_password, salt);
-    console.log(`✅ Contraseña hasheada: ${hashedPassword.substring(0, 20)}...`);
+    console.log('🔐 Contraseña hasheada correctamente');
     
-    console.log('📞 Llamando a UserModel.resetearPassword...');
     const actualizado = await UserModel.resetearPassword(rut, hashedPassword);
     
-    console.log(`✅ Resultado de actualización: ${actualizado}`);
+    
     
     if (actualizado) {
       // 📧 Enviar email con contraseña temporal
       try {
         const { sendPasswordResetEmail } = await import('../services/email.service.js');
-        console.log('📧 Enviando email con contraseña temporal...');
+        
         await sendPasswordResetEmail(usuario.email, usuario.nombre, nueva_password, usuario.rut);
-        console.log('✅ Email enviado exitosamente');
+        
       } catch (emailError) {
-        console.error('⚠️  Error al enviar email:', emailError);
+        
         // No fallar la operación si el email falla
       }
       
-      console.log('✅ Contraseña reseteada exitosamente');
+      
       res.json({ 
         success: true,
         message: 'Contraseña reseteada correctamente. Se ha enviado un email al usuario.',
         password_temporal: nueva_password // Enviar la contraseña SIN HASHEAR al admin
       });
     } else {
-      console.log('❌ Error al actualizar contraseña');
+      
       res.status(500).json({ message: 'Error al actualizar la contraseña' });
     }
   } catch (error) {
-    console.error('❌ Error al resetear contraseña:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
@@ -274,7 +268,7 @@ export const obtenerDetalleUsuario = async (req, res) => {
       res.status(404).json({ message: 'Usuario no encontrado' });
     }
   } catch (error) {
-    console.error('Error al obtener detalle del usuario:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -288,7 +282,7 @@ export const obtenerPropuestasAsignadasAProfesor = async (req, res) => {
     const propuestas = await obtenerPropuestasPorProfesor(rut);
     res.json(propuestas);
   } catch (error) {
-    console.error('Error al obtener propuestas del profesor:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -298,7 +292,7 @@ export const obtenerTodasLasAsignaciones = async (req, res) => {
     const asignaciones = await AdminModel.obtenerTodasLasAsignaciones();
     res.json(asignaciones);
   } catch (error) {
-    console.error('Error al obtener asignaciones:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -306,6 +300,7 @@ export const obtenerTodasLasAsignaciones = async (req, res) => {
 export const crearAsignacion = async (req, res) => {
   try {
     const { propuesta_id, profesor_rut } = req.body;
+    const asignado_por = req.rut; // RUT del usuario autenticado que hace la asignación
     
     // Verificar que la propuesta existe
     const propuestaExiste = await AdminModel.verificarPropuestaExiste(propuesta_id);
@@ -326,11 +321,11 @@ export const crearAsignacion = async (req, res) => {
     }
     
     // Crear la asignación
-    await asignarProfesor(propuesta_id, profesor_rut);
+    await asignarProfesor(propuesta_id, profesor_rut, asignado_por);
     
     res.status(201).json({ message: 'Asignación creada correctamente' });
   } catch (error) {
-    console.error('Error al crear asignación:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -354,7 +349,7 @@ export const eliminarAsignacion = async (req, res) => {
     
     res.json({ message: 'Asignación eliminada correctamente' });
   } catch (error) {
-    console.error('Error al eliminar asignación:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -370,11 +365,11 @@ export const obtenerEstadisticas = async (req, res) => {
     
     const estadisticas = await AdminModel.obtenerEstadisticasCompletas(carreraFiltro);
     
-    console.log(`🔍 Estadísticas (rol ${rol_id}, carrera ${carreraFiltro || 'todas'}):`, estadisticas);
+    console.log('📊 Estadísticas obtenidas:', estadisticas);
     
     res.json(estadisticas);
   } catch (error) {
-    console.error('Error al obtener estadísticas:', error);
+    
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -401,7 +396,7 @@ export const obtenerCargaAdministrativa = async (req, res) => {
     // Obtener estadísticas (filtradas si aplica)
     const estadisticas = await obtenerEstadisticasCarga(carreraFiltro);
     
-    console.log(`🔍 Carga administrativa (rol ${rol_id}, carrera ${carreraFiltro || 'todas'}): ${cargaProfesores.length} profesores`);
+    console.log(`📊 Carga académica obtenida: ${cargaProfesores.length} profesores`);
     
     res.json({
       profesores: cargaProfesores,
@@ -414,7 +409,7 @@ export const obtenerCargaAdministrativa = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al obtener carga administrativa:', error);
+    
     res.status(500).json({ 
       message: 'Error al obtener carga administrativa',
       error: error.message 

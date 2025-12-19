@@ -1,0 +1,315 @@
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <i class="fas fa-chart-line"></i>
+    <span>AcTitUBB - Reportes y Métricas</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <button class="btn-icon" (click)="exportarPDF()" title="Exportar a PDF">
+      <i class="fas fa-file-pdf"></i>
+    </button>
+    <button class="btn-icon" (click)="exportarExcel()" title="Exportar a Excel">
+      <i class="fas fa-file-excel"></i>
+    </button>
+    <button class="btn-secondary" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
+</nav>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin"></i>
+  </div>
+  <p>Cargando reportes...</p>
+</div>
+
+<!-- Contenido Principal -->
+<div *ngIf="!loading" class="container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1><i class="fas fa-chart-bar"></i> Dashboard de Métricas</h1>
+      <p>Vista completa de tu actividad académica</p>
+    </div>
+    
+    <!-- Selector de Período -->
+    <div class="period-selector">
+      <button 
+        class="period-btn" 
+        [class.active]="periodoSeleccionado === 'mes'"
+        (click)="cambiarPeriodo('mes')">
+        Último Mes
+      </button>
+      <button 
+        class="period-btn" 
+        [class.active]="periodoSeleccionado === 'trimestre'"
+        (click)="cambiarPeriodo('trimestre')">
+        Trimestre
+      </button>
+      <button 
+        class="period-btn" 
+        [class.active]="periodoSeleccionado === 'semestre'"
+        (click)="cambiarPeriodo('semestre')">
+        Semestre
+      </button>
+      <button 
+        class="period-btn" 
+        [class.active]="periodoSeleccionado === 'año'"
+        (click)="cambiarPeriodo('año')">
+        Año
+      </button>
+    </div>
+  </div>
+
+  <!-- Métricas Principales -->
+  <div class="metrics-grid" *ngIf="metricas">
+    <!-- Propuestas -->
+    <div class="metric-card gradient-purple">
+      <div class="metric-icon">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <div class="metric-content">
+        <h3>Propuestas Revisadas</h3>
+        <div class="metric-value">{{ metricas.totalPropuestasRevisadas }}</div>
+        <div class="metric-details">
+          <span class="detail success">
+            <i class="fas fa-check-circle"></i>
+            {{ metricas.propuestasAprobadas }} aprobadas
+          </span>
+          <span class="detail danger">
+            <i class="fas fa-times-circle"></i>
+            {{ metricas.propuestasRechazadas }} rechazadas
+          </span>
+        </div>
+      </div>
+      <div class="metric-badge">
+        {{ getPorcentajeAprobacion() }}% aprobación
+      </div>
+    </div>
+
+    <!-- Proyectos Activos -->
+    <div class="metric-card gradient-blue">
+      <div class="metric-icon">
+        <i class="fas fa-project-diagram"></i>
+      </div>
+      <div class="metric-content">
+        <h3>Proyectos</h3>
+        <div class="metric-value">{{ metricas.proyectosActivos }}</div>
+        <div class="metric-details">
+          <span class="detail info">
+            <i class="fas fa-play-circle"></i>
+            {{ metricas.proyectosActivos }} activos
+          </span>
+          <span class="detail success">
+            <i class="fas fa-check-circle"></i>
+            {{ metricas.proyectosCompletados }} completados
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reuniones -->
+    <div class="metric-card gradient-green">
+      <div class="metric-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="metric-content">
+        <h3>Reuniones</h3>
+        <div class="metric-value">{{ metricas.totalReuniones }}</div>
+        <div class="metric-details">
+          <span class="detail">
+            <i class="fas fa-clock"></i>
+            {{ formatearHoras(metricas.horasReunionesTotal) }}
+          </span>
+          <span class="detail">
+            <i class="fas fa-calendar-week"></i>
+            {{ metricas.reunionesUltimoMes }} este mes
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estudiantes -->
+    <div class="metric-card gradient-orange">
+      <div class="metric-icon">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div class="metric-content">
+        <h3>Estudiantes</h3>
+        <div class="metric-value">{{ metricas.estudiantesAsignados }}</div>
+        <div class="metric-details">
+          <span class="detail">
+            <i class="fas fa-hourglass-half"></i>
+            {{ metricas.horasSemanalesEstimadas }}h/semana
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fechas Importantes -->
+    <div class="metric-card gradient-pink">
+      <div class="metric-icon">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="metric-content">
+        <h3>Fechas Importantes</h3>
+        <div class="metric-value">{{ metricas.fechasProximas }}</div>
+        <div class="metric-details">
+          <span class="detail warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ metricas.fechasVencidas }} vencidas
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disponibilidad -->
+    <div class="metric-card gradient-cyan">
+      <div class="metric-icon">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="metric-content">
+        <h3>Disponibilidad</h3>
+        <div class="metric-value">{{ metricas.horasDisponibilidadSemanal }}h</div>
+        <div class="metric-details">
+          <span class="detail">
+            <i class="fas fa-percent"></i>
+            {{ metricas.porcentajeOcupacion }}% ocupado
+          </span>
+        </div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="metricas.porcentajeOcupacion"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de Detalles -->
+  <div class="details-section">
+    <!-- Proyectos Detalle -->
+    <div class="detail-card">
+      <div class="card-header">
+        <h2><i class="fas fa-folder-open"></i> Proyectos Asignados</h2>
+        <span class="badge">{{ proyectos.length }} total</span>
+      </div>
+      
+      <div class="table-container" *ngIf="proyectos.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Estudiante</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Inicio</th>
+              <th>Progreso</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let proyecto of proyectos">
+              <td class="proyecto-titulo">{{ proyecto.titulo }}</td>
+              <td>{{ proyecto.estudiante_nombre }}</td>
+              <td><span class="badge-rol">{{ proyecto.rol }}</span></td>
+              <td>
+                <span class="estado-badge" [class]="getEstadoColor(proyecto.estado)">
+                  {{ proyecto.estado }}
+                </span>
+              </td>
+              <td>{{ formatearFecha(proyecto.fecha_inicio) }}</td>
+              <td>
+                <div class="progress-mini">
+                  <div class="progress-mini-fill" [style.width.%]="proyecto.progreso"></div>
+                  <span class="progress-text">{{ proyecto.progreso }}%</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="empty-state" *ngIf="proyectos.length === 0">
+        <i class="fas fa-folder-open"></i>
+        <p>No tienes proyectos asignados</p>
+      </div>
+    </div>
+
+    <!-- Propuestas Recientes -->
+    <div class="detail-card">
+      <div class="card-header">
+        <h2><i class="fas fa-file-signature"></i> Propuestas Recientes</h2>
+        <span class="badge">{{ propuestas.length }} mostradas</span>
+      </div>
+      
+      <div class="table-container" *ngIf="propuestas.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Estudiante</th>
+              <th>Estado</th>
+              <th>Fecha Revisión</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let propuesta of propuestas">
+              <td class="propuesta-titulo">{{ propuesta.titulo }}</td>
+              <td>{{ propuesta.estudiante_nombre }}</td>
+              <td>
+                <span class="estado-badge" [class]="getEstadoColor(propuesta.estado)">
+                  {{ propuesta.estado }}
+                </span>
+              </td>
+              <td>{{ formatearFecha(propuesta.fecha_revision) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="empty-state" *ngIf="propuestas.length === 0">
+        <i class="fas fa-file-signature"></i>
+        <p>No has revisado propuestas recientemente</p>
+      </div>
+    </div>
+
+    <!-- Reuniones Recientes -->
+    <div class="detail-card">
+      <div class="card-header">
+        <h2><i class="fas fa-handshake"></i> Reuniones Recientes</h2>
+        <span class="badge">{{ reuniones.length }} mostradas</span>
+      </div>
+      
+      <div class="table-container" *ngIf="reuniones.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Estudiante</th>
+              <th>Fecha</th>
+              <th>Duración</th>
+              <th>Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let reunion of reuniones">
+              <td class="proyecto-titulo">{{ reunion.proyecto_titulo }}</td>
+              <td>{{ reunion.estudiante_nombre }}</td>
+              <td>{{ formatearFecha(reunion.fecha) }}</td>
+              <td>{{ formatearHoras(reunion.duracion) }}</td>
+              <td><span class="badge-tipo">{{ reunion.tipo }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="empty-state" *ngIf="reuniones.length === 0">
+        <i class="fas fa-handshake"></i>
+        <p>No tienes reuniones registradas</p>
+      </div>
+    </div>
+  </div>
+</div>
+

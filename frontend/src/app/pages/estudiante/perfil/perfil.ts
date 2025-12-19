@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -20,7 +20,8 @@ export class PerfilEstudianteComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -39,11 +40,14 @@ export class PerfilEstudianteComponent implements OnInit {
         next: (data: any) => {
           this.estudiante = { ...data };
           this.loading = false;
+          this.cdr.detectChanges();
+          console.log('✅ Perfil cargado y vista actualizada');
         },
         error: (error) => {
           console.error('Error al cargar perfil:', error);
           this.mostrarMensaje('Error al cargar el perfil', 'error');
           this.loading = false;
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -117,36 +121,7 @@ export class PerfilEstudianteComponent implements OnInit {
   }
 
   volver() {
-    // Obtener el rol del usuario del token para navegar al home correcto
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const rolId = Number(payload.rol_id);
-        
-        // Navegar según el rol del usuario
-        const rutasPorRol: { [key: string]: string } = {
-          '1': '/estudiante',  // Estudiante
-          '2': '/profesor',    // Profesor
-          '3': '/admin'        // Admin
-        };
-
-        const rutaDestino = rutasPorRol[rolId.toString()];
-        if (rutaDestino) {
-          console.log(`Navegando a home del rol ${rolId}: ${rutaDestino}`);
-          this.router.navigate([rutaDestino]);
-        } else {
-          console.error(`Rol ID ${rolId} no reconocido, navegando a estudiante por defecto`);
-          this.router.navigate(['/estudiante']);
-        }
-      } catch (error) {
-        console.error('Error al decodificar token:', error);
-        this.router.navigate(['/login']);
-      }
-    } else {
-      // Sin token, redirigir al login
-      this.router.navigate(['/login']);
-    }
+    window.history.back();
   }
 
   cerrarSesion() {

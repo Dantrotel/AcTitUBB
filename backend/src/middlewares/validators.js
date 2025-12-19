@@ -318,10 +318,14 @@ export const revisarPropuestaSchema = Joi.object({
   comentarios_profesor: Joi.string()
     .min(10)
     .max(2000)
-    .required()
-    .messages({
-      'string.min': 'Comentarios deben tener al menos 10 caracteres',
-      'any.required': 'Comentarios son requeridos'
+    .allow('', null)
+    .when('estado', {
+      is: 'aprobada',
+      then: Joi.optional(),
+      otherwise: Joi.required().messages({
+        'string.min': 'Comentarios deben tener al menos 10 caracteres',
+        'any.required': 'Comentarios son requeridos'
+      })
     }),
   estado: Joi.string()
     .valid('pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada')
@@ -329,7 +333,7 @@ export const revisarPropuestaSchema = Joi.object({
     .messages({
       'any.only': 'Estado debe ser: pendiente, en_revision, correcciones, aprobada o rechazada'
     })
-});
+  });
 
 /**
  * Schema: Asignación de profesor

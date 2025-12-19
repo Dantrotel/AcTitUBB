@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
+import { NotificationService } from '../../services/notification.service';
 
 interface Reunion {
   id: number;
@@ -69,7 +70,8 @@ export class GestionReunionesComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     // Obtener rol del usuario desde localStorage
     const userData = localStorage.getItem('userData');
@@ -95,7 +97,6 @@ export class GestionReunionesComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error al cargar reuniones:', error);
         this.errorMessage = 'Error al cargar las reuniones';
         this.isLoading = false;
       }
@@ -148,16 +149,22 @@ export class GestionReunionesComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al confirmar reunión:', error);
         this.errorMessage = 'Error al confirmar la reunión';
         this.isLoading = false;
       }
     });
   }
 
-  cancelarReunion(reunion: Reunion) {
-    const motivo = prompt('Motivo de la cancelación (opcional):') || '';
-    if (motivo === null) return; // Usuario canceló el prompt
+  async cancelarReunion(reunion: Reunion): Promise<void> {
+    const motivo = await this.notificationService.prompt(
+      'Motivo de la cancelación (opcional):',
+      'Cancelar reunión',
+      '',
+      'Cancelar reunión',
+      'No cancelar'
+    );
+    
+    if (motivo === null) return;
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -172,7 +179,6 @@ export class GestionReunionesComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al cancelar reunión:', error);
         this.errorMessage = 'Error al cancelar la reunión';
         this.isLoading = false;
       }
@@ -250,7 +256,6 @@ export class GestionReunionesComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al reprogramar reunión:', error);
         this.errorMessage = 'Error al reprogramar la reunión';
         this.isLoading = false;
       }
@@ -368,7 +373,7 @@ export class GestionReunionesComponent implements OnInit {
   }
 
   volver() {
-    // Usar history.back() para volver a la p�gina anterior sin activar guards
+    // Usar history.back() para volver a la p�gina anterior sin activar guards
     window.history.back();
   }
 }

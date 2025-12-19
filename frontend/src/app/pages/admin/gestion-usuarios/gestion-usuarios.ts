@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -59,7 +59,8 @@ export class GestionUsuariosComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -74,7 +75,6 @@ export class GestionUsuariosComponent implements OnInit {
   cargarRoles() {
     this.apiService.getRoles().subscribe({
       next: (data: any) => {
-        console.log('✅ Roles cargados desde API:', data);
         // Manejar si la respuesta es un objeto con propiedad 'roles' o directamente un array
         if (Array.isArray(data)) {
           this.roles = data;
@@ -83,10 +83,8 @@ export class GestionUsuariosComponent implements OnInit {
         } else {
           this.roles = [];
         }
-        console.log('📋 Roles finales:', this.roles);
       },
       error: (err) => {
-        console.error('❌ Error al cargar roles:', err);
         // Fallback con roles básicos si falla la carga
         this.roles = [
           { id: 1, nombre: 'estudiante' },
@@ -94,7 +92,6 @@ export class GestionUsuariosComponent implements OnInit {
           { id: 3, nombre: 'admin' },
           { id: 4, nombre: 'Super Administrador' }
         ];
-        console.log('📋 Usando roles fallback:', this.roles);
       }
     });
   }
@@ -136,19 +133,27 @@ export class GestionUsuariosComponent implements OnInit {
   }
 
   verificarSuperAdmin() {
-    // Intentar obtener de 'userData' primero, luego 'usuario' como fallback
-    const userDataStr = localStorage.getItem('userData') || localStorage.getItem('usuario') || '{}';
-    this.usuarioActual = JSON.parse(userDataStr);
+    // Intentar obtener de token JWT primero
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.usuarioActual = payload;
+      } catch (e) {
+        // Fallback a localStorage
+        const userDataStr = localStorage.getItem('userData') || localStorage.getItem('usuario') || '{}';
+        this.usuarioActual = JSON.parse(userDataStr);
+      }
+    }
     
-    console.log('👤 Usuario actual desde localStorage:', this.usuarioActual);
-    console.log('🔑 rol_id del usuario:', this.usuarioActual.rol_id);
-    console.log('🔑 Tipo de rol_id:', typeof this.usuarioActual.rol_id);
     
     // Comparación robusta que maneja tanto string como number
     const rolId = parseInt(this.usuarioActual.rol_id);
     this.esSuperAdmin = rolId === 4;
     
-    console.log('✅ Es Super Admin:', this.esSuperAdmin);
+    
+    // Forzar detección de cambios inmediata
+    this.cdr.detectChanges();
   }
   // Constructor and lifecycle method
   // Only one constructor and one ngOnInit allowed
@@ -157,6 +162,7 @@ export class GestionUsuariosComponent implements OnInit {
   cargarUsuarios(): void {
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     this.apiService.getUsuarios().subscribe({
       next: (data: any) => {
@@ -167,17 +173,16 @@ export class GestionUsuariosComponent implements OnInit {
             // Solo incluir estudiantes (1) y profesores (2)
             return rolId === 1 || rolId === 2;
           });
-          console.log('Usuarios cargados (filtrados - solo estudiantes y profesores):', this.usuarios.length);
         } else {
           this.usuarios = data;
-          console.log('Usuarios cargados (Super Admin - todos):', this.usuarios.length);
         }
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Error al cargar los usuarios';
         this.loading = false;
-        console.error('Error cargando usuarios:', err);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -283,7 +288,6 @@ export class GestionUsuariosComponent implements OnInit {
         setTimeout(() => this.mensaje = '', 3000);
       },
       error: (err) => {
-        console.error('Error al crear usuario:', err);
         this.error = err.error?.message || 'Error al crear el usuario';
         this.procesando = false;
       }
@@ -302,10 +306,6 @@ export class GestionUsuariosComponent implements OnInit {
       }
     
     // Debug logs
-    console.log('🔍 Modal Editar - Usuario:', this.usuarioEditar);
-    console.log('🔍 Es Super Admin:', this.esSuperAdmin);
-    console.log('🔍 Roles disponibles:', this.roles);
-    console.log('🔍 Carreras disponibles:', this.carreras);
     
     this.mostrarModalEditar = true;
   }
@@ -356,7 +356,6 @@ export class GestionUsuariosComponent implements OnInit {
               setTimeout(() => this.mensaje = '', 3000);
             },
             error: (err) => {
-              console.error('Error al cambiar rol:', err);
               this.error = 'Error al cambiar el rol';
               this.procesando = false;
             }
@@ -370,7 +369,6 @@ export class GestionUsuariosComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al actualizar usuario:', err);
         this.error = err.error?.message || 'Error al actualizar el usuario';
         this.procesando = false;
       }
@@ -388,7 +386,6 @@ export class GestionUsuariosComponent implements OnInit {
         setTimeout(() => this.mensaje = '', 3000);
       },
       error: (err) => {
-        console.error('Error al cambiar estado:', err);
         this.error = 'Error al cambiar el estado del usuario';
       }
     });
@@ -419,19 +416,15 @@ export class GestionUsuariosComponent implements OnInit {
     this.procesando = true;
     this.error = '';
 
-    console.log('Reseteando contraseña para:', this.usuarioEditar.rut);
-    console.log('Nueva contraseña:', this.passwordTemporal);
 
     this.apiService.resetearPasswordUsuario(this.usuarioEditar.rut, this.passwordTemporal).subscribe({
       next: (response: any) => {
-        console.log('Respuesta del servidor:', response);
         this.mensaje = '✅ Contraseña reseteada exitosamente. Cópiala y entrégasela al usuario.';
         this.procesando = false;
         // NO cerrar el modal para que el admin pueda copiar la contraseña
         setTimeout(() => this.mensaje = '', 5000);
       },
       error: (err) => {
-        console.error('Error al resetear contraseña:', err);
         this.error = err.error?.message || 'Error al resetear la contraseña';
         this.procesando = false;
       }
@@ -480,7 +473,6 @@ export class GestionUsuariosComponent implements OnInit {
         setTimeout(() => this.mensaje = '', 3000);
       },
       error: (err) => {
-        console.error('Error al eliminar usuario:', err);
         this.error = err.error?.message || 'Error al eliminar el usuario';
         this.procesando = false;
       }

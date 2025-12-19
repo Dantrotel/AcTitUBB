@@ -485,3 +485,144 @@ export const sendPasswordResetEmail = async (email, nombre, passwordTemporal, ru
 
   await transporter.sendMail(mailOptions);
 };
+
+// ============= RECORDATORIOS AUTOMÁTICOS =============
+
+export const sendRecordatorioFechaLimite = async (email, nombre, tituloFecha, fechaLimite, proyectoTitulo) => {
+  const fechaFormateada = new Date(fechaLimite).toLocaleString('es-CL', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const mailOptions = {
+    from: `"AcTitUBB - Recordatorios" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: '⏰ Recordatorio: Fecha Límite Próxima - AcTitUBB',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #ff9800; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800; }
+          .urgente { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>⏰ Recordatorio de Fecha Límite</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${nombre}</strong>,</p>
+          <div class="urgente">
+            <h3 style="margin-top: 0; color: #ff9800;">⚠️ Fecha Límite Próxima</h3>
+            <p><strong>Título:</strong> ${tituloFecha}</p>
+            ${proyectoTitulo ? `<p><strong>Proyecto:</strong> ${proyectoTitulo}</p>` : ''}
+            <p><strong>Fecha Límite:</strong> ${fechaFormateada}</p>
+          </div>
+          <p>Te recordamos que esta fecha está próxima a vencer. Por favor, asegúrate de cumplir con los entregables a tiempo.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+export const sendAlertaInactividad = async (email, nombre, proyectoTitulo, diasInactivo) => {
+  const mailOptions = {
+    from: `"AcTitUBB - Alertas" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: '⚠️ Alerta: Proyecto sin Actividad - AcTitUBB',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #dc3545; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .alerta { background: #f8d7da; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>⚠️ Alerta de Inactividad</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${nombre}</strong>,</p>
+          <div class="alerta">
+            <h3 style="margin-top: 0; color: #dc3545;">Tu proyecto requiere atención</h3>
+            <p><strong>Proyecto:</strong> ${proyectoTitulo}</p>
+            <p><strong>Días sin actividad:</strong> ${diasInactivo} días</p>
+          </div>
+          <p>Hemos detectado que tu proyecto no ha tenido actividad reciente. Te recomendamos:</p>
+          <ul>
+            <li>Coordinar una reunión con tu profesor guía</li>
+            <li>Actualizar el progreso de tus hitos</li>
+            <li>Subir entregas pendientes</li>
+          </ul>
+          <p>Recuerda que la inactividad prolongada puede afectar el desarrollo exitoso de tu proyecto.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+export const sendRecordatorioEvaluacion = async (email, nombre, proyectoTitulo, hitoNombre, diasRestantes) => {
+  const mailOptions = {
+    from: `"AcTitUBB - Recordatorios" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: '⏰ Recordatorio: Evaluación Pendiente - AcTitUBB',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background: #ffc107; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107; }
+          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>⏰ Evaluación Pendiente</h2>
+        </div>
+        <div class="content">
+          <p>Hola <strong>${nombre}</strong>,</p>
+          <div class="card">
+            <h3 style="margin-top: 0; color: #ffc107;">Tienes una evaluación pendiente</h3>
+            <p><strong>Proyecto:</strong> ${proyectoTitulo}</p>
+            <p><strong>Entrega:</strong> ${hitoNombre}</p>
+            <p><strong>Plazo restante:</strong> ${diasRestantes} días hábiles</p>
+          </div>
+          <p>Recuerda que según el reglamento, dispones de 15 días hábiles para evaluar entregas finales.</p>
+          <p>Por favor, ingresa al sistema para revisar y calificar la entrega.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Universidad del Bío-Bío - AcTitUBB</p>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};

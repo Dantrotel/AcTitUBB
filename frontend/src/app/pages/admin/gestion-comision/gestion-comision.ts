@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
+import { NotificationService } from '../../../services/notification.service';
 
 interface Proyecto {
   id: number;
@@ -64,7 +65,8 @@ export class GestionComisionComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -171,9 +173,13 @@ export class GestionComisionComponent implements OnInit {
   }
 
   async removerMiembro(comisionId: number) {
-    if (!confirm('¿Estás seguro de remover este miembro de la comisión?')) {
-      return;
-    }
+    const confirmed = await this.notificationService.confirm(
+      '¿Estás seguro de remover este miembro de la comisión?',
+      'Remover Miembro',
+      'Remover',
+      'Cancelar'
+    );
+    if (!confirmed) return;
 
     try {
       this.loading = true;
@@ -240,6 +246,6 @@ export class GestionComisionComponent implements OnInit {
   }
 
   volver() {
-    this.router.navigate(['/admin/home']);
+    window.history.back();
   }
 }
