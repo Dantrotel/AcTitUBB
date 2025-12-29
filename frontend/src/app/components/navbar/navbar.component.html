@@ -1,0 +1,66 @@
+<nav class="navbar">
+  <div class="navbar-brand" (click)="goToHome()">
+    <i class="fas fa-graduation-cap"></i>
+    <span>{{ pageTitle }}</span>
+  </div>
+  
+  <div class="navbar-actions">
+    <!-- Botón Volver (si está habilitado) -->
+    <div *ngIf="showBackButton" class="action-item" (click)="onBack()">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver</span>
+    </div>
+
+    <!-- Acciones personalizadas -->
+    <ng-container *ngFor="let action of actions; let i = index">
+      <!-- Acción simple (sin dropdown) -->
+      <div *ngIf="!action.dropdown" 
+           class="action-item" 
+           (click)="executeAction(action)">
+        <i [class]="action.icon"></i>
+        <span>{{ action.label }}</span>
+      </div>
+
+      <!-- Acción con dropdown -->
+      <div *ngIf="action.dropdown" 
+           class="action-item dropdown-trigger" 
+           (click)="toggleDropdown(i)">
+        <i [class]="action.icon"></i>
+        <span>{{ action.label }}</span>
+        <i class="fas fa-chevron-down"></i>
+        
+        <div class="dropdown-menu" [class.show]="activeDropdown === i">
+          <div *ngFor="let subAction of action.dropdown" 
+               class="dropdown-item" 
+               (click)="executeAction(subAction, $event)">
+            <i [class]="subAction.icon"></i>
+            <span>{{ subAction.label }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    
+    <!-- Menú de usuario -->
+    <div class="action-item user-menu" (click)="toggleUserMenu()">
+      <i class="fas fa-user-circle"></i>
+      <span>{{ userName || getRoleLabel() }}</span>
+      <i class="fas fa-chevron-down"></i>
+      
+      <div class="dropdown-menu" [class.show]="showUserMenu">
+        <div class="dropdown-item" (click)="goToProfile(); $event.stopPropagation()">
+          <i class="fas fa-user"></i>
+          <span>Mi Perfil</span>
+        </div>
+        <div class="dropdown-item" (click)="goToHome(); $event.stopPropagation()">
+          <i class="fas fa-home"></i>
+          <span>Inicio</span>
+        </div>
+        <div class="dropdown-item" (click)="onLogout(); $event.stopPropagation()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+

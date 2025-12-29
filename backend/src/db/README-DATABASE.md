@@ -204,3 +204,4 @@ Al iniciar, verás en la consola:
 
 **¡El sistema maneja todo automáticamente!** 🎉
 
+

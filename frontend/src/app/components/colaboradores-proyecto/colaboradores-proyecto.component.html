@@ -1,212 +1,337 @@
-<mat-card class="colaboradores-card">
-  <mat-card-header>
-    <mat-card-title>
-      <div class="header-title">
-        <mat-icon>group_work</mat-icon>
-        <span>Colaboradores Externos del Proyecto</span>
+<div class="colaboradores-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="icon-wrapper">
+        <i class="fas fa-handshake"></i>
       </div>
-    </mat-card-title>
-    <div class="header-actions">
-      <button mat-raised-button color="primary" (click)="toggleFormulario()" [disabled]="!proyectoId">
-        <mat-icon>{{ mostrarFormulario() ? 'close' : 'person_add' }}</mat-icon>
+      <div class="header-text">
+        <h2>Colaboradores Externos del Proyecto</h2>
+        <p>Gestiona supervisores, mentores y asesores técnicos</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary" (click)="toggleFormulario()" [disabled]="!proyectoId">
+        <i [class]="mostrarFormulario() ? 'fas fa-times' : 'fas fa-user-plus'"></i>
         {{ mostrarFormulario() ? 'Cancelar' : 'Asignar Colaborador' }}
       </button>
     </div>
-  </mat-card-header>
+  </div>
 
-  <mat-card-content>
-    <!-- Formulario de Asignación -->
-    @if (mostrarFormulario()) {
-      <div class="formulario-seccion">
-        <h3><mat-icon>assignment_ind</mat-icon> Asignar Colaborador Externo</h3>
-        <form (ngSubmit)="asignarColaborador()">
-          <div class="form-grid">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Colaborador *</mat-label>
-              <mat-select [(ngModel)]="nuevaAsignacion.colaborador_id" name="colaborador_id" required>
-                @for (colab of colaboradoresDisponibles(); track colab.id) {
-                  <mat-option [value]="colab.id">
-                    {{ colab.nombre_completo }} - {{ colab.entidad_nombre }}
-                  </mat-option>
-                }
-              </mat-select>
-              <mat-hint>Solo colaboradores verificados y activos</mat-hint>
-            </mat-form-field>
+  <!-- Formulario de Asignación -->
+  @if (mostrarFormulario()) {
+    <div class="form-card">
+      <div class="form-header">
+        <i class="fas fa-user-tie"></i>
+        <h3>Asignar Colaborador Externo</h3>
+      </div>
+      <form (ngSubmit)="asignarColaborador()" class="colaborador-form">
+        <div class="form-grid">
+          <!-- Colaborador -->
+          <div class="form-group full-width">
+            <label for="colaborador">
+              <i class="fas fa-user"></i>
+              Colaborador <span class="required">*</span>
+            </label>
+            <select 
+              id="colaborador"
+              [(ngModel)]="nuevaAsignacion.colaborador_id" 
+              name="colaborador_id" 
+              required
+              class="form-control">
+              <option value="">Seleccione un colaborador</option>
+              @for (colab of colaboradoresDisponibles(); track colab.id) {
+                <option [value]="colab.id">
+                  {{ colab.nombre_completo }} - {{ colab.entidad_nombre }}
+                </option>
+              }
+            </select>
+            <small class="form-hint">
+              <i class="fas fa-info-circle"></i>
+              Solo colaboradores verificados y activos
+            </small>
+          </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Rol en el Proyecto *</mat-label>
-              <mat-select [(ngModel)]="nuevaAsignacion.rol_en_proyecto" name="rol_en_proyecto" required>
-                @for (rol of rolesDisponibles; track rol) {
-                  <mat-option [value]="rol">{{ rol }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+          <!-- Rol en Proyecto -->
+          <div class="form-group">
+            <label for="rol">
+              <i class="fas fa-briefcase"></i>
+              Rol en el Proyecto <span class="required">*</span>
+            </label>
+            <select 
+              id="rol"
+              [(ngModel)]="nuevaAsignacion.rol_en_proyecto" 
+              name="rol_en_proyecto" 
+              required
+              class="form-control">
+              <option value="">Seleccione un rol</option>
+              @for (rol of rolesDisponibles; track rol) {
+                <option [value]="rol">{{ rol }}</option>
+              }
+            </select>
+          </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Fecha de Inicio</mat-label>
-              <input matInput type="date" [(ngModel)]="nuevaAsignacion.fecha_inicio" name="fecha_inicio">
-            </mat-form-field>
+          <!-- Fecha de Inicio -->
+          <div class="form-group">
+            <label for="fecha_inicio">
+              <i class="fas fa-calendar-alt"></i>
+              Fecha de Inicio
+            </label>
+            <input 
+              type="date" 
+              id="fecha_inicio"
+              [(ngModel)]="nuevaAsignacion.fecha_inicio" 
+              name="fecha_inicio"
+              class="form-control">
+          </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Horas Dedicadas (semanal)</mat-label>
-              <input matInput type="number" [(ngModel)]="nuevaAsignacion.horas_dedicadas" name="horas_dedicadas" min="1">
-              <mat-hint>Horas por semana</mat-hint>
-            </mat-form-field>
+          <!-- Horas Dedicadas -->
+          <div class="form-group">
+            <label for="horas">
+              <i class="fas fa-clock"></i>
+              Horas Dedicadas (semanal)
+            </label>
+            <input 
+              type="number" 
+              id="horas"
+              [(ngModel)]="nuevaAsignacion.horas_dedicadas" 
+              name="horas_dedicadas" 
+              min="1"
+              placeholder="4"
+              class="form-control">
+            <small class="form-hint">Horas por semana</small>
+          </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Frecuencia de Interacción</mat-label>
-              <mat-select [(ngModel)]="nuevaAsignacion.frecuencia_interaccion" name="frecuencia_interaccion">
-                @for (frec of frecuencias; track frec.value) {
-                  <mat-option [value]="frec.value">{{ frec.label }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+          <!-- Frecuencia de Interacción -->
+          <div class="form-group">
+            <label for="frecuencia">
+              <i class="fas fa-sync-alt"></i>
+              Frecuencia de Interacción
+            </label>
+            <select 
+              id="frecuencia"
+              [(ngModel)]="nuevaAsignacion.frecuencia_interaccion" 
+              name="frecuencia_interaccion"
+              class="form-control">
+              <option value="">Seleccione frecuencia</option>
+              @for (frec of frecuencias; track frec.value) {
+                <option [value]="frec.value">{{ frec.label }}</option>
+              }
+            </select>
+          </div>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Descripción del Rol</mat-label>
-              <textarea matInput [(ngModel)]="nuevaAsignacion.descripcion_rol" name="descripcion_rol" rows="3" 
-                        placeholder="Ej: Supervisar avances semanales, aprobar entregables, evaluar desempeño"></textarea>
-            </mat-form-field>
+          <!-- Descripción del Rol -->
+          <div class="form-group full-width">
+            <label for="descripcion">
+              <i class="fas fa-align-left"></i>
+              Descripción del Rol
+            </label>
+            <textarea 
+              id="descripcion"
+              [(ngModel)]="nuevaAsignacion.descripcion_rol" 
+              name="descripcion_rol" 
+              rows="3"
+              placeholder="Ej: Supervisar avances semanales, aprobar entregables, evaluar desempeño"
+              class="form-control"></textarea>
+          </div>
 
-            <div class="checkbox-container full-width">
-              <mat-checkbox [(ngModel)]="nuevaAsignacion.puede_evaluar" name="puede_evaluar">
+          <!-- Puede Evaluar -->
+          <div class="form-group full-width checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="nuevaAsignacion.puede_evaluar" 
+                name="puede_evaluar">
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-text">
+                <i class="fas fa-star"></i>
                 Este colaborador puede evaluar al estudiante
-              </mat-checkbox>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="toggleFormulario()">
+            <i class="fas fa-times"></i>
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="cargando()">
+            <i class="fas fa-save"></i>
+            Asignar al Proyecto
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (cargando()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando colaboradores...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @else if (colaboradores().length === 0 && !mostrarFormulario()) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-users-slash"></i>
+      </div>
+      <h3>No hay colaboradores externos asignados</h3>
+      <p>Los colaboradores externos aportan experiencia práctica y supervisión profesional al proyecto</p>
+      <button class="btn-primary-large" (click)="toggleFormulario()">
+        <i class="fas fa-user-plus"></i>
+        Asignar Primer Colaborador
+      </button>
+    </div>
+  }
+
+  <!-- Lista de Colaboradores -->
+  @else if (colaboradores().length > 0) {
+    <div class="colaboradores-grid">
+      @for (colab of colaboradores(); track colab.id) {
+        <div class="colaborador-card" [class.inactivo]="!colab.activo">
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="colaborador-avatar">
+              <i class="fas fa-user-tie"></i>
             </div>
-          </div>
-
-          <div class="form-actions">
-            <button mat-raised-button type="button" (click)="toggleFormulario()">Cancelar</button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="cargando()">
-              <mat-icon>save</mat-icon>
-              Asignar al Proyecto
-            </button>
-          </div>
-        </form>
-      </div>
-    }
-
-    <!-- Lista de Colaboradores -->
-    @if (cargando()) {
-      <div class="loading">
-        <mat-icon>hourglass_empty</mat-icon>
-        <p>Cargando colaboradores...</p>
-      </div>
-    } @else if (colaboradores().length === 0) {
-      <div class="empty-state">
-        <mat-icon>people_outline</mat-icon>
-        <p>No hay colaboradores externos asignados a este proyecto</p>
-        <button mat-raised-button color="primary" (click)="toggleFormulario()">
-          <mat-icon>person_add</mat-icon>
-          Asignar Primer Colaborador
-        </button>
-      </div>
-    } @else {
-      <table mat-table [dataSource]="colaboradores()" class="colaboradores-table">
-        <!-- Colaborador -->
-        <ng-container matColumnDef="colaborador">
-          <th mat-header-cell *matHeaderCellDef>Colaborador</th>
-          <td mat-cell *matCellDef="let colab">
             <div class="colaborador-info">
-              <strong>{{ colab.nombre_completo }}</strong>
+              <h4>{{ colab.nombre_completo }}</h4>
               @if (colab.cargo) {
-                <small>{{ colab.cargo }}</small>
+                <p class="cargo">{{ colab.cargo }}</p>
+              }
+              @if (colab.email) {
+                <p class="email">
+                  <i class="fas fa-envelope"></i>
+                  {{ colab.email }}
+                </p>
               }
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Entidad -->
-        <ng-container matColumnDef="entidad">
-          <th mat-header-cell *matHeaderCellDef>Empresa</th>
-          <td mat-cell *matCellDef="let colab">
-            <div class="entidad-cell">
-              <mat-icon>business</mat-icon>
-              <span>{{ colab.entidad_nombre }}</span>
+            <div class="card-status">
+              <span class="status-badge" [class.activo]="colab.activo" [class.inactivo]="!colab.activo">
+                <i [class]="colab.activo ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                {{ colab.activo ? 'Activo' : 'Inactivo' }}
+              </span>
             </div>
-          </td>
-        </ng-container>
+          </div>
 
-        <!-- Rol -->
-        <ng-container matColumnDef="rol">
-          <th mat-header-cell *matHeaderCellDef>Rol en Proyecto</th>
-          <td mat-cell *matCellDef="let colab">
-            <div class="rol-info">
-              <mat-chip>{{ colab.rol_en_proyecto }}</mat-chip>
-              @if (colab.descripcion_rol) {
-                <small>{{ colab.descripcion_rol }}</small>
+          <!-- Card Body -->
+          <div class="card-body">
+            <!-- Entidad -->
+            <div class="info-row">
+              <div class="info-label">
+                <i class="fas fa-building"></i>
+                Empresa
+              </div>
+              <div class="info-value">{{ colab.entidad_nombre || 'No especificada' }}</div>
+            </div>
+
+            <!-- Rol -->
+            <div class="info-row">
+              <div class="info-label">
+                <i class="fas fa-briefcase"></i>
+                Rol en Proyecto
+              </div>
+              <div class="info-value">
+                <span class="rol-badge">{{ colab.rol_en_proyecto }}</span>
+              </div>
+            </div>
+
+            <!-- Descripción del Rol -->
+            @if (colab.descripcion_rol) {
+              <div class="info-row full-width">
+                <div class="info-label">
+                  <i class="fas fa-align-left"></i>
+                  Descripción
+                </div>
+                <div class="info-value descripcion">{{ colab.descripcion_rol }}</div>
+              </div>
+            }
+
+            <!-- Fecha Inicio -->
+            @if (colab.fecha_inicio) {
+              <div class="info-row">
+                <div class="info-label">
+                  <i class="fas fa-calendar-alt"></i>
+                  Fecha Inicio
+                </div>
+                <div class="info-value">{{ formatearFecha(colab.fecha_inicio) }}</div>
+              </div>
+            }
+
+            <!-- Horas y Frecuencia -->
+            <div class="info-row-group">
+              @if (colab.horas_dedicadas) {
+                <div class="info-row">
+                  <div class="info-label">
+                    <i class="fas fa-clock"></i>
+                    Horas/Semana
+                  </div>
+                  <div class="info-value">{{ colab.horas_dedicadas }}h</div>
+                </div>
+              }
+              @if (colab.frecuencia_interaccion) {
+                <div class="info-row">
+                  <div class="info-label">
+                    <i class="fas fa-sync-alt"></i>
+                    Frecuencia
+                  </div>
+                  <div class="info-value">{{ colab.frecuencia_interaccion }}</div>
+                </div>
               }
             </div>
-          </td>
-        </ng-container>
 
-        <!-- Fecha Inicio -->
-        <ng-container matColumnDef="fecha_inicio">
-          <th mat-header-cell *matHeaderCellDef>Inicio</th>
-          <td mat-cell *matCellDef="let colab">
-            {{ formatearFecha(colab.fecha_inicio) }}
-          </td>
-        </ng-container>
-
-        <!-- Puede Evaluar -->
-        <ng-container matColumnDef="puede_evaluar">
-          <th mat-header-cell *matHeaderCellDef>Evaluación</th>
-          <td mat-cell *matCellDef="let colab">
-            <div class="evaluacion-status">
-              @if (colab.puede_evaluar) {
-                @if (colab.evaluacion_realizada) {
-                  <mat-chip class="evaluado">
-                    <mat-icon>check_circle</mat-icon>
-                    Evaluado
-                  </mat-chip>
+            <!-- Evaluación -->
+            <div class="info-row">
+              <div class="info-label">
+                <i class="fas fa-star"></i>
+                Evaluación
+              </div>
+              <div class="info-value">
+                @if (colab.puede_evaluar) {
+                  @if (colab.evaluacion_realizada) {
+                    <span class="eval-badge evaluado">
+                      <i class="fas fa-check-circle"></i>
+                      Evaluado
+                    </span>
+                  } @else {
+                    <span class="eval-badge pendiente">
+                      <i class="fas fa-hourglass-half"></i>
+                      Pendiente
+                    </span>
+                  }
                 } @else {
-                  <mat-chip class="pendiente">
-                    <mat-icon>pending</mat-icon>
-                    Pendiente
-                  </mat-chip>
+                  <span class="eval-badge no-evalua">
+                    <i class="fas fa-minus-circle"></i>
+                    No evalúa
+                  </span>
                 }
-              } @else {
-                <mat-chip class="no-evalua">No evalúa</mat-chip>
-              }
+              </div>
             </div>
-          </td>
-        </ng-container>
+          </div>
 
-        <!-- Estado -->
-        <ng-container matColumnDef="estado">
-          <th mat-header-cell *matHeaderCellDef>Estado</th>
-          <td mat-cell *matCellDef="let colab">
-            <mat-chip [class.activo]="colab.activo" [class.inactivo]="!colab.activo">
-              {{ colab.activo ? 'Activo' : 'Inactivo' }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Acciones -->
-        <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef>Acciones</th>
-          <td mat-cell *matCellDef="let colab">
-            <div class="acciones-container">
-              <button mat-icon-button [matTooltip]="'Contactar a ' + colab.nombre_completo">
-                <mat-icon>email</mat-icon>
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <button class="btn-icon" title="Contactar">
+              <i class="fas fa-envelope"></i>
+              Contactar
+            </button>
+            <button class="btn-icon" title="Ver detalles">
+              <i class="fas fa-eye"></i>
+              Detalles
+            </button>
+            @if (colab.activo) {
+              <button class="btn-icon danger" (click)="desasignarColaborador(colab)" title="Desasignar">
+                <i class="fas fa-user-times"></i>
+                Desasignar
               </button>
-              <button mat-icon-button matTooltip="Ver detalles">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              @if (colab.activo) {
-                <button mat-icon-button color="warn" 
-                        (click)="desasignarColaborador(colab)"
-                        matTooltip="Desasignar del proyecto">
-                  <mat-icon>person_remove</mat-icon>
-                </button>
-              }
-            </div>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-    }
-  </mat-card-content>
-</mat-card>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

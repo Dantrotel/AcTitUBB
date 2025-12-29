@@ -233,7 +233,7 @@ export class GestionCalendarioComponent implements OnInit {
         if (error.status === 401) {
           mensajeError = 'No estás autenticado. Por favor inicia sesión de nuevo.';
         } else if (error.status === 403) {
-          mensajeError = 'No tienes permisos para crear fechas globales (solo administradores).';
+          mensajeError = 'No tienes permisos para crear fechas globales (solo jefes de curso).';
         } else if (error.status === 400) {
           mensajeError = error.error?.message || 'Datos inválidos en el formulario.';
         } else if (error.error?.message) {

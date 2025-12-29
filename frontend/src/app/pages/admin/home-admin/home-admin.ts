@@ -6,7 +6,7 @@ import { ApiService } from '../../../services/api';
 @Component({
   standalone: true,
   imports: [CommonModule],
-  selector: 'home-admin',
+  selector: 'home-admin', // Mantener selector por compatibilidad
   templateUrl: './home-admin.html',
   styleUrls: ['./home-admin.scss']
 })
@@ -193,6 +193,24 @@ export class HomeAdminComponent implements OnInit {
 
   irACalendarioUnificado(): void {
     this.router.navigate(['/admin/calendario-unificado']);
+  }
+
+  // ===== NAVEGACIÓN A ACTIVIDADES ACADÉMICAS (COMO PROFESOR) =====
+  
+  irAPropuestasAsignadas(): void {
+    this.router.navigate(['/profesor/propuestas/asignadas']);
+  }
+
+  irAMisProyectos(): void {
+    this.router.navigate(['/profesor/cronogramas']);
+  }
+
+  irAReuniones(): void {
+    this.router.navigate(['/profesor/reuniones']);
+  }
+
+  irAReportes(): void {
+    this.router.navigate(['/profesor/reportes']);
   }
 
   cerrarSesion(): void {

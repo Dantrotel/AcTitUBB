@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { NavbarComponent } from '../../../components/navbar/navbar.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   selector: 'gestion-usuarios',
   templateUrl: './gestion-usuarios.html',
   styleUrls: ['./gestion-usuarios.scss']
@@ -16,6 +17,7 @@ export class GestionUsuariosComponent implements OnInit {
   loading = true;
   error = '';
   mensaje = '';
+  userName = '';
   filtroRol = '';
   filtroNombre = '';
   filtroRut = '';
@@ -64,12 +66,24 @@ export class GestionUsuariosComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      this.userName = user.nombre || 'Jefe de Curso';
+    }
     // Verificar primero si es super admin antes de cargar usuarios
     this.verificarSuperAdmin();
     this.cargarUsuarios();
     this.cargarRoles();
     this.cargarDepartamentos();
     this.cargarCarreras();
+  }
+
+  cerrarSesion(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userData');
+    this.router.navigate(['/login']);
   }
 
   cargarRoles() {
@@ -487,7 +501,8 @@ export class GestionUsuariosComponent implements OnInit {
     switch (rol.toLowerCase()) {
       case 'estudiante': return 'rol-estudiante';
       case 'profesor': return 'rol-profesor';
-      case 'administrador': return 'rol-admin';
+      case 'jefe_curso': return 'rol-admin';
+      case 'administrador': return 'rol-admin'; // Mantener por compatibilidad
       default: return 'rol-default';
     }
   }

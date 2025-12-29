@@ -73,17 +73,27 @@ export class AsignarProfesorComponent implements OnInit {
   }
 
   private cargarProfesores(): void {
+    console.log('🔄 Cargando profesores y admins (que también pueden ser profesores)...');
     this.apiService.getProfesores().subscribe({
       next: (data: any) => {
+        console.log('✅ Usuarios recibidos:', data);
         const usuarios = Array.isArray(data) ? data : [];
-        // Filtrar solo profesores (rol_nombre = 'profesor' o rol_id = 2)
-        this.profesores = usuarios.filter((u: any) => 
-          u.rol_nombre?.toLowerCase() === 'profesor' || String(u.rol_id) === '2' || u.rol_id === 2
-        );
+        
+        // Filtrar profesores (rol_id = 2) Y admins (rol_id = 3)
+        // Los admins también pueden actuar como profesores
+        this.profesores = usuarios.filter((u: any) => {
+          const esProfesor = u.rol_id === 2 || String(u.rol_id) === '2' || u.rol_nombre?.toLowerCase() === 'profesor';
+          const esAdmin = u.rol_id === 3 || String(u.rol_id) === '3' || u.rol_nombre?.toLowerCase() === 'admin';
+          return esProfesor || esAdmin;
+        });
+        
+        console.log(`📋 Profesores/Admins disponibles: ${this.profesores.length}`);
+        console.log('👥 Lista:', this.profesores.map(p => `${p.nombre} (${p.rol_nombre})`));
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.error = 'Error al cargar los profesores';
+        console.error('❌ Error al cargar profesores:', err);
+        this.error = 'Error al cargar los profesores: ' + (err.error?.message || err.message);
         this.cdr.detectChanges();
       }
     });

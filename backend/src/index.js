@@ -135,6 +135,8 @@ app.use('/api/v1/users/register', registerLimiter);
 app.use('/api/v1/users', router);
 app.use('/api/v1/roles', routerRole);
 app.use('/api/v1/projects', routerProject);
+// Alias en español para compatibilidad con frontend que usa '/proyectos'
+app.use('/api/v1/proyectos', routerProject);
 app.use('/api/v1/propuestas', routerProp);
 app.use('/api/v1/', downloadRouter);
 app.use('/api/v1/admin', adminRouter);

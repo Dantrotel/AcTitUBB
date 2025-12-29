@@ -47,31 +47,49 @@ export class CronogramaCompletoComponent implements OnInit {
   }
 
   cargarCronograma() {
+    console.log('🔄 Cargando cronograma del proyecto:', this.projectId);
     this.apiService.obtenerCronograma(this.projectId).subscribe({
       next: (response: any) => {
-        this.cronograma = response.cronograma;
+        console.log('✅ Respuesta de cronograma recibida:', response);
+        // El backend puede devolver { cronograma: {...} } o { data: { cronograma: {...} } }
+        this.cronograma = response.cronograma || response.data?.cronograma || null;
+        console.log('📋 Cronograma cargado:', this.cronograma);
       },
       error: (error: any) => {
+        console.error('❌ Error al cargar cronograma:', error);
         this.cronograma = null;
       }
     });
   }
 
   crearCronograma() {
-    // Aquí podrías abrir un modal o navegar a una página para crear cronograma
-    // Por ahora, creamos un cronograma básico
+    console.log('🔨 Creando cronograma para proyecto:', this.projectId);
+    
+    // Crear un cronograma básico con fechas por defecto
+    const hoy = new Date();
+    const fechaFin = new Date();
+    fechaFin.setMonth(fechaFin.getMonth() + 6); // 6 meses desde hoy
+    
     const cronogramaData = {
       nombre_cronograma: 'Cronograma Principal',
-      descripcion: 'Cronograma principal del proyecto',
-      fecha_inicio: new Date().toISOString().split('T')[0],
-      fecha_fin_estimada: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 6 meses
+      descripcion: 'Cronograma principal del proyecto de titulación',
+      fecha_inicio: hoy.toISOString().split('T')[0],
+      fecha_fin_estimada: fechaFin.toISOString().split('T')[0],
+      dias_alerta_previa: 3
     };
+    
+    console.log('📋 Datos del cronograma a crear:', cronogramaData);
     
     this.apiService.crearCronograma(this.projectId, cronogramaData).subscribe({
       next: (response: any) => {
+        console.log('✅ Cronograma creado exitosamente:', response);
+        alert('✅ Cronograma creado exitosamente. Ahora puedes agregar hitos y entregas.');
         this.cargarCronograma(); // Recargar el cronograma
       },
       error: (error: any) => {
+        console.error('❌ Error al crear cronograma:', error);
+        const mensaje = error.error?.message || 'Error al crear el cronograma';
+        alert('❌ ' + mensaje);
       }
     });
   }

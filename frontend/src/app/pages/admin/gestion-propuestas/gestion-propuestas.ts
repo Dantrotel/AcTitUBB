@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
+import { NavbarComponent } from '../../../components/navbar/navbar.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   selector: 'gestion-propuestas',
   templateUrl: './gestion-propuestas.html',
   styleUrls: ['./gestion-propuestas.scss']
@@ -19,6 +20,7 @@ export class GestionPropuestasComponent implements OnInit {
   filtroEstado = '';
   filtroEstudiante = '';
   filtroProfesor = '';
+  userName = '';
   
   // Evaluaciones
   mostrarModalEvaluacion = false;
@@ -47,7 +49,19 @@ export class GestionPropuestasComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      this.userName = user.nombre || 'Jefe de Curso';
+    }
     this.cargarPropuestas();
+  }
+
+  cerrarSesion(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userData');
+    this.router.navigate(['/login']);
   }
 
   // Método público para cargar propuestas

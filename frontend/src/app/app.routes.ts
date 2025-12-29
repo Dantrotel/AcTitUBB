@@ -163,27 +163,32 @@ export const routes: Routes = [
         path: '',
         component: HomeProfesor,
         canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] } // Profesor, Admin, Super Admin
       },
       {
         path: 'propuestas/todas',
         component: PropuestasTodas,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       {
         path: 'propuestas/asignadas',
         component: PropuestasAsignadasComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       {
         path: 'propuestas/revisar/:id',
         component: RevisarPropuestaComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       // Rutas de gestión de proyectos
       {
         path: 'cronogramas',
         component: CronogramasComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       {
         path: 'proyectos',
@@ -194,52 +199,61 @@ export const routes: Routes = [
       {
         path: 'proyecto/:id',
         component: ProyectoCronogramaComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       // Rutas de Reuniones para Profesores
       {
         path: 'calendario/dashboard',
         component: DashboardReunionesComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       {
         path: 'calendario/disponibilidades',
         component: DisponibilidadesComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       {
         path: 'calendario/solicitudes',
         component: SolicitudesReunionComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       {
         path: 'calendario/gestion',
         component: GestionReunionesComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       // Ruta para gestión de reuniones del profesor
       {
         path: 'reuniones',
         component: ReunionesProfesorComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       // Ruta para fechas importantes
       {
         path: 'fechas-importantes',
         component: FechasImportantesProfesorComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       // Ruta para reportes y métricas
       {
         path: 'reportes',
         component: ReportesProfesorComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       },
       // Ruta para gestión de documentos del proyecto
       {
         path: 'proyecto/:id/documentos',
         component: DocumentosProyectoComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       }
     ],
   },

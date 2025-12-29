@@ -153,6 +153,25 @@ export const crearPropuestaController = async (req, res) => {
       bibliografia
     });
 
+    // Guardar archivo inicial en historial
+    if (archivo) {
+      try {
+        console.log(`📦 Guardando archivo inicial en historial: ${archivo}`);
+        await PropuestasService.guardarArchivoPropuesta(
+          nuevaPropuestaId,
+          'propuesta_inicial',
+          archivo,
+          nombre_archivo_original,
+          estudiante_rut,
+          'Versión inicial de la propuesta'
+        );
+        console.log(`✅ Archivo inicial guardado en historial`);
+      } catch (error) {
+        console.error(`⚠️ Error al guardar archivo inicial en historial: ${error.message}`);
+        // No fallar la creación si falla el guardado del historial
+      }
+    }
+
     return res.status(201).json({ message: 'Propuesta creada exitosamente', id: nuevaPropuestaId });
   } catch (error) {
     console.error('Error al crear propuesta:', error);
@@ -314,7 +333,8 @@ export const revisarPropuesta = async (req, res) => {
       const [estudianteInfo] = await pool.execute(
         `SELECT u.rut, c.id as carrera_id, c.nombre as carrera_nombre
          FROM usuarios u
-         LEFT JOIN carreras c ON u.carrera_id = c.id
+         LEFT JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut AND ec.es_carrera_principal = TRUE
+         LEFT JOIN carreras c ON ec.carrera_id = c.id
          WHERE u.rut = ?`,
         [propuesta.estudiante_rut]
       );
@@ -577,17 +597,39 @@ export const ActualizarPropuesta = async (req, res) => {
       archivoPath = req.file.filename; // Nombre del archivo generado por el servidor
       nombreArchivoOriginal = req.file.originalname; // Nombre original del archivo
       
-      // Eliminar archivo anterior si existe
+      // GUARDAR archivo anterior en historial (NO eliminarlo)
       if (propuesta.archivo) {
-        const archivoAnterior = path.join('uploads/propuestas', propuesta.archivo);
-        if (fs.existsSync(archivoAnterior)) {
-          try {
-            fs.unlinkSync(archivoAnterior);
-            console.log(`Archivo anterior eliminado: ${propuesta.archivo}`);
-          } catch (error) {
-            console.error(`Error al eliminar archivo anterior: ${error.message}`);
-          }
+        try {
+          console.log(`📦 Guardando archivo anterior en historial: ${propuesta.archivo}`);
+          await PropuestasService.guardarArchivoPropuesta(
+            id,
+            'correccion_estudiante',
+            propuesta.archivo,
+            propuesta.nombre_archivo_original || 'archivo_anterior.pdf',
+            estudiante_rut,
+            'Versión anterior antes de corrección'
+          );
+          console.log(`✅ Archivo anterior guardado en historial`);
+        } catch (error) {
+          console.error(`⚠️ Error al guardar archivo anterior en historial: ${error.message}`);
+          // No fallar la actualización si falla el guardado del historial
         }
+      }
+      
+      // Guardar el nuevo archivo en historial también
+      try {
+        console.log(`📦 Guardando nuevo archivo en historial: ${archivoPath}`);
+        await PropuestasService.guardarArchivoPropuesta(
+          id,
+          'correccion_estudiante',
+          archivoPath,
+          nombreArchivoOriginal,
+          estudiante_rut,
+          'Nueva versión con correcciones'
+        );
+        console.log(`✅ Nuevo archivo guardado en historial`);
+      } catch (error) {
+        console.error(`⚠️ Error al guardar nuevo archivo en historial: ${error.message}`);
       }
     }
 

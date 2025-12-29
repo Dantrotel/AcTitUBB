@@ -128,10 +128,13 @@ export class AsignacionesComponent implements OnInit {
     this.apiService.getProfesores().subscribe({
       next: (data: any) => {
         const usuarios = Array.isArray(data) ? data : [];
-        // Filtrar solo profesores (rol_nombre = 'profesor' o rol_id = 2)
-        this.profesores = usuarios.filter((u: any) => 
-          u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2
-        );
+        // Filtrar profesores (rol_id = 2) Y admins (rol_id = 3) que también pueden ser profesores
+        this.profesores = usuarios.filter((u: any) => {
+          const esProfesor = u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2;
+          const esAdmin = u.rol_nombre?.toLowerCase() === 'admin' || u.rol_id === 3;
+          return esProfesor || esAdmin;
+        });
+        console.log(`📋 Profesores/Admins disponibles para asignación: ${this.profesores.length}`);
       },
       error: (err) => {
         console.error('Error cargando profesores:', err);
@@ -409,6 +412,7 @@ export class AsignacionesComponent implements OnInit {
         this.notificationService.success('Profesor asignado exitosamente al proyecto');
         this.ocultarFormularioAsignacion();
         this.cargarAsignaciones();
+        this.cargarProyectos(); // ✅ Recargar proyectos para actualizar la información del profesor guía
         this.cargarEstadisticas();
         this.loadingAsignacion = false;
         this.cdr.detectChanges();
@@ -549,6 +553,7 @@ export class AsignacionesComponent implements OnInit {
   }
 
   obtenerClaseEstado(estado: string): string {
+    if (!estado) return 'estado-default';
     switch (estado.toLowerCase()) {
       case 'pendiente': return 'estado-pendiente';
       case 'en revisión': return 'estado-revision';
@@ -595,6 +600,7 @@ export class AsignacionesComponent implements OnInit {
   }
 
   getEstadoDisplay(estado: string): string {
+    if (!estado) return 'Sin estado';
     const estados: { [key: string]: string } = {
       'propuesta': 'Propuesta',
       'en_desarrollo': 'En Desarrollo',

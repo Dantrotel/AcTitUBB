@@ -41,6 +41,15 @@ export class ProyectoCronogramaComponent implements OnInit {
     this.userRole = localStorage.getItem('rol_id') || '1';
     this.userRut = localStorage.getItem('rut') || '';
 
+    // Leer el parámetro 'tab' de la URL para abrir la pestaña correcta
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.tabActiva = params['tab'];
+        console.log('📑 Pestaña activa desde URL:', this.tabActiva);
+        this.cdr.detectChanges();
+      }
+    });
+
     this.cargarProyecto();
     this.obtenerCronograma();
   }
@@ -81,15 +90,23 @@ export class ProyectoCronogramaComponent implements OnInit {
   }
 
   obtenerCronograma() {
+    console.log('🔄 Obteniendo cronograma del proyecto:', this.projectId);
     this.apiService.obtenerCronograma(this.projectId.toString()).subscribe({
       next: (response: any) => {
-        if (response.data) {
-          this.cronogramaId = response.data.id;
+        console.log('✅ Respuesta de cronograma recibida:', response);
+        // Aceptar diferentes formatos de respuesta del backend
+        const cronograma = response?.cronograma || response?.data?.cronograma || response?.data || null;
+        console.log('📋 Cronograma extraído:', cronograma);
+        if (cronograma && cronograma.id) {
+          this.cronogramaId = cronograma.id.toString();
+          console.log('✅ CronogramaId asignado:', this.cronogramaId);
+        } else {
+          console.warn('⚠️ No se encontró cronograma activo');
         }
         this.cdr.detectChanges();
       },
       error: (error: any) => {
-        console.error('Error al obtener cronograma:', error);
+        console.error('❌ Error al obtener cronograma:', error);
         this.cdr.detectChanges();
       }
     });
