@@ -1,3 +1,13 @@
+<!-- Navbar -->
+<app-navbar
+  [userName]="userName"
+  [userRole]="'admin'"
+  [showBackButton]="true"
+  [pageTitle]="'AcTitUBB'"
+  (back)="volver()"
+  (logout)="cerrarSesion()">
+</app-navbar>
+
 <!-- Contenido principal -->
 <div class="main-container">
   <!-- Header compacto con gradiente -->
@@ -7,18 +17,14 @@
         <i class="fas fa-users"></i>
         Gestión de Usuarios
       </h1>
-      <p class="header-subtitle" *ngIf="esSuperAdmin">Administra todos los usuarios del sistema</p>
-      <p class="header-subtitle" *ngIf="!esSuperAdmin">Administra los usuarios de tu carrera</p>
+      <p class="header-subtitle" *ngIf="esSuperAdmin">Gestiona todos los usuarios del sistema</p>
+      <p class="header-subtitle" *ngIf="!esSuperAdmin">Gestiona los usuarios de tu carrera</p>
     </div>
     
     <div class="header-right">
       <button class="btn-nuevo-usuario" (click)="abrirModalCrear()">
         <i class="fas fa-user-plus"></i>
         Nuevo Usuario
-      </button>
-      <button class="btn-volver" (click)="volver()">
-        <i class="fas fa-arrow-left"></i>
-        Volver
       </button>
       <div class="total-badge">
         <span class="total-number">{{ usuarios.length }}</span>
@@ -33,11 +39,11 @@
     {{ mensaje }}
   </div>
 
-  <!-- Alerta informativa para Admin de Carrera -->
+  <!-- Alerta informativa para Jefe de Curso -->
   <div *ngIf="!esSuperAdmin" class="info-alert">
     <i class="fas fa-info-circle"></i>
     <div>
-      <strong>Vista de Administrador de Carrera</strong>
+      <strong>Vista de Jefe de Curso</strong>
       <p>Solo puedes ver y gestionar usuarios asociados a tu carrera.</p>
     </div>
   </div>
@@ -80,7 +86,7 @@
           <option value="">Todos los roles</option>
           <option value="estudiante">Estudiante</option>
           <option value="profesor">Profesor</option>
-          <option value="admin">Administrador / Jefe de Carrera</option>
+          <option value="admin">Jefe de Curso</option>
           <option value="Super Administrador">Super Administrador</option>
         </select>
       </div>

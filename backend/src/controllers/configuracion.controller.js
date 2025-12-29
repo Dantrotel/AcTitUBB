@@ -155,7 +155,8 @@ export const obtenerEstadisticasGlobales = async (req, res) => {
         SUM(CASE WHEN DATEDIFF(NOW(), p.ultima_actividad_fecha) > 30 THEN 1 ELSE 0 END) as en_riesgo
       FROM proyectos p
       INNER JOIN usuarios u ON p.estudiante_rut = u.rut
-      INNER JOIN carreras c ON u.carrera_id = c.id
+      INNER JOIN estudiantes_carreras ec ON u.rut = ec.estudiante_rut AND ec.es_carrera_principal = TRUE
+      INNER JOIN carreras c ON ec.carrera_id = c.id
       WHERE p.estado_detallado NOT IN ('cerrado')
       GROUP BY c.id, c.nombre
       ORDER BY total_proyectos DESC

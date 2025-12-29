@@ -1,3 +1,13 @@
+<!-- Navbar -->
+<app-navbar
+  [userName]="userName"
+  [userRole]="'admin'"
+  [showBackButton]="true"
+  [pageTitle]="'AcTitUBB'"
+  (back)="volver()"
+  (logout)="cerrarSesion()">
+</app-navbar>
+
 <!-- Contenido principal -->
 <div class="main-container">
   <!-- Header compacto con gradiente -->
@@ -7,17 +17,13 @@
         <i class="fas fa-file-alt"></i>
         Gestión de Propuestas
       </h1>
-      <p class="header-subtitle">Administra todas las propuestas del sistema</p>
+      <p class="header-subtitle">Gestiona todas las propuestas del sistema</p>
     </div>
     <div class="header-right">
       <div class="total-badge">
         <span class="total-number">{{ propuestas.length }}</span>
         <span class="total-label">Total</span>
       </div>
-      <button class="btn-volver" (click)="volver()">
-        <i class="fas fa-arrow-left"></i>
-        Volver
-      </button>
     </div>
   </div>
 

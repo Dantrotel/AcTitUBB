@@ -126,26 +126,102 @@
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '📊';
-    font-size: 4rem;
-    display: block;
+  .empty-state-icon {
+    font-size: 5rem;
     margin-bottom: 1rem;
-    opacity: 0.7;
+    opacity: 0.8;
+    animation: float 3s ease-in-out infinite;
   }
 
   h3 {
     color: var(--ubb-primary);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
 
-  p {
-    color: var(--ubb-gray);
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-    line-height: 1.6;
+  .empty-state-content {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+
+    p {
+      color: var(--ubb-gray);
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+      text-align: center;
+
+      strong {
+        color: var(--ubb-primary);
+      }
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+      text-align: left;
+
+      li {
+        padding: 0.75rem 0;
+        color: var(--ubb-dark);
+        font-size: 1rem;
+        border-bottom: 1px solid rgba(0, 75, 141, 0.1);
+
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+
+    .btn-lg {
+      margin: 2rem auto;
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .help-text {
+      font-size: 0.9rem;
+      color: var(--ubb-gray);
+      font-style: italic;
+      margin-top: 1rem;
+    }
+
+    .alert {
+      background: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-align: left;
+
+      i {
+        color: var(--ubb-secondary);
+        font-size: 1.5rem;
+      }
+
+      &.alert-info {
+        background: #e7f3ff;
+        border-color: #b3d9ff;
+        color: var(--ubb-dark);
+      }
+    }
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 

@@ -518,9 +518,14 @@ export class ApiService {
 
   // Gestión de profesores (ahora a través de usuarios)
   getProfesores() {
-    // Obtener todos los usuarios y filtrar profesores en el cliente
-    // Nota: La gestión de profesores ahora se hace a través de /admin/usuarios
-    return this.getUsuarios();
+    // Obtener todos los usuarios y filtrar profesores y admins (que también pueden ser profesores)
+    // No usamos rol_filter porque necesitamos tanto rol 2 (profesor) como rol 3 (admin/profesor)
+    const token = localStorage.getItem('token');
+    return this.http.get(`${this.baseUrl}/admin/usuarios`, {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    });
   }
 
   getPropuestasAsignadasAProfesor(rut: string) {

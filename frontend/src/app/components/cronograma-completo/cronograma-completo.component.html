@@ -60,7 +60,7 @@
     <div class="section-content">
       <app-gestion-hitos
         [projectId]="projectId"
-        [cronogramaId]="cronograma?.id || ''"
+        [cronogramaId]="cronograma?.id?.toString() || ''"
         [userRole]="userRole"
         [userRut]="userRut"
         (hitosActualizados)="onHitosActualizados()">
@@ -70,15 +70,37 @@
     
   <!-- Mensaje cuando no hay cronograma -->
   <div *ngIf="!cronograma?.id" class="no-cronograma-message">
-    <h3>🔍 No hay cronograma activo</h3>
-    <p>Este proyecto aún no cuenta con un cronograma de hitos y entregas configurado.</p>
-    <p>Un cronograma es esencial para organizar las entregas y evaluar el progreso del proyecto.</p>
-    <button *ngIf="userRole === '2'" class="btn btn-primary" (click)="crearCronograma()">
-      ✨ Crear Cronograma
-    </button>
-    <button *ngIf="userRole === '1'" class="btn btn-secondary" disabled>
-      ⏳ Esperando asignación de profesor
-    </button>
+    <div class="empty-state-icon">📅</div>
+    <h3>No hay cronograma activo para este proyecto</h3>
+    
+    <div *ngIf="userRole === '2' || userRole === '3'" class="empty-state-content">
+      <p><strong>Como profesor</strong>, necesitas crear un cronograma para organizar:</p>
+      <ul>
+        <li>📌 Hitos y fechas límite</li>
+        <li>📤 Entregas de documentos</li>
+        <li>📊 Evaluaciones y seguimiento</li>
+        <li>🎯 Objetivos del proyecto</li>
+      </ul>
+      <button class="btn btn-primary btn-lg" (click)="crearCronograma()">
+        <i class="fas fa-plus-circle"></i> Crear Cronograma Ahora
+      </button>
+      <p class="help-text">Se creará un cronograma con duración de 6 meses que podrás personalizar después</p>
+    </div>
+    
+    <div *ngIf="userRole === '1'" class="empty-state-content">
+      <p><strong>Como estudiante</strong>, estás esperando que tu profesor guía cree el cronograma del proyecto.</p>
+      <p>Una vez creado, podrás ver:</p>
+      <ul>
+        <li>📅 Fechas límite de entregas</li>
+        <li>📤 Subir tus avances</li>
+        <li>📊 Seguimiento de tu progreso</li>
+        <li>💬 Retroalimentación del profesor</li>
+      </ul>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        Contacta a tu profesor guía para que configure el cronograma del proyecto
+      </div>
+    </div>
   </div>
 
   <!-- Acciones flotantes -->

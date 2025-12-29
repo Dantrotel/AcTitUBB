@@ -212,23 +212,25 @@ export const revisarPropuesta = async (id, data) => {
       throw new Error('Propuesta no encontrada');
     }
 
-    // Actualizar la propuesta (con archivo si existe)
+    // Actualizar la propuesta (solo estado y comentarios)
+    // NOTA: Los archivos se guardan en historial_revisiones_propuestas, no en propuestas
     const datosActualizacion = { 
       comentarios_profesor: comentario, 
       estado 
     };
     
-    // Agregar archivo si fue proporcionado
-    if (data.archivo_revision) {
-      datosActualizacion.archivo_revision = data.archivo_revision;
-      datosActualizacion.nombre_archivo_original = data.nombre_archivo_original;
-    }
+    console.log('🎯 Service - Datos que se enviarán al modelo:', JSON.stringify(datosActualizacion, null, 2));
     
     const actualizada = await PropuestasModel.revisarPropuesta(id, datosActualizacion);
+    
+    console.log('✅ Service - Modelo retornó:', actualizada);
     
     if (!actualizada) {
       throw new Error('Error al actualizar la propuesta');
     }
+
+    console.log('✅ Service - Propuesta actualizada correctamente, verificando estado...');
+    console.log('✅ Service - Estado actual:', estado);
 
     // Si el estado es "aprobada", crear automáticamente el proyecto
     if (estado === 'aprobada') {
@@ -272,14 +274,19 @@ export const revisarPropuesta = async (id, data) => {
       }
     }
 
-    return {
+    console.log('✅ Service - Preparando respuesta exitosa...');
+    const respuesta = {
       success: true,
       estudiante_rut: propuesta.estudiante_rut,
       titulo: propuesta.titulo,
       message: 'Propuesta revisada correctamente'
     };
+    console.log('✅ Service - Respuesta:', JSON.stringify(respuesta, null, 2));
+    return respuesta;
     
   } catch (error) {
+    console.error('❌ Service - Error capturado:', error.message);
+    console.error('❌ Service - Stack:', error.stack);
     throw error;
   }
 };
