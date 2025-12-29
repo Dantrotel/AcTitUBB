@@ -1,0 +1,197 @@
+// Variables de colores UBB
+$primary-color: #004b8d;
+$secondary-color: #0066cc;
+$white-color: #ffffff;
+$light-gray: #f8f9fa;
+$dark-gray: #212529;
+
+.navbar {
+  background: $white-color;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $primary-color;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: $secondary-color;
+      transform: scale(1.05);
+    }
+
+    i {
+      color: $secondary-color;
+      margin-right: 0.5rem;
+      font-size: 1.8rem;
+    }
+  }
+
+  .navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: $dark-gray;
+      font-weight: 500;
+      position: relative;
+      white-space: nowrap;
+
+      i {
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover {
+        background: $light-gray;
+        color: $primary-color;
+        transform: translateY(-2px);
+
+        i {
+          transform: scale(1.1);
+        }
+      }
+
+      &.user-menu {
+        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+        color: $white-color;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+
+        &:hover {
+          background: linear-gradient(135deg, $secondary-color 0%, $primary-color 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 75, 141, 0.3);
+        }
+      }
+
+      &.dropdown-trigger {
+        .fa-chevron-down {
+          font-size: 0.75rem;
+          margin-left: 0.25rem;
+          transition: transform 0.3s ease;
+        }
+
+        &:hover .fa-chevron-down {
+          transform: rotate(180deg);
+        }
+      }
+
+      // Dropdown menu
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        right: 0;
+        background: $white-color;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        min-width: 220px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1001;
+        overflow: hidden;
+
+        &.show {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 1.25rem;
+          color: $dark-gray;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border-bottom: 1px solid $light-gray;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          i {
+            font-size: 1rem;
+            color: $secondary-color;
+            width: 20px;
+            text-align: center;
+          }
+
+          &:hover {
+            background: linear-gradient(90deg, $light-gray 0%, $white-color 100%);
+            color: $primary-color;
+            padding-left: 1.5rem;
+
+            i {
+              transform: scale(1.2);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 1rem;
+    height: 60px;
+
+    .navbar-brand {
+      font-size: 1.2rem;
+
+      i {
+        font-size: 1.5rem;
+      }
+    }
+
+    .navbar-actions {
+      gap: 0.5rem;
+
+      .action-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+
+        span {
+          display: none;
+        }
+
+        i {
+          margin: 0;
+        }
+
+        &.user-menu span {
+          display: inline;
+        }
+      }
+    }
+  }
+}
+

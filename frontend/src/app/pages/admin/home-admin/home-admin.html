@@ -1,4 +1,4 @@
-<!-- Navbar del administrador -->
+<!-- Navbar del Jefe de Curso -->
 <nav class="navbar">
   <div class="navbar-brand">
     <i class="fas fa-graduation-cap"></i>
@@ -49,7 +49,7 @@
     <!-- Menú de usuario -->
     <div class="action-item user-menu" (click)="toggleUserMenu()">
       <i class="fas fa-user-circle"></i>
-      <span>{{ userName || 'Administrador' }}</span>
+      <span>{{ userName || 'Jefe de Curso' }}</span>
       <i class="fas fa-chevron-down"></i>
       
       <div class="dropdown-menu" [class.show]="showUserMenu">
@@ -67,11 +67,11 @@
   <!-- Header con bienvenida -->
   <div class="welcome-header">
     <div class="welcome-content">
-      <h1>Panel de Administración</h1>
+      <h1>Panel Jefe de Curso</h1>
       <p>Gestión completa del sistema de propuestas de título</p>
     </div>
     <div class="welcome-icon">
-      <i class="fas fa-cogs"></i>
+      <i class="fas fa-user-tie"></i>
     </div>
   </div>
 
@@ -452,11 +452,11 @@
     </div>
   }
 
-  <!-- Secciones de administración -->
+  <!-- Secciones de gestión -->
   <div class="admin-sections">
     <h2 class="section-title">
       <i class="fas fa-tools"></i>
-      Herramientas de Administración
+      Herramientas de Gestión
     </h2>
     
     <div class="sections-grid">
@@ -467,7 +467,7 @@
         </div>
         <div class="card-content">
           <h3>Gestión de Propuestas</h3>
-          <p>Ver, editar y administrar todas las propuestas del sistema</p>
+          <p>Ver, editar y gestionar todas las propuestas del sistema</p>
           <div class="card-actions">
             <span class="action-text">Acceder</span>
             <i class="fas fa-arrow-right"></i>
@@ -482,7 +482,7 @@
         </div>
         <div class="card-content">
           <h3>Gestión de Proyectos</h3>
-          <p>Ver, administrar y monitorear todos los proyectos activos</p>
+          <p>Ver, gestionar y monitorear todos los proyectos activos</p>
           <div class="card-actions">
             <span class="action-text">Acceder</span>
             <i class="fas fa-arrow-right"></i>
@@ -497,7 +497,7 @@
         </div>
         <div class="card-content">
           <h3>Gestión de Usuarios</h3>
-          <p>Administrar estudiantes, profesores y roles del sistema</p>
+          <p>Gestionar estudiantes, profesores y roles del sistema</p>
           <div class="card-actions">
             <span class="action-text">Acceder</span>
             <i class="fas fa-arrow-right"></i>
@@ -564,7 +564,77 @@
         </div>
         <div class="card-content">
           <h3>Colaboradores Externos</h3>
-          <p>Administrar supervisores, mentores y asesores técnicos externos</p>
+          <p>Gestionar supervisores, mentores y asesores técnicos externos</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Actividades Académicas (Como Profesor) -->
+    <div class="section-divider"></div>
+    
+    <h2 class="section-title">
+      <i class="fas fa-chalkboard-teacher"></i>
+      Mis Actividades como Profesor
+    </h2>
+    
+    <div class="sections-grid">
+      <!-- Propuestas Asignadas -->
+      <div class="section-card profesor-card" (click)="irAPropuestasAsignadas()">
+        <div class="card-icon">
+          <i class="fas fa-file-signature"></i>
+        </div>
+        <div class="card-content">
+          <h3>Propuestas Asignadas</h3>
+          <p>Revisar y evaluar propuestas de título asignadas</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mis Proyectos (Cronogramas) -->
+      <div class="section-card profesor-card" (click)="irAMisProyectos()">
+        <div class="card-icon">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="card-content">
+          <h3>Proyectos que Guío</h3>
+          <p>Gestionar cronogramas y seguimiento de proyectos</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reuniones -->
+      <div class="section-card profesor-card" (click)="irAReuniones()">
+        <div class="card-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="card-content">
+          <h3>Reuniones</h3>
+          <p>Gestionar disponibilidad y reuniones con estudiantes</p>
+          <div class="card-actions">
+            <span class="action-text">Acceder</span>
+            <i class="fas fa-arrow-right"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reportes -->
+      <div class="section-card profesor-card" (click)="irAReportes()">
+        <div class="card-icon">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="card-content">
+          <h3>Reportes Académicos</h3>
+          <p>Ver métricas y estadísticas de mis actividades</p>
           <div class="card-actions">
             <span class="action-text">Acceder</span>
             <i class="fas fa-arrow-right"></i>
@@ -888,6 +958,6 @@
 <!-- Footer -->
 <footer class="main-footer">
   <div class="footer-content">
-    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Panel de Administración</p>
+    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Panel Jefe de Curso</p>
   </div>
 </footer> 

@@ -362,14 +362,23 @@ export class GestionHitosComponent implements OnInit {
 
   // Carga inicial de datos (Sistema Unificado ✅)
   cargarHitos() {
+    console.log('🔄 Cargando hitos del cronograma:', this.cronogramaId);
     this.apiService.getHitosCronograma(this.cronogramaId).subscribe({
       next: (response: any) => {
+        console.log('✅ Respuesta de hitos recibida:', response);
+        // El backend devuelve { success: true, hitos: [...] }
+        const hitosData = response.hitos || response.data || [];
+        console.log('📋 Hitos encontrados:', hitosData.length);
+        
         // Normalizar hitos del backend para compatibilidad
-        this.hitos = (response.data || []).map((h: any) => this.apiService.normalizarHito(h));
+        this.hitos = hitosData.map((h: any) => this.apiService.normalizarHito(h));
+        console.log('✅ Hitos normalizados:', this.hitos);
+        
         this.filtrarHitos();
         this.cargarEntregasParaTodosLosHitos();
       },
       error: (error: any) => {
+        console.error('❌ Error al cargar hitos:', error);
         this.mostrarError('No se pudieron cargar los hitos del proyecto');
       }
     });

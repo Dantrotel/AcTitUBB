@@ -20,7 +20,7 @@ $info-color: #17a2b8;
 $light-gray: $light-color;
 $dark-gray: $dark-color;
 
-// Navbar del administrador
+// Navbar del Jefe de Curso
 .navbar {
   background: $white-color;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -346,6 +346,28 @@ $dark-gray: $dark-color;
     }
   }
 
+  .section-subtitle {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-top: -1rem;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+
+  .section-description {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-top: -1rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #e9ecef 20%, #e9ecef 80%, transparent 100%);
+    margin: 3rem 0 2rem 0;
+  }
+
   // Grid de propuestas principales (4 tarjetas grandes)
   .stats-grid-propuestas {
     display: grid;
@@ -406,7 +428,7 @@ $dark-gray: $dark-color;
   }
 }
 
-// Secciones de administración
+// Secciones de gestión
 .admin-sections {
   .sections-grid {
     display: grid;
@@ -426,6 +448,31 @@ $dark-gray: $dark-color;
         transform: translateY(-6px);
         box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
         border-color: $primary-color;
+      }
+
+      // Tarjetas de actividades académicas (como profesor)
+      &.profesor-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 2px solid #e9ecef;
+        
+        &:hover {
+          border-color: $primary-color;
+          box-shadow: 0 12px 30px rgba(0, 75, 141, 0.15);
+          background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+
+        .card-icon i {
+          color: $secondary-color;
+        }
+
+        .card-content h3 {
+          color: $primary-color;
+        }
+
+        .card-actions .action-text,
+        .card-actions i {
+          color: $secondary-color;
+        }
       }
 
       .card-icon {
@@ -810,7 +857,7 @@ $dark-gray: $dark-color;
 }
 
 /* ========================================
-   ADMIN DASHBOARD ANALYTICS STYLES
+   JEFE DE CURSO DASHBOARD ANALYTICS STYLES
    ======================================== */
 
 $primary-color: #003d82;

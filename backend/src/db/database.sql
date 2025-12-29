@@ -32,6 +32,19 @@ CREATE TABLE IF NOT EXISTS estados_propuestas (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabla de Períodos para Propuestas (control de fechas de envío)
+CREATE TABLE IF NOT EXISTS periodos_propuestas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_activo (activo),
+    INDEX idx_fechas (fecha_inicio, fecha_fin)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tabla de Estados de Proyectos
 CREATE TABLE IF NOT EXISTS estados_proyectos (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -129,6 +142,8 @@ CREATE TABLE IF NOT EXISTS historial_revisiones_propuestas (
     accion ENUM('asignado', 'revision_iniciada', 'comentario_agregado', 'decision_tomada', 'desasignado') NOT NULL,
     decision ENUM('aprobar', 'rechazar', 'solicitar_correcciones') NULL,
     comentarios TEXT NULL,
+    archivo_revision VARCHAR(255) NULL COMMENT 'Archivo adjunto a esta revisión',
+    nombre_archivo_original VARCHAR(255) NULL COMMENT 'Nombre original del archivo adjunto',
     fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     realizado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'RUT de quien realizó la acción (puede ser el mismo profesor)',
     FOREIGN KEY (asignacion_id) REFERENCES asignaciones_propuestas(id) ON DELETE CASCADE,
@@ -140,6 +155,24 @@ CREATE TABLE IF NOT EXISTS historial_revisiones_propuestas (
     INDEX idx_historial_fecha (fecha_accion),
     INDEX idx_historial_accion (accion)
 );
+
+-- Tabla para versiones de archivos de propuestas (sistema de versionado)
+CREATE TABLE IF NOT EXISTS archivos_propuesta (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    propuesta_id INT NOT NULL,
+    tipo_archivo ENUM('propuesta_inicial', 'revision_profesor', 'correccion_estudiante') NOT NULL,
+    archivo VARCHAR(255) NOT NULL,
+    nombre_archivo_original VARCHAR(255) NOT NULL,
+    subido_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    version INT NOT NULL DEFAULT 1,
+    comentario TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (propuesta_id) REFERENCES propuestas(id) ON DELETE CASCADE,
+    FOREIGN KEY (subido_por) REFERENCES usuarios(rut),
+    INDEX idx_propuesta (propuesta_id),
+    INDEX idx_version (propuesta_id, version),
+    INDEX idx_tipo (tipo_archivo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de Proyectos (Fase de desarrollo)
 CREATE TABLE IF NOT EXISTS proyectos (
@@ -1201,6 +1234,11 @@ INSERT IGNORE INTO estados_propuestas (nombre, descripcion) VALUES
 ('correcciones', 'Propuesta requiere correcciones del estudiante'),
 ('aprobada', 'Propuesta aprobada, se puede crear proyecto'),
 ('rechazada', 'Propuesta rechazada');
+
+-- Período de propuestas activo (para desarrollo y testing)
+INSERT IGNORE INTO periodos_propuestas (nombre, fecha_inicio, fecha_fin, activo) VALUES
+('Período de Desarrollo 2025', '2025-01-01', '2025-12-31', 1)
+ON DUPLICATE KEY UPDATE activo = VALUES(activo);
 
 -- Estados de proyectos
 INSERT IGNORE INTO estados_proyectos (nombre, descripcion) VALUES

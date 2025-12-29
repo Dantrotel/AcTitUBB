@@ -154,7 +154,11 @@ export const asignarProfesor = async (propuesta_id, profesor_rut, asignado_por) 
   return result.affectedRows > 0;
 };
 
-export const revisarPropuesta = async (id, { comentarios_profesor, estado, archivo_revision = null, nombre_archivo_original = null }) => {
+export const revisarPropuesta = async (id, data) => {
+  console.log('🔍 revisarPropuesta - Datos recibidos:', JSON.stringify(data, null, 2));
+  
+  const { comentarios_profesor, estado } = data;
+  
   // Mapear el nombre del estado al ID correspondiente
   const estadoMap = {
     'pendiente': 1,
@@ -169,23 +173,30 @@ export const revisarPropuesta = async (id, { comentarios_profesor, estado, archi
     throw new Error(`Estado inválido: ${estado}`);
   }
   
-  // Si hay archivo, incluirlo en la actualización
-  let query, params;
-  if (archivo_revision) {
-    query = `UPDATE propuestas 
-             SET comentarios = ?, estado_id = ?, fecha_revision = NOW(), 
-                 archivo_revision = ?, nombre_archivo_original = ? 
-             WHERE id = ?`;
-    params = [comentarios_profesor, estado_id, archivo_revision, nombre_archivo_original, id];
-  } else {
-    query = `UPDATE propuestas 
-             SET comentarios = ?, estado_id = ?, fecha_revision = NOW() 
-             WHERE id = ?`;
-    params = [comentarios_profesor, estado_id, id];
-  }
+  // NOTA: Los comentarios y archivos del profesor se guardan en historial_revisiones_propuestas,
+  // NO en la tabla propuestas. Solo actualizamos el estado y fecha de revisión aquí.
   
-  const [result] = await pool.execute(query, params);
-  return result.affectedRows > 0;
+  const query = `UPDATE propuestas 
+                 SET estado_id = ?, fecha_revision = NOW() 
+                 WHERE id = ?`;
+  const params = [estado_id, id];
+  
+  console.log('✅ Query a ejecutar:', query);
+  console.log('✅ Params:', params);
+  console.log('✅ Tipo de query:', typeof query);
+  console.log('✅ Longitud de query:', query.length);
+  console.log('✅ Query limpio (sin espacios):', query.replace(/\s+/g, ' ').trim());
+  
+  try {
+    const [result] = await pool.execute(query, params);
+    console.log('✅ Query ejecutado exitosamente, affected rows:', result.affectedRows);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('❌ Error al ejecutar query:', error.message);
+    console.error('❌ Query que falló:', query);
+    console.error('❌ Params:', params);
+    throw error;
+  }
 };
 
 export const aprobarPropuesta = async (id, proyecto_id) => {

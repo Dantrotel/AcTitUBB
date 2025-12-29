@@ -165,7 +165,7 @@ const obtenerUsuariosPorCarreras = async (carreraIds) => {
         LEFT JOIN carreras c ON ec.carrera_id = c.id
         LEFT JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.es_principal = TRUE AND pd.activo = TRUE
         LEFT JOIN departamentos d ON pd.departamento_id = d.id
-        WHERE u.rol_id IN (1, 2)  -- Solo estudiantes (1) y profesores (2)
+        WHERE u.rol_id IN (1, 2, 3)  -- Estudiantes (1), profesores (2) y admins (3)
         AND (
             -- Estudiantes de alguna de las carreras
             (u.rol_id = 1 AND ec.carrera_id IN (${placeholders}))
@@ -176,6 +176,9 @@ const obtenerUsuariosPorCarreras = async (carreraIds) => {
                 FROM departamentos_carreras 
                 WHERE carrera_id IN (${placeholders}) AND activo = TRUE
             ))
+            OR
+            -- Admins (pueden actuar como profesores sin restricción de departamento)
+            (u.rol_id = 3)
         )
         ORDER BY u.nombre
     `, [...carreraIds, ...carreraIds]);
