@@ -268,15 +268,18 @@ export const obtenerDashboardAdmin = async () => {
         // 7. Proyectos por profesor (top 10 con más carga)
         const [cargaProfesores] = await pool.execute(`
             SELECT 
-                u.nombre as profesor,
-                COUNT(DISTINCT ap.proyecto_id) as total_proyectos,
-                GROUP_CONCAT(DISTINCT rp.nombre SEPARATOR ', ') as roles
+                u.rut,
+                u.nombre,
+                u.email as correo,
+                COUNT(DISTINCT CASE WHEN rp.id = 2 THEN ap.proyecto_id END) as proyectos_guia,
+                COUNT(DISTINCT CASE WHEN rp.id = 4 THEN ap.proyecto_id END) as proyectos_informante,
+                COUNT(DISTINCT ap.proyecto_id) as total_proyectos
             FROM usuarios u
             INNER JOIN asignaciones_proyectos ap ON u.rut = ap.profesor_rut
             INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
             WHERE ap.activo = TRUE AND u.rol_id = 2
-            GROUP BY u.rut, u.nombre
-            ORDER BY total_proyectos DESC
+            GROUP BY u.rut, u.nombre, u.email
+            ORDER BY total_proyectos DESC, proyectos_guia DESC
             LIMIT 10
         `);
 

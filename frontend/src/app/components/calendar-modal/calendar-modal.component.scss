@@ -33,11 +33,12 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
 
 .modal-content {
   background: $ubb-white;
-  border-radius: 16px;
+  border-radius: 12px;
   width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 600px;
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideIn 0.3s ease;
 }
@@ -46,15 +47,16 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 0.75rem 1.25rem;
   border-bottom: 1px solid $gray-color;
   background: $ubb-blue-gradient;
   color: $ubb-white;
-  border-radius: 16px 16px 0 0;
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
 
   h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     font-weight: 600;
   }
 
@@ -75,17 +77,19 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
 }
 
 .calendar-container {
-  padding: 2rem;
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
 
   h3 {
-    font-size: 1.3rem;
+    font-size: 1rem;
     font-weight: 600;
     color: $ubb-black;
     margin: 0;
@@ -95,8 +99,8 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
   .nav-btn {
     background: $ubb-light-gray;
     border: none;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
     cursor: pointer;
     transition: all 0.3s ease;
     color: $ubb-dark-gray;
@@ -104,63 +108,63 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
     &:hover {
       background: $ubb-blue;
       color: $ubb-white;
-      transform: translateY(-2px);
     }
 
     i {
-      font-size: 1rem;
+      font-size: 0.9rem;
     }
   }
 }
 
 .calendar-grid {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  margin-bottom: 1rem;
+  gap: 4px;
+  margin-bottom: 0.25rem;
 
   .weekday {
     text-align: center;
-    padding: 1rem 0.5rem;
+    padding: 0.25rem;
     font-weight: 600;
     color: $ubb-dark-gray;
-    background: $ubb-light-gray;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
   }
 }
 
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  gap: 4px;
 }
 
 .calendar-day {
-  aspect-ratio: 1;
+  height: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 4px;
+  transition: all 0.2s ease;
   position: relative;
   background: $ubb-white;
-  border: 1px solid $gray-color;
+  border: 1px solid transparent;
+  padding: 0.25rem;
 
   &:hover {
     background: $ubb-light-gray;
-    transform: scale(1.05);
   }
 
   &.other-month {
     color: $gray-color;
-    background: $ubb-light-gray;
+
+    .day-number {
+      opacity: 0.5;
+    }
   }
 
   &.today {
@@ -170,48 +174,44 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
   }
 
   &.has-event {
-    background: rgba($ubb-success, 0.1);
-    border-color: $ubb-success;
-
-    .event-indicator {
+    .event-dot {
       position: absolute;
       bottom: 4px;
-      right: 4px;
-      width: 8px;
-      height: 8px;
+      width: 4px;
+      height: 4px;
       background: $ubb-success;
       border-radius: 50%;
     }
   }
 
   .day-number {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 0.85rem;
+    font-weight: 400;
   }
 }
 
 .events-list {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
   background: $ubb-light-gray;
-  border-radius: 12px;
+  border-radius: 8px;
 
   h4 {
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.5rem 0;
     color: $ubb-black;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 600;
   }
 
   .event-item {
     display: flex;
     align-items: center;
-    padding: 1rem;
+    padding: 0.5rem;
     background: $ubb-white;
-    border-radius: 8px;
+    border-radius: 6px;
     margin-bottom: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid $ubb-blue;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    border-left: 3px solid $ubb-blue;
 
     &:last-child {
       margin-bottom: 0;
@@ -260,18 +260,18 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
     }
 
     .event-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       background: $ubb-blue-gradient;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-right: 1rem;
+      margin-right: 0.75rem;
 
       i {
         color: $ubb-white;
-        font-size: 1rem;
+        font-size: 0.85rem;
       }
     }
 
@@ -282,11 +282,12 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
         font-weight: 600;
         color: $ubb-black;
         margin-bottom: 0.25rem;
+        font-size: 0.9rem;
       }
 
       .event-description {
         color: $ubb-dark-gray;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
       }
     }
   }
@@ -294,9 +295,9 @@ $ubb-blue-gradient: linear-gradient(135deg, $ubb-blue 0%, $ubb-blue-light 100%);
 
 .upcoming-events {
   h4 {
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.5rem 0;
     color: $ubb-black;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 600;
   }
 

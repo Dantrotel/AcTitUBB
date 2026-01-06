@@ -382,7 +382,7 @@ const verificarEvaluacionesPendientes = async () => {
       WHERE hc.tipo_hito = 'entrega_final'
         AND hc.estado = 'entregado'
         AND ap.activo = TRUE
-        AND rp.nombre = 'Profesor Informante'
+        AND rp.nombre = 'Profesor de Asignatura'
         AND hc.fecha_entrega_real IS NOT NULL
         AND DATEDIFF(NOW(), hc.fecha_entrega_real) >= ?
         AND DATEDIFF(NOW(), hc.fecha_entrega_real) <= ?

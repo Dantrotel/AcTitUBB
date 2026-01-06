@@ -19,7 +19,7 @@ export interface VersionDocumento {
   autor_rut: string;
   autor_nombre?: string;
   autor_apellido?: string;
-  autor_rol: 'estudiante' | 'profesor_guia' | 'profesor_informante' | 'admin';
+  autor_rol: 'estudiante' | 'profesor_guia' | 'profesor_asignatura' | 'admin';
   comentarios_generales?: string;
   estado: 'borrador' | 'enviado' | 'en_revision' | 'revisado' | 'aprobado' | 'rechazado';
   requiere_correccion?: boolean;
@@ -80,7 +80,7 @@ export interface ResultadoFinal {
   proyecto_id: number;
   estado_final: 'aprobado' | 'aprobado_con_distincion' | 'aprobado_con_observaciones' | 'reprobado' | 'abandonado' | 'anulado';
   evaluacion_profesor_guia?: number;
-  evaluacion_profesor_informante?: number;
+  evaluacion_profesor_asignatura?: number;
   evaluacion_comision?: number;
   observaciones_finales?: string;
   recomendaciones?: string;

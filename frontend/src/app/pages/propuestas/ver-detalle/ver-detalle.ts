@@ -203,6 +203,18 @@ export class VerPropuestaComponent implements OnInit {
     }
   }
 
+  irAlHome() {
+    if (this.esProfesor) {
+      this.router.navigate(['/profesor']);
+    } else if (this.esEstudiante) {
+      this.router.navigate(['/estudiante']);
+    } else if (this.esAdmin) {
+      this.router.navigate(['/admin']);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
   recargarPropuesta() {
     this.cargarPropuesta();
   }

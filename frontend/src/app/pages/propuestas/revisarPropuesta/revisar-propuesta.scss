@@ -657,6 +657,23 @@ $text-muted: #6c757d;
             transform: translateY(-2px);
           }
         }
+
+        &.btn-draft {
+          background: linear-gradient(135deg, $warning-color 0%, darken($warning-color, 10%) 100%);
+          color: $dark-color;
+          box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+          font-weight: 600;
+
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
       }
     }
   }

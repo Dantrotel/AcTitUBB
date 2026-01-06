@@ -291,7 +291,7 @@ export class SubirVersionComponent {
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {
     this.esEstudiante = data.rolUsuario === 'estudiante';
-    this.esProfesor = ['profesor_guia', 'profesor_informante'].includes(data.rolUsuario);
+    this.esProfesor = ['profesor_guia', 'profesor_asignatura'].includes(data.rolUsuario);
 
     this.formulario = this.fb.group({
       tipo_version: [this.esEstudiante ? 'estudiante' : 'profesor_revision'],

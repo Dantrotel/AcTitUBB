@@ -218,6 +218,11 @@ export class HomeAdminComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
+  irAlHome() {
+    // Ya estamos en el home de admin, solo cerramos menús si están abiertos
+    this.showUserMenu = false;
+  }
+
   fechaActual(): Date {
     return new Date();
   }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
+import { NavbarComponent } from '../../../components/navbar/navbar.component';
 
 interface Proyecto {
   id: number;
@@ -36,11 +37,14 @@ interface ProfesorDisponible {
 @Component({
   selector: 'app-gestion-comision',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './gestion-comision.html',
   styleUrls: ['./gestion-comision.scss']
 })
 export class GestionComisionComponent implements OnInit {
+  // Propiedades para navbar
+  userName = '';
+  
   proyectos: Proyecto[] = [];
   proyectoSeleccionado: Proyecto | null = null;
   comision: MiembroComision[] = [];
@@ -70,7 +74,25 @@ export class GestionComisionComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.cargarUsuario();
     this.cargarProyectos();
+  }
+
+  cargarUsuario() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.userName = payload.nombre || 'Admin';
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
+      }
+    }
+  }
+
+  cerrarSesion() {
+    localStorage.removeItem('token');
+    this.router.navigate(['/login']);
   }
 
   async cargarProyectos() {

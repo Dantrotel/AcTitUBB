@@ -10,7 +10,7 @@ import { NavbarComponent } from '../../../components/navbar/navbar.component';
   imports: [CommonModule, FormsModule, NavbarComponent],
   selector: 'gestion-usuarios',
   templateUrl: './gestion-usuarios.html',
-  styleUrls: ['./gestion-usuarios.scss']
+  styleUrl: './gestion-usuarios.scss'
 })
 export class GestionUsuariosComponent implements OnInit {
   usuarios: any[] = [];
@@ -57,6 +57,38 @@ export class GestionUsuariosComponent implements OnInit {
     const rol = this.roles.find(r => r.id === rolId);
     return rol ? rol.nombre : '';
   }
+
+  // Getter para roles filtrados según el tipo de usuario
+  get rolesFiltrados(): any[] {
+    if (this.esSuperAdmin) {
+      // Super Admin ve todos los roles EXCEPTO Super Administrador (rol 4)
+      return this.roles.filter(r => r.id !== 4);
+    } else {
+      // Jefe de Curso solo ve Estudiante (1) y Profesor (2)
+      return this.roles.filter(r => r.id === 1 || r.id === 2);
+    }
+  }
+
+  // Getter para opciones de filtro por rol
+  get opcionesFiltroRol(): any[] {
+    if (this.esSuperAdmin) {
+      // Super Admin puede filtrar por todos los roles excepto Super Admin
+      return [
+        { value: '', label: 'Todos los roles' },
+        { value: 'estudiante', label: 'Estudiante' },
+        { value: 'profesor', label: 'Profesor' },
+        { value: 'admin', label: 'Jefe de Curso' }
+      ];
+    } else {
+      // Jefe de Curso solo puede filtrar por Estudiante y Profesor
+      return [
+        { value: '', label: 'Todos los roles' },
+        { value: 'estudiante', label: 'Estudiante' },
+        { value: 'profesor', label: 'Profesor' }
+      ];
+    }
+  }
+  
   esSuperAdmin: boolean = false;
 
   constructor(

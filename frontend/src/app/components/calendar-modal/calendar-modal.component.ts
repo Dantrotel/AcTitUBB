@@ -27,11 +27,6 @@ import { ApiService } from '../../services/api';
             </button>
           </div>
           
-          <!-- Debug info -->
-          <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px;">
-            <strong>Debug:</strong> Propuestas: {{propuestas.length}} | Eventos: {{upcomingEvents.length}} | Días con eventos: {{getDiasConEventos()}}
-          </div>
-          
           <div class="calendar-grid">
             <div class="calendar-weekdays">
               <div class="weekday" *ngFor="let day of weekdays">{{day}}</div>
@@ -47,9 +42,7 @@ import { ApiService } from '../../services/api';
                 (click)="selectDate(day)"
               >
                 <span class="day-number">{{day.dayNumber}}</span>
-                <div class="event-indicator" *ngIf="day.hasEvent">
-                  <i class="fas fa-circle"></i>
-                </div>
+                <span class="event-dot" *ngIf="day.hasEvent"></span>
               </div>
             </div>
           </div>

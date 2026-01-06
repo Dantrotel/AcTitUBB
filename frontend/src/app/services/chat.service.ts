@@ -252,15 +252,23 @@ export class ChatService {
    * Obtener total de mensajes no leídos
    */
   async obtenerTotalNoLeidos(): Promise<number> {
-    const response = await fetch(`${this.apiUrl}/chat/no-leidos`, {
-      headers: this.getHeaders()
-    });
-    
-    if (!response.ok) throw new Error('Error al obtener total no leídos');
-    
-    const data = await response.json();
-    this.totalNoLeidos.set(data.total);
-    return data.total;
+    try {
+      const response = await fetch(`${this.apiUrl}/chat/no-leidos`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) {
+        // Si no está autenticado o hay error, retornar 0
+        return 0;
+      }
+      
+      const data = await response.json();
+      this.totalNoLeidos.set(data.total);
+      return data.total;
+    } catch (error) {
+      // Silenciar errores (ej: no autenticado)
+      return 0;
+    }
   }
 
   /**

@@ -517,7 +517,7 @@ router.get('/profesores-asignados', async (req, res) => {
                 CASE rp.nombre
                     WHEN 'profesor_guia' THEN 1
                     WHEN 'profesor_co_guia' THEN 2
-                    WHEN 'profesor_informante' THEN 3
+                    WHEN 'profesor_asignatura' THEN 3
                     ELSE 4
                 END`,
             [user.rut]

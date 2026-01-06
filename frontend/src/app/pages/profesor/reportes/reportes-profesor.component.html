@@ -1,33 +1,19 @@
 <!-- Navbar -->
-<nav class="navbar">
-  <div class="navbar-brand">
-    <i class="fas fa-chart-line"></i>
-    <span>AcTitUBB - Reportes y Métricas</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <button class="btn-icon" (click)="exportarPDF()" title="Exportar a PDF">
-      <i class="fas fa-file-pdf"></i>
-    </button>
-    <button class="btn-icon" (click)="exportarExcel()" title="Exportar a Excel">
-      <i class="fas fa-file-excel"></i>
-    </button>
-    <button class="btn-secondary" (click)="volver()">
-      <i class="fas fa-arrow-left"></i>
-      Volver
-    </button>
-  </div>
-</nav>
-
-<!-- Loading State -->
-<div *ngIf="loading" class="loading-container">
-  <div class="loading-spinner">
-    <i class="fas fa-spinner fa-spin"></i>
-  </div>
-  <p>Cargando reportes...</p>
-</div>
+<app-navbar
+  [userName]="profesor.nombre || 'Profesor'"
+  [userRole]="'profesor'"
+  [showBackButton]="true"
+  [pageTitle]="'AcTitUBB - Reportes'"
+  [actions]="[
+    { icon: 'fas fa-file-pdf', label: 'PDF', action: exportarPDF },
+    { icon: 'fas fa-file-excel', label: 'Excel', action: exportarExcel }
+  ]"
+  (back)="volver()"
+  (logout)="cerrarSesion()">
+</app-navbar>
 
 <!-- Contenido Principal -->
+<div class="main-container">
 <div *ngIf="!loading" class="container">
   <!-- Header -->
   <div class="page-header">

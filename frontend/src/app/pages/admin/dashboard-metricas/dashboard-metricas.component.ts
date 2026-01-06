@@ -170,12 +170,22 @@ import { NotificationService } from '../../../services/notification.service';
 
                 <ng-container matColumnDef="guia">
                   <th mat-header-cell *matHeaderCellDef>Como Guía</th>
-                  <td mat-cell *matCellDef="let element">{{ element.como_guia }}</td>
+                  <td mat-cell *matCellDef="let element">
+                    <span class="badge badge-info">
+                      <mat-icon>school</mat-icon>
+                      {{ element.como_guia }} Guía
+                    </span>
+                  </td>
                 </ng-container>
 
                 <ng-container matColumnDef="informante">
                   <th mat-header-cell *matHeaderCellDef>Como Informante</th>
-                  <td mat-cell *matCellDef="let element">{{ element.como_informante }}</td>
+                  <td mat-cell *matCellDef="let element">
+                    <span class="badge badge-success">
+                      <mat-icon>people</mat-icon>
+                      {{ element.como_informante }} Informante
+                    </span>
+                  </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="columnasProfesores"></tr>

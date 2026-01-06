@@ -156,4 +156,9 @@ export class SuperAdminHomeComponent implements OnInit {
   logout(): void {
     this.apiService.logout();
   }
+
+  irAlHome() {
+    // Ya estamos en el home de super-admin, solo cerramos menús si están abiertos
+    this.showUserMenu.set(false);
+  }
 }

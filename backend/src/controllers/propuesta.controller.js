@@ -90,22 +90,17 @@ export const crearPropuestaController = async (req, res) => {
     if (!numero_estudiantes || ![1, 2].includes(parseInt(numero_estudiantes))) {
       errores.push('numero_estudiantes debe ser 1 o 2');
     }
-    if (!complejidad_estimada || !['baja', 'media', 'alta'].includes(complejidad_estimada)) {
-      errores.push('complejidad_estimada debe ser "baja", "media" o "alta"');
-    }
     if (!duracion_estimada_semestres || ![1, 2].includes(parseInt(duracion_estimada_semestres))) {
       errores.push('duracion_estimada_semestres debe ser 1 o 2');
     }
-    if (!area_tematica || area_tematica.trim() === '') errores.push('area_tematica es requerida');
-    if (!objetivos_generales || objetivos_generales.trim() === '') errores.push('objetivos_generales es requerido');
-    if (!objetivos_especificos || objetivos_especificos.trim() === '') errores.push('objetivos_especificos es requerido');
-    if (!metodologia_propuesta || metodologia_propuesta.trim() === '') errores.push('metodologia_propuesta es requerida');
     if (!estudiante_rut) errores.push('estudiante_rut falta (problema de autenticación)');
 
-    // Validación condicional: si son 2 estudiantes y complejidad baja, requiere justificación
-    if (parseInt(numero_estudiantes) === 2 && complejidad_estimada === 'baja') {
-      if (!justificacion_complejidad || justificacion_complejidad.trim() === '') {
-        errores.push('justificacion_complejidad es requerida para 2 estudiantes con complejidad baja');
+    // Validación de estudiantes adicionales
+    if (parseInt(numero_estudiantes) > 1) {
+      if (!estudiantes_adicionales || estudiantes_adicionales.length === 0) {
+        errores.push('Se requiere especificar los estudiantes adicionales cuando numero_estudiantes > 1');
+      } else if (estudiantes_adicionales.length !== parseInt(numero_estudiantes) - 1) {
+        errores.push(`Se requieren ${parseInt(numero_estudiantes) - 1} estudiantes adicionales pero se recibieron ${estudiantes_adicionales.length}`);
       }
     }
 

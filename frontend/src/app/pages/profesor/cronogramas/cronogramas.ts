@@ -17,6 +17,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
+import { NavbarComponent } from '../../../components/navbar/navbar.component';
 
 @Component({
   selector: 'app-cronogramas',
@@ -36,12 +37,16 @@ import { NotificationService } from '../../../services/notification.service';
     MatProgressSpinnerModule,
     MatExpansionModule,
     MatChipsModule,
-    MatBadgeModule
+    MatBadgeModule,
+    NavbarComponent
   ],
   templateUrl: './cronogramas.html',
   styleUrls: ['./cronogramas.scss']
 })
 export class CronogramasComponent implements OnInit {
+  // Propiedades para navbar
+  profesor: any = {};
+  
   // Propiedades del componente
   proyectosAsignados: any[] = [];
   proyectoSeleccionado: any = null;
@@ -121,7 +126,28 @@ export class CronogramasComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.cargarProfesor();
     this.cargarProyectosAsignados();
+  }
+
+  cargarProfesor() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.profesor = {
+          rut: payload.rut,
+          nombre: payload.nombre || 'Profesor'
+        };
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
+      }
+    }
+  }
+
+  cerrarSesion() {
+    localStorage.removeItem('token');
+    this.router.navigate(['/login']);
   }
 
   // Métodos de utilidad para fechas

@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
 import { NavbarComponent } from '../../../components/navbar/navbar.component';
@@ -21,6 +21,8 @@ export class GestionPropuestasComponent implements OnInit {
   filtroEstudiante = '';
   filtroProfesor = '';
   userName = '';
+  viewMode: 'admin' | 'superadmin' = 'admin';
+  backRoute = '/admin';
   
   // Evaluaciones
   mostrarModalEvaluacion = false;
@@ -42,17 +44,22 @@ export class GestionPropuestasComponent implements OnInit {
   evaluacionEditId: string | null = null;
 
   constructor(
-    private router: Router,
+    protected router: Router,
+    protected route: ActivatedRoute,
     private apiService: ApiService,
     private cdr: ChangeDetectorRef,
     private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
+    // Obtener viewMode de la ruta
+    this.viewMode = this.route.snapshot.data['viewMode'] || 'admin';
+    this.backRoute = this.route.snapshot.data['backRoute'] || '/admin';
+    
     const userData = localStorage.getItem('userData');
     if (userData) {
       const user = JSON.parse(userData);
-      this.userName = user.nombre || 'Jefe de Curso';
+      this.userName = user.nombre || (this.viewMode === 'superadmin' ? 'Super Administrador' : 'Jefe de Curso');
     }
     this.cargarPropuestas();
   }

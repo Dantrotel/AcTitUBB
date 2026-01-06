@@ -36,8 +36,6 @@ import { MatDividerModule } from '@angular/material/divider';
 export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('mensajesContainer') private mensajesContainer!: ElementRef;
   
-  chatService = signal(new ChatService());
-  
   // Estado local
   conversacionSeleccionada = signal<Conversacion | null>(null);
   nuevoMensaje = signal<string>('');
@@ -57,6 +55,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.rutUsuarioActual = payload.rut;
       } catch (e) {
+        console.error('Error al decodificar token:', e);
       }
     }
 

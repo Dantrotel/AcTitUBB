@@ -1,6 +1,6 @@
 <!-- Navbar del Jefe de Curso -->
 <nav class="navbar">
-  <div class="navbar-brand">
+  <div class="navbar-brand" (click)="irAlHome()" style="cursor: pointer;">
     <i class="fas fa-graduation-cap"></i>
     <span>AcTitUBB</span>
   </div>
@@ -191,7 +191,7 @@
               <i class="fas fa-chart-line"></i>
             </div>
             <div class="metrica-content">
-              <h4>{{ dashboard.metricas_generales?.avance_promedio_proyectos || 0 }}%</h4>
+              <h4>{{ (dashboard.metricas_generales?.avance_promedio_proyectos || 0) | number:'1.0-2' }}%</h4>
               <p>Avance Promedio</p>
             </div>
           </div>
@@ -238,17 +238,17 @@
               Proyectos por Estado
             </h4>
             <div class="estados-list">
-              @for (estado of dashboard.proyectos_por_estado; track estado.estado_proyecto) {
+              @for (estado of dashboard.proyectos_por_estado; track estado.estado) {
                 <div class="estado-item">
                   <div class="estado-bar">
                     <div class="estado-label">
-                      <span class="estado-nombre">{{ estado.estado_proyecto }}</span>
+                      <span class="estado-nombre">{{ estado.estado }}</span>
                       <span class="estado-count">{{ estado.total }}</span>
                     </div>
                     <div class="bar-container">
                       <div class="bar-fill" 
                            [style.width.%]="(estado.total / dashboard.metricas_generales.total_proyectos_activos * 100)"
-                           [class]="'estado-' + estado.estado_proyecto"></div>
+                           [class]="'estado-' + estado.estado"></div>
                     </div>
                   </div>
                 </div>
@@ -290,7 +290,7 @@
                   </div>
                   <div class="stat-row">
                     <span class="stat-label">Avance:</span>
-                    <span class="stat-value">{{ modalidad.avance_promedio || 0 }}%</span>
+                    <span class="stat-value">{{ (modalidad.avance_promedio || 0) | number:'1.0-2' }}%</span>
                   </div>
                 </div>
                 <div class="modalidad-progress">
@@ -688,7 +688,7 @@
         <div class="regulatory-card informante-card">
           <div class="card-header">
             <i class="fas fa-clock"></i>
-            <h3>Entregas Pendientes (Informante)</h3>
+            <h3>Entregas Pendientes (Profesor de Asignatura)</h3>
           </div>
           <div class="card-body">
             <div class="regulatory-stats">
@@ -826,7 +826,7 @@
     <div class="modal-body">
       <div *ngIf="informantesPendientes.length === 0" class="empty-state">
         <i class="fas fa-check-circle"></i>
-        <p>No hay entregas pendientes de revisión por informantes.</p>
+        <p>No hay entregas pendientes de revisión por profesores de asignatura.</p>
       </div>
       <div *ngIf="informantesPendientes.length > 0" class="table-responsive">
         <table class="data-table">
@@ -834,7 +834,7 @@
             <tr>
               <th>Proyecto</th>
               <th>Estudiante</th>
-              <th>Informante</th>
+              <th>Profesor Asignatura</th>
               <th>Días Restantes</th>
               <th>Estado del Plazo</th>
             </tr>

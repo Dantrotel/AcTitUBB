@@ -124,6 +124,10 @@ export class PerfilEstudianteComponent implements OnInit {
     window.history.back();
   }
 
+  irAlHome() {
+    this.router.navigate(['/estudiante']);
+  }
+
   cerrarSesion() {
     localStorage.removeItem('token');
     localStorage.removeItem('userData');

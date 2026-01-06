@@ -737,9 +737,25 @@ export class HomeProfesor implements OnInit {
     this.router.navigate([ruta]);
   }
 
+  // Método para navegar a proyectos
+  navegarAProyectos() {
+    this.router.navigate(['/profesor/proyectos']);
+  }
+
+  // Método para navegar a un proyecto específico
+  navegarAProyecto(proyectoId: number) {
+    this.router.navigate(['/proyecto', proyectoId]);
+  }
+
   // Método para cerrar sesión
   cerrarSesion() {
     this.ApiService.logout();
     this.router.navigate(['/login']);
+  }
+
+  irAlHome() {
+    // Ya estamos en el home de profesor, solo cerramos menús si están abiertos
+    this.showUserMenu = false;
+    this.showCalendarioMenu = false;
   }
 }

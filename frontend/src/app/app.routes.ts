@@ -18,6 +18,10 @@ import { AsignarProfesorComponent } from './pages/admin/asignar-profesor/asignar
 import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion-usuarios';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
+import { ProfesorChatComponent } from './pages/profesor/chat/profesor-chat.component';
+import { EstudianteChatComponent } from './pages/estudiante/chat/estudiante-chat.component';
+import { AdminChatComponent } from './pages/admin/chat/admin-chat.component';
+import { SuperAdminChatComponent } from './pages/super-admin/chat/super-admin-chat.component';
 import { GestionComisionComponent } from './pages/admin/gestion-comision/gestion-comision';
 import { GestionExtensionesComponent } from './pages/admin/gestion-extensiones/gestion-extensiones.component';
 import { GestionPeriodoPropuestasComponent } from './pages/admin/gestion-periodo-propuestas/gestion-periodo-propuestas.component';
@@ -31,6 +35,7 @@ import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-impo
 import { SuperAdminHomeComponent } from './pages/super-admin/home/super-admin-home.component';
 import { GestionEstructuraComponent } from './pages/super-admin/gestion-estructura/gestion-estructura';
 import { GestionarJefesComponent } from './pages/super-admin/gestionar-jefes/gestionar-jefes';
+import { SuperAdminGestionUsuariosComponent } from './pages/super-admin/gestion-usuarios/super-admin-gestion-usuarios';
 
 // Calendario Matching Components
 import { DisponibilidadesComponent } from './components/calendario-matching/disponibilidades.component';
@@ -50,9 +55,6 @@ import { ReportesProfesorComponent } from './pages/profesor/reportes/reportes-pr
 
 // Documentos Component
 import { DocumentosProyectoComponent } from './components/documentos-proyecto/documentos-proyecto.component';
-
-// Chat Component
-import { ChatComponent } from './components/chat/chat.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -90,7 +92,11 @@ export const routes: Routes = [
 
   // Rutas del Super Administrador
   { path: 'super-admin', component: SuperAdminHomeComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
-  { path: 'super-admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
+  { path: 'super-admin/usuarios', component: SuperAdminGestionUsuariosComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin' } },
+  { path: 'super-admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin' } },
+  { path: 'super-admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin/propuestas' } },
+  { path: 'super-admin/proyectos', component: GestionProyectosComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin' } },
+  { path: 'super-admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin' } },
   { path: 'super-admin/gestion-estructura', component: GestionEstructuraComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
   { path: 'super-admin/gestionar-jefes', component: GestionarJefesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
   { 
@@ -117,21 +123,27 @@ export const routes: Routes = [
     canActivate: [AuthGuard], 
     data: { requiredRoles: [4] } 
   },
+  {
+    path: 'super-admin/chat',
+    component: SuperAdminChatComponent,
+    canActivate: [AuthGuard],
+    data: { requiredRoles: [4] }
+  },
 
-  // Rutas del administrador
-  { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard] },
+  // Rutas del administrador (Jefe de Carrera)
+  { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard], data: { requiredRoles: [3] } },
   { 
     path: 'admin/reportes', 
     loadComponent: () => import('./pages/admin/reportes/reportes.component').then(m => m.ReportesComponent),
     canActivate: [AuthGuard],
-    data: { requiredRoles: [3, 4] }
+    data: { requiredRoles: [3], viewMode: 'admin' }
   },
-  { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard] },
-  { path: 'admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard] },
-  { path: 'admin/proyectos', component: GestionProyectosComponent, canActivate: [AuthGuard], data: { requiredRoles: [3, 4] } },
-  { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard] },
-  { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard] },
-  { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard] },
+  { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
+  { path: 'admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin/propuestas' } },
+  { path: 'admin/proyectos', component: GestionProyectosComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
+  { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin' } },
+  { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
+  { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
   { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
   { path: 'admin/comision', component: GestionComisionComponent, canActivate: [AuthGuard] },
   { path: 'admin/extensiones', component: GestionExtensionesComponent, canActivate: [AuthGuard] },
@@ -142,6 +154,12 @@ export const routes: Routes = [
     path: 'admin/carga-profesores', 
     loadComponent: () => import('./pages/admin/carga-administrativa/carga-administrativa').then(m => m.CargaAdministrativaComponent),
     canActivate: [AuthGuard] 
+  },
+  {
+    path: 'admin/chat',
+    component: AdminChatComponent,
+    canActivate: [AuthGuard],
+    data: { requiredRoles: [3, 4] }
   },
   {
     path: 'admin/entidades-externas',
@@ -181,7 +199,7 @@ export const routes: Routes = [
         path: 'propuestas/revisar/:id',
         component: RevisarPropuestaComponent,
         canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
+        data: { requiredRoles: [2, 3, 4], backRoute: '/profesor/propuestas/asignadas' }
       },
       // Rutas de gestión de proyectos
       {
@@ -254,6 +272,13 @@ export const routes: Routes = [
         component: DocumentosProyectoComponent,
         canActivate: [AuthGuard],
         data: { requiredRoles: [2, 3, 4] }
+      },
+      // Ruta para chat
+      {
+        path: 'chat',
+        component: ProfesorChatComponent,
+        canActivate: [AuthGuard],
+        data: { requiredRoles: [2, 3, 4] }
       }
     ],
   },
@@ -311,7 +336,7 @@ export const routes: Routes = [
       // Ruta para chat
       {
         path: 'chat',
-        component: ChatComponent,
+        component: EstudianteChatComponent,
         canActivate: [AuthGuard]
       },
       // Ruta para plantillas de documentos
