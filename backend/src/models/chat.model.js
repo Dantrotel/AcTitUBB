@@ -250,23 +250,114 @@ const chatModel = {
   },
 
   /**
-   * Buscar usuarios para iniciar chat (excluyendo al usuario actual)
+   * Buscar usuarios para iniciar chat con reglas de permisos:
+   * - Estudiante: Solo profesores de su proyecto + admin (jefe de carrera)
+   * - Profesor: Otros profesores + estudiantes de sus proyectos + admin
+   * - Admin: Todos
    */
   async buscarUsuarios(usuario_rut, busqueda = '') {
     const connection = await pool.getConnection();
     try {
-      const [usuarios] = await connection.query(
-        `SELECT u.rut, u.nombre, u.email, r.nombre as rol
-         FROM usuarios u
-         INNER JOIN roles r ON u.rol_id = r.id
-         WHERE u.rut != ?
-         AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)
-         AND u.confirmado = TRUE
-         ORDER BY u.nombre
-         LIMIT 20`,
-        [usuario_rut, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`]
+      // Obtener rol del usuario
+      const [usuarioInfo] = await connection.query(
+        'SELECT rol_id FROM usuarios WHERE rut = ?',
+        [usuario_rut]
       );
       
+      if (usuarioInfo.length === 0) {
+        return [];
+      }
+      
+      const rol_id = usuarioInfo[0].rol_id;
+      let query = '';
+      let params = [];
+      
+      if (rol_id === 1) {
+        // ESTUDIANTE: Solo profesores de su proyecto + admin (jefe de carrera)
+        query = `
+          SELECT DISTINCT u.rut, u.nombre, u.email, r.nombre as rol
+          FROM usuarios u
+          INNER JOIN roles r ON u.rol_id = r.id
+          WHERE u.rut != ? 
+          AND u.confirmado = TRUE
+          AND (
+            -- Profesores asignados a proyectos del estudiante
+            u.rut IN (
+              SELECT DISTINCT ap.profesor_rut
+              FROM proyectos p
+              INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
+              WHERE p.estudiante_rut = ?
+            )
+            -- Jefe de carrera (administrador)
+            OR u.rol_id = 3
+          )
+          AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)
+          ORDER BY 
+            CASE WHEN u.rol_id = 3 THEN 0 ELSE 1 END,
+            u.nombre
+          LIMIT 20
+        `;
+        params = [usuario_rut, usuario_rut, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`];
+        
+      } else if (rol_id === 2) {
+        // PROFESOR: Otros profesores + estudiantes de sus proyectos + admin
+        query = `
+          SELECT DISTINCT u.rut, u.nombre, u.email, r.nombre as rol
+          FROM usuarios u
+          INNER JOIN roles r ON u.rol_id = r.id
+          WHERE u.rut != ? 
+          AND u.confirmado = TRUE
+          AND (
+            -- Otros profesores
+            u.rol_id = 2
+            -- Estudiantes de proyectos donde está asignado
+            OR u.rut IN (
+              SELECT DISTINCT p.estudiante_rut
+              FROM proyectos p
+              INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
+              WHERE ap.profesor_rut = ?
+            )
+            -- Admin (jefe de carrera)
+            OR u.rol_id = 3
+            -- Super Admin
+            OR u.rol_id = 4
+          )
+          AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)
+          ORDER BY 
+            CASE 
+              WHEN u.rol_id = 3 THEN 0
+              WHEN u.rol_id = 4 THEN 1
+              WHEN u.rol_id = 2 THEN 2
+              ELSE 3
+            END,
+            u.nombre
+          LIMIT 20
+        `;
+        params = [usuario_rut, usuario_rut, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`];
+        
+      } else if (rol_id === 3 || rol_id === 4) {
+        // ADMIN o SUPER ADMIN: Todos los usuarios confirmados
+        query = `
+          SELECT u.rut, u.nombre, u.email, r.nombre as rol
+          FROM usuarios u
+          INNER JOIN roles r ON u.rol_id = r.id
+          WHERE u.rut != ?
+          AND u.confirmado = TRUE
+          AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)
+          ORDER BY 
+            CASE 
+              WHEN u.rol_id = 3 THEN 0
+              WHEN u.rol_id = 2 THEN 1
+              WHEN u.rol_id = 1 THEN 2
+              ELSE 3
+            END,
+            u.nombre
+          LIMIT 20
+        `;
+        params = [usuario_rut, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`];
+      }
+      
+      const [usuarios] = await connection.query(query, params);
       return usuarios;
     } finally {
       connection.release();

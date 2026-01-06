@@ -19,43 +19,58 @@ export class CrearPropuestaComponent {
   archivo: File | null = null;
   isSubmitting = false;
 
-  // Nuevos campos del modelo mejorado
+  // Nuevos campos del modelo
   modalidad = '';
   numero_estudiantes = '';
-  complejidad_estimada = '';
   duracion_estimada_semestres = '';
-  justificacion_complejidad = '';
-  area_tematica = '';
-  objetivos_generales = '';
-  objetivos_especificos = '';
-  metodologia_propuesta = '';
-  recursos_necesarios = '';
-  bibliografia = '';
 
   // Estudiantes adicionales
   estudiantes_adicionales: string[] = [];
   mostrarEstudiantesAdicionales = false;
 
-  // Variables de control para validaciones
-  mostrarJustificacionComplejidad = false;
+  // Carrera del usuario y opciones de duración
+  carreraUsuario: string = '';
+  opcionesDuracion: {value: string, label: string}[] = [];
 
   constructor(
     private apiService: ApiService, 
     private router: Router,
     private notificationService: NotificationService
-  ) {}
+  ) {
+    this.obtenerCarreraUsuario();
+  }
 
-  probarNotificaciones() {
-    this.notificationService.success('¡Prueba exitosa!', 'El sistema de notificaciones funciona correctamente');
-    setTimeout(() => {
-      this.notificationService.error('Error de prueba', 'Este es un mensaje de error de prueba');
-    }, 1000);
-    setTimeout(() => {
-      this.notificationService.warning('Advertencia de prueba', 'Este es un mensaje de advertencia de prueba');
-    }, 2000);
-    setTimeout(() => {
-      this.notificationService.info('Info de prueba', 'Este es un mensaje informativo de prueba');
-    }, 3000);
+  obtenerCarreraUsuario() {
+    // Obtener información del usuario del token
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.carreraUsuario = payload.carrera || '';
+        this.configurarOpcionesDuracion();
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
+      }
+    }
+  }
+
+  configurarOpcionesDuracion() {
+    // IECI (Ingeniería en Computación e Informática) = solo 1 semestre
+    // ICINF (Ingeniería Civil en Informática) = 1 o 2 semestres
+    if (this.carreraUsuario.toLowerCase().includes('computación') && 
+        !this.carreraUsuario.toLowerCase().includes('civil')) {
+      // IECI - Solo 1 semestre
+      this.opcionesDuracion = [
+        { value: '1', label: '1 Semestre' }
+      ];
+      this.duracion_estimada_semestres = '1'; // Pre-seleccionar única opción
+    } else {
+      // ICINF y otras carreras - 1 o 2 semestres
+      this.opcionesDuracion = [
+        { value: '1', label: '1 Semestre' },
+        { value: '2', label: '2 Semestres' }
+      ];
+    }
   }
 
   onFileChange(event: Event) {
@@ -64,12 +79,7 @@ export class CrearPropuestaComponent {
   }
 
   onEstudiantesChange() {
-    this.validarJustificacionComplejidad();
     this.actualizarEstudiantesAdicionales();
-  }
-
-  onComplejidadChange() {
-    this.validarJustificacionComplejidad();
   }
 
   private actualizarEstudiantesAdicionales() {
@@ -94,17 +104,6 @@ export class CrearPropuestaComponent {
     }
   }
 
-  private validarJustificacionComplejidad() {
-    // Mostrar justificación si hay 2 estudiantes y complejidad baja
-    this.mostrarJustificacionComplejidad = 
-      this.numero_estudiantes === '2' && this.complejidad_estimada === 'baja';
-    
-    // Limpiar justificación si no es necesaria
-    if (!this.mostrarJustificacionComplejidad) {
-      this.justificacion_complejidad = '';
-    }
-  }
-
   private validarRUT(rut: string): boolean {
     if (!rut || rut.trim() === '') return false;
     // Formato: 12345678-9
@@ -118,12 +117,7 @@ export class CrearPropuestaComponent {
     if (!this.descripcion.trim()) return 'La descripción es obligatoria';
     if (!this.modalidad) return 'Debes seleccionar una modalidad';
     if (!this.numero_estudiantes) return 'Debes especificar el número de estudiantes';
-    if (!this.complejidad_estimada) return 'Debes seleccionar la complejidad estimada';
     if (!this.duracion_estimada_semestres) return 'Debes especificar la duración estimada';
-    if (!this.area_tematica.trim()) return 'El área temática es obligatoria';
-    if (!this.objetivos_generales.trim()) return 'Los objetivos generales son obligatorios';
-    if (!this.objetivos_especificos.trim()) return 'Los objetivos específicos son obligatorios';
-    if (!this.metodologia_propuesta.trim()) return 'La metodología propuesta es obligatoria';
     if (!this.archivo) return 'Debes seleccionar un archivo (PDF o Word)';
 
     // Validar estudiantes adicionales
@@ -144,15 +138,9 @@ export class CrearPropuestaComponent {
       }
     }
 
-    // Validación específica de justificación
-    if (this.mostrarJustificacionComplejidad && !this.justificacion_complejidad.trim()) {
-      return 'Debes justificar por qué este proyecto requiere 2 estudiantes siendo de complejidad baja';
-    }
-
     // Validaciones de longitud
     if (this.titulo.length > 255) return 'El título no puede exceder 255 caracteres';
     if (this.descripcion.length > 1000) return 'La descripción no puede exceder 1000 caracteres';
-    if (this.area_tematica.length > 100) return 'El área temática no puede exceder 100 caracteres';
 
     return null;
   }
@@ -175,26 +163,10 @@ export class CrearPropuestaComponent {
     formData.append('fecha_envio', new Date().toISOString().split('T')[0]);
     formData.append('archivo', this.archivo!);
 
-    // Nuevos campos
+    // Campos de configuración
     formData.append('modalidad', this.modalidad);
     formData.append('numero_estudiantes', this.numero_estudiantes);
-    formData.append('complejidad_estimada', this.complejidad_estimada);
     formData.append('duracion_estimada_semestres', this.duracion_estimada_semestres);
-    formData.append('area_tematica', this.area_tematica);
-    formData.append('objetivos_generales', this.objetivos_generales);
-    formData.append('objetivos_especificos', this.objetivos_especificos);
-    formData.append('metodologia_propuesta', this.metodologia_propuesta);
-
-    // Campos opcionales (solo si tienen contenido)
-    if (this.justificacion_complejidad) {
-      formData.append('justificacion_complejidad', this.justificacion_complejidad);
-    }
-    if (this.recursos_necesarios) {
-      formData.append('recursos_necesarios', this.recursos_necesarios);
-    }
-    if (this.bibliografia) {
-      formData.append('bibliografia', this.bibliografia);
-    }
 
     // Agregar estudiantes adicionales si existen
     if (this.estudiantes_adicionales.length > 0) {
@@ -221,6 +193,10 @@ export class CrearPropuestaComponent {
   volver() {
     // Usar history.back() para volver a la página anterior sin activar guards
     window.history.back();
+  }
+
+  irAlHome() {
+    this.router.navigate(['/estudiante']);
   }
 
   fechaActual(): Date {

@@ -108,12 +108,15 @@
               <label for="rol">Rol *</label>
               <select id="rol" [(ngModel)]="nuevaAsignacion.rol_profesor_id" name="rol" required>
                 <option value="">Seleccionar rol</option>
-                <option *ngFor="let rol of rolesProfesores" [value]="rol.id">
+                <option *ngFor="let rol of rolesFiltrados" [value]="rol.id">
                   {{rol.nombre}}
                 </option>
               </select>
-              <small *ngIf="rolesProfesores.length === 0" class="text-warning">
-                ⚠️ No se pudieron cargar los roles. Total: {{rolesProfesores.length}}
+              <small *ngIf="rolesFiltrados.length === 0" class="text-warning">
+                ⚠️ No hay roles disponibles
+              </small>
+              <small *ngIf="nuevaAsignacion.proyecto_id && rolesFiltrados.length < rolesProfesores.length" class="text-info">
+                ℹ️ Profesor de Sala solo disponible para Ing. Civil en Informática
               </small>
             </div>
             

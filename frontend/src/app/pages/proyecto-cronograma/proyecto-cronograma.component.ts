@@ -5,12 +5,13 @@ import { CronogramaCompletoComponent } from '../../components/cronograma-complet
 import { DocumentosProyectoComponent } from '../../components/documentos-proyecto/documentos-proyecto.component';
 import { HistorialVersionesComponent } from '../../components/historial-versiones/historial-versiones.component';
 import { ColaboradoresProyectoComponent } from '../../components/colaboradores-proyecto/colaboradores-proyecto.component';
+import { RevisionHitosProfesorComponent } from '../../components/revision-hitos-profesor/revision-hitos-profesor.component';
 import { ApiService } from '../../services/api';
 
 @Component({
   selector: 'app-proyecto-cronograma',
   standalone: true,
-  imports: [CommonModule, RouterModule, CronogramaCompletoComponent, DocumentosProyectoComponent, HistorialVersionesComponent, ColaboradoresProyectoComponent],
+  imports: [CommonModule, RouterModule, CronogramaCompletoComponent, DocumentosProyectoComponent, HistorialVersionesComponent, ColaboradoresProyectoComponent, RevisionHitosProfesorComponent],
   templateUrl: './proyecto-cronograma.component.html',
   styleUrl: './proyecto-cronograma.component.scss'
 })

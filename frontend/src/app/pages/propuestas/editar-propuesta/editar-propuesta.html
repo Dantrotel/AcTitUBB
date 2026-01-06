@@ -183,7 +183,6 @@
               <option value="">Selecciona cantidad</option>
               <option value="1">1 Estudiante</option>
               <option value="2">2 Estudiantes</option>
-              <option value="3">3 Estudiantes</option>
             </select>
             <div *ngIf="editForm.submitted && !propuesta.numero_estudiantes" class="error-field">
               El número de estudiantes es obligatorio
@@ -251,9 +250,13 @@
               class="form-select"
               [class.invalid]="editForm.submitted && !propuesta.duracion_estimada_semestres">
               <option value="">Selecciona duración</option>
-              <option value="1">1 Semestre</option>
-              <option value="2">2 Semestres</option>
+              <option *ngFor="let opcion of opcionesDuracion" [value]="opcion.value">
+                {{ opcion.label }}
+              </option>
             </select>
+            <small class="form-hint" *ngIf="opcionesDuracion.length === 1">
+              Tu carrera solo permite proyectos de 1 semestre
+            </small>
             <div *ngIf="editForm.submitted && !propuesta.duracion_estimada_semestres" class="error-field">
               La duración estimada es obligatoria
             </div>

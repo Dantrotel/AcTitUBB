@@ -83,10 +83,10 @@ import { VersionesPlantillasService, ResultadoFinal, HistorialEstado } from '../
                       <span class="nota">{{ resultadoExistente()!.evaluacion_profesor_guia }}</span>
                     </div>
                   }
-                  @if (resultadoExistente()!.evaluacion_profesor_informante) {
+                  @if (resultadoExistente()!.evaluacion_profesor_asignatura) {
                     <div class="evaluacion-item">
-                      <span class="label">Profesor Informante</span>
-                      <span class="nota">{{ resultadoExistente()!.evaluacion_profesor_informante }}</span>
+                      <span class="label">Profesor de Asignatura</span>
+                      <span class="nota">{{ resultadoExistente()!.evaluacion_profesor_asignatura }}</span>
                     </div>
                   }
                   @if (resultadoExistente()!.evaluacion_comision) {

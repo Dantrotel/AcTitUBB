@@ -83,11 +83,7 @@
       <div class="filter-group">
         <label for="filtroRol"><i class="fas fa-user-tag"></i> Rol:</label>
         <select id="filtroRol" [(ngModel)]="filtroRol" class="filter-select">
-          <option value="">Todos los roles</option>
-          <option value="estudiante">Estudiante</option>
-          <option value="profesor">Profesor</option>
-          <option value="admin">Jefe de Curso</option>
-          <option value="Super Administrador">Super Administrador</option>
+          <option [value]="opcion.value" *ngFor="let opcion of opcionesFiltroRol">{{ opcion.label }}</option>
         </select>
       </div>
 
@@ -171,71 +167,62 @@
       <p>No hay usuarios que coincidan con los filtros aplicados</p>
     </div>
 
-    <div *ngIf="usuariosFiltrados.length > 0" class="usuarios-grid">
-      <div *ngFor="let usuario of usuariosFiltrados" class="usuario-card">
-        <div class="card-header">
-          <div class="usuario-info">
-            <div class="usuario-avatar">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="usuario-details">
-              <h3>{{ usuario.nombre }}</h3>
-              <p class="usuario-email">{{ usuario.email }}</p>
-            </div>
-          </div>
-          <div class="usuario-badges">
-            <div class="rol-badge" [class]="obtenerClaseRol(usuario.rol_nombre)">
-              {{ usuario.rol_nombre }}
-            </div>
-            <div class="estado-badge" [class]="obtenerClaseEstado(usuario.confirmado ? 'Activo' : 'Inactivo')">
-              {{ usuario.confirmado ? 'Activo' : 'Inactivo' }}
-            </div>
-          </div>
-        </div>
-
-        <div class="card-content">
-          <div class="usuario-data">
-            <div class="data-item">
-              <i class="fas fa-id-card"></i>
-              <span><strong>RUT:</strong> {{ usuario.rut }}</span>
-            </div>
-            <div class="data-item">
-              <i class="fas fa-user-tag"></i>
-              <span><strong>Rol:</strong> {{ usuario.rol_nombre }}</span>
-            </div>
-            <div class="data-item" *ngIf="usuario.carrera_nombre">
-              <i class="fas fa-graduation-cap"></i>
-              <span><strong>Carrera:</strong> {{ usuario.carrera_nombre }}</span>
-            </div>
-            <div class="data-item">
-              <i class="fas fa-circle"></i>
-              <span><strong>Estado:</strong> {{ usuario.confirmado ? 'Activo' : 'Inactivo' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button class="btn-primary" (click)="abrirModalEditar(usuario)">
-            <i class="fas fa-edit"></i>
-            Editar
-          </button>
-          
-          <button class="btn-accent" (click)="cambiarEstado(usuario)">
-            <i class="fas fa-toggle-on"></i>
-            Cambiar Estado
-          </button>
-
-          <button *ngIf="esSuperAdmin" class="btn-warning" (click)="abrirModalResetPassword(usuario)">
-            <i class="fas fa-key"></i>
-            Resetear Contraseña
-          </button>
-          
-          <button class="btn-danger" (click)="abrirModalEliminar(usuario)">
-            <i class="fas fa-trash"></i>
-            Eliminar
-          </button>
-        </div>
-      </div>
+    <!-- Lista vertical de usuarios (tabla) -->
+    <div *ngIf="usuariosFiltrados.length > 0" class="usuarios-lista">
+      <table class="usuarios-table">
+        <thead>
+          <tr>
+            <th>RUT</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Carrera/Departamento</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let usuario of usuariosFiltrados" class="usuario-row">
+            <td class="rut-col">{{ usuario.rut }}</td>
+            <td class="nombre-col">
+              <div class="usuario-nombre">
+                <i class="fas fa-user"></i>
+                {{ usuario.nombre }}
+              </div>
+            </td>
+            <td class="email-col">{{ usuario.email }}</td>
+            <td class="rol-col">
+              <span class="rol-badge" [class]="obtenerClaseRol(usuario.rol_nombre)">
+                {{ usuario.rol_nombre }}
+              </span>
+            </td>
+            <td class="carrera-col">
+              {{ usuario.rol_id === 2 ? (usuario.departamento_nombre || '-') : (usuario.carrera_nombre || '-') }}
+            </td>
+            <td class="estado-col">
+              <span class="estado-badge" [class]="obtenerClaseEstado(usuario.confirmado ? 'Activo' : 'Inactivo')">
+                {{ usuario.confirmado ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="acciones-col">
+              <div class="acciones-grupo">
+                <button class="btn-icon btn-edit" (click)="abrirModalEditar(usuario)" matTooltip="Editar">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon btn-toggle" (click)="cambiarEstado(usuario)" matTooltip="Cambiar Estado">
+                  <i class="fas fa-toggle-on"></i>
+                </button>
+                <button *ngIf="esSuperAdmin" class="btn-icon btn-reset" (click)="abrirModalResetPassword(usuario)" matTooltip="Resetear Contraseña">
+                  <i class="fas fa-key"></i>
+                </button>
+                <button class="btn-icon btn-delete" (click)="abrirModalEliminar(usuario)" matTooltip="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -315,7 +302,7 @@
           <div class="form-group">
             <label for="rol">Rol *</label>
             <select id="rol" [(ngModel)]="nuevoUsuario.rol_id" name="rol" required>
-              <option [value]="rol.id" *ngFor="let rol of roles">{{ rol.nombre }}</option>
+              <option [value]="rol.id" *ngFor="let rol of rolesFiltrados">{{ rol.nombre }}</option>
             </select>
           </div>
 
@@ -402,7 +389,7 @@
         <div class="form-group" *ngIf="esSuperAdmin">
           <label for="rolEdit">Rol *</label>
           <select id="rolEdit" [(ngModel)]="usuarioEditar.rol_id" name="rol" required>
-            <option [value]="rol.id" *ngFor="let rol of roles">{{ rol.nombre }}</option>
+            <option [value]="rol.id" *ngFor="let rol of rolesFiltrados">{{ rol.nombre }}</option>
           </select>
         </div>
         <div class="form-group" *ngIf="!esSuperAdmin">

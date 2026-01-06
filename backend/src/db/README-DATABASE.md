@@ -41,9 +41,11 @@ backend/src/db/
 └── README-DATABASE.md    ← Este archivo
 ```
 
-### 📋 `database.sql` (Archivo Principal)
+### 📋 `database.sql` (Archivo Principal - UNIFICADO)
 
-Contiene **TODA** la estructura de la base de datos:
+**✨ ACTUALIZADO (Diciembre 2025)**: Este archivo ahora contiene **TODA** la estructura de la base de datos unificada, incluyendo todas las migraciones anteriores.
+
+Contiene:
 
 1. **Creación de BD**: `CREATE DATABASE IF NOT EXISTS actitubb`
 2. **Tablas Principales**: 
@@ -53,9 +55,12 @@ Contiene **TODA** la estructura de la base de datos:
    
 3. **Tablas de Colaboradores Externos**:
    - `entidades_externas`
-   - `colaboradores_externos`
+   - `colaboradores_externos` (con autenticación integrada)
    - `colaboradores_proyectos`
    - `evaluaciones_colaboradores_externos`
+   - `evaluaciones_colaboradores` (nueva)
+   - `tokens_colaboradores` (nueva)
+   - `notificaciones_colaboradores` (nueva)
 
 4. **Tablas de Sistema**:
    - `actividad_sistema`
@@ -66,15 +71,37 @@ Contiene **TODA** la estructura de la base de datos:
    - `resultados_finales_proyecto`
    - `historial_estados_proyecto`
 
-5. **Datos Iniciales**:
+5. **Migraciones Integradas** (ya no necesitas archivos separados):
+   - ✅ Sistema de autenticación para colaboradores externos
+   - ✅ Campos de archivo_revision en historial_revisiones_propuestas
+   - ✅ Tabla versiones_propuestas para historial completo
+   - ✅ Todas las columnas adicionales necesarias
+
+6. **Datos Iniciales**:
    - Roles (estudiante, profesor, admin, superadmin)
    - Estados de propuestas
    - Estados de proyectos
    - Configuraciones del sistema
 
+**📌 Nota Importante**: Ya no necesitas ejecutar migraciones separadas. Todo está en un solo archivo que se ejecuta automáticamente al iniciar el backend.
+
 ---
 
 ## ⚙️ ¿Qué Hacer Si...?
+
+### ❓ ¿Qué pasó con las migraciones en `/migrations`?
+
+**✅ Ya están integradas en `database.sql`**
+
+Anteriormente teníamos archivos separados en `backend/migrations/`:
+- `add_archivo_revision_to_historial.sql` → ✅ Integrado
+- `add_colaboradores_auth.sql` → ✅ Integrado
+- `create_versiones_propuestas.sql` → ✅ Integrado
+
+Todos estos cambios ahora están en `database.sql`, por lo que:
+- No necesitas ejecutar migraciones manualmente
+- No hay archivos SQL dispersos por el proyecto
+- Todo se ejecuta automáticamente al iniciar el backend
 
 ### ❓ Necesito agregar una nueva tabla
 

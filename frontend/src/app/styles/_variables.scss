@@ -44,13 +44,13 @@ $transition-normal: all 0.3s ease;
 $transition-slow: all 0.5s ease;
 
 // Tipografía
-$font-size-small: 0.85rem;
-$font-size-normal: 1rem;
-$font-size-medium: 1.1rem;
-$font-size-large: 1.3rem;
-$font-size-xl: 1.5rem;
-$font-size-xxl: 2rem;
-$font-size-xxxl: 2.5rem;
+$font-size-small: 0.75rem;
+$font-size-normal: 0.9rem;
+$font-size-medium: 1rem;
+$font-size-large: 1.15rem;
+$font-size-xl: 1.3rem;
+$font-size-xxl: 1.75rem;
+$font-size-xxxl: 2.2rem;
 
 $font-weight-normal: 400;
 $font-weight-medium: 500;
@@ -58,12 +58,12 @@ $font-weight-semibold: 600;
 $font-weight-bold: 700;
 
 // Espaciado estandarizado
-$spacing-xs: 5px;
-$spacing-sm: 10px;
-$spacing-md: 15px;
-$spacing-lg: 20px;
-$spacing-xl: 25px;
-$spacing-xxl: 30px;
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 20px;
+$spacing-xxl: 24px;
 
 // Breakpoints responsivos
 $mobile: 480px;
@@ -133,7 +133,7 @@ $z-tooltip: 1070;
   background: $ubb-primary-gradient;
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 8px 18px;
   border-radius: $border-radius-medium;
   font-weight: $font-weight-semibold;
   cursor: pointer;
@@ -149,7 +149,7 @@ $z-tooltip: 1070;
   background: $dark-gray;
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 8px 18px;
   border-radius: $border-radius-medium;
   font-weight: $font-weight-semibold;
   cursor: pointer;
@@ -177,9 +177,9 @@ $z-tooltip: 1070;
 @mixin header-style {
   background: $ubb-primary-gradient;
   color: white;
-  padding: $spacing-xxl;
+  padding: $spacing-lg;
   border-radius: $border-radius-xl;
-  margin-bottom: $spacing-xxl;
+  margin-bottom: $spacing-lg;
   box-shadow: $shadow-primary;
   
   h1 {
@@ -200,7 +200,7 @@ $z-tooltip: 1070;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
+  padding: 60px 16px;
   text-align: center;
   background: $background-white;
   border-radius: $border-radius-xl;
@@ -230,7 +230,7 @@ $z-tooltip: 1070;
 
 @mixin form-input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 8px 12px;
   border: 2px solid #e9ecef;
   border-radius: $border-radius-medium;
   font-size: $font-size-normal;

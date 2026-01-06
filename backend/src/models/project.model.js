@@ -249,10 +249,14 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 SELECT p.*, 
                        u.nombre AS nombre_estudiante,
                        u.email AS email_estudiante,
-                       prop.titulo AS titulo_propuesta
+                       prop.titulo AS titulo_propuesta,
+                       car.codigo AS codigo_carrera,
+                       car.nombre AS carrera_nombre
                 FROM proyectos p
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+                LEFT JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.es_carrera_principal = 1
+                LEFT JOIN carreras car ON ec.carrera_id = car.id
                 ORDER BY p.fecha_inicio DESC
             `;
             params = [];
@@ -263,6 +267,8 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                        u.nombre AS nombre_estudiante,
                        u.email AS email_estudiante,
                        prop.titulo AS titulo_propuesta,
+                       car.codigo AS codigo_carrera,
+                       car.nombre AS carrera_nombre,
                        GROUP_CONCAT(DISTINCT CONCAT(prof.nombre, ' (', rp.nombre, ')') SEPARATOR ', ') AS profesores_asignados,
                        (SELECT prof_guia.nombre 
                         FROM asignaciones_proyectos ap_guia
@@ -291,6 +297,8 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 FROM proyectos p
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+                LEFT JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.es_carrera_principal = 1
+                LEFT JOIN carreras car ON ec.carrera_id = car.id
                 INNER JOIN estudiantes_proyectos ep_join ON p.id = ep_join.proyecto_id
                 LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
                 LEFT JOIN usuarios prof ON ap.profesor_rut = prof.rut
@@ -306,10 +314,14 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 SELECT DISTINCT p.*, 
                        u.nombre AS nombre_estudiante,
                        u.email AS email_estudiante,
-                       prop.titulo AS titulo_propuesta
+                       prop.titulo AS titulo_propuesta,
+                       car.codigo AS codigo_carrera,
+                       car.nombre AS carrera_nombre
                 FROM proyectos p
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
+                LEFT JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.es_carrera_principal = 1
+                LEFT JOIN carreras car ON ec.carrera_id = car.id
                 INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id 
                 WHERE ap.profesor_rut = ? AND ap.activo = TRUE
                 ORDER BY p.fecha_inicio DESC
@@ -512,7 +524,7 @@ const obtenerCargaProfesores = async (carrera_id = null) => {
                 u.email,
                 -- Conteo por rol específico
                 SUM(CASE WHEN rp.nombre = 'Profesor Guía' THEN 1 ELSE 0 END) as proyectos_guia,
-                SUM(CASE WHEN rp.nombre = 'Profesor Informante' THEN 1 ELSE 0 END) as proyectos_informante,
+                SUM(CASE WHEN rp.nombre = 'Profesor de Asignatura' THEN 1 ELSE 0 END) as proyectos_informante,
                 SUM(CASE WHEN rp.nombre = 'Profesor Revisor' THEN 1 ELSE 0 END) as proyectos_revisor,
                 SUM(CASE WHEN rp.nombre = 'Profesor Co-Guía' THEN 1 ELSE 0 END) as proyectos_coguia,
                 SUM(CASE WHEN rp.nombre = 'Profesor de Sala' THEN 1 ELSE 0 END) as proyectos_sala,

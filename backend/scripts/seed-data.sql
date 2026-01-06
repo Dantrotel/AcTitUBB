@@ -59,26 +59,29 @@ INSERT INTO usuarios (rut, nombre, apellido_paterno, apellido_materno, email, pa
 ('22222222-2', 'María', 'González', 'López', 'admin2@ubiobio.cl', '$2b$10$xB5r7KQYGvN8hYZ4kQ7IQeE5yL9mH6pR3tW8xD2cF4jK7mN9qT0sA', 3, 1, 0),
 ('33333333-3', 'Pedro', 'Martínez', 'Fernández', 'admin3@ubiobio.cl', '$2b$10$xB5r7KQYGvN8hYZ4kQ7IQeE5yL9mH6pR3tW8xD2cF4jK7mN9qT0sA', 3, 1, 0);
 
--- Profesores (contraseña: Profe123!)
-INSERT INTO usuarios (rut, nombre, apellido_paterno, apellido_materno, email, password, rol_id, confirmado, debe_cambiar_password, titulo_profesional, grado_academico, area_especializacion, anos_experiencia) VALUES
-('12345678-9', 'Roberto', 'Sánchez', 'Castro', 'rsanchez@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0, 'Ingeniero Civil en Informática', 'Doctor en Ciencias de la Computación', 'Inteligencia Artificial', 15),
-('23456789-0', 'Ana', 'Ramírez', 'Torres', 'aramirez@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0, 'Ingeniera en Computación', 'Magíster en Ingeniería de Software', 'Desarrollo Web', 10),
-('34567890-1', 'Luis', 'Pérez', 'Morales', 'lperez@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0, 'Ingeniero Civil Industrial', 'Doctor en Gestión de Proyectos', 'Bases de Datos', 12),
-('45678901-2', 'Carmen', 'Vargas', 'Díaz', 'cvargas@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0, 'Ingeniera en Informática', 'Magíster en Ciberseguridad', 'Seguridad Informática', 8),
-('56789012-3', 'Jorge', 'Muñoz', 'Rojas', 'jmunoz@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0, 'Ingeniero Civil en Computación', 'Magíster en Redes y Telecomunicaciones', 'Redes de Computadores', 11);
+-- Profesores del Departamento de Sistemas de Información (contraseña: Profe123!)
+INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado, debe_cambiar_password) VALUES
+('12345678-9', 'Dr. Roberto Sánchez Castro', 'rsanchez@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0),
+('23456789-0', 'Dra. Ana Ramírez Torres', 'aramirez@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0),
+('34567890-1', 'Mg. Luis Pérez Morales', 'lperez@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0),
+('45678901-2', 'Mg. Carmen Vargas Díaz', 'cvargas@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0),
+('56789012-3', 'Mg. Jorge Muñoz Rojas', 'jmunoz@ubiobio.cl', '$2b$10$yC6s8LRZHwO9iZA5lR8JRfF6zM0nI7qS4uX9yE3dG5kL8nO0rU1tB', 2, 1, 0);
 
--- Estudiantes (contraseña: Estudiante123!)
-INSERT INTO usuarios (rut, nombre, apellido_paterno, apellido_materno, email, password, rol_id, confirmado, debe_cambiar_password, carrera, nivel_academico, semestre_ingreso) VALUES
-('19876543-2', 'Sebastián', 'Flores', 'Gutiérrez', 'sflores2019@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería Civil en Informática', 'Pregrado', '2019-1'),
-('19876543-3', 'Valentina', 'Ortiz', 'Núñez', 'vortiz2019@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería en Computación', 'Pregrado', '2019-1'),
-('20123456-7', 'Diego', 'Castro', 'Bravo', 'dcastro2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería Civil en Informática', 'Pregrado', '2020-1'),
-('20234567-8', 'Camila', 'Reyes', 'Soto', 'creyes2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería en Informática', 'Pregrado', '2020-1'),
-('20345678-9', 'Matías', 'Silva', 'Pinto', 'msilva2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería Civil en Informática', 'Pregrado', '2020-2'),
-('20456789-0', 'Francisca', 'Morales', 'Herrera', 'fmorales2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería en Computación', 'Pregrado', '2020-2'),
-('21123456-7', 'Nicolás', 'Vega', 'Contreras', 'nvega2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería Civil en Informática', 'Pregrado', '2021-1'),
-('21234567-8', 'Sofía', 'Campos', 'Valdés', 'scampos2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería en Informática', 'Pregrado', '2021-1'),
-('21345678-9', 'Benjamín', 'Riquelme', 'Espinoza', 'briquelme2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería en Computación', 'Pregrado', '2021-2'),
-('21456789-0', 'Martina', 'Fuentes', 'Cortés', 'mfuentes2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0, 'Ingeniería Civil en Informática', 'Pregrado', '2021-2');
+-- Estudiantes IECI (Ingeniería de Ejecución en Computación e Informática) - Solo 1 semestre (contraseña: Estudiante123!)
+INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado, debe_cambiar_password) VALUES
+('19876543-2', 'Sebastián Flores Gutiérrez', 'sflores2019@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('20234567-8', 'Camila Reyes Soto', 'creyes2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('20456789-0', 'Francisca Morales Herrera', 'fmorales2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('21234567-8', 'Sofía Campos Valdés', 'scampos2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0);
+
+-- Estudiantes ICINF (Ingeniería Civil en Informática) - Puede 1 o 2 semestres (contraseña: Estudiante123!)
+INSERT INTO usuarios (rut, nombre, email, password, rol_id, confirmado, debe_cambiar_password) VALUES
+('19876543-3', 'Valentina Ortiz Núñez', 'vortiz2019@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('20123456-7', 'Diego Castro Bravo', 'dcastro2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('20345678-9', 'Matías Silva Pinto', 'msilva2020@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('21123456-7', 'Nicolás Vega Contreras', 'nvega2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('21345678-9', 'Benjamín Riquelme Espinoza', 'briquelme2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0),
+('21456789-0', 'Martina Fuentes Cortés', 'mfuentes2021@egresados.ubiobio.cl', '$2b$10$zD7t9MSAIxP0jAB6mS9KSgG7aO1pJ8rT5vY0zF4eH6lM9oP1sV2uC', 1, 1, 0);
 
 -- ============================================
 -- 2. ENTIDADES EXTERNAS
@@ -164,116 +167,100 @@ INSERT INTO propuestas (titulo, descripcion, estudiante_rut, estado_id, fecha_en
 '21234567-8', 1, DATE_SUB(NOW(), INTERVAL 3 DAY), 'propuesta_marketplace.pdf');
 
 -- ============================================
--- 5. ASIGNACIONES DE PROPUESTAS (Revisores)
+-- 5. ASIGNACIONES DE PROPUESTAS (Profesores Revisores)
 -- ============================================
 
 INSERT INTO asignaciones_propuestas (propuesta_id, profesor_rut, tipo_asignacion, fecha_asignacion, fecha_revision, comentarios) VALUES
--- Propuesta 1: Sistema de Inventario ML
+-- Propuesta 1: Sistema de Inventario ML (APROBADA)
 (1, '12345678-9', 'guia', DATE_SUB(NOW(), INTERVAL 88 DAY), DATE_SUB(NOW(), INTERVAL 87 DAY), 'Excelente propuesta. El enfoque de ML para predicción de demanda es innovador. Aprobado para continuar como proyecto.'),
-(1, '23456789-0', 'informante', DATE_SUB(NOW(), INTERVAL 88 DAY), DATE_SUB(NOW(), INTERVAL 87 DAY), 'Propuesta técnicamente sólida. El stack tecnológico propuesto es adecuado.'),
+(1, '23456789-0', 'profesor_asignatura', DATE_SUB(NOW(), INTERVAL 88 DAY), DATE_SUB(NOW(), INTERVAL 87 DAY), 'Propuesta técnicamente sólida. El stack tecnológico propuesto es adecuado. Aprobado.'),
 
--- Propuesta 2: E-Learning Adaptativo
-(2, '23456789-0', 'guia', DATE_SUB(NOW(), INTERVAL 83 DAY), DATE_SUB(NOW(), INTERVAL 82 DAY), 'Proyecto muy completo. La gamificación y adaptación al estudiante son puntos fuertes. Aprobado.'),
-(2, '34567890-1', 'informante', DATE_SUB(NOW(), INTERVAL 83 DAY), DATE_SUB(NOW(), INTERVAL 82 DAY), 'Buena arquitectura de base de datos propuesta. Sugiero considerar escalabilidad.'),
+-- Propuesta 2: E-Learning Adaptativo (APROBADA - 2 estudiantes)
+(2, '23456789-0', 'guia', DATE_SUB(NOW(), INTERVAL 83 DAY), DATE_SUB(NOW(), INTERVAL 82 DAY), 'Proyecto muy completo. La duración de 2 semestres es apropiada para la complejidad. Aprobado.'),
+(2, '34567890-1', 'profesor_asignatura', DATE_SUB(NOW(), INTERVAL 83 DAY), DATE_SUB(NOW(), INTERVAL 82 DAY), 'Buena arquitectura propuesta. El trabajo justifica 2 estudiantes. Aprobado.'),
 
--- Propuesta 3: Telemedicina
-(3, '34567890-1', 'guia', DATE_SUB(NOW(), INTERVAL 78 DAY), DATE_SUB(NOW(), INTERVAL 77 DAY), 'Proyecto con gran impacto social. Cumple con todos los requisitos técnicos. Aprobado.'),
-(3, '45678901-2', 'informante', DATE_SUB(NOW(), INTERVAL 78 DAY), DATE_SUB(NOW(), INTERVAL 77 DAY), 'Importante considerar aspectos de seguridad y privacidad de datos médicos. Con esas consideraciones, aprobado.'),
+-- Propuesta 3: IoT Ambiental (APROBADA)
+(3, '56789012-3', 'guia', DATE_SUB(NOW(), INTERVAL 73 DAY), DATE_SUB(NOW(), INTERVAL 72 DAY), 'Excelente integración de hardware y software. Proyecto viable en 1 semestre. Aprobado.'),
+(3, '12345678-9', 'profesor_asignatura', DATE_SUB(NOW(), INTERVAL 73 DAY), DATE_SUB(NOW(), INTERVAL 72 DAY), 'Propuesta bien fundamentada. El dashboard añade gran valor. Aprobado.'),
 
--- Propuesta 4: Monitoreo Ambiental IoT
-(4, '56789012-3', 'guia', DATE_SUB(NOW(), INTERVAL 73 DAY), DATE_SUB(NOW(), INTERVAL 72 DAY), 'Excelente integración de hardware y software. El protocolo de comunicación propuesto es adecuado. Aprobado.'),
-(4, '12345678-9', 'informante', DATE_SUB(NOW(), INTERVAL 73 DAY), DATE_SUB(NOW(), INTERVAL 72 DAY), 'Propuesta bien fundamentada. El análisis de datos históricos añade valor.'),
+-- Propuesta 4: Investigación ML (EN REVISIÓN - 2 estudiantes)
+(4, '12345678-9', 'guia', DATE_SUB(NOW(), INTERVAL 14 DAY), NULL, NULL),
+(4, '45678901-2', 'profesor_asignatura', DATE_SUB(NOW(), INTERVAL 14 DAY), NULL, NULL),
 
--- Propuesta 5: Blockchain Agrícola (en revisión)
-(5, '12345678-9', 'guia', DATE_SUB(NOW(), INTERVAL 14 DAY), NULL, NULL),
-(5, '56789012-3', 'informante', DATE_SUB(NOW(), INTERVAL 14 DAY), NULL, NULL),
-
--- Propuesta 6: Chatbot NLP (en revisión)
-(6, '23456789-0', 'guia', DATE_SUB(NOW(), INTERVAL 9 DAY), NULL, NULL),
-(6, '45678901-2', 'informante', DATE_SUB(NOW(), INTERVAL 9 DAY), NULL, NULL);
+-- Propuesta 5: Gestión Académica (EN REVISIÓN)
+(5, '34567890-1', 'guia', DATE_SUB(NOW(), INTERVAL 9 DAY), NULL, NULL),
+(5, '56789012-3', 'profesor_asignatura', DATE_SUB(NOW(), INTERVAL 9 DAY), NULL, NULL);
 
 -- ============================================
--- 6. PROYECTOS
+-- 6. PROYECTOS (Derivados de propuestas aprobadas)
 -- ============================================
 
 INSERT INTO proyectos (titulo, descripcion, propuesta_id, estudiante_rut, estado_id, fecha_inicio, fecha_entrega_estimada) VALUES
 ('Sistema de Gestión de Inventario con Machine Learning',
-'Sistema web desarrollado con React y Node.js que implementa algoritmos de regresión y series temporales para predicción de demanda. Base de datos PostgreSQL y despliegue en AWS.',
+'Sistema web desarrollado con React y Node.js que implementa algoritmos de regresión y series temporales para predicción de demanda. Base de datos PostgreSQL y despliegue en AWS. Proyecto IECI (1 semestre).',
 1, '19876543-2', 1, DATE_SUB(NOW(), INTERVAL 85 DAY), DATE_ADD(NOW(), INTERVAL 95 DAY)),
 
 ('Plataforma de E-Learning Adaptativo',
-'Plataforma desarrollada con Angular y Django. Algoritmos de IA implementados con TensorFlow para adaptación del contenido. Base de datos MongoDB.',
-2, '19876543-3', 1, DATE_SUB(NOW(), INTERVAL 80 DAY), DATE_ADD(NOW(), INTERVAL 100 DAY)),
-
-('App Móvil de Telemedicina para Zonas Rurales',
-'Aplicación multiplataforma desarrollada con React Native. Backend en Node.js con Express. Videoconferencias con WebRTC. Firebase para notificaciones push.',
-3, '20123456-7', 1, DATE_SUB(NOW(), INTERVAL 75 DAY), DATE_ADD(NOW(), INTERVAL 105 DAY)),
+'Plataforma desarrollada con Angular y Django. Algoritmos de IA implementados con TensorFlow para adaptación del contenido. Base de datos MongoDB. Proyecto ICINF con 2 estudiantes (2 semestres).',
+2, '19876543-3', 1, DATE_SUB(NOW(), INTERVAL 80 DAY), DATE_ADD(NOW(), INTERVAL 280 DAY)),
 
 ('Sistema de Monitoreo Ambiental IoT',
-'Red de sensores ESP32 con comunicación MQTT. Backend en Python con FastAPI. Dashboard web con Vue.js y Chart.js. Base de datos TimescaleDB.',
-4, '20234567-8', 1, DATE_SUB(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 110 DAY));
+'Red de sensores ESP32 con comunicación MQTT. Backend en Python con FastAPI. Dashboard web con Vue.js y Chart.js. Base de datos TimescaleDB. Proyecto IECI (1 semestre).',
+3, '20234567-8', 1, DATE_SUB(NOW(), INTERVAL 70 DAY), DATE_ADD(NOW(), INTERVAL 110 DAY));
 
 -- ============================================
 -- 7. ESTUDIANTES_PROYECTO (relación N:M)
 -- ============================================
 
 INSERT INTO estudiantes_proyecto (proyecto_id, estudiante_rut, rol_estudiante, fecha_incorporacion) VALUES
+-- Proyecto 1: 1 estudiante IECI
 (1, '19876543-2', 'titular', DATE_SUB(NOW(), INTERVAL 85 DAY)),
+-- Proyecto 2: 2 estudiantes ICINF
 (2, '19876543-3', 'titular', DATE_SUB(NOW(), INTERVAL 80 DAY)),
-(3, '20123456-7', 'titular', DATE_SUB(NOW(), INTERVAL 75 DAY)),
-(4, '20234567-8', 'titular', DATE_SUB(NOW(), INTERVAL 70 DAY));
+(2, '20123456-7', 'titular', DATE_SUB(NOW(), INTERVAL 80 DAY)),
+-- Proyecto 3: 1 estudiante IECI
+(3, '20234567-8', 'titular', DATE_SUB(NOW(), INTERVAL 70 DAY));
 
 -- ============================================
 -- 8. ASIGNACIONES DE PROFESORES A PROYECTOS
 -- ============================================
 
-INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor, fecha_asignacion) VALUES
--- Proyecto 1: Inventario ML
-(1, '12345678-9', 'guia', DATE_SUB(NOW(), INTERVAL 85 DAY)),
-(1, '23456789-0', 'informante', DATE_SUB(NOW(), INTERVAL 85 DAY)),
-(1, '15123456-7', 'colaborador_externo', DATE_SUB(NOW(), INTERVAL 80 DAY)), -- Fernando Campos (TechSolutions)
+INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, fecha_asignacion, activo, asignado_por) VALUES
+-- Proyecto 1: Inventario ML (1 estudiante IECI)
+(1, '12345678-9', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Guía'), DATE_SUB(NOW(), INTERVAL 85 DAY), TRUE, '22222222-2'),
+(1, '23456789-0', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor de Asignatura'), DATE_SUB(NOW(), INTERVAL 85 DAY), TRUE, '22222222-2'),
 
--- Proyecto 2: E-Learning
-(2, '23456789-0', 'guia', DATE_SUB(NOW(), INTERVAL 80 DAY)),
-(2, '34567890-1', 'informante', DATE_SUB(NOW(), INTERVAL 80 DAY)),
-(2, '16234567-8', 'colaborador_externo', DATE_SUB(NOW(), INTERVAL 75 DAY)), -- Patricia Muñoz (TechSolutions)
+-- Proyecto 2: E-Learning (2 estudiantes ICINF - 2 semestres)
+(2, '23456789-0', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Guía'), DATE_SUB(NOW(), INTERVAL 80 DAY), TRUE, '22222222-2'),
+(2, '34567890-1', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor de Asignatura'), DATE_SUB(NOW(), INTERVAL 80 DAY), TRUE, '22222222-2'),
 
--- Proyecto 3: Telemedicina
-(3, '34567890-1', 'guia', DATE_SUB(NOW(), INTERVAL 75 DAY)),
-(3, '45678901-2', 'informante', DATE_SUB(NOW(), INTERVAL 75 DAY)),
-(3, '13567890-1', 'colaborador_externo', DATE_SUB(NOW(), INTERVAL 70 DAY)), -- Marcelo Torres (Fundación)
-
--- Proyecto 4: IoT Ambiental
-(4, '56789012-3', 'guia', DATE_SUB(NOW(), INTERVAL 70 DAY)),
-(4, '12345678-9', 'informante', DATE_SUB(NOW(), INTERVAL 70 DAY)),
-(4, '18678901-2', 'colaborador_externo', DATE_SUB(NOW(), INTERVAL 65 DAY)); -- Andrea Silva (CloudServices)
+-- Proyecto 3: IoT Ambiental (1 estudiante IECI)
+(3, '56789012-3', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Guía'), DATE_SUB(NOW(), INTERVAL 70 DAY), TRUE, '22222222-2'),
+(3, '12345678-9', (SELECT id FROM roles_profesores WHERE nombre = 'Profesor de Asignatura'), DATE_SUB(NOW(), INTERVAL 70 DAY), TRUE, '22222222-2');
 
 -- ============================================
 -- 9. FECHAS IMPORTANTES
 -- ============================================
 
 INSERT INTO fechas_importantes (proyecto_id, titulo, descripcion, fecha, tipo, recordatorio, creado_por) VALUES
--- Proyecto 1
+-- Proyecto 1: Inventario ML (IECI - 1 semestre)
 (1, 'Entrega Capítulo 1', 'Entrega del marco teórico y estado del arte', DATE_ADD(NOW(), INTERVAL 15 DAY), 'entrega', 1, '12345678-9'),
 (1, 'Reunión de Avance', 'Presentación del avance del modelo de ML', DATE_ADD(NOW(), INTERVAL 30 DAY), 'reunion', 1, '12345678-9'),
 (1, 'Entrega Prototipo', 'Demostración del prototipo funcional', DATE_ADD(NOW(), INTERVAL 60 DAY), 'entrega', 1, '12345678-9'),
 (1, 'Defensa Final', 'Presentación y defensa del trabajo de titulación', DATE_ADD(NOW(), INTERVAL 95 DAY), 'hito', 1, '12345678-9'),
 
--- Proyecto 2
+-- Proyecto 2: E-Learning (ICINF - 2 semestres - 2 estudiantes)
 (2, 'Revisión Arquitectura', 'Validación de la arquitectura del sistema', DATE_ADD(NOW(), INTERVAL 20 DAY), 'revision', 1, '23456789-0'),
-(2, 'Entrega Módulo IA', 'Entrega del módulo de adaptación con IA', DATE_ADD(NOW(), INTERVAL 45 DAY), 'entrega', 1, '23456789-0'),
-(2, 'Testing con Usuarios', 'Pruebas de usabilidad con usuarios reales', DATE_ADD(NOW(), INTERVAL 70 DAY), 'hito', 1, '23456789-0'),
-(2, 'Entrega Final', 'Entrega del informe final y defensa', DATE_ADD(NOW(), INTERVAL 100 DAY), 'hito', 1, '23456789-0'),
+(2, 'Entrega Primer Semestre', 'Entrega avance primer semestre: módulos base implementados', DATE_ADD(NOW(), INTERVAL 120 DAY), 'hito', 1, '23456789-0'),
+(2, 'Entrega Módulo IA', 'Entrega del módulo de adaptación con IA', DATE_ADD(NOW(), INTERVAL 180 DAY), 'entrega', 1, '23456789-0'),
+(2, 'Testing con Usuarios', 'Pruebas de usabilidad con usuarios reales', DATE_ADD(NOW(), INTERVAL 230 DAY), 'hito', 1, '23456789-0'),
+(2, 'Defensa Final', 'Entrega del informe final y defensa', DATE_ADD(NOW(), INTERVAL 280 DAY), 'hito', 1, '23456789-0'),
 
--- Proyecto 3
-(3, 'Aprobación Ética', 'Revisión del comité de ética por manejo de datos médicos', DATE_ADD(NOW(), INTERVAL 10 DAY), 'otro', 1, '34567890-1'),
-(3, 'Demo Videoconferencias', 'Demostración del módulo de videoconferencias', DATE_ADD(NOW(), INTERVAL 35 DAY), 'entrega', 1, '34567890-1'),
-(3, 'Piloto en Terreno', 'Prueba piloto en comunidad rural', DATE_ADD(NOW(), INTERVAL 75 DAY), 'hito', 1, '34567890-1'),
-
--- Proyecto 4
-(4, 'Instalación Sensores', 'Instalación de la red de sensores en campus', DATE_ADD(NOW(), INTERVAL 25 DAY), 'hito', 1, '56789012-3'),
-(4, 'Calibración Sistema', 'Calibración y validación de mediciones', DATE_ADD(NOW(), INTERVAL 50 DAY), 'revision', 1, '56789012-3'),
-(4, 'Presentación Resultados', 'Presentación de análisis de datos recopilados', DATE_ADD(NOW(), INTERVAL 90 DAY), 'entrega', 1, '56789012-3');
+-- Proyecto 3: IoT Ambiental (IECI - 1 semestre)
+(3, 'Instalación Sensores', 'Instalación de la red de sensores en campus', DATE_ADD(NOW(), INTERVAL 25 DAY), 'hito', 1, '56789012-3'),
+(3, 'Calibración Sistema', 'Calibración y validación de mediciones', DATE_ADD(NOW(), INTERVAL 50 DAY), 'revision', 1, '56789012-3'),
+(3, 'Presentación Resultados', 'Presentación de análisis de datos recopilados', DATE_ADD(NOW(), INTERVAL 90 DAY), 'entrega', 1, '56789012-3'),
+(3, 'Defensa Final', 'Defensa del proyecto de titulación', DATE_ADD(NOW(), INTERVAL 110 DAY), 'hito', 1, '56789012-3');
 
 -- ============================================
 -- 10. DISPONIBILIDAD HORARIOS (Profesores)

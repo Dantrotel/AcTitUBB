@@ -11,6 +11,18 @@
       <span>Volver</span>
     </div>
 
+    <!-- Botón de Chat con notificaciones -->
+    <div *ngIf="showChat" class="action-item chat-button" (click)="irAlChat()">
+      <div class="chat-icon-wrapper">
+        <i class="fas fa-comments" 
+           [matBadge]="mensajesNoLeidos" 
+           [matBadgeHidden]="mensajesNoLeidos === 0"
+           matBadgeColor="warn" 
+           matBadgeSize="small"></i>
+      </div>
+      <span>Chat</span>
+    </div>
+
     <!-- Acciones personalizadas -->
     <ng-container *ngFor="let action of actions; let i = index">
       <!-- Acción simple (sin dropdown) -->

@@ -366,6 +366,36 @@ export class AsignacionesComponent implements OnInit {
     };
   }
 
+  // Getter para filtrar roles según la carrera del estudiante
+  get rolesFiltrados(): any[] {
+    if (!this.nuevaAsignacion.proyecto_id) {
+      // Si no hay proyecto seleccionado, mostrar todos menos el de sala
+      return this.rolesProfesores.filter(rol => rol.id !== 3);
+    }
+
+    const proyectoId = Number(this.nuevaAsignacion.proyecto_id);
+    const proyecto = this.proyectos.find(p => 
+      (p.proyecto_id || p.id) === proyectoId
+    );
+
+    if (!proyecto) {
+      return this.rolesProfesores.filter(rol => rol.id !== 3);
+    }
+
+    // Si el proyecto es de ICINF (código de carrera ICINF), mostrar todos los roles
+    const esICINF = proyecto.codigo_carrera === 'ICINF' || 
+                    proyecto.carrera_codigo === 'ICINF' ||
+                    proyecto.carrera_nombre?.includes('Civil');
+
+    if (esICINF) {
+      // ICINF puede tener Profesor de Sala (rol 3)
+      return this.rolesProfesores;
+    } else {
+      // IECI NO puede tener Profesor de Sala (filtrar rol 3)
+      return this.rolesProfesores.filter(rol => rol.id !== 3);
+    }
+  }
+
   ocultarFormularioAsignacion() {
     this.mostrarFormulario = false;
   }
@@ -532,7 +562,7 @@ export class AsignacionesComponent implements OnInit {
       'profesor_revisor': '#6c757d',
       'profesor_guia': '#007bff',
       'profesor_co_guia': '#28a745',
-      'profesor_informante': '#ffc107',
+      'profesor_asignatura': '#ffc107',
       'profesor_sala': '#dc3545',
       'profesor_corrector': '#17a2b8',
       'profesor_externo': '#6f42c1'

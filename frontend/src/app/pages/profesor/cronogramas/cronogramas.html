@@ -1,25 +1,23 @@
 <!-- Navbar -->
-<nav class="navbar">
-  <div class="navbar-brand">
-    <i class="fas fa-graduation-cap"></i>
-    <span>AcTitUBB - Cronogramas</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <button class="btn-secondary" (click)="volver()">
-      <i class="fas fa-arrow-left"></i>
-      Volver
-    </button>
-  </div>
-</nav>
+<app-navbar
+  [userName]="profesor.nombre || 'Profesor'"
+  [userRole]="'profesor'"
+  [showBackButton]="true"
+  [pageTitle]="'AcTitUBB - Cronogramas'"
+  (back)="volver()"
+  (logout)="cerrarSesion()">
+</app-navbar>
 
 <!-- Contenido principal -->
 <div class="main-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1><i class="fas fa-calendar-alt"></i> Gestión de Cronogramas</h1>
-      <p>Administra cronogramas y hitos de entrega para tus proyectos asignados</p>
+  <!-- Header compacto con gradiente -->
+  <div class="page-header-compact">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-calendar-alt"></i>
+        Gestión de Cronogramas
+      </h1>
+      <p class="header-subtitle">Administra cronogramas y hitos de entrega para tus proyectos asignados</p>
     </div>
   </div>
 

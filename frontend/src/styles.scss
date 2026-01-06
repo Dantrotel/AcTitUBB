@@ -80,24 +80,24 @@
   --border-color-light: var(--color-gray-200);
   
   /* === Espaciado === */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
-  --spacing-3xl: 4rem;
+  --spacing-xs: 0.15rem;
+  --spacing-sm: 0.25rem;
+  --spacing-md: 0.4rem;
+  --spacing-lg: 0.6rem;
+  --spacing-xl: 0.8rem;
+  --spacing-2xl: 1rem;
+  --spacing-3xl: 1.2rem;
   
   /* === Tipografía === */
   --font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 2rem;
-  --font-size-4xl: 2.5rem;
+  --font-size-xs: 0.65rem;
+  --font-size-sm: 0.75rem;
+  --font-size-base: 0.85rem;
+  --font-size-lg: 0.95rem;
+  --font-size-xl: 1.05rem;
+  --font-size-2xl: 1.2rem;
+  --font-size-3xl: 1.5rem;
+  --font-size-4xl: 2rem;
   
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -147,7 +147,7 @@ body {
    ======================================== */
 
 .btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: var(--border-radius-md);
   font-weight: var(--font-weight-semibold);
@@ -241,12 +241,12 @@ body {
 }
 
 .btn-sm {
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.75rem;
   font-size: var(--font-size-sm);
 }
 
 .btn-lg {
-  padding: 1rem 2rem;
+  padding: 0.65rem 1.25rem;
   font-size: var(--font-size-lg);
 }
 
@@ -267,7 +267,7 @@ body {
 }
 
 .card-header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   border-bottom: var(--border-width) solid var(--border-color-light);
   
   &.card-header-primary {
@@ -278,11 +278,11 @@ body {
 }
 
 .card-body {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
 }
 
 .card-footer {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   border-top: var(--border-width) solid var(--border-color-light);
   background: var(--color-gray-50);
 }
@@ -293,7 +293,7 @@ body {
 
 .form-label {
   display: block;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
@@ -303,7 +303,7 @@ body {
 .form-select,
 .form-textarea {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: var(--border-width-md) solid var(--border-color);
   border-radius: var(--border-radius-sm);
   font-size: var(--font-size-base);
@@ -342,7 +342,7 @@ body {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.15rem 0.5rem;
   border-radius: var(--border-radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);

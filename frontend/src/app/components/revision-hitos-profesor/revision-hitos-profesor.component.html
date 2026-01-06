@@ -1,0 +1,327 @@
+<div class="revision-hitos-container">
+  <!-- Header con estadísticas -->
+  <div class="header-section">
+    <div class="title-section">
+      <h2>
+        <i class="fas fa-tasks"></i>
+        Entregas y Revisiones de Hitos
+      </h2>
+      <p class="subtitle">Revisa las entregas de los estudiantes y proporciona retroalimentación</p>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="stats-cards">
+      <div class="stat-card pendiente">
+        <i class="fas fa-clock"></i>
+        <div class="stat-content">
+          <h3>{{ contarEntregasPendientes() }}</h3>
+          <p>Pendientes de revisión</p>
+        </div>
+      </div>
+      <div class="stat-card aprobado">
+        <i class="fas fa-check-circle"></i>
+        <div class="stat-content">
+          <h3>{{ contarEntregasAprobadas() }}</h3>
+          <p>Aprobadas</p>
+        </div>
+      </div>
+      <div class="stat-card requiere-correccion">
+        <i class="fas fa-exclamation-circle"></i>
+        <div class="stat-content">
+          <h3>{{ contarRequierenCorreccion() }}</h3>
+          <p>Requieren corrección</p>
+        </div>
+      </div>
+      <div class="stat-card progreso">
+        <i class="fas fa-chart-line"></i>
+        <div class="stat-content">
+          <h3>{{ calcularProgresoGeneral() }}%</h3>
+          <p>Progreso general</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-section">
+    <div class="filtro-group">
+      <label>
+        <i class="fas fa-filter"></i>
+        Estado:
+      </label>
+      <select [(ngModel)]="filtroEstado" (change)="cargarHitos()" class="form-select">
+        <option value="">Todos</option>
+        <option value="con_entrega">Con entrega</option>
+        <option value="sin_entrega">Sin entrega</option>
+        <option value="pendiente_revision">Pendiente de revisión</option>
+      </select>
+    </div>
+    <div class="filtro-group">
+      <label>
+        <i class="fas fa-tag"></i>
+        Tipo:
+      </label>
+      <select [(ngModel)]="filtroTipo" (change)="cargarHitos()" class="form-select">
+        <option value="">Todos</option>
+        <option value="entrega_documento">Entrega de documento</option>
+        <option value="revision_avance">Revisión de avance</option>
+        <option value="reunion_seguimiento">Reunión de seguimiento</option>
+        <option value="evaluacion">Evaluación</option>
+        <option value="defensa">Defensa</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Lista de Hitos -->
+  <div class="hitos-list" *ngIf="!cargando && hitosFiltrados.length > 0">
+    <div *ngFor="let hito of hitosFiltrados" 
+         class="hito-card" 
+         [class.vencido]="esVencido(hito.fecha_limite) && !hito.entrega"
+         [class.con-entrega]="hito.tiene_entrega">
+      
+      <div class="hito-header">
+        <div class="hito-info">
+          <div class="hito-icono">
+            <i class="fas" [class]="obtenerIconoTipo(hito.tipo_hito)"></i>
+          </div>
+          <div class="hito-detalles">
+            <h3>{{ hito.nombre_hito }}</h3>
+            <p class="hito-descripcion">{{ hito.descripcion }}</p>
+            <div class="hito-meta">
+              <span class="meta-item">
+                <i class="fas fa-calendar"></i>
+                Límite: {{ formatearFechaCorta(hito.fecha_limite) }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-percentage"></i>
+                Peso: {{ hito.peso_en_proyecto }}%
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="hito-estado">
+          <span class="badge" [class]="obtenerClaseEstado(hito.entrega?.estado || 'sin_entrega')">
+            {{ obtenerTextoEstado(hito) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Información de la entrega -->
+      <div class="entrega-info" *ngIf="hito.tiene_entrega && hito.entrega">
+        <div class="entrega-header">
+          <h4>
+            <i class="fas fa-upload"></i>
+            Entrega del estudiante
+          </h4>
+        </div>
+
+        <div class="entrega-detalles">
+          <div class="detalle-item">
+            <label>Archivo:</label>
+            <div class="archivo-info">
+              <i class="fas fa-file-pdf"></i>
+              <span>{{ hito.entrega.archivo_nombre }}</span>
+              <button 
+                class="btn-download" 
+                (click)="descargarEntrega(hito.entrega!)"
+                title="Descargar archivo">
+                <i class="fas fa-download"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="detalle-item">
+            <label>Fecha de entrega:</label>
+            <span>{{ formatearFecha(hito.entrega.fecha_entrega) }}</span>
+          </div>
+
+          <div class="detalle-item" *ngIf="hito.entrega.comentarios_estudiante">
+            <label>Comentarios del estudiante:</label>
+            <p class="comentario-texto">{{ hito.entrega.comentarios_estudiante }}</p>
+          </div>
+
+          <div class="detalle-item" *ngIf="hito.entrega.calificacion !== undefined && hito.entrega.calificacion !== null">
+            <label>Calificación:</label>
+            <span class="calificacion-valor">
+              {{ hito.entrega.calificacion }}/100
+            </span>
+          </div>
+
+          <div class="detalle-item" *ngIf="hito.entrega.comentarios_profesor">
+            <label>Retroalimentación del profesor:</label>
+            <div class="retroalimentacion-box">
+              <p>{{ hito.entrega.comentarios_profesor }}</p>
+              <small *ngIf="hito.entrega.fecha_revision">
+                Revisado el: {{ formatearFecha(hito.entrega.fecha_revision) }}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="entrega-acciones">
+          <button 
+            class="btn btn-primary"
+            (click)="abrirRevision(hito)"
+            [disabled]="cargando">
+            <i class="fas fa-edit"></i>
+            {{ hito.entrega.estado === 'pendiente_revision' ? 'Revisar' : 'Editar Revisión' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Sin entrega -->
+      <div class="sin-entrega-info" *ngIf="!hito.tiene_entrega">
+        <i class="fas fa-inbox"></i>
+        <p>El estudiante aún no ha realizado la entrega de este hito</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="cargando">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Cargando hitos...</p>
+  </div>
+
+  <!-- Sin hitos -->
+  <div class="empty-state" *ngIf="!cargando && hitosFiltrados.length === 0 && hitos.length === 0">
+    <i class="fas fa-tasks"></i>
+    <p>No hay hitos en este proyecto</p>
+  </div>
+
+  <!-- Sin resultados de filtro -->
+  <div class="empty-state" *ngIf="!cargando && hitosFiltrados.length === 0 && hitos.length > 0">
+    <i class="fas fa-filter"></i>
+    <p>No hay hitos que coincidan con los filtros seleccionados</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="mensajeError">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ mensajeError }}</p>
+    <button class="btn btn-secondary" (click)="cargarHitos()">
+      <i class="fas fa-redo"></i>
+      Reintentar
+    </button>
+  </div>
+</div>
+
+<!-- Modal de Revisión -->
+<div class="modal-overlay" *ngIf="mostrarModalRevision" (click)="cerrarModalRevision()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-edit"></i>
+        Revisar Entrega
+      </h3>
+      <button class="btn-close" (click)="cerrarModalRevision()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="hitoSeleccionado && entregaEnRevision">
+      <!-- Información del hito -->
+      <div class="hito-info-modal">
+        <h4>{{ hitoSeleccionado.nombre_hito }}</h4>
+        <p>{{ hitoSeleccionado.descripcion }}</p>
+        <div class="meta-info">
+          <span>
+            <i class="fas fa-file"></i>
+            {{ entregaEnRevision.archivo_nombre }}
+          </span>
+          <button 
+            class="btn-link"
+            (click)="descargarEntrega(entregaEnRevision)">
+            <i class="fas fa-download"></i>
+            Descargar
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulario de revisión -->
+      <form class="form-revision">
+        <div class="form-group">
+          <label for="calificacion">
+            Calificación (0-100) *
+          </label>
+          <input 
+            type="number" 
+            id="calificacion"
+            [(ngModel)]="calificacion"
+            name="calificacion"
+            min="0" 
+            max="100" 
+            step="1"
+            class="form-control"
+            required>
+          <small class="form-text">Ingresa una calificación entre 0 y 100</small>
+        </div>
+
+        <div class="form-group">
+          <label for="estadoRevision">
+            Estado *
+          </label>
+          <div class="radio-group">
+            <label class="radio-option aprobado">
+              <input 
+                type="radio" 
+                name="estadoRevision"
+                [(ngModel)]="estadoRevision"
+                value="aprobado">
+              <span>
+                <i class="fas fa-check-circle"></i>
+                Aprobado
+              </span>
+            </label>
+            <label class="radio-option requiere-correcciones">
+              <input 
+                type="radio" 
+                name="estadoRevision"
+                [(ngModel)]="estadoRevision"
+                value="requiere_correcciones">
+              <span>
+                <i class="fas fa-exclamation-circle"></i>
+                Requiere correcciones
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="comentariosProfesor">
+            Retroalimentación *
+          </label>
+          <textarea 
+            id="comentariosProfesor"
+            [(ngModel)]="comentariosProfesor"
+            name="comentariosProfesor"
+            rows="6"
+            class="form-control"
+            placeholder="Proporciona retroalimentación detallada al estudiante sobre su entrega..."
+            required></textarea>
+          <small class="form-text">
+            {{ comentariosProfesor.length }}/1000 caracteres
+          </small>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button 
+        class="btn btn-secondary" 
+        (click)="cerrarModalRevision()"
+        [disabled]="cargando">
+        Cancelar
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="guardarRevision()"
+        [disabled]="cargando || !comentariosProfesor.trim()">
+        <i class="fas fa-save"></i>
+        Guardar Revisión
+      </button>
+    </div>
+  </div>
+</div>

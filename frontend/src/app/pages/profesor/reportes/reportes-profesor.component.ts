@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
+import { NavbarComponent } from '../../../components/navbar/navbar.component';
 
 interface MetricasProfesor {
   // Propuestas
@@ -66,11 +67,14 @@ interface ReunionDetalle {
 @Component({
   selector: 'app-reportes-profesor',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NavbarComponent],
   templateUrl: './reportes-profesor.component.html',
   styleUrls: ['./reportes-profesor.component.scss']
 })
 export class ReportesProfesorComponent implements OnInit {
+  // Propiedades para navbar
+  profesor: any = {};
+  
   loading = true;
   metricas: MetricasProfesor | null = null;
   proyectos: ProyectoDetalle[] = [];
@@ -88,7 +92,28 @@ export class ReportesProfesorComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.cargarProfesor();
     this.cargarReportes();
+  }
+
+  cargarProfesor() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.profesor = {
+          rut: payload.rut,
+          nombre: payload.nombre || 'Profesor'
+        };
+      } catch (error) {
+        console.error('Error al decodificar token:', error);
+      }
+    }
+  }
+
+  cerrarSesion() {
+    localStorage.removeItem('token');
+    this.router.navigate(['/login']);
   }
 
   cargarReportes() {

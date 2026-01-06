@@ -945,6 +945,12 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     this.ApiService.logout();
   }
 
+  irAlHome() {
+    // Ya estamos en el home de estudiante, solo cerramos menús si están abiertos
+    this.showUserMenu = false;
+    this.showCalendarioMenu = false;
+  }
+
   // Métodos para estado dinámico
   getEstadoTexto(): string {
     if (!this.ultimaPropuesta) {

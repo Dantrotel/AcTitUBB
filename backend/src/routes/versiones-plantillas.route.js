@@ -11,7 +11,7 @@ const router = Router();
 /**
  * Subir nueva versión de documento
  * POST /api/v1/versiones
- * Roles: estudiante, profesor_guia, profesor_informante
+ * Roles: estudiante, profesor_guia, profesor_asignatura
  */
 router.post(
   '/',
@@ -63,7 +63,7 @@ router.get(
 /**
  * Actualizar estado de una versión
  * PUT /api/v1/versiones/:version_id/estado
- * Roles: profesor_guia, profesor_informante, admin
+ * Roles: profesor_guia, profesor_asignatura, admin
  */
 router.put(
   '/:version_id/estado',

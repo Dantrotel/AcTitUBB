@@ -1,12 +1,12 @@
 <!-- Navbar con navegación -->
 <nav class="navbar">
-  <div class="navbar-brand">
+  <div class="navbar-brand" (click)="irAlHome()" style="cursor: pointer;">
     <i class="fas fa-graduation-cap"></i>
     <span>AcTitUBB</span>
   </div>
   
   <div class="navbar-actions">
-    <div class="action-item" (click)="router.navigate(['/profesor/propuestas-asignadas'])" matTooltip="Volver">
+    <div class="action-item" (click)="volver()" matTooltip="Volver">
       <i class="fas fa-arrow-left"></i>
       <span>Volver</span>
     </div>

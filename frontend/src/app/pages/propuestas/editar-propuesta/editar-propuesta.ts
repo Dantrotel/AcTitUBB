@@ -50,6 +50,10 @@ export class ActualizarPropuestaComponent implements OnInit {
   // Estudiantes adicionales
   estudiantes_adicionales: string[] = [];
   mostrarEstudiantesAdicionales = false;
+  
+  // Carrera del usuario y opciones de duración
+  carreraUsuario: string = '';
+  opcionesDuracion: {value: string, label: string}[] = [];
 
   constructor(
     private apiService: ApiService,
@@ -107,8 +111,28 @@ export class ActualizarPropuestaComponent implements OnInit {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.userRut = payload.rut || '';
+        this.carreraUsuario = payload.carrera || '';
+        this.configurarOpcionesDuracion();
       } catch {
       }
+    }
+  }
+  
+  configurarOpcionesDuracion() {
+    // IECI (Ingeniería en Computación e Informática) = solo 1 semestre
+    // ICINF (Ingeniería Civil en Informática) = 1 o 2 semestres
+    if (this.carreraUsuario.toLowerCase().includes('computación') && 
+        !this.carreraUsuario.toLowerCase().includes('civil')) {
+      // IECI - Solo 1 semestre
+      this.opcionesDuracion = [
+        { value: '1', label: '1 Semestre' }
+      ];
+    } else {
+      // ICINF y otras carreras - 1 o 2 semestres
+      this.opcionesDuracion = [
+        { value: '1', label: '1 Semestre' },
+        { value: '2', label: '2 Semestres' }
+      ];
     }
   }
 
@@ -547,6 +571,10 @@ export class ActualizarPropuestaComponent implements OnInit {
 
   volver() {
     this.location.back();
+  }
+
+  irAlHome() {
+    this.router.navigate(['/estudiante']);
   }
 
   // Toast notifications

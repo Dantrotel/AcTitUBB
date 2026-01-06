@@ -1,22 +1,29 @@
-<nav class="navbar">
-  <div class="navbar-brand">
-    <i class="fas fa-users"></i>
-    <span>Gestión de Comisiones Evaluadoras</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <button class="btn-secondary" (click)="volver()">
-      <i class="fas fa-arrow-left"></i>
-      Volver
-    </button>
-  </div>
-</nav>
+<!-- Navbar -->
+<app-navbar
+  [userName]="userName"
+  [userRole]="'admin'"
+  [showBackButton]="true"
+  [pageTitle]="'AcTitUBB'"
+  (back)="volver()"
+  (logout)="cerrarSesion()">
+</app-navbar>
 
 <div class="main-container">
-  <!-- Header -->
-  <div class="page-header">
-    <h1><i class="fas fa-gavel"></i> Gestión de Comisiones Evaluadoras</h1>
-    <p>Asigna y gestiona los miembros de las comisiones evaluadoras para cada proyecto</p>
+  <!-- Header compacto con gradiente -->
+  <div class="page-header-compact">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-gavel"></i>
+        Gestión de Comisiones Evaluadoras
+      </h1>
+      <p class="header-subtitle">Asigna y gestiona los miembros de las comisiones evaluadoras para cada proyecto</p>
+    </div>
+    <div class="header-right">
+      <div class="total-badge">
+        <span class="total-number">{{ proyectos.length }}</span>
+        <span class="total-label">Proyectos</span>
+      </div>
+    </div>
   </div>
 
   <!-- Mensajes -->

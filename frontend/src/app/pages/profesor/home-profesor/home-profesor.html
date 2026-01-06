@@ -1,6 +1,6 @@
 <!-- Navbar con navegación -->
 <nav class="navbar">
-  <div class="navbar-brand">
+  <div class="navbar-brand" (click)="irAlHome()" style="cursor: pointer;">
     <i class="fas fa-graduation-cap"></i>
     <span>AcTitUBB</span>
   </div>
@@ -14,6 +14,11 @@
     <div class="action-item" (click)="navegar('propuestas/asignadas')">
       <i class="fas fa-tasks"></i>
       <span>Asignadas</span>
+    </div>
+
+    <div class="action-item" (click)="navegarAProyectos()">
+      <i class="fas fa-project-diagram"></i>
+      <span>Mis Proyectos</span>
     </div>
 
     <!-- Menú de Calendario Matching -->
@@ -153,7 +158,7 @@
             <div class="rol-card">
               <div class="rol-header">
                 <i class="fas fa-graduation-cap"></i>
-                <h4>{{ rol.rol === 'guia' ? 'Profesor Guía' : rol.rol === 'informante' ? 'Profesor Informante' : rol.rol }}</h4>
+                <h4>{{ rol.rol === 'guia' ? 'Profesor Guía' : rol.rol === 'asignatura' ? 'Profesor de Asignatura' : rol.rol }}</h4>
               </div>
               <div class="rol-stats">
                 <div class="rol-number">{{ rol.total }}</div>

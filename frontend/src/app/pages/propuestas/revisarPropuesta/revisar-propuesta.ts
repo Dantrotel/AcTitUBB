@@ -23,6 +23,7 @@ export class RevisarPropuestaComponent implements OnInit {
   esAdmin = false;
   esSuperAdmin = false;
   puedeRevisar = false;
+  backRoute = '/profesor/propuestas/asignadas'; // Ruta por defecto
   
   // Archivo revisado
   archivoRevisado: File | null = null;
@@ -41,8 +42,39 @@ export class RevisarPropuestaComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private api: ApiService, public router: Router, private cdr: ChangeDetectorRef) {}
 
+  volver() {
+    this.router.navigate([this.backRoute]);
+  }
+
+  irAlHome() {
+    // Detectar rol del usuario y navegar a su home
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const rol = payload.rol_id;
+        switch(rol) {
+          case 1: this.router.navigate(['/estudiante']); break;
+          case 2: this.router.navigate(['/profesor']); break;
+          case 3: this.router.navigate(['/admin']); break;
+          case 4: this.router.navigate(['/super-admin']); break;
+          default: this.router.navigate(['/']); break;
+        }
+      } catch (error) {
+        this.router.navigate(['/']);
+      }
+    }
+  }
+
   ngOnInit(): void {
     this.propuestaId = this.route.snapshot.paramMap.get('id') || '';
+    
+    // Obtener la ruta de retorno desde route.data
+    const routeData = this.route.snapshot.data;
+    if (routeData['backRoute']) {
+      this.backRoute = routeData['backRoute'];
+    }
+    
     const userDataStr = localStorage.getItem('userData');
     if (userDataStr) {
       const userData = JSON.parse(userDataStr);
@@ -104,7 +136,7 @@ export class RevisarPropuestaComponent implements OnInit {
           // Propuesta aprobada - mostrar mensaje sobre proyecto creado
           if (response.proyecto_creado && response.proyecto_id) {
             this.notificationService.success(
-              `Se ha creado automáticamente el proyecto con ID: ${response.proyecto_id}. El proyecto está en estado "Esperando Asignación de Profesores". Los administradores deben asignar los 3 roles (Profesor Guía, Revisor e Informante) para activarlo.`,
+              `Se ha creado automáticamente el proyecto con ID: ${response.proyecto_id}. El proyecto está en estado "Esperando Asignación de Profesores". Los administradores deben asignar los 3 roles (Profesor Guía, Revisor y de Asignatura) para activarlo.`,
               '✅ Propuesta Aprobada',
               8000
             );
@@ -115,14 +147,8 @@ export class RevisarPropuestaComponent implements OnInit {
           this.notificationService.success('Revisión guardada correctamente');
         }
         
-        // Redirigir según el rol del usuario
-        if (this.esSuperAdmin) {
-          this.router.navigate(['/super-admin']);
-        } else if (this.esAdmin) {
-          this.router.navigate(['/admin/propuestas']);
-        } else if (this.esProfesor) {
-          this.router.navigate(['/profesor/propuestas/asignadas']);
-        }
+        // Redirigir a la ruta de retorno configurada
+        this.router.navigate([this.backRoute]);
       },
       error: () => this.notificationService.error('No se pudo guardar la revisión')
     });
