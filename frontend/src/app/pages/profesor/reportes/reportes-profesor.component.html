@@ -1,16 +1,20 @@
-<!-- Navbar -->
-<app-navbar
-  [userName]="profesor.nombre || 'Profesor'"
-  [userRole]="'profesor'"
-  [showBackButton]="true"
-  [pageTitle]="'AcTitUBB - Reportes'"
-  [actions]="[
-    { icon: 'fas fa-file-pdf', label: 'PDF', action: exportarPDF },
-    { icon: 'fas fa-file-excel', label: 'Excel', action: exportarExcel }
-  ]"
-  (back)="volver()"
-  (logout)="cerrarSesion()">
-</app-navbar>
+<!-- Acciones de exportación -->
+<div class="page-actions-bar" style="display:flex; justify-content:flex-end; gap:8px; padding:12px 20px 0;">
+  <button class="btn-icon" (click)="exportarPDF()" title="Exportar a PDF">
+    <i class="fas fa-file-pdf"></i>
+  </button>
+  <button class="btn-icon" (click)="exportarExcel()" title="Exportar a Excel">
+    <i class="fas fa-file-excel"></i>
+  </button>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin"></i>
+  </div>
+  <p>Cargando reportes...</p>
+</div>
 
 <!-- Contenido Principal -->
 <div class="main-container">

@@ -64,8 +64,8 @@ const versionesModel = {
       const [rows] = await pool.query(
         `SELECT 
           v.*,
-          u.nombres AS autor_nombre,
-          u.apellidos AS autor_apellido,
+          u.nombre AS autor_nombre,
+          NULL AS autor_apellido,
           COUNT(c.id) AS total_comentarios
         FROM versiones_documento v
         LEFT JOIN usuarios u ON v.autor_rut = u.rut
@@ -90,8 +90,8 @@ const versionesModel = {
       let query = `
         SELECT 
           v.*,
-          u.nombres AS autor_nombre,
-          u.apellidos AS autor_apellido,
+          u.nombre AS autor_nombre,
+          NULL AS autor_apellido,
           a.titulo AS avance_titulo,
           COUNT(c.id) AS total_comentarios
         FROM versiones_documento v
@@ -136,8 +136,8 @@ const versionesModel = {
       const [rows] = await pool.query(
         `SELECT 
           v.*,
-          u.nombres AS autor_nombre,
-          u.apellidos AS autor_apellido,
+          u.nombre AS autor_nombre,
+          NULL AS autor_apellido,
           a.titulo AS avance_titulo,
           p.titulo AS proyecto_titulo
         FROM versiones_documento v
@@ -276,7 +276,7 @@ const versionesModel = {
 
       // Obtener nombre del autor
       const [usuario] = await pool.query(
-        'SELECT CONCAT(nombres, " ", apellidos) AS nombre_completo FROM usuarios WHERE rut = ?',
+        'SELECT nombre AS nombre_completo FROM usuarios WHERE rut = ?',
         [autorRut]
       );
 
@@ -311,8 +311,8 @@ const versionesModel = {
       const [rows] = await pool.query(
         `SELECT 
           c.*,
-          u.nombres AS autor_nombre_usuario,
-          u.apellidos AS autor_apellido_usuario
+          u.nombre AS autor_nombre_usuario,
+          NULL AS autor_apellido_usuario
         FROM comentarios_version c
         LEFT JOIN usuarios u ON c.autor_rut = u.rut
         WHERE c.version_id = ?
@@ -403,8 +403,8 @@ const versionesModel = {
           c.nombre AS carrera_nombre,
           d.nombre AS departamento_nombre,
           f.nombre AS facultad_nombre,
-          u.nombres AS creador_nombre,
-          u.apellidos AS creador_apellido
+          u.nombre AS creador_nombre,
+          NULL AS creador_apellido
         FROM plantillas_documentos p
         LEFT JOIN carreras c ON p.carrera_id = c.id
         LEFT JOIN departamentos d ON p.departamento_id = d.id
@@ -570,8 +570,8 @@ const versionesModel = {
       const [rows] = await pool.query(
         `SELECT 
           r.*,
-          u.nombres AS cerrado_por_nombre,
-          u.apellidos AS cerrado_por_apellido
+          u.nombre AS cerrado_por_nombre,
+          NULL AS cerrado_por_apellido
         FROM resultados_finales_proyecto r
         LEFT JOIN usuarios u ON r.cerrado_por = u.rut
         WHERE r.proyecto_id = ?`,
@@ -609,8 +609,8 @@ const versionesModel = {
       const [rows] = await pool.query(
         `SELECT 
           h.*,
-          u.nombres AS cambiado_por_nombre,
-          u.apellidos AS cambiado_por_apellido
+          u.nombre AS cambiado_por_nombre,
+          NULL AS cambiado_por_apellido
         FROM historial_estados_proyecto h
         LEFT JOIN usuarios u ON h.cambiado_por = u.rut
         WHERE h.proyecto_id = ?

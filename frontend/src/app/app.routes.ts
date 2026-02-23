@@ -31,6 +31,9 @@ import { SolicitarExtensionComponent } from './pages/estudiante/solicitar-extens
 import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
 import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-importantes/fechas-importantes-profesor.component';
 
+// Layout Component
+import { AppLayoutComponent } from './components/app-layout/app-layout.component';
+
 // Super Admin Components
 import { SuperAdminHomeComponent } from './pages/super-admin/home/super-admin-home.component';
 import { GestionEstructuraComponent } from './pages/super-admin/gestion-estructura/gestion-estructura';
@@ -59,7 +62,7 @@ import { DocumentosProyectoComponent } from './components/documentos-proyecto/do
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
-  // Rutas públicas
+  // Rutas públicas (sin layout)
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { 
@@ -76,283 +79,167 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
 
-  // Rutas protegidas con AuthGuard
-  { path: 'perfil', component: PerfilEstudianteComponent, canActivate: [AuthGuard] },
-  { path: 'propuestas/crear', component: CrearPropuestaComponent, canActivate: [AuthGuard] },
-  { path: 'propuestas/listar-propuesta', component: ListarPropuestasComponent, canActivate: [AuthGuard] },
-  { path: 'propuestas/editar-propuesta/:id', component: ActualizarPropuestaComponent, canActivate: [AuthGuard] },
-  { path: 'propuestas/ver-detalle/:id', component: VerPropuestaComponent, canActivate: [AuthGuard] },
-  { path: 'propuestas/asignadas', component: PropuestasAsignadasComponent, canActivate: [AuthGuard] },
-  { path: 'propuestas/todas', component: PropuestasTodas, canActivate: [AuthGuard] },
-
-  // Rutas del Sistema de Reuniones (sin matching automático)
-  { path: 'calendario-matching', redirectTo: '/calendario-matching/solicitudes', pathMatch: 'full' },
-  { path: 'calendario-matching/solicitudes', component: SolicitudesReunionComponent, canActivate: [AuthGuard] },
-  { path: 'calendario-matching/gestion', component: GestionReunionesComponent, canActivate: [AuthGuard] },
-
-  // Rutas del Super Administrador
-  { path: 'super-admin', component: SuperAdminHomeComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
-  { path: 'super-admin/usuarios', component: SuperAdminGestionUsuariosComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin' } },
-  { path: 'super-admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin' } },
-  { path: 'super-admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin/propuestas' } },
-  { path: 'super-admin/proyectos', component: GestionProyectosComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin' } },
-  { path: 'super-admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4], viewMode: 'superadmin', backRoute: '/super-admin' } },
-  { path: 'super-admin/gestion-estructura', component: GestionEstructuraComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
-  { path: 'super-admin/gestionar-jefes', component: GestionarJefesComponent, canActivate: [AuthGuard], data: { requiredRoles: [4] } },
-  { 
-    path: 'super-admin/configuracion', 
-    loadComponent: () => import('./pages/admin/configuracion-sistema/configuracion-sistema.component').then(m => m.ConfiguracionSistemaComponent),
-    canActivate: [AuthGuard], 
-    data: { requiredRoles: [4] } 
-  },
-  { 
-    path: 'super-admin/dashboard-metricas', 
-    loadComponent: () => import('./pages/admin/dashboard-metricas/dashboard-metricas.component').then(m => m.DashboardMetricasComponent),
-    canActivate: [AuthGuard], 
-    data: { requiredRoles: [4] } 
-  },
-  { 
-    path: 'super-admin/actividad', 
-    loadComponent: () => import('./pages/super-admin/actividad-tiempo-real/actividad-tiempo-real.component').then(m => m.ActividadTiempoRealComponent),
-    canActivate: [AuthGuard], 
-    data: { requiredRoles: [4] } 
-  },
-  { 
-    path: 'super-admin/respaldos', 
-    loadComponent: () => import('./pages/super-admin/gestion-respaldos/gestion-respaldos.component').then(m => m.GestionRespaldosComponent),
-    canActivate: [AuthGuard], 
-    data: { requiredRoles: [4] } 
-  },
+  // Rutas protegidas CON LAYOUT
   {
-    path: 'super-admin/chat',
-    component: SuperAdminChatComponent,
+    path: '',
+    component: AppLayoutComponent,
     canActivate: [AuthGuard],
-    data: { requiredRoles: [4] }
-  },
-
-  // Rutas del administrador (Jefe de Carrera)
-  { path: 'admin', component: HomeAdminComponent, canActivate: [AuthGuard], data: { requiredRoles: [3] } },
-  { 
-    path: 'admin/reportes', 
-    loadComponent: () => import('./pages/admin/reportes/reportes.component').then(m => m.ReportesComponent),
-    canActivate: [AuthGuard],
-    data: { requiredRoles: [3], viewMode: 'admin' }
-  },
-  { path: 'admin/propuestas', component: GestionPropuestasComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
-  { path: 'admin/propuestas/revisar/:id', component: RevisarPropuestaComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin/propuestas' } },
-  { path: 'admin/proyectos', component: GestionProyectosComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
-  { path: 'admin/asignar-profesor/:id', component: AsignarProfesorComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin' } },
-  { path: 'admin/usuarios', component: GestionUsuariosComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
-  { path: 'admin/asignaciones', component: AsignacionesComponent, canActivate: [AuthGuard], data: { requiredRoles: [3], viewMode: 'admin', backRoute: '/admin' } },
-  { path: 'admin/calendario', component: GestionCalendarioComponent, canActivate: [AuthGuard] },
-  { path: 'admin/comision', component: GestionComisionComponent, canActivate: [AuthGuard] },
-  { path: 'admin/extensiones', component: GestionExtensionesComponent, canActivate: [AuthGuard] },
-  { path: 'admin/gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, canActivate: [AuthGuard] },
-  { path: 'admin/fechas-importantes', component: FechasImportantesComponent, canActivate: [AuthGuard] },
-  { path: 'admin/calendario-unificado', component: CalendarioUnificadoComponent, canActivate: [AuthGuard] },
-  { 
-    path: 'admin/carga-profesores', 
-    loadComponent: () => import('./pages/admin/carga-administrativa/carga-administrativa').then(m => m.CargaAdministrativaComponent),
-    canActivate: [AuthGuard] 
-  },
-  {
-    path: 'admin/chat',
-    component: AdminChatComponent,
-    canActivate: [AuthGuard],
-    data: { requiredRoles: [3, 4] }
-  },
-  {
-    path: 'admin/entidades-externas',
-    loadComponent: () => import('./pages/admin/gestion-entidades/gestion-entidades.component').then(m => m.GestionEntidadesComponent),
-    canActivate: [AuthGuard],
-    data: { requiredRoles: [3, 4] }
-  },
-  {
-    path: 'admin/colaboradores-externos',
-    loadComponent: () => import('./pages/admin/gestion-colaboradores/gestion-colaboradores.component').then(m => m.GestionColaboradoresComponent),
-    canActivate: [AuthGuard],
-    data: { requiredRoles: [2, 3, 4] }
-  },
-
-  {
-    path: 'profesor',
+    canActivateChild: [AuthGuard],
     children: [
-      {
-        path: '',
-        component: HomeProfesor,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] } // Profesor, Admin, Super Admin
-      },
-      {
-        path: 'propuestas/todas',
-        component: PropuestasTodas,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      {
-        path: 'propuestas/asignadas',
-        component: PropuestasAsignadasComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      {
-        path: 'propuestas/revisar/:id',
-        component: RevisarPropuestaComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4], backRoute: '/profesor/propuestas/asignadas' }
-      },
-      // Rutas de gestión de proyectos
-      {
-        path: 'cronogramas',
-        component: CronogramasComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      {
-        path: 'proyectos',
-        redirectTo: 'cronogramas',
-        pathMatch: 'full'
-      },
-      // Ruta para ver proyecto y cronograma específico
-      {
-        path: 'proyecto/:id',
-        component: ProyectoCronogramaComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      // Rutas de Reuniones para Profesores
-      {
-        path: 'calendario/dashboard',
-        component: DashboardReunionesComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      {
-        path: 'calendario/disponibilidades',
-        component: DisponibilidadesComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      {
-        path: 'calendario/solicitudes',
-        component: SolicitudesReunionComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      {
-        path: 'calendario/gestion',
-        component: GestionReunionesComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      // Ruta para gestión de reuniones del profesor
-      {
-        path: 'reuniones',
-        component: ReunionesProfesorComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      // Ruta para fechas importantes
-      {
-        path: 'fechas-importantes',
-        component: FechasImportantesProfesorComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      // Ruta para reportes y métricas
-      {
-        path: 'reportes',
-        component: ReportesProfesorComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      // Ruta para gestión de documentos del proyecto
-      {
-        path: 'proyecto/:id/documentos',
-        component: DocumentosProyectoComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      },
-      // Ruta para chat
-      {
-        path: 'chat',
-        component: ProfesorChatComponent,
-        canActivate: [AuthGuard],
-        data: { requiredRoles: [2, 3, 4] }
-      }
-    ],
-  },
+      // Perfil
+      { path: 'perfil', component: PerfilEstudianteComponent },
+      
+      // Propuestas
+      { path: 'propuestas/crear', component: CrearPropuestaComponent },
+      { path: 'propuestas/listar-propuesta', component: ListarPropuestasComponent },
+      { path: 'propuestas/mis-propuestas', component: ListarPropuestasComponent },
+      { path: 'propuestas/editar-propuesta/:id', component: ActualizarPropuestaComponent },
+      { path: 'propuestas/ver-detalle/:id', component: VerPropuestaComponent },
+      { path: 'propuestas/asignadas', component: PropuestasAsignadasComponent },
+      { path: 'propuestas/todas', component: PropuestasTodas },
 
-  // Rutas adicionales para estudiantes
-  {
-    path: 'estudiante',
-    children: [
-      {
-        path: '',
-        component: EstudianteHomeComponent,
-        canActivate: [AuthGuard],
-        pathMatch: 'full'
-      },
-      // Ruta para ver proyecto y cronograma
-      {
-        path: 'proyecto/:id',
-        component: ProyectoCronogramaComponent,
-        canActivate: [AuthGuard]
-      },
-      // Ruta para calendario unificado (visual completo)
-      {
-        path: 'calendario',
-        component: CalendarioUnificadoComponent,
-        canActivate: [AuthGuard]
-      },
-      // Rutas de Reuniones para Estudiantes (sin disponibilidades ni matching)
-      {
-        path: 'calendario/solicitudes',
-        component: SolicitudesReunionComponent,
-        canActivate: [AuthGuard]
-      },
-      {
-        path: 'calendario/gestion',
-        component: GestionReunionesComponent,
-        canActivate: [AuthGuard]
-      },
-      // Ruta para gestión de documentos del proyecto
-      {
-        path: 'proyecto/:id/documentos',
-        component: DocumentosProyectoComponent,
-        canActivate: [AuthGuard]
-      },
-      // Ruta para solicitar extensión de plazo
-      {
-        path: 'solicitar-extension',
-        component: SolicitarExtensionComponent,
-        canActivate: [AuthGuard]
-      },
-      {
-        path: 'solicitar-extension/:proyectoId',
-        component: SolicitarExtensionComponent,
-        canActivate: [AuthGuard]
-      },
-      // Ruta para chat
-      {
-        path: 'chat',
-        component: EstudianteChatComponent,
-        canActivate: [AuthGuard]
-      },
-      // Ruta para plantillas de documentos
-      {
-        path: 'plantillas',
-        loadComponent: () => import('./pages/estudiante/plantillas-documentos/plantillas-documentos.component').then(m => m.PlantillasEstudianteComponent),
-        canActivate: [AuthGuard]
-      }
-    ],
-  },
+      // Calendario Matching
+      { path: 'calendario-matching', redirectTo: '/calendario-matching/solicitudes', pathMatch: 'full' },
+      { path: 'calendario-matching/solicitudes', component: SolicitudesReunionComponent },
+      { path: 'calendario-matching/gestion', component: GestionReunionesComponent },
 
-  // Ruta de gestión de plantillas para admin
-  {
-    path: 'admin/plantillas',
-    loadComponent: () => import('./pages/admin/gestion-plantillas/gestion-plantillas.component').then(m => m.GestionPlantillasComponent),
-    canActivate: [AuthGuard],
-    data: { requiredRoles: [3, 4] }
-  },
+      // ========================================
+      // SUPER ADMIN ROUTES
+      // ========================================
+      { 
+        path: 'super-admin', 
+        children: [
+          { path: '', redirectTo: 'home', pathMatch: 'full' },
+          { path: 'home', component: SuperAdminHomeComponent, data: { requiredRoles: [4] } },
+          { path: 'propuestas/revisar/:id', component: RevisarPropuestaComponent, data: { requiredRoles: [4] } },
+          { path: 'gestion-estructura', component: GestionEstructuraComponent, data: { requiredRoles: [4] } },
+          { path: 'jefes', component: GestionarJefesComponent, data: { requiredRoles: [4] } },
+          { path: 'gestionar-jefes', component: GestionarJefesComponent, data: { requiredRoles: [4] } },
+          { 
+            path: 'configuracion', 
+            loadComponent: () => import('./pages/admin/configuracion-sistema/configuracion-sistema.component').then(m => m.ConfiguracionSistemaComponent),
+            data: { requiredRoles: [4] } 
+          },
+          { 
+            path: 'dashboard-metricas', 
+            loadComponent: () => import('./pages/admin/dashboard-metricas/dashboard-metricas.component').then(m => m.DashboardMetricasComponent),
+            data: { requiredRoles: [4] } 
+          },
+          { 
+            path: 'actividad', 
+            loadComponent: () => import('./pages/super-admin/actividad-tiempo-real/actividad-tiempo-real.component').then(m => m.ActividadTiempoRealComponent),
+            data: { requiredRoles: [4] } 
+          },
+          { 
+            path: 'respaldos', 
+            loadComponent: () => import('./pages/super-admin/gestion-respaldos/gestion-respaldos.component').then(m => m.GestionRespaldosComponent),
+            data: { requiredRoles: [4] } 
+          }
+        ]
+      },
+
+      // ========================================
+      // ADMIN ROUTES (Jefe de Curso)
+      // ========================================
+      {
+        path: 'admin',
+        children: [
+          { path: '', redirectTo: 'home', pathMatch: 'full' },
+          { path: 'home', component: HomeAdminComponent, data: { requiredRoles: [3, 4] } },
+          { 
+            path: 'reportes', 
+            loadComponent: () => import('./pages/admin/reportes/reportes.component').then(m => m.ReportesComponent),
+            data: { requiredRoles: [3, 4] }
+          },
+          { path: 'propuestas', component: GestionPropuestasComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'propuestas/revisar/:id', component: RevisarPropuestaComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'proyectos', component: GestionProyectosComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'asignar-profesor/:id', component: AsignarProfesorComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'usuarios', component: GestionUsuariosComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'asignaciones', component: AsignacionesComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'calendario', component: GestionCalendarioComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'comision', component: GestionComisionComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'extensiones', component: GestionExtensionesComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'periodos', component: GestionPeriodoPropuestasComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'fechas-importantes', component: FechasImportantesComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'calendario-unificado', component: CalendarioUnificadoComponent, data: { requiredRoles: [3, 4] } },
+          { 
+            path: 'carga-profesores', 
+            loadComponent: () => import('./pages/admin/carga-administrativa/carga-administrativa').then(m => m.CargaAdministrativaComponent),
+            data: { requiredRoles: [3, 4] } 
+          },
+          {
+            path: 'entidades-externas',
+            loadComponent: () => import('./pages/admin/gestion-entidades/gestion-entidades.component').then(m => m.GestionEntidadesComponent),
+            data: { requiredRoles: [3, 4] }
+          },
+          {
+            path: 'colaboradores-externos',
+            loadComponent: () => import('./pages/admin/gestion-colaboradores/gestion-colaboradores.component').then(m => m.GestionColaboradoresComponent),
+            data: { requiredRoles: [2, 3, 4] }
+          },
+          {
+            path: 'plantillas',
+            loadComponent: () => import('./pages/admin/gestion-plantillas/gestion-plantillas.component').then(m => m.GestionPlantillasComponent),
+            data: { requiredRoles: [3, 4] }
+          }
+        ]
+      },
+
+      // ========================================
+      // PROFESOR ROUTES
+      // ========================================
+      // ========================================
+      // PROFESOR ROUTES
+      // ========================================
+      {
+        path: 'profesor',
+        children: [
+          { path: '', redirectTo: 'home', pathMatch: 'full' },
+          { path: 'home', component: HomeProfesor, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'propuestas/todas', component: PropuestasTodas, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'propuestas/asignadas', component: PropuestasAsignadasComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'propuestas/revisar/:id', component: RevisarPropuestaComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'cronogramas', component: CronogramasComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'proyectos', redirectTo: 'cronogramas', pathMatch: 'full' },
+          { path: 'proyecto/:id', component: ProyectoCronogramaComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'calendario/dashboard', component: DashboardReunionesComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'calendario/disponibilidades', component: DisponibilidadesComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'calendario/solicitudes', component: SolicitudesReunionComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'calendario/gestion', component: GestionReunionesComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'reuniones', component: ReunionesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'fechas-importantes', component: FechasImportantesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'reportes', component: ReportesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent, data: { requiredRoles: [2, 3, 4] } }
+        ]
+      },
+
+      // ========================================
+      // ESTUDIANTE ROUTES
+      // ========================================
+      {
+        path: 'estudiante',
+        children: [
+          { path: '', redirectTo: 'home', pathMatch: 'full' },
+          { path: 'home', component: EstudianteHomeComponent },
+          { path: 'mi-proyecto', component: EstudianteHomeComponent },
+          { path: 'proyecto/:id', component: ProyectoCronogramaComponent },
+          { path: 'calendario', component: CalendarioUnificadoComponent },
+          { path: 'calendario/solicitudes', component: SolicitudesReunionComponent },
+          { path: 'calendario/gestion', component: GestionReunionesComponent },
+          { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent },
+          { path: 'solicitar-extension', component: SolicitarExtensionComponent },
+          { path: 'solicitar-extension/:proyectoId', component: SolicitarExtensionComponent },
+          { path: 'chat', component: EstudianteChatComponent },
+          { path: 'perfil', component: PerfilEstudianteComponent },
+          { path: 'documentos', redirectTo: 'plantillas', pathMatch: 'full' },
+          { 
+            path: 'plantillas',
+            loadComponent: () => import('./pages/estudiante/plantillas-documentos/plantillas-documentos.component').then(m => m.PlantillasEstudianteComponent)
+          }
+        ]
+      }
+    ]
+  }
 ];

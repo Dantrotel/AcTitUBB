@@ -1,66 +1,3 @@
-<!-- Navbar del Jefe de Curso -->
-<nav class="navbar">
-  <div class="navbar-brand" (click)="irAlHome()" style="cursor: pointer;">
-    <i class="fas fa-graduation-cap"></i>
-    <span>AcTitUBB</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <!-- Notificaciones -->
-    <div class="action-item notifications-menu" (click)="togglePanelNotificaciones()">
-        <i class="fas fa-bell"></i>
-        <span *ngIf="notificacionesNoLeidas > 0" class="notification-badge">{{ notificacionesNoLeidas }}</span>
-      
-      <!-- Panel desplegable de notificaciones -->
-      <div *ngIf="mostrarPanelNotificaciones" class="dropdown-menu notifications-dropdown show">
-        <div class="panel-header">
-          <h3>Notificaciones</h3>
-          <button class="btn-small" (click)="marcarTodasComoLeidas(); $event.stopPropagation()" *ngIf="notificacionesNoLeidas > 0">
-            Marcar todas como leídas
-          </button>
-        </div>
-        
-        <div class="notifications-list" *ngIf="notificaciones.length > 0">
-          <div *ngFor="let notificacion of notificaciones" 
-               class="notification-item" 
-               [class.no-leida]="!notificacion.leida"
-               (click)="marcarComoLeida(notificacion); $event.stopPropagation()">
-            <div class="notification-icon" [style.color]="obtenerColorNotificacion(notificacion.tipo)">
-              <i [class]="obtenerIconoNotificacion(notificacion.tipo)"></i>
-            </div>
-            <div class="notification-content">
-              <h4>{{ notificacion.titulo }}</h4>
-              <p>{{ notificacion.mensaje }}</p>
-              <span class="notification-time">{{ formatearTiempoNotificacion(notificacion.fecha) }}</span>
-            </div>
-            <button class="notification-close" (click)="eliminarNotificacion(notificacion.id); $event.stopPropagation()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-        
-        <div *ngIf="notificaciones.length === 0" class="no-notifications">
-          <i class="fas fa-bell-slash"></i>
-          <p>No hay notificaciones</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Menú de usuario -->
-    <div class="action-item user-menu" (click)="toggleUserMenu()">
-      <i class="fas fa-user-circle"></i>
-      <span>{{ userName || 'Jefe de Curso' }}</span>
-      <i class="fas fa-chevron-down"></i>
-      
-      <div class="dropdown-menu" [class.show]="showUserMenu">
-        <div class="dropdown-item" (click)="cerrarSesion()">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Cerrar Sesión</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</nav>
 
 <!-- Contenido principal -->
 <div class="main-container">
@@ -70,6 +7,50 @@
       <h1>Panel Jefe de Curso</h1>
       <p>Gestión completa del sistema de propuestas de título</p>
     </div>
+
+    <!-- Panel de Notificaciones -->
+    <div class="notifications-menu" style="position:relative; cursor:pointer;"
+         (click)="togglePanelNotificaciones()">
+      <i class="fas fa-bell" style="font-size:1.4rem;"></i>
+      <span *ngIf="notificacionesNoLeidas > 0" class="notification-badge">{{ notificacionesNoLeidas }}</span>
+
+      <div *ngIf="mostrarPanelNotificaciones" class="dropdown-menu notifications-dropdown show"
+           (click)="$event.stopPropagation()">
+        <div class="panel-header">
+          <h3>Notificaciones</h3>
+          <button class="btn-small" (click)="marcarTodasComoLeidas()"
+                  *ngIf="notificacionesNoLeidas > 0">
+            Marcar todas como leídas
+          </button>
+        </div>
+
+        <div class="notifications-list" *ngIf="notificaciones.length > 0">
+          <div *ngFor="let notificacion of notificaciones"
+               class="notification-item"
+               [class.no-leida]="!notificacion.leida"
+               (click)="marcarComoLeida(notificacion)">
+            <div class="notification-icon" [style.color]="obtenerColorNotificacion(notificacion.tipo)">
+              <i [class]="obtenerIconoNotificacion(notificacion.tipo)"></i>
+            </div>
+            <div class="notification-content">
+              <h4>{{ notificacion.titulo }}</h4>
+              <p>{{ notificacion.mensaje }}</p>
+              <span class="notification-time">{{ formatearTiempoNotificacion(notificacion.fecha) }}</span>
+            </div>
+            <button class="notification-close"
+                    (click)="eliminarNotificacion(notificacion.id); $event.stopPropagation()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="notificaciones.length === 0" class="no-notifications">
+          <i class="fas fa-bell-slash"></i>
+          <p>No hay notificaciones</p>
+        </div>
+      </div>
+    </div>
+
     <div class="welcome-icon">
       <i class="fas fa-user-tie"></i>
     </div>

@@ -448,6 +448,8 @@ export const ProjectModel = {
     createProject,
     getProjects,
     getProjectById,
+    getDetailProject: getProjectById,
+    obtenerHitosProyecto: async () => [],
     getProjectsByStudent,
     getProjectsByProfessor,
     updateProject,

@@ -1038,7 +1038,48 @@ export const archivarActa = async (actaId, usuario_rut) => {
 
         return result.affectedRows > 0;
     } catch (error) {
-        
+
         throw error;
     }
+};
+
+/**
+ * Obtener estadísticas generales del sistema de reuniones (para administradores)
+ * @returns {Promise<Object>} - Estadísticas globales
+ */
+export const obtenerEstadisticasGenerales = async () => {
+    const [porEstado] = await pool.execute(`
+        SELECT estado, COUNT(*) as total
+        FROM solicitudes_reunion
+        GROUP BY estado
+    `);
+
+    const [porMes] = await pool.execute(`
+        SELECT DATE_FORMAT(fecha_solicitud, '%Y-%m') as mes, COUNT(*) as total
+        FROM solicitudes_reunion
+        WHERE fecha_solicitud >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY mes
+        ORDER BY mes DESC
+    `);
+
+    const [totales] = await pool.execute(`
+        SELECT
+            COUNT(*) as total_solicitudes,
+            SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+            SUM(CASE WHEN estado = 'aceptada' THEN 1 ELSE 0 END) as aceptadas,
+            SUM(CASE WHEN estado = 'rechazada' THEN 1 ELSE 0 END) as rechazadas
+        FROM solicitudes_reunion
+    `);
+
+    const [reuniones] = await pool.execute(`
+        SELECT COUNT(*) as total_reuniones
+        FROM reuniones_calendario
+    `);
+
+    return {
+        totales: totales[0],
+        por_estado: porEstado,
+        por_mes: porMes,
+        total_reuniones: reuniones[0]?.total_reuniones || 0
+    };
 };

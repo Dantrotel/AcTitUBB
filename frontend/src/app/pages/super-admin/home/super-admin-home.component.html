@@ -1,27 +1,3 @@
-<!-- Navbar del super administrador -->
-<nav class="navbar">
-  <div class="navbar-brand" (click)="irAlHome()" style="cursor: pointer;">
-    <i class="fas fa-graduation-cap"></i>
-    <span>AcTitUBB</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <!-- Menú de usuario -->
-    <div class="action-item user-menu" (click)="toggleUserMenu()">
-      <i class="fas fa-user-circle"></i>
-      <span>{{ userData()?.nombre || 'Super Administrador' }}</span>
-      <i class="fas fa-chevron-down"></i>
-      
-      <div class="dropdown-menu" [class.show]="showUserMenu()">
-        <div class="dropdown-item" (click)="logout()">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Cerrar Sesión</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</nav>
-
 <div class="super-admin-container">
 
   <!-- Dashboard de estadísticas GLOBALES -->
