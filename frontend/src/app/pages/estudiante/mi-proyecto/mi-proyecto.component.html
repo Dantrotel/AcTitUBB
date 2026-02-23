@@ -1,0 +1,56 @@
+<div class="redirect-wrapper">
+
+  <!-- Cargando -->
+  @if (estado === 'cargando') {
+    <div class="redirect-card">
+      <div class="spinner-ring">
+        <div></div><div></div><div></div><div></div>
+      </div>
+      <h2 class="redirect-title">Cargando tu proyecto</h2>
+      <p class="redirect-subtitle">Un momento por favor...</p>
+    </div>
+  }
+
+  <!-- Sin proyecto activo -->
+  @if (estado === 'sin_proyecto') {
+    <div class="redirect-card">
+      <div class="status-icon info">
+        <i class="fas fa-rocket"></i>
+      </div>
+      <h2 class="redirect-title">Sin proyecto activo</h2>
+      <p class="redirect-subtitle">
+        Todavía no tienes un proyecto en curso.<br>
+        Una vez que tu propuesta sea aprobada, podrás acceder aquí directamente.
+      </p>
+      <button class="btn-primary" (click)="irAlInicio()">
+        <i class="fas fa-home"></i>
+        Ir al inicio
+      </button>
+    </div>
+  }
+
+  <!-- Error de red -->
+  @if (estado === 'error') {
+    <div class="redirect-card">
+      <div class="status-icon error">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h2 class="redirect-title">No se pudo cargar</h2>
+      <p class="redirect-subtitle">
+        Ocurrió un error al obtener la información de tu proyecto.<br>
+        Por favor intenta nuevamente.
+      </p>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="reintentar()">
+          <i class="fas fa-redo"></i>
+          Reintentar
+        </button>
+        <button class="btn-secondary" (click)="irAlInicio()">
+          <i class="fas fa-home"></i>
+          Ir al inicio
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

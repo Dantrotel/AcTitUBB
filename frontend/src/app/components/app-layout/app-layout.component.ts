@@ -87,10 +87,12 @@ export class AppLayoutComponent implements OnInit {
           {
             label: 'Mi Proyecto',
             icon: 'fas fa-rocket',
-            children: [
-              { label: 'Ver Proyecto', icon: 'fas fa-eye', route: '/estudiante/mi-proyecto' },
-              { label: 'Solicitar Extensión', icon: 'fas fa-clock', route: '/estudiante/solicitar-extension' }
-            ]
+            route: '/estudiante/mi-proyecto'
+          },
+          {
+            label: 'Solicitar Extensión',
+            icon: 'fas fa-clock',
+            route: '/estudiante/solicitar-extension'
           },
           {
             label: 'Plantillas',
@@ -126,14 +128,14 @@ export class AppLayoutComponent implements OnInit {
             label: 'Propuestas',
             icon: 'fas fa-file-alt',
             children: [
-              { label: 'Todas las Propuestas', icon: 'fas fa-list-alt', route: '/propuestas/todas' },
-              { label: 'Asignadas a Mí', icon: 'fas fa-tasks', route: '/propuestas/asignadas' }
+              { label: 'Todas las Propuestas', icon: 'fas fa-list-alt', route: '/profesor/propuestas/todas' },
+              { label: 'Asignadas a Mí', icon: 'fas fa-tasks', route: '/profesor/propuestas/asignadas' }
             ]
           },
           {
             label: 'Mis Proyectos',
             icon: 'fas fa-project-diagram',
-            route: '/profesor/proyectos'
+            route: '/profesor/cronogramas'
           },
           {
             label: 'Calendario',
