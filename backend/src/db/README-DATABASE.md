@@ -34,11 +34,21 @@ El sistema **ejecuta automáticamente** el archivo `database.sql` cuando se inic
 
 ```
 backend/src/db/
-├── database.sql          ← ARCHIVO PRINCIPAL (se ejecuta automáticamente)
-├── database.sql.backup   ← Respaldo del archivo original
-├── connectionDB.js       ← Lógica de conexión e inicialización
-├── datos-prueba.sql      ← Datos de ejemplo (NO se ejecuta automáticamente)
-└── README-DATABASE.md    ← Este archivo
+├── database.sql              ← ARCHIVO PRINCIPAL (se ejecuta automáticamente)
+├── database.sql.backup       ← Respaldo del archivo original
+├── connectionDB.js           ← Lógica de conexión e inicialización
+├── README-DATABASE.md        ← Este archivo
+├── migrations/               ← Cambios de esquema incrementales (numerados)
+│   ├── 001_versiones_propuestas.sql
+│   ├── 002_archivo_revision_historial.sql
+│   ├── 003_colaboradores_auth.sql
+│   └── 004_tablas_faltantes.sql
+├── seeds/                    ← Datos de prueba (NO se ejecutan automáticamente)
+│   ├── datos-prueba.sql      ← Agrega datos sin resetear (usa INSERT IGNORE)
+│   └── seed-data.sql         ← Reset completo con datos ficticios coherentes
+└── utils/                    ← Scripts de diagnóstico y reparación
+    ├── check-corrupted-data.sql
+    └── fix-corrupted-data.sql
 ```
 
 ### 📋 `database.sql` (Archivo Principal - UNIFICADO)
@@ -132,11 +142,11 @@ ALTER TABLE nombre_tabla ADD COLUMN nueva_columna VARCHAR(100);
 
 Usa el script de seed:
 ```bash
-# Cargar datos ficticios completos
-mysql -u root -p actitubb < backend/scripts/seed-data.sql
+# Reset completo con datos ficticios coherentes
+mysql -u root -p actitubb < backend/src/db/seeds/seed-data.sql
 
-# O cargar datos antiguos
-mysql -u root -p actitubb < backend/src/db/datos-prueba.sql
+# O agregar datos extendidos sin resetear (facultades, carreras, usuarios adicionales)
+mysql -u root -p actitubb < backend/src/db/seeds/datos-prueba.sql
 ```
 
 ### ❓ Necesito resetear la base de datos
