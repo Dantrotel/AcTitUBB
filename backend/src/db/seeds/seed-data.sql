@@ -2,6 +2,20 @@
 -- SCRIPT DE DATOS FICTICIOS COHERENTES
 -- Sistema de Gestión de Titulación UBB
 -- ============================================
+-- ⚠️  ADVERTENCIA: ESTE SCRIPT ESTÁ DESACTUALIZADO
+-- Este archivo fue escrito con una versión anterior del schema y NO es compatible
+-- con el schema actual (database.sql). Ejecutarlo causará errores por:
+--   - Columnas inexistentes o renombradas en: asignaciones_propuestas,
+--     asignaciones_proyectos, solicitudes_reunion, estudiantes_proyectos
+--   - Columnas NOT NULL faltantes en: colaboradores_externos (creado_por),
+--     asignaciones_propuestas (asignado_por), proyectos (modalidad, complejidad)
+--   - Tabla inexistente: mensajes_chat (reemplazada por conversaciones/mensajes)
+--   - Valores ENUM inválidos en: entidades_externas.tipo,
+--     colaboradores_externos.tipo_colaborador
+--
+-- ESTADO: Requiere actualización completa antes de poder usarse.
+-- Usar datos-prueba.sql para estructura académica básica (sí es compatible).
+-- ============================================
 -- IMPORTANTE: Este script respeta los datos iniciales creados por database.sql
 -- Solo limpia tablas de datos de negocio, NO tablas de configuración (roles, estados)
 -- ============================================
