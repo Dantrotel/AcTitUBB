@@ -26,7 +26,7 @@ async function runMigration() {
     console.log('✅ Conectado a la base de datos');
 
     console.log('📄 Leyendo archivo de migración...');
-    const sql = readFileSync(join(__dirname, 'add_colaboradores_auth.sql'), 'utf8');
+    const sql = readFileSync(join(__dirname, '..', 'src', 'db', 'migrations', '003_colaboradores_auth.sql'), 'utf8');
     
     console.log('🔧 Ejecutando migración para sistema de colaboradores...');
     await connection.query(sql);

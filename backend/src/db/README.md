@@ -9,20 +9,19 @@
   - Se ejecuta automáticamente al iniciar el backend si las tablas no existen
   - **Este es el único archivo que necesitas para crear la BD desde cero**
 
-### Archivos de Utilidad
-- **`datos-prueba.sql`** - Datos ficticios para desarrollo y testing
-  - Usuarios de prueba
-  - Propuestas de ejemplo
-  - Proyectos de muestra
-  - NO se ejecuta automáticamente
+### Seeds (datos de prueba)
+- **`seeds/datos-prueba.sql`** - Datos ficticios extendidos (facultades, carreras, usuarios adicionales). Usa `INSERT IGNORE`, se ejecuta sobre la BD existente.
+- **`seeds/seed-data.sql`** - Reset completo con datos ficticios coherentes. Trunca tablas y recarga todo desde cero.
 
-- **`check-corrupted-data.sql`** - Script para verificar datos corruptos
-  - Útil para diagnóstico
-  - Ejecutar manualmente cuando sea necesario
+### Migraciones (cambios de esquema)
+- **`migrations/001_versiones_propuestas.sql`** - Tabla `versiones_propuestas`
+- **`migrations/002_archivo_revision_historial.sql`** - Columnas en `historial_revisiones_propuestas`
+- **`migrations/003_colaboradores_auth.sql`** - Auth y evaluaciones de colaboradores externos
+- **`migrations/004_tablas_faltantes.sql`** - Tablas de chat, documentos y vista de solicitudes pendientes
 
-- **`fix-corrupted-data.sql`** - Script para limpiar datos corruptos
-  - Hace backup antes de limpiar
-  - Ejecutar manualmente solo si hay problemas
+### Utilidades
+- **`utils/check-corrupted-data.sql`** - Script para verificar datos corruptos en propuestas
+- **`utils/fix-corrupted-data.sql`** - Script para limpiar datos corruptos (hace backup previo)
 
 ## 🚀 Inicialización Automática
 
@@ -122,8 +121,8 @@ Todas las migraciones anteriores han sido consolidadas en `database.sql`:
 3. Documentar el cambio con comentarios
 
 ### Para datos de prueba:
-1. Usar `backend/scripts/seed-data.sql` (se ejecuta manualmente)
-2. O agregar a `datos-prueba.sql` para casos específicos
+1. Usar `backend/src/db/seeds/seed-data.sql` (reset completo, se ejecuta manualmente)
+2. O usar `backend/src/db/seeds/datos-prueba.sql` para agregar datos sin resetear
 
 ## 🔍 Verificación
 

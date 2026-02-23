@@ -32,18 +32,18 @@ Esto creará todas las tablas y los datos de configuración inicial.
 mysql -u root -p actitubb < backend/src/db/database.sql
 
 # Luego, carga los datos ficticios
-mysql -u root -p actitubb < backend/scripts/seed-data.sql
+mysql -u root -p actitubb < backend/src/db/seeds/seed-data.sql
 ```
 
 ### Opción 2: Desde MySQL Workbench
 1. Abrir MySQL Workbench
 2. Conectarse a la base de datos `actitubb`
-3. Abrir el archivo `seed-data.sql`
+3. Abrir el archivo `backend/src/db/seeds/seed-data.sql`
 4. Ejecutar el script completo (⚡ Execute)
 
 ### Opción 3: Desde la terminal con Docker (si usas Docker)
 ```bash
-docker exec -i mysql_container mysql -u root -ptu_password actitubb < backend/scripts/seed-data.sql
+docker exec -i mysql_container mysql -u root -ptu_password actitubb < backend/src/db/seeds/seed-data.sql
 ```
 
 ---

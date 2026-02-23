@@ -51,7 +51,7 @@ mysql -u root -p actitubb_test < backend/src/db/database.sql
 
 ### 3. Cargar datos iniciales:
 ```bash
-mysql -u root -p actitubb_test < backend/src/db/datos-prueba.sql
+mysql -u root -p actitubb_test < backend/src/db/seeds/datos-prueba.sql
 ```
 
 ### 4. Configurar variables de entorno:
@@ -146,7 +146,7 @@ rol: Estudiante (1)
   ```
 - Recarga los datos iniciales:
   ```bash
-  mysql -u root -p actitubb_test < backend/src/db/datos-prueba.sql
+  mysql -u root -p actitubb_test < backend/src/db/seeds/datos-prueba.sql
   ```
 
 ## 📈 Mejoras Futuras
