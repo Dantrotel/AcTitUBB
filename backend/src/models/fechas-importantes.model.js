@@ -265,6 +265,33 @@ export const permiteExtension = async (fecha_id) => {
     return rows[0]?.permite_extension || false;
 };
 
+/**
+ * Obtener todas las fechas importantes de todos los proyectos (para administradores)
+ * @returns {Promise<Array>} - Lista completa de fechas importantes
+ */
+export const obtenerTodasFechasImportantes = async () => {
+    const query = `
+        SELECT
+            f.*,
+            p.titulo AS proyecto_titulo,
+            u.nombre AS estudiante_nombre,
+            CASE
+                WHEN f.fecha < CURDATE() AND f.completada = FALSE THEN 'vencida'
+                WHEN f.fecha = CURDATE() AND f.completada = FALSE THEN 'hoy'
+                WHEN f.fecha > CURDATE() AND f.completada = FALSE THEN 'pendiente'
+                WHEN f.completada = TRUE THEN 'completada'
+            END AS estado,
+            DATEDIFF(f.fecha, CURDATE()) AS dias_restantes
+        FROM fechas f
+        LEFT JOIN proyectos p ON f.proyecto_id = p.id
+        LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+        WHERE f.activa = TRUE
+        ORDER BY f.fecha ASC
+    `;
+    const [rows] = await pool.execute(query);
+    return rows;
+};
+
 export default {
     crearFechaImportante,
     obtenerFechasImportantesPorProyecto,
@@ -276,5 +303,6 @@ export default {
     obtenerFechasVencidas,
     obtenerEstadisticasFechas,
     obtenerFechasImportantesGlobales,
-    permiteExtension
+    permiteExtension,
+    obtenerTodasFechasImportantes
 };

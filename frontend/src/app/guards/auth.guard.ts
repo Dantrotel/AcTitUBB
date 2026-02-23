@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { CanActivate, CanActivateChild, ActivatedRouteSnapshot, Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
 })
-export class AuthGuard implements CanActivate {
+export class AuthGuard implements CanActivate, CanActivateChild {
   constructor(private router: Router) {}
 
   private isTokenExpired(token: string): boolean {
@@ -60,11 +60,15 @@ export class AuthGuard implements CanActivate {
       }
 
       if (!requiredRoles.includes(userRole)) {
-        this.router.navigate(['/acceso-denegado']);
+        this.router.navigate(['/login']);
         return false;
       }
     }
 
     return true;
+  }
+
+  canActivateChild(childRoute: ActivatedRouteSnapshot): boolean {
+    return this.canActivate(childRoute);
   }
 }

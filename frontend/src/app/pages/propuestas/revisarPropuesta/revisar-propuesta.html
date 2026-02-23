@@ -1,22 +1,4 @@
-<!-- Navbar con navegación -->
-<nav class="navbar">
-  <div class="navbar-brand" (click)="irAlHome()" style="cursor: pointer;">
-    <i class="fas fa-graduation-cap"></i>
-    <span>AcTitUBB</span>
-  </div>
-  
-  <div class="navbar-actions">
-    <div class="action-item" (click)="volver()" matTooltip="Volver">
-      <i class="fas fa-arrow-left"></i>
-      <span>Volver</span>
-    </div>
-    
-    <div class="action-item" (click)="toggleHistorial()" matTooltip="Ver historial de revisiones">
-      <i class="fas fa-history"></i>
-      <span>{{ mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial' }}</span>
-    </div>
-  </div>
-</nav>
+
 
 <!-- Contenido principal -->
 <div class="main-container" *ngIf="puedeRevisar && propuesta; else errorTpl">

@@ -8,8 +8,8 @@ import logger from '../config/logger.js';
 export const obtenerConfiguraciones = async (req, res) => {
   try {
     const [configuraciones] = await pool.execute(`
-      SELECT clave, valor, descripcion, tipo_valor 
-      FROM configuracion_sistema 
+      SELECT clave, valor, descripcion, tipo
+      FROM configuracion_sistema
       ORDER BY clave
     `);
 
@@ -46,7 +46,7 @@ export const actualizarConfiguracion = async (req, res) => {
 
     // Validar que la configuración existe
     const [exists] = await pool.execute(
-      'SELECT tipo_valor FROM configuracion_sistema WHERE clave = ?',
+      'SELECT tipo FROM configuracion_sistema WHERE clave = ?',
       [clave]
     );
 
@@ -57,7 +57,7 @@ export const actualizarConfiguracion = async (req, res) => {
       });
     }
 
-    const tipoValor = exists[0].tipo_valor;
+    const tipoValor = exists[0].tipo;
 
     // Validar el tipo de valor
     if (tipoValor === 'entero') {

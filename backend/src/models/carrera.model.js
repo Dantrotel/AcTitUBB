@@ -369,8 +369,8 @@ const obtenerEstadisticasCarrera = async (id) => {
             COUNT(DISTINCT pr.id) as total_proyectos
         FROM carreras c
         LEFT JOIN estudiantes_carreras ec ON c.id = ec.carrera_id
-        LEFT JOIN propuestas p ON c.id = p.carrera_id
-        LEFT JOIN proyectos pr ON c.id = pr.carrera_id
+        LEFT JOIN propuestas p ON ec.estudiante_rut = p.estudiante_rut
+        LEFT JOIN proyectos pr ON ec.estudiante_rut = pr.estudiante_rut
         WHERE c.id = ?
         GROUP BY c.id, c.nombre, c.codigo
     `;
@@ -388,8 +388,9 @@ const obtenerPropuestasPendientesAprobacion = async (carrera_id) => {
                ep.estado as estado_propuesta
         FROM propuestas p
         INNER JOIN usuarios u ON p.estudiante_rut = u.rut
+        INNER JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.carrera_id = ?
         LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
-        WHERE p.carrera_id = ? 
+        WHERE 1=1
           AND p.requiere_aprobacion_jefe_carrera = TRUE
           AND NOT EXISTS (
               SELECT 1 FROM aprobaciones_jefes_carrera ajc 

@@ -1,0 +1,193 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.mobile-open]="mobileMenuOpen()">
+    <!-- Logo Section -->
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <img src="Escudo_Universidad_del_Bío-Bío.png" alt="Logo UBB" class="logo-img">
+        <div class="logo-text" *ngIf="!sidebarCollapsed()">
+          <span class="logo-title">AcTitUBB</span>
+          <span class="logo-subtitle">Universidad del Bío-Bío</span>
+        </div>
+      </div>
+      <button class="toggle-btn desktop-only" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'">
+        <i class="fas" [class.fa-bars]="sidebarCollapsed()" [class.fa-times]="!sidebarCollapsed()"></i>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <ul class="menu-list">
+        @for (item of menuItems; track item.label) {
+          <li class="menu-item" 
+              [class.active]="isMenuItemActive(item)"
+              [class.has-children]="item.children">
+            
+            <!-- Item sin hijos -->
+            @if (!item.children) {
+              <a class="menu-link" 
+                 [routerLink]="item.route"
+                 [class.active]="isActiveRoute(item.route)">
+                <i class="menu-icon" [class]="item.icon"></i>
+                <span class="menu-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
+                @if (item.badge) {
+                  <span class="menu-badge" *ngIf="!sidebarCollapsed()">{{ item.badge }}</span>
+                }
+              </a>
+            }
+
+            <!-- Item con hijos (submenu) -->
+            @if (item.children) {
+              <div class="menu-link menu-parent" 
+                   (click)="toggleMenuItem(item)"
+                   [class.expanded]="item.expanded">
+                <i class="menu-icon" [class]="item.icon"></i>
+                <span class="menu-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
+                <i class="menu-arrow fas fa-chevron-down" *ngIf="!sidebarCollapsed()"></i>
+              </div>
+              
+              <!-- Submenu -->
+              <ul class="submenu" *ngIf="item.expanded && !sidebarCollapsed()">
+                @for (child of item.children; track child.label) {
+                  <li class="submenu-item">
+                    <a class="submenu-link" 
+                       [routerLink]="child.route"
+                       [class.active]="isActiveRoute(child.route)">
+                      <i class="submenu-icon" [class]="child.icon"></i>
+                      <span class="submenu-label">{{ child.label }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <!-- User Section in Sidebar -->
+    <div class="sidebar-footer">
+      <div class="user-profile" [class.collapsed]="sidebarCollapsed()">
+        <div class="user-avatar">
+          {{ getUserInitials() }}
+        </div>
+        <div class="user-info" *ngIf="!sidebarCollapsed()">
+          <div class="user-name">{{ currentUser?.nombre || 'Usuario' }}</div>
+          <div class="user-role">{{ getRoleDisplay() }}</div>
+        </div>
+        <button class="user-menu-toggle" 
+                (click)="toggleUserMenu()"
+                *ngIf="!sidebarCollapsed()"
+                [attr.aria-expanded]="userMenuOpen()">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+      </div>
+
+      <!-- User Dropdown Menu -->
+      @if (userMenuOpen() && !sidebarCollapsed()) {
+        <div class="user-dropdown">
+          <a class="dropdown-item" [routerLink]="['/perfil']" (click)="userMenuOpen.set(false)">
+            <i class="fas fa-user"></i>
+            <span>Mi Perfil</span>
+          </a>
+          <a class="dropdown-item" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Cerrar Sesión</span>
+          </a>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-content">
+    
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle mobile-only" (click)="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item">
+            <a [routerLink]="getHomeRoute()">
+              <i class="fas fa-home"></i>
+            </a>
+          </li>
+          @for (crumb of breadcrumbs; track crumb; let last = $last) {
+            <li class="breadcrumb-item" [class.active]="last">
+              <i class="fas fa-chevron-right breadcrumb-separator"></i>
+              <span>{{ crumb }}</span>
+            </li>
+          }
+        </ol>
+      </nav>
+
+      <!-- Top Bar Actions -->
+      <div class="topbar-actions">
+        <!-- Notificaciones -->
+        <button class="topbar-btn" title="Notificaciones">
+          <i class="fas fa-bell"></i>
+          <span class="badge-dot"></span>
+        </button>
+
+        <!-- Usuario (mobile) -->
+        <div class="mobile-user mobile-only" (click)="toggleUserMenu()">
+          <div class="user-avatar-small">
+            {{ getUserInitials() }}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <span>&copy; {{ currentYear }} Universidad del Bío-Bío - AcTitUBB</span>
+        <span class="footer-version">v1.0.0</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Mobile Menu Overlay -->
+  @if (mobileMenuOpen()) {
+    <div class="mobile-overlay" (click)="toggleMobileMenu()"></div>
+  }
+
+  <!-- User Menu Overlay (Mobile) -->
+  @if (userMenuOpen()) {
+    <div class="user-menu-overlay mobile-only" (click)="toggleUserMenu()">
+      <div class="user-menu-mobile" (click)="$event.stopPropagation()">
+        <div class="mobile-menu-header">
+          <div class="user-avatar-large">
+            {{ getUserInitials() }}
+          </div>
+          <div class="user-details">
+            <div class="user-name">{{ currentUser?.nombre || 'Usuario' }}</div>
+            <div class="user-email">{{ currentUser?.correo || '' }}</div>
+            <div class="user-role">{{ getRoleDisplay() }}</div>
+          </div>
+        </div>
+        <div class="mobile-menu-actions">
+          <a class="mobile-action-item" [routerLink]="['/perfil']" (click)="userMenuOpen.set(false)">
+            <i class="fas fa-user"></i>
+            <span>Mi Perfil</span>
+          </a>
+          <button class="mobile-action-item logout" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

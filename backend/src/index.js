@@ -37,6 +37,7 @@ import { initializeBlacklist } from './middlewares/blacklist.js';
 import { initializeSocketIO } from './config/socket.js';
 import cache from './config/cache.js';
 import { initializeSchedulers } from './services/scheduler.service.js';
+import verifySession, { checkRole } from './middlewares/verifySession.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -143,7 +144,6 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/calendario', calendarioRouter);
 
 // Ruta de carga administrativa accesible para todos los usuarios autenticados
-import { verifySession } from './middlewares/verifySession.js';
 import { obtenerCargaAdministrativa } from './controllers/admin.controller.js';
 app.get('/api/v1/carga-profesores', verifySession, obtenerCargaAdministrativa);
 app.use('/api/v1/profesor', profesorRouter);
@@ -171,19 +171,19 @@ import chatRouter from './routes/chat.route.js';
 app.use('/api/v1/chat', chatRouter);
 
 // Sprint 3: Endpoint de estadísticas de caché (solo para admins)
-app.get('/api/v1/admin/cache-stats', (req, res) => {
+app.get('/api/v1/admin/cache-stats', verifySession, checkRole('3', '4'), (req, res) => {
     const stats = cache.getStats();
     res.json({ stats });
 });
 
 // Sprint 3: Endpoint para limpiar caché (solo para admins)
-app.post('/api/v1/admin/cache-flush', (req, res) => {
+app.post('/api/v1/admin/cache-flush', verifySession, checkRole('3', '4'), (req, res) => {
     cache.flushAll();
     logger.info('Todos los caches flushed por admin', { admin: req.rut });
     res.json({ message: 'Todos los caches limpiados' });
 });
 
-app.post('/api/v1/admin/cache-flush/:categoria', (req, res) => {
+app.post('/api/v1/admin/cache-flush/:categoria', verifySession, checkRole('3', '4'), (req, res) => {
     const { categoria } = req.params;
     cache.flush(categoria);
     logger.info('Cache flushed por admin', { categoria, admin: req.rut });

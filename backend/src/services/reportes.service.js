@@ -26,10 +26,10 @@ export const generarReporteCumplimientoCarreraPDF = async (carreraId = null) => 
     doc.moveDown(2);
 
     // Obtener datos
-    const whereClause = carreraId ? `WHERE c.id_carrera = ${carreraId}` : '';
+    const whereClause = carreraId ? `WHERE c.id = ${parseInt(carreraId)}` : '';
     const [carreras] = await pool.execute(`
-      SELECT 
-        c.nombre_carrera,
+      SELECT
+        c.nombre as nombre_carrera,
         COUNT(DISTINCT p.id) as total_proyectos,
         SUM(CASE WHEN p.estado_detallado IN ('defendido', 'cerrado') THEN 1 ELSE 0 END) as proyectos_finalizados,
         SUM(CASE WHEN p.riesgo_nivel = 'alto' THEN 1 ELSE 0 END) as proyectos_riesgo,
@@ -37,12 +37,12 @@ export const generarReporteCumplimientoCarreraPDF = async (carreraId = null) => 
         COUNT(DISTINCT prop.id) as total_propuestas,
         SUM(CASE WHEN prop.estado_id = 2 THEN 1 ELSE 0 END) as propuestas_aprobadas
       FROM carreras c
-      LEFT JOIN estudiantes e ON e.carrera_id = c.id_carrera
-      LEFT JOIN proyectos p ON p.estudiante_rut = e.id_usuario
-      LEFT JOIN propuestas prop ON prop.estudiante_rut = e.id_usuario
+      LEFT JOIN estudiantes_carreras ec ON c.id = ec.carrera_id
+      LEFT JOIN proyectos p ON p.estudiante_rut = ec.estudiante_rut
+      LEFT JOIN propuestas prop ON prop.estudiante_rut = ec.estudiante_rut
       ${whereClause}
-      GROUP BY c.id_carrera
-      ORDER BY c.nombre_carrera
+      GROUP BY c.id, c.nombre
+      ORDER BY c.nombre
     `);
 
     // Tabla de datos
@@ -116,23 +116,23 @@ export const generarReporteCargaDocenteExcel = async () => {
 
     // Obtener datos
     const [profesores] = await pool.execute(`
-      SELECT 
+      SELECT
         u.rut,
-        CONCAT(u.nombre, ' ', u.apellidos) as nombre_completo,
+        u.nombre as nombre_completo,
         u.email,
-        d.nombre_departamento,
+        d.nombre as nombre_departamento,
         COUNT(DISTINCT ap.proyecto_id) as total_proyectos,
         SUM(CASE WHEN rp.nombre = 'Profesor Guía' THEN 1 ELSE 0 END) as como_guia,
         SUM(CASE WHEN rp.nombre = 'Profesor Informante' THEN 1 ELSE 0 END) as como_informante,
         SUM(CASE WHEN rp.nombre = 'Profesor Co-guía' THEN 1 ELSE 0 END) as como_coguia
       FROM usuarios u
       LEFT JOIN profesores_departamentos pd ON pd.profesor_rut = u.rut
-      LEFT JOIN departamentos d ON d.id_departamento = pd.departamento_id
+      LEFT JOIN departamentos d ON d.id = pd.departamento_id
       LEFT JOIN asignaciones_proyectos ap ON ap.profesor_rut = u.rut AND ap.activo = TRUE
       LEFT JOIN roles_profesores rp ON rp.id = ap.rol_profesor_id
       WHERE u.rol_id IN (2, 3)
-      GROUP BY u.rut
-      ORDER BY total_proyectos DESC, nombre_completo
+      GROUP BY u.rut, u.nombre, u.email, d.nombre
+      ORDER BY total_proyectos DESC, u.nombre
     `);
 
     // Agregar filas
@@ -221,21 +221,21 @@ export const generarReporteProyectosFinalizadosExcel = async (fechaInicio, fecha
       : '';
 
     const [proyectos] = await pool.execute(`
-      SELECT 
+      SELECT
         p.id,
         p.titulo,
-        CONCAT(u.nombre, ' ', u.apellidos) as estudiante_nombre,
-        c.nombre_carrera,
+        u.nombre as estudiante_nombre,
+        c.nombre as nombre_carrera,
         p.modalidad,
         p.complejidad,
         p.fecha_inicio,
         p.fecha_entrega_real,
         DATEDIFF(p.fecha_entrega_real, p.fecha_inicio) as duracion_dias,
-        CONCAT(ug.nombre, ' ', ug.apellidos) as profesor_guia
+        ug.nombre as profesor_guia
       FROM proyectos p
       INNER JOIN usuarios u ON p.estudiante_rut = u.rut
-      INNER JOIN estudiantes e ON e.id_usuario = u.rut
-      INNER JOIN carreras c ON c.id_carrera = e.carrera_id
+      LEFT JOIN estudiantes_carreras ec ON ec.estudiante_rut = p.estudiante_rut
+      LEFT JOIN carreras c ON c.id = ec.carrera_id
       LEFT JOIN asignaciones_proyectos ap ON ap.proyecto_id = p.id AND ap.activo = TRUE
       LEFT JOIN roles_profesores rp ON rp.id = ap.rol_profesor_id AND rp.nombre = 'Profesor Guía'
       LEFT JOIN usuarios ug ON ug.rut = ap.profesor_rut

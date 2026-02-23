@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { verifySession } from '../middlewares/verifySession.js';
 import { pool } from '../db/connectionDB.js';
 import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
+import { ProjectService } from '../services/project.service.js';
 
 const router = Router();
 
