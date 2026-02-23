@@ -1,43 +1,70 @@
-@use 'sass:color';
+// ===================================
+// VARIABLES
+// ===================================
 
-// Variables
-$sidebar-width: 260px;
-$sidebar-collapsed-width: 70px;
+// Sidebar – dark navy institutional
+$sidebar-bg: #0f172a;
+$sidebar-header-bg: #1e293b;
+$sidebar-section-header: rgba(255,255,255,0.30);
+$sidebar-text: rgba(255,255,255,0.62);
+$sidebar-text-hover: rgba(255,255,255,0.92);
+$sidebar-text-active: #ffffff;
+$sidebar-border: rgba(255,255,255,0.07);
+$sidebar-hover-bg: rgba(255,255,255,0.07);
+$sidebar-active-bg: rgba(41,137,216,0.18);
+$sidebar-active-border: #2989d8;
+$sidebar-icon: rgba(255,255,255,0.42);
+$sidebar-icon-active: #7db9e8;
+
+// Layout
+$sidebar-width: 264px;
+$sidebar-collapsed-width: 68px;
 $topbar-height: 64px;
-$primary-color: #004b8d;
-$secondary-color: #0066cc;
-$accent-color: #2989d8;
-$text-primary: #2d3748;
-$text-secondary: #718096;
-$bg-primary: #ffffff;
-$bg-secondary: #f7fafc;
-$bg-hover: #edf2f7;
+
+// Topbar – clean white
+$topbar-bg: #ffffff;
+$topbar-border: #e2e8f0;
+
+// Content
+$content-bg: #f0f4f8;
+
+// General
+$primary: #004b8d;
+$secondary: #0066cc;
+$accent: #2989d8;
+$text-primary: #1e293b;
+$text-secondary: #64748b;
 $border-color: #e2e8f0;
-$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-$shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-$transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+$shadow-sm: 0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04);
+$shadow-md: 0 4px 6px rgba(15,23,42,0.07), 0 2px 4px rgba(15,23,42,0.04);
+$shadow-lg: 0 10px 20px rgba(15,23,42,0.10), 0 4px 6px rgba(15,23,42,0.04);
+
+$transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 $transition-fast: 0.15s ease;
 
-// Breakpoints
 $mobile: 768px;
 $tablet: 1024px;
 
-// Layout Principal
+// ===================================
+// LAYOUT PRINCIPAL
+// ===================================
+
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background: $bg-secondary;
+  background: $content-bg;
   position: relative;
 }
 
 // ===================================
 // SIDEBAR
 // ===================================
+
 .sidebar {
   width: $sidebar-width;
-  background: $bg-primary;
-  border-right: 1px solid $border-color;
+  background: $sidebar-bg;
+  background-image: linear-gradient(180deg, #0f172a 0%, #131f35 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -45,18 +72,17 @@ $tablet: 1024px;
   left: 0;
   height: 100vh;
   z-index: 1000;
-  transition: width $transition-base, transform $transition-base;
-  box-shadow: $shadow-md;
+  transition: width $transition, transform $transition;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.15);
 
-  // Estado colapsado
   .sidebar-collapsed & {
     width: $sidebar-collapsed-width;
   }
 
-  // Móvil: sidebar oculto por defecto
   @media (max-width: $mobile) {
     transform: translateX(-100%);
-    
+    width: $sidebar-width;
+
     &.mobile-open {
       transform: translateX(0);
     }
@@ -68,11 +94,11 @@ $tablet: 1024px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1rem;
-  border-bottom: 1px solid $border-color;
+  padding: 0 1rem;
   min-height: $topbar-height;
-  background: linear-gradient(135deg, $primary-color, $secondary-color);
-  color: white;
+  background: $sidebar-header-bg;
+  border-bottom: 1px solid $sidebar-border;
+  flex-shrink: 0;
 
   .logo-container {
     display: flex;
@@ -80,13 +106,16 @@ $tablet: 1024px;
     gap: 0.75rem;
     flex: 1;
     min-width: 0;
+    overflow: hidden;
   }
 
   .logo-img {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     object-fit: contain;
     flex-shrink: 0;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    border-radius: 6px;
   }
 
   .logo-text {
@@ -94,7 +123,7 @@ $tablet: 1024px;
     flex-direction: column;
     min-width: 0;
     opacity: 1;
-    transition: opacity $transition-fast;
+    transition: opacity $transition-fast, width $transition-fast;
 
     .sidebar-collapsed & {
       opacity: 0;
@@ -104,51 +133,56 @@ $tablet: 1024px;
   }
 
   .logo-title {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
+    color: #ffffff;
     line-height: 1.2;
+    letter-spacing: 0.02em;
   }
 
   .logo-subtitle {
-    font-size: 0.7rem;
-    opacity: 0.9;
+    font-size: 0.6875rem;
+    color: rgba(255,255,255,0.55);
     font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .toggle-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 32px;
-    height: 32px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.7);
+    width: 30px;
+    height: 30px;
     border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background $transition-fast;
+    transition: all $transition-fast;
     flex-shrink: 0;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255,255,255,0.15);
+      color: #ffffff;
     }
 
     i {
-      font-size: 1rem;
+      font-size: 0.875rem;
     }
   }
 }
 
-// Navegación del Sidebar
+// Navegación
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1rem 0;
+  padding: 0.875rem 0;
 
-  /* Custom scrollbar */
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
 
   &::-webkit-scrollbar-track {
@@ -156,11 +190,11 @@ $tablet: 1024px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: $border-color;
-    border-radius: 3px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
 
     &:hover {
-      background: color.adjust($border-color, $lightness: -10%);
+      background: rgba(255,255,255,0.20);
     }
   }
 }
@@ -168,19 +202,20 @@ $tablet: 1024px;
 .menu-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0.625rem;
 }
 
 .menu-item {
   position: relative;
-  margin: 0.25rem 0.5rem;
+  margin-bottom: 1px;
 
   &.active > .menu-link {
-    background: linear-gradient(90deg, $secondary-color, $accent-color);
-    color: white;
+    background: $sidebar-active-bg;
+    border-left-color: $sidebar-active-border;
+    color: $sidebar-text-active;
 
     .menu-icon {
-      color: white;
+      color: $sidebar-icon-active;
     }
   }
 }
@@ -188,46 +223,50 @@ $tablet: 1024px;
 .menu-link {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
-  color: $text-primary;
+  padding: 0.625rem 0.875rem;
+  color: $sidebar-text;
   text-decoration: none;
   border-radius: 8px;
+  border-left: 3px solid transparent;
   transition: all $transition-fast;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   font-weight: 500;
   gap: 0.75rem;
   position: relative;
 
   &:hover {
-    background: $bg-hover;
-    color: $secondary-color;
+    background: $sidebar-hover-bg;
+    color: $sidebar-text-hover;
 
     .menu-icon {
-      color: $secondary-color;
+      color: rgba(255,255,255,0.75);
     }
   }
 
   &.active {
-    background: linear-gradient(90deg, $secondary-color, $accent-color);
-    color: white;
-    
+    background: $sidebar-active-bg;
+    border-left-color: $sidebar-active-border;
+    color: $sidebar-text-active;
+
     .menu-icon {
-      color: white;
+      color: $sidebar-icon-active;
     }
   }
 
   .sidebar-collapsed & {
     justify-content: center;
-    padding: 0.75rem;
+    padding: 0.625rem;
+    border-left: none;
+    border-radius: 8px;
   }
 }
 
 .menu-icon {
-  font-size: 1.1rem;
-  width: 24px;
+  font-size: 1rem;
+  width: 20px;
   text-align: center;
-  color: $text-secondary;
+  color: $sidebar-icon;
   transition: color $transition-fast;
   flex-shrink: 0;
 }
@@ -237,6 +276,7 @@ $tablet: 1024px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 
   .sidebar-collapsed & {
     display: none;
@@ -244,20 +284,22 @@ $tablet: 1024px;
 }
 
 .menu-badge {
-  background: #e53e3e;
+  background: #ef4444;
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.15rem 0.5rem;
+  padding: 0.1rem 0.45rem;
   border-radius: 10px;
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
+  line-height: 1.4;
 }
 
 .menu-arrow {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   transition: transform $transition-fast;
-  color: $text-secondary;
+  color: rgba(255,255,255,0.35);
+  flex-shrink: 0;
 
   .menu-parent.expanded & {
     transform: rotate(180deg);
@@ -267,15 +309,15 @@ $tablet: 1024px;
 // Submenu
 .submenu {
   list-style: none;
-  margin: 0.25rem 0 0.5rem 0;
+  margin: 0.125rem 0 0.25rem 0;
   padding: 0;
-  animation: slideDown 0.2s ease-out;
+  animation: slideDown 0.18s ease-out;
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -284,70 +326,76 @@ $tablet: 1024px;
 }
 
 .submenu-item {
-  margin: 0.125rem 0;
+  margin-bottom: 1px;
 }
 
 .submenu-link {
   display: flex;
   align-items: center;
-  padding: 0.6rem 1rem 0.6rem 3rem;
-  color: $text-secondary;
+  padding: 0.5rem 0.875rem 0.5rem 2.75rem;
+  color: rgba(255,255,255,0.48);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   border-radius: 6px;
   transition: all $transition-fast;
-  gap: 0.6rem;
+  gap: 0.5rem;
+  border-left: 3px solid transparent;
 
   &:hover {
-    background: $bg-hover;
-    color: $secondary-color;
+    background: $sidebar-hover-bg;
+    color: rgba(255,255,255,0.80);
 
     .submenu-icon {
-      color: $secondary-color;
+      color: rgba(255,255,255,0.70);
     }
   }
 
   &.active {
-    color: $secondary-color;
-    background: rgba($secondary-color, 0.1);
-    font-weight: 600;
+    color: $sidebar-text-active;
+    background: $sidebar-active-bg;
+    border-left-color: $sidebar-active-border;
+    font-weight: 500;
 
     .submenu-icon {
-      color: $secondary-color;
+      color: $sidebar-icon-active;
     }
   }
 }
 
 .submenu-icon {
-  font-size: 0.875rem;
-  width: 18px;
+  font-size: 0.8rem;
+  width: 16px;
   text-align: center;
-  color: $text-secondary;
+  color: rgba(255,255,255,0.35);
   transition: color $transition-fast;
+  flex-shrink: 0;
 }
 
 .submenu-label {
   flex: 1;
+  letter-spacing: 0.01em;
 }
 
 // Footer del Sidebar (Usuario)
 .sidebar-footer {
-  border-top: 1px solid $border-color;
-  padding: 1rem;
+  border-top: 1px solid $sidebar-border;
+  padding: 0.75rem 0.625rem;
   position: relative;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.15);
 }
 
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
   border-radius: 8px;
   transition: background $transition-fast;
   cursor: pointer;
 
   &:hover {
-    background: $bg-hover;
+    background: $sidebar-hover-bg;
   }
 
   &.collapsed {
@@ -357,18 +405,19 @@ $tablet: 1024px;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, $secondary-color, $accent-color);
+  background: linear-gradient(135deg, $secondary, $accent);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.875rem;
   flex-shrink: 0;
-  box-shadow: $shadow-sm;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 2px solid rgba(255,255,255,0.12);
 }
 
 .user-info {
@@ -382,72 +431,96 @@ $tablet: 1024px;
 
 .user-name {
   font-weight: 600;
-  font-size: 0.9rem;
-  color: $text-primary;
+  font-size: 0.8125rem;
+  color: rgba(255,255,255,0.90);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .user-role {
-  font-size: 0.75rem;
-  color: $text-secondary;
+  font-size: 0.6875rem;
+  color: rgba(255,255,255,0.45);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 1px;
 }
 
 .user-menu-toggle {
   background: none;
   border: none;
-  color: $text-secondary;
+  color: rgba(255,255,255,0.35);
   cursor: pointer;
   padding: 0.25rem;
   transition: color $transition-fast;
+  font-size: 0.875rem;
 
   &:hover {
-    color: $secondary-color;
+    color: rgba(255,255,255,0.75);
   }
 }
 
 .user-dropdown {
   position: absolute;
   bottom: 100%;
-  left: 1rem;
-  right: 1rem;
-  background: $bg-primary;
-  border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: $shadow-lg;
-  padding: 0.5rem;
+  left: 0.625rem;
+  right: 0.625rem;
+  background: #1e293b;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: 0.375rem;
   margin-bottom: 0.5rem;
-  animation: slideUp 0.2s ease-out;
+  animation: slideUp 0.18s ease-out;
   z-index: 10;
 
   .dropdown-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    color: $text-primary;
+    gap: 0.625rem;
+    padding: 0.625rem 0.875rem;
+    color: rgba(255,255,255,0.70);
     text-decoration: none;
-    border-radius: 6px;
-    transition: background $transition-fast;
+    border-radius: 7px;
+    transition: all $transition-fast;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
 
     i {
-      width: 20px;
+      width: 18px;
       text-align: center;
-      color: $text-secondary;
+      color: rgba(255,255,255,0.40);
+      font-size: 0.9rem;
     }
 
     &:hover {
-      background: $bg-hover;
-      color: $secondary-color;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.95);
 
       i {
-        color: $secondary-color;
+        color: $accent;
+      }
+    }
+
+    &.logout-item {
+      color: rgba(239,68,68,0.80);
+      margin-top: 2px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 0.75rem;
+
+      i { color: rgba(239,68,68,0.65); }
+
+      &:hover {
+        color: #ef4444;
+        background: rgba(239,68,68,0.10);
+        i { color: #ef4444; }
       }
     }
   }
@@ -456,7 +529,7 @@ $tablet: 1024px;
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -467,13 +540,14 @@ $tablet: 1024px;
 // ===================================
 // MAIN CONTENT
 // ===================================
+
 .main-content {
   flex: 1;
   margin-left: $sidebar-width;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  transition: margin-left $transition-base;
+  transition: margin-left $transition;
 
   .sidebar-collapsed & {
     margin-left: $sidebar-collapsed-width;
@@ -487,10 +561,11 @@ $tablet: 1024px;
 // ===================================
 // TOPBAR
 // ===================================
+
 .topbar {
   height: $topbar-height;
-  background: $bg-primary;
-  border-bottom: 1px solid $border-color;
+  background: $topbar-bg;
+  border-bottom: 1px solid $topbar-border;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
@@ -508,14 +583,20 @@ $tablet: 1024px;
 .mobile-menu-toggle {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: $text-primary;
   cursor: pointer;
   padding: 0.5rem;
+  border-radius: 6px;
   display: none;
+  transition: background $transition-fast;
+
+  &:hover { background: #f1f5f9; }
 
   @media (max-width: $mobile) {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -530,25 +611,32 @@ $tablet: 1024px;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 0.5rem;
+  gap: 0.25rem;
   flex-wrap: wrap;
 }
 
 .breadcrumb-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
   color: $text-secondary;
 
   a {
     color: $text-secondary;
     text-decoration: none;
     transition: color $transition-fast;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem;
+    border-radius: 4px;
 
     &:hover {
-      color: $secondary-color;
+      color: $secondary;
+      background: #f1f5f9;
     }
+
+    i { font-size: 0.875rem; }
   }
 
   &.active {
@@ -557,23 +645,24 @@ $tablet: 1024px;
   }
 
   .breadcrumb-separator {
-    font-size: 0.7rem;
-    color: $border-color;
+    font-size: 0.6rem;
+    color: #cbd5e1;
+    margin: 0 0.125rem;
   }
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .topbar-btn {
   background: none;
   border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -583,60 +672,67 @@ $tablet: 1024px;
   transition: all $transition-fast;
 
   &:hover {
-    background: $bg-hover;
-    color: $secondary-color;
+    background: #f1f5f9;
+    color: $secondary;
   }
 
   i {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
 
   .badge-dot {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 7px;
+    right: 7px;
     width: 8px;
     height: 8px;
-    background: #e53e3e;
+    background: #ef4444;
     border-radius: 50%;
-    border: 2px solid $bg-primary;
+    border: 2px solid $topbar-bg;
+    animation: pulse-dot 2s ease infinite;
   }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
 }
 
 .mobile-user {
   display: none;
-
   @media (max-width: $mobile) {
     display: block;
+    cursor: pointer;
   }
 }
 
 .user-avatar-small {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, $secondary-color, $accent-color);
+  background: linear-gradient(135deg, $secondary, $accent);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: transform $transition-fast;
+  font-size: 0.8rem;
+  border: 2px solid #e2e8f0;
+  transition: border-color $transition-fast;
 
   &:hover {
-    transform: scale(1.05);
+    border-color: $secondary;
   }
 }
 
 // ===================================
 // PAGE CONTENT
 // ===================================
+
 .page-content {
   flex: 1;
-  padding: 2rem;
-  background: $bg-secondary;
+  padding: 1.75rem 2rem;
+  background: $content-bg;
   overflow-x: hidden;
 
   @media (max-width: $mobile) {
@@ -647,10 +743,11 @@ $tablet: 1024px;
 // ===================================
 // FOOTER
 // ===================================
+
 .app-footer {
-  background: $bg-primary;
-  border-top: 1px solid $border-color;
-  padding: 1.25rem 2rem;
+  background: $topbar-bg;
+  border-top: 1px solid $topbar-border;
+  padding: 1rem 2rem;
 
   @media (max-width: $mobile) {
     padding: 1rem;
@@ -661,10 +758,26 @@ $tablet: 1024px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: $text-secondary;
   flex-wrap: wrap;
   gap: 0.5rem;
+
+  span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: $primary;
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+  }
 
   @media (max-width: $mobile) {
     justify-content: center;
@@ -673,13 +786,19 @@ $tablet: 1024px;
 }
 
 .footer-version {
+  background: #f1f5f9;
   color: $text-secondary;
   font-weight: 600;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid $border-color;
 }
 
 // ===================================
-// MOBILE SPECIFIC
+// RESPONSIVE / MOBILE
 // ===================================
+
 .mobile-only {
   display: none;
 
@@ -700,7 +819,8 @@ $tablet: 1024px;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
   z-index: 999;
   animation: fadeIn 0.2s ease-out;
 
@@ -710,12 +830,8 @@ $tablet: 1024px;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 // User Menu Mobile
@@ -725,7 +841,8 @@ $tablet: 1024px;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
   z-index: 1001;
   display: flex;
   align-items: flex-end;
@@ -734,64 +851,68 @@ $tablet: 1024px;
 
 .user-menu-mobile {
   width: 100%;
-  background: $bg-primary;
+  background: #ffffff;
   border-radius: 20px 20px 0 0;
-  box-shadow: $shadow-lg;
-  animation: slideUpMobile 0.3s ease-out;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+  animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
 @keyframes slideUpMobile {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 .mobile-menu-header {
-  padding: 2rem;
-  background: linear-gradient(135deg, $primary-color, $secondary-color);
+  padding: 2rem 1.5rem 1.5rem;
+  background: linear-gradient(135deg, $primary, $secondary);
   color: white;
-  border-radius: 20px 20px 0 0;
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
 .user-avatar-large {
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.22);
+  border: 2px solid rgba(255,255,255,0.40);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   flex-shrink: 0;
 }
 
 .user-details {
   flex: 1;
+  min-width: 0;
 
   .user-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 0.25rem;
+    color: white;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .user-email {
-    font-size: 0.85rem;
-    opacity: 0.9;
-    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.80);
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .user-role {
-    font-size: 0.75rem;
-    opacity: 0.8;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.65);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -799,19 +920,19 @@ $tablet: 1024px;
 }
 
 .mobile-menu-actions {
-  padding: 0.5rem;
+  padding: 0.625rem;
 }
 
 .mobile-action-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
+  gap: 0.875rem;
+  padding: 0.875rem 1.25rem;
   color: $text-primary;
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: 10px;
   transition: background $transition-fast;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   border: none;
   background: none;
@@ -820,47 +941,36 @@ $tablet: 1024px;
   cursor: pointer;
 
   i {
-    width: 24px;
+    width: 22px;
     text-align: center;
     color: $text-secondary;
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   &:hover {
-    background: $bg-hover;
+    background: #f8fafc;
   }
 
   &.logout {
-    color: #e53e3e;
-    margin-top: 0.5rem;
+    color: #ef4444;
+    margin-top: 0.25rem;
     border-top: 1px solid $border-color;
-    padding-top: 1.25rem;
+    padding-top: 1rem;
 
-    i {
-      color: #e53e3e;
+    i { color: #ef4444; }
+
+    &:hover {
+      background: #fef2f2;
     }
   }
 }
 
 // ===================================
-// ANIMATIONS
+// PRINT
 // ===================================
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
 
-// ===================================
-// PRINT STYLES
-// ===================================
 @media print {
-  .sidebar,
-  .topbar,
-  .app-footer {
+  .sidebar, .topbar, .app-footer {
     display: none;
   }
 

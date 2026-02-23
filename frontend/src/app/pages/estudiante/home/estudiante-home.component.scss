@@ -236,8 +236,7 @@ body {
 
 // Contenedor principal
 .main-container {
-  margin-top: 70px;
-  padding: 2rem;
+  padding: 0;
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
@@ -353,9 +352,9 @@ body {
 
 // Sección de bienvenida
 .welcome-section {
-  background: $primary-gradient;
-  border-radius: 20px;
-  padding: 3rem;
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
@@ -363,16 +362,18 @@ body {
   color: $white-color;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 74, 141, 0.25);
 
   &::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    top: -40%;
+    right: -5%;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.10) 0%, transparent 70%);
     z-index: 1;
+    pointer-events: none;
   }
 
   .welcome-content {
@@ -380,10 +381,9 @@ body {
     position: relative;
 
     h1 {
-      font-size: 2.5rem;
+      font-size: 2rem;
       font-weight: 700;
-      margin-bottom: 1rem;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 0.5rem;
     }
 
     .status-text {
