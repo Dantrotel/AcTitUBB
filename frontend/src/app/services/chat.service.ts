@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Socket, io } from 'socket.io-client';
+import { environment } from '../../environments/environment';
 
 export interface Conversacion {
   id: number;
@@ -38,7 +39,7 @@ export interface Usuario {
 })
 export class ChatService {
   private socket: Socket | null = null;
-  private apiUrl = 'http://localhost:3000/api/v1';
+  private apiUrl = environment.apiUrl;
   // Signals para reactividad
   conversaciones = signal<Conversacion[]>([]);
   mensajesActuales = signal<Mensaje[]>([]);
@@ -209,25 +210,6 @@ export class ChatService {
     const data = await response.json();
     this.mensajesActuales.set(data.mensajes);
     return data.mensajes;
-  }
-
-  /**
-   * Enviar mensaje por API REST (alternativa a WebSocket)
-   */
-  async enviarMensajeAPI(conversacionId: number, contenido: string): Promise<Mensaje> {
-    const response = await fetch(
-      `${this.apiUrl}/chat/conversaciones/${conversacionId}/mensajes`,
-      {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ contenido })
-      }
-    );
-    
-    if (!response.ok) throw new Error('Error al enviar mensaje');
-    
-    const data = await response.json();
-    return data.mensaje;
   }
 
   /**

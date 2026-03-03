@@ -516,9 +516,6 @@ const versionesModel = {
       const {
         proyecto_id,
         estado_final,
-        evaluacion_profesor_guia,
-        evaluacion_profesor_informante,
-        evaluacion_comision,
         observaciones_finales,
         recomendaciones,
         areas_destacadas,
@@ -532,19 +529,17 @@ const versionesModel = {
 
       const [result] = await pool.query(
         `INSERT INTO resultados_finales_proyecto (
-          proyecto_id, estado_final, evaluacion_profesor_guia, 
-          evaluacion_profesor_informante, evaluacion_comision,
+          proyecto_id, estado_final,
           observaciones_finales, recomendaciones, areas_destacadas,
           documento_final, acta_aprobacion,
           mencion_honores, mencion_excelencia, publicacion_recomendada,
           fecha_aprobacion, cerrado_por
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          proyecto_id, estado_final, evaluacion_profesor_guia,
-          evaluacion_profesor_informante, evaluacion_comision,
+          proyecto_id, estado_final,
           observaciones_finales, recomendaciones, areas_destacadas,
           documento_final, acta_aprobacion,
-          mencion_honores || false, mencion_excelencia || false, 
+          mencion_honores || false, mencion_excelencia || false,
           publicacion_recomendada || false,
           fecha_aprobacion, cerradoPorRut
         ]

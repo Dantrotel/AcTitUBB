@@ -114,6 +114,14 @@
           <button class="btn-icon" (click)="descargarDocumento(doc.id)" title="Descargar">
             📥
           </button>
+          <button
+            *ngIf="esProfesor || esAdmin"
+            class="btn-icon btn-correccion"
+            [class.active]="correccionDocumentoId === doc.id"
+            (click)="abrirFormCorreccion(doc.id)"
+            title="Subir corrección">
+            ✏️
+          </button>
           <button 
             *ngIf="puedeEliminarDocumento(doc)"
             class="btn-icon" 
@@ -158,6 +166,42 @@
           (click)="actualizarEstado(doc.id, estado.value)">
           {{ estado.label }}
         </button>
+      </div>
+
+      <!-- Formulario de corrección (solo visible cuando está abierto para este doc) -->
+      <div class="correccion-form" *ngIf="correccionDocumentoId === doc.id">
+        <h4>✏️ Subir Corrección para: <em>{{ doc.nombre_original }}</em></h4>
+        <div class="form-group">
+          <label>Archivo corregido (PDF, Word) *</label>
+          <input
+            type="file"
+            (change)="onArchivoCorreccionSelected($event)"
+            accept=".pdf,.docx,.doc"
+            class="form-control">
+          <small *ngIf="archivoCorreccion">
+            {{ archivoCorreccion.name }} ({{ formatearTamanio(archivoCorreccion.size) }})
+          </small>
+        </div>
+        <div class="form-group">
+          <label>Comentarios sobre la corrección</label>
+          <textarea
+            [(ngModel)]="comentariosCorreccion"
+            name="comentariosCorreccion"
+            rows="3"
+            class="form-control"
+            placeholder="Describe los cambios solicitados o realizados..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button
+            class="btn btn-success"
+            (click)="subirCorreccion(doc)"
+            [disabled]="subiendoCorreccion || !archivoCorreccion">
+            {{ subiendoCorreccion ? 'Subiendo...' : '📤 Subir Corrección' }}
+          </button>
+          <button class="btn btn-secondary" (click)="abrirFormCorreccion(doc.id)">
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
 

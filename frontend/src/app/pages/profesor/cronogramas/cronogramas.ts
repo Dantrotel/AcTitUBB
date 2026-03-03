@@ -2,120 +2,70 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatBadgeModule } from '@angular/material/badge';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
-import { NavbarComponent } from '../../../components/navbar/navbar.component';
 
 @Component({
   selector: 'app-cronogramas',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatProgressSpinnerModule,
-    MatExpansionModule,
-    MatChipsModule,
-    MatBadgeModule,
-    NavbarComponent
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './cronogramas.html',
   styleUrls: ['./cronogramas.scss']
 })
 export class CronogramasComponent implements OnInit {
-  // Propiedades para navbar
   profesor: any = {};
-  
-  // Propiedades del componente
+
+  // Proyectos
   proyectosAsignados: any[] = [];
   proyectoSeleccionado: any = null;
-  cronogramas: any[] = [];
-  cronogramaSeleccionado: any = null;
-  cronogramaActivo: any = null;
-  hitosCronograma: any[] = [];
-  showModalCronograma: boolean = false;
-  showModalHito: boolean = false;
-  mostrarModalCronograma: boolean = false;
-  mostrarModalHito: boolean = false;
-  mostrarModalRevision: boolean = false;
-  editandoCronograma: boolean = false;
-  editandoHito: boolean = false;
-  cargando: boolean = false;
-  loading: boolean = false;
-  error: string = '';
-  success: string = '';
-  
+
+  // Estados
+  loading = false;
+  loadingFechas = false;
+  error = '';
+  success = '';
+
   // Fechas importantes
   fechasImportantes: any[] = [];
-  mostrarModalFecha: boolean = false;
-  loadingFechas: boolean = false;
+  todasLasFechas: any[] = [];
+
+  // Modales
+  mostrarModalFecha = false;
+  mostrarModalEditarFecha = false;
+  fechaEditando: any = null;
+
+  // Vista
+  vistaActual: 'lista' | 'timeline' = 'lista';
+  vistaGlobal = false;
+
+  // Filtros
+  filtroTipo = '';
+  filtroPrioridad = '';
+  filtroOrden = 'fecha_asc';
+
+  // Formulario nueva fecha
   nuevaFecha: any = {
     titulo: '',
     descripcion: '',
     tipo_fecha: 'entrega',
-    fecha_limite: null
+    fecha_limite: null,
+    prioridad: 'media'
   };
-  
+
   tiposFecha = [
-    { value: 'entrega', label: 'Entrega' },
-    { value: 'reunion', label: 'Reunión' },
-    { value: 'evaluacion', label: 'Evaluación' },
-    { value: 'hito', label: 'Hito' },
-    { value: 'deadline', label: 'Fecha límite' },
+    { value: 'entrega',      label: 'Entrega' },
+    { value: 'reunion',      label: 'Reunión' },
+    { value: 'hito',         label: 'Hito' },
+    { value: 'deadline',     label: 'Fecha límite' },
     { value: 'presentacion', label: 'Presentación' }
   ];
-  
-  // Formularios
-  nuevoCronograma: any = {
-    nombre: '',
-    descripcion: '',
-    fechaInicio: null,
-    fechaFin: null
-  };
-  
-  nuevoHito: any = {
-    nombre: '',
-    descripcion: '',
-    fechaLimite: null,
-    tipo: 'tarea',
-    estado: 'pendiente',
-    archivo: null
-  };
-  
-  revisionHito: any = {
-    comentarios_profesor: '',
-    calificacion: null,
-    estado: ''
-  };
-  
-  cronogramaEditando: any = {};
-  hitoEditando: any = {};
-  
-  // Propiedades para archivos
-  archivoSeleccionado: File | null = null;
-  maxFileSize: number = 10 * 1024 * 1024; // 10MB
-  tiposArchivo: string[] = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'];
+
+  prioridades = [
+    { value: 'baja',   label: 'Baja' },
+    { value: 'media',  label: 'Media' },
+    { value: 'alta',   label: 'Alta' },
+    { value: 'critica', label: 'Crítica' }
+  ];
 
   constructor(
     private apiService: ApiService,
@@ -132,17 +82,11 @@ export class CronogramasComponent implements OnInit {
 
   cargarProfesor() {
     const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        this.profesor = {
-          rut: payload.rut,
-          nombre: payload.nombre || 'Profesor'
-        };
-      } catch (error) {
-        console.error('Error al decodificar token:', error);
-      }
-    }
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this.profesor = { rut: payload.rut, nombre: payload.nombre || 'Profesor' };
+    } catch { /* token inválido */ }
   }
 
   cerrarSesion() {
@@ -150,331 +94,342 @@ export class CronogramasComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  // Métodos de utilidad para fechas
-  esFechaPasada(fecha: string): boolean {
-    return new Date(fecha) < new Date();
-  }
+  // ===== UTILIDADES DE FECHAS =====
 
   getDiasRestantes(fecha: string): number {
     const hoy = new Date();
-    const fechaLimite = new Date(fecha);
-    const diff = fechaLimite.getTime() - hoy.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    hoy.setHours(0, 0, 0, 0);
+    const fl = new Date(fecha);
+    fl.setHours(0, 0, 0, 0);
+    return Math.ceil((fl.getTime() - hoy.getTime()) / 86400000);
   }
 
   formatearFecha(fecha: string): string {
     if (!fecha) return '';
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      year: 'numeric', month: 'long', day: 'numeric'
     });
   }
 
+  getConteoRegresivo(fecha: any): { texto: string; clase: string } {
+    if (fecha.completada) return { texto: 'Completada', clase: 'estado-completada' };
+    const d = this.getDiasRestantes(fecha.fecha || fecha.fecha_limite);
+    if (d < 0)  return { texto: `Vencida hace ${Math.abs(d)} día${Math.abs(d) !== 1 ? 's' : ''}`, clase: 'estado-vencida' };
+    if (d === 0) return { texto: 'Vence hoy', clase: 'estado-hoy' };
+    if (d === 1) return { texto: 'Vence mañana', clase: 'estado-urgente' };
+    if (d <= 3)  return { texto: `${d} días restantes`, clase: 'estado-urgente' };
+    if (d <= 7)  return { texto: `${d} días restantes`, clase: 'estado-proximo' };
+    return { texto: `${d} días restantes`, clase: 'estado-normal' };
+  }
+
   getIconoTipoFecha(tipo: string): string {
-    const iconos: any = {
-      'entrega': 'fas fa-file-upload',
-      'reunion': 'fas fa-users',
-      'evaluacion': 'fas fa-clipboard-check',
-      'hito': 'fas fa-flag-checkered',
-      'deadline': 'fas fa-exclamation-triangle',
-      'presentacion': 'fas fa-presentation'
+    const map: any = {
+      entrega:      'fas fa-file-upload',
+      reunion:      'fas fa-users',
+      hito:         'fas fa-flag-checkered',
+      deadline:     'fas fa-exclamation-triangle',
+      presentacion: 'fas fa-chalkboard-teacher'
     };
-    return iconos[tipo] || 'fas fa-calendar';
+    return map[tipo] || 'fas fa-calendar';
   }
 
   getTipoFechaLabel(tipo: string): string {
-    const labels: any = {
-      'entrega': 'Entrega',
-      'reunion': 'Reunión',
-      'evaluacion': 'Evaluación',
-      'hito': 'Hito',
-      'deadline': 'Fecha límite',
-      'presentacion': 'Presentación'
+    const map: any = {
+      entrega: 'Entrega', reunion: 'Reunión', hito: 'Hito',
+      deadline: 'Fecha límite', presentacion: 'Presentación'
     };
-    return labels[tipo] || tipo;
+    return map[tipo] || tipo;
   }
+
+  getPrioridadLabel(p: string): string {
+    const map: any = { baja: 'Baja', media: 'Media', alta: 'Alta', critica: 'Crítica' };
+    return map[p] || p;
+  }
+
+  // ===== CARGA DE DATOS =====
 
   async cargarProyectosAsignados() {
     try {
-      this.cargando = true;
+      this.loading = true;
       this.error = '';
-      const response: any = await this.apiService.getProyectosAsignados().toPromise();
-      console.log('📦 Respuesta de proyectos asignados:', response);
-      
-      // El backend devuelve { total: X, projects: [...] }
-      this.proyectosAsignados = response?.projects || response || [];
-      console.log('✅ Proyectos asignados cargados:', this.proyectosAsignados.length);
-      console.log('📋 Lista de proyectos:', this.proyectosAsignados);
-      
-      // Forzar detección de cambios
-      this.cdr.detectChanges();
-    } catch (error: any) {
-      console.error('❌ Error al cargar proyectos:', error);
-      this.error = 'Error al cargar proyectos: ' + (error.error?.message || error.message);
-      this.cdr.detectChanges();
+      const res: any = await this.apiService.getProyectosAsignados().toPromise();
+      this.proyectosAsignados = res?.projects || res || [];
+    } catch (e: any) {
+      this.error = 'Error al cargar proyectos: ' + (e.error?.message || e.message);
     } finally {
-      this.cargando = false;
+      this.loading = false;
       this.cdr.detectChanges();
     }
   }
 
   async seleccionarProyecto(proyecto: any) {
     this.proyectoSeleccionado = proyecto;
+    this.vistaGlobal = false;
+    this.limpiarFiltros();
     await this.cargarFechasImportantes();
-    this.cdr.detectChanges();
   }
 
-  async cargarCronogramas() {
-    if (!this.proyectoSeleccionado) return;
-    
+  async cargarFechasImportantes() {
+    if (!this.proyectoSeleccionado?.id) return;
     try {
-      this.cargando = true;
-      this.error = '';
-      const response = await this.apiService.obtenerCronograma(this.proyectoSeleccionado.id).toPromise();
-      this.cronogramas = response as any[];
-    } catch (error: any) {
-      this.error = 'Error al cargar cronogramas: ' + (error.error?.message || error.message);
+      this.loadingFechas = true;
+      const res: any = await this.apiService.getFechasImportantesProyecto(
+        this.proyectoSeleccionado.id
+      ).toPromise();
+      this.fechasImportantes = res?.success ? (res.data?.fechas_importantes || []) : [];
+    } catch {
+      this.error = 'Error al cargar fechas importantes';
+      this.fechasImportantes = [];
     } finally {
-      this.cargando = false;
+      this.loadingFechas = false;
+      this.cdr.detectChanges();
     }
   }
 
-  abrirModalCronograma() {
-    this.showModalCronograma = true;
-    this.editandoCronograma = false;
-    this.nuevoCronograma = {
-      nombre: '',
-      descripcion: '',
-      fechaInicio: null,
-      fechaFin: null
+  async cargarTodasLasFechas() {
+    if (this.proyectosAsignados.length === 0) return;
+    try {
+      this.loadingFechas = true;
+      const acumuladas: any[] = [];
+
+      for (const proyecto of this.proyectosAsignados) {
+        try {
+          const res: any = await this.apiService
+            .getFechasImportantesProyecto(proyecto.id)
+            .toPromise();
+          const fechas: any[] = res?.success
+            ? (res.data?.fechas_importantes || [])
+            : [];
+          // Agregar info del proyecto a cada fecha para mostrarla en la card
+          acumuladas.push(
+            ...fechas.map((f: any) => ({
+              ...f,
+              proyecto_titulo: proyecto.titulo,
+              proyecto_id: proyecto.id
+            }))
+          );
+        } catch {
+          // Si falla un proyecto individual, continuamos con los demás
+        }
+      }
+
+      this.todasLasFechas = acumuladas;
+    } catch {
+      this.error = 'Error al cargar vista global';
+      this.todasLasFechas = [];
+    } finally {
+      this.loadingFechas = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async toggleVistaGlobal() {
+    this.vistaGlobal = !this.vistaGlobal;
+    if (this.vistaGlobal) {
+      this.proyectoSeleccionado = null;
+      this.limpiarFiltros();
+      // Asegurar que los proyectos estén cargados antes de iterar
+      if (this.proyectosAsignados.length === 0) {
+        await this.cargarProyectosAsignados();
+      }
+      await this.cargarTodasLasFechas();
+    }
+  }
+
+  // ===== FILTROS Y ORDENAMIENTO =====
+
+  get fechasFiltradas(): any[] {
+    let lista = this.vistaGlobal ? [...this.todasLasFechas] : [...this.fechasImportantes];
+    if (this.filtroTipo)      lista = lista.filter(f => f.tipo_fecha === this.filtroTipo);
+    if (this.filtroPrioridad) lista = lista.filter(f => f.prioridad === this.filtroPrioridad);
+
+    const ord: any = { critica: 0, alta: 1, media: 2, baja: 3 };
+    switch (this.filtroOrden) {
+      case 'fecha_asc':
+        lista.sort((a, b) => new Date(a.fecha || a.fecha_limite).getTime() - new Date(b.fecha || b.fecha_limite).getTime());
+        break;
+      case 'fecha_desc':
+        lista.sort((a, b) => new Date(b.fecha || b.fecha_limite).getTime() - new Date(a.fecha || a.fecha_limite).getTime());
+        break;
+      case 'prioridad':
+        lista.sort((a, b) => (ord[a.prioridad] ?? 4) - (ord[b.prioridad] ?? 4));
+        break;
+      case 'tipo':
+        lista.sort((a, b) => (a.tipo_fecha || '').localeCompare(b.tipo_fecha || ''));
+        break;
+    }
+    return lista;
+  }
+
+  get fechasAgrupadasPorMes(): { mes: string; fechas: any[] }[] {
+    const grupos: { [k: string]: { label: string; fechas: any[] } } = {};
+    for (const f of this.fechasFiltradas) {
+      const d = new Date(f.fecha || f.fecha_limite);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!grupos[key]) {
+        grupos[key] = {
+          label: d.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' }),
+          fechas: []
+        };
+      }
+      grupos[key].fechas.push(f);
+    }
+    return Object.keys(grupos).sort().map(k => ({
+      mes: grupos[k].label,
+      fechas: grupos[k].fechas
+    }));
+  }
+
+  get progreso(): { total: number; completadas: number; porcentaje: number } {
+    const total = this.fechasImportantes.length;
+    const completadas = this.fechasImportantes.filter(f => f.completada).length;
+    return { total, completadas, porcentaje: total > 0 ? Math.round((completadas / total) * 100) : 0 };
+  }
+
+  get hayFiltrosActivos(): boolean {
+    return !!(this.filtroTipo || this.filtroPrioridad || this.filtroOrden !== 'fecha_asc');
+  }
+
+  limpiarFiltros() {
+    this.filtroTipo = '';
+    this.filtroPrioridad = '';
+    this.filtroOrden = 'fecha_asc';
+  }
+
+  // ===== CREAR FECHA =====
+
+  abrirModalFecha() {
+    this.nuevaFecha = {
+      titulo: '', descripcion: '', tipo_fecha: 'entrega',
+      fecha_limite: null, prioridad: 'media'
     };
+    this.mostrarModalFecha = true;
   }
 
-  cerrarModalCronograma() {
-    this.showModalCronograma = false;
-    this.editandoCronograma = false;
-    this.limpiarMensajes();
+  cerrarModalFecha() {
+    this.mostrarModalFecha = false;
   }
 
-  async guardarCronograma() {
-    if (!this.validarCronograma()) return;
-
+  async crearFechaImportante() {
+    if (!this.proyectoSeleccionado?.id) return;
+    if (!this.nuevaFecha.titulo?.trim()) { this.error = 'El título es requerido'; return; }
+    if (!this.nuevaFecha.fecha_limite)   { this.error = 'La fecha límite es requerida'; return; }
     try {
-      this.cargando = true;
-      this.error = '';
-      
-      const cronogramaData = {
-        ...this.nuevoCronograma,
-        proyectoId: this.proyectoSeleccionado.id
-      };
-
-      if (this.editandoCronograma) {
-        // TODO: Implementar actualización cuando la API lo soporte
-        this.error = 'Función de edición no disponible aún';
-        return;
-      } else {
-        await this.apiService.crearCronograma(this.proyectoSeleccionado.id, cronogramaData).toPromise();
-        this.success = 'Cronograma creado exitosamente';
-      }
-      
-      await this.cargarCronogramas();
-      this.cerrarModalCronograma();
-    } catch (error: any) {
-      this.error = 'Error al guardar cronograma: ' + (error.error?.message || error.message);
-    } finally {
-      this.cargando = false;
-    }
-  }
-
-  editarCronograma(cronograma: any) {
-    this.cronogramaEditando = { ...cronograma };
-    this.nuevoCronograma = { ...cronograma };
-    this.editandoCronograma = true;
-    this.showModalCronograma = true;
-  }
-
-  async eliminarCronograma(cronogramId: number) {
-    const confirmed = await this.notificationService.confirm(
-      '¿Está seguro de eliminar este cronograma?',
-      'Eliminar Cronograma',
-      'Eliminar',
-      'Cancelar'
-    );
-    if (!confirmed) return;
-
-    try {
-      this.cargando = true;
-      this.error = '';
-      // TODO: Implementar eliminación cuando la API lo soporte
-      this.error = 'Función de eliminación no disponible aún';
-    } catch (error: any) {
-      this.error = 'Error al eliminar cronograma: ' + (error.error?.message || error.message);
-    } finally {
-      this.cargando = false;
-    }
-  }
-
-  seleccionarCronograma(cronograma: any) {
-    this.cronogramaSeleccionado = cronograma;
-  }
-
-  abrirModalHito() {
-    this.showModalHito = true;
-    this.editandoHito = false;
-    this.nuevoHito = {
-      nombre: '',
-      descripcion: '',
-      fechaLimite: null,
-      tipo: 'tarea',
-      estado: 'pendiente',
-      archivo: null
-    };
-    this.archivoSeleccionado = null;
-  }
-
-  cerrarModalHito() {
-    this.showModalHito = false;
-    this.editandoHito = false;
-    this.archivoSeleccionado = null;
-    this.limpiarMensajes();
-  }
-
-  async guardarHito() {
-    if (!this.validarHito()) return;
-
-    try {
-      this.cargando = true;
-      this.error = '';
-      
-      const formData = new FormData();
-      formData.append('nombre', this.nuevoHito.nombre);
-      formData.append('descripcion', this.nuevoHito.descripcion);
-      formData.append('fechaLimite', this.nuevoHito.fechaLimite);
-      formData.append('tipo', this.nuevoHito.tipo);
-      formData.append('estado', this.nuevoHito.estado);
-      
-      if (this.archivoSeleccionado) {
-        formData.append('archivo', this.archivoSeleccionado);
-      }
-
-      if (this.editandoHito) {
-        // TODO: Implementar actualización cuando la API lo soporte
-        this.error = 'Función de edición de hitos no disponible aún';
-        return;
-      } else {
-        await this.apiService.crearHitoCronograma(this.cronogramaSeleccionado.id, formData).toPromise();
-        this.success = 'Hito creado exitosamente';
-      }
-      
-      await this.cargarCronogramas();
-      this.cerrarModalHito();
-    } catch (error: any) {
-      this.error = 'Error al guardar hito: ' + (error.error?.message || error.message);
-    } finally {
-      this.cargando = false;
-    }
-  }
-
-  editarHito(hito: any) {
-    this.hitoEditando = { ...hito };
-    this.nuevoHito = { ...hito };
-    this.editandoHito = true;
-    this.showModalHito = true;
-  }
-
-  async eliminarHito(hitoId: number) {
-    const confirmed = await this.notificationService.confirm(
-      '¿Está seguro de eliminar este hito?',
-      'Eliminar Hito',
-      'Eliminar',
-      'Cancelar'
-    );
-    if (!confirmed) return;
-
-    try {
-      this.cargando = true;
-      this.error = '';
-      // TODO: Implementar eliminación cuando la API lo soporte
-      this.error = 'Función de eliminación de hitos no disponible aún';
-    } catch (error: any) {
-      this.error = 'Error al eliminar hito: ' + (error.error?.message || error.message);
-    } finally {
-      this.cargando = false;
-    }
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > this.maxFileSize) {
-        this.error = 'El archivo es demasiado grande. Máximo 10MB.';
-        return;
-      }
-      
-      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-      if (!this.tiposArchivo.includes(extension)) {
-        this.error = 'Tipo de archivo no permitido. Tipos permitidos: ' + this.tiposArchivo.join(', ');
-        return;
-      }
-      
-      this.archivoSeleccionado = file;
-      this.error = '';
-    }
-  }
-
-  async descargarArchivo(nombreArchivo: string, hitoId?: number) {
-    try {
-      this.cargando = true;
       this.loading = true;
       this.error = '';
-      // TODO: Implementar descarga cuando la API lo soporte
-      window.open(`/api/v1/cronogramas/hitos/archivo/${nombreArchivo}`, '_blank');
-      this.success = 'Descargando archivo...';
-    } catch (error: any) {
-      this.error = 'Error al descargar archivo: ' + (error.error?.message || error.message);
+      await this.apiService.crearFechaImportante(this.proyectoSeleccionado.id, {
+        titulo:      this.nuevaFecha.titulo.trim(),
+        descripcion: this.nuevaFecha.descripcion?.trim() || '',
+        tipo_fecha:  this.nuevaFecha.tipo_fecha,
+        fecha_limite: this.nuevaFecha.fecha_limite,
+        prioridad:   this.nuevaFecha.prioridad
+      }).toPromise();
+      this.notificationService.success('Fecha creada exitosamente');
+      await this.cargarFechasImportantes();
+      this.cerrarModalFecha();
+    } catch (e: any) {
+      this.error = 'Error al crear fecha: ' + (e.error?.message || e.message);
     } finally {
-      this.cargando = false;
       this.loading = false;
     }
   }
 
-  validarCronograma(): boolean {
-    if (!this.nuevoCronograma.nombre?.trim()) {
-      this.error = 'El nombre del cronograma es requerido';
-      return false;
-    }
-    if (!this.nuevoCronograma.fechaInicio) {
-      this.error = 'La fecha de inicio es requerida';
-      return false;
-    }
-    if (!this.nuevoCronograma.fechaFin) {
-      this.error = 'La fecha de fin es requerida';
-      return false;
-    }
-    if (new Date(this.nuevoCronograma.fechaInicio) >= new Date(this.nuevoCronograma.fechaFin)) {
-      this.error = 'La fecha de inicio debe ser anterior a la fecha de fin';
-      return false;
-    }
-    return true;
+  // ===== EDITAR FECHA =====
+
+  abrirModalEditarFecha(fecha: any) {
+    const fl = (fecha.fecha_limite || fecha.fecha || '').split('T')[0];
+    this.fechaEditando = {
+      id:          fecha.id,
+      titulo:      fecha.titulo,
+      descripcion: fecha.descripcion || '',
+      tipo_fecha:  fecha.tipo_fecha,
+      fecha_limite: fl,
+      prioridad:   fecha.prioridad || 'media'
+    };
+    this.mostrarModalEditarFecha = true;
   }
 
-  validarHito(): boolean {
-    if (!this.nuevoHito.nombre?.trim()) {
-      this.error = 'El nombre del hito es requerido';
-      return false;
-    }
-    if (!this.nuevoHito.fechaLimite) {
-      this.error = 'La fecha límite es requerida';
-      return false;
-    }
-    if (!this.cronogramaSeleccionado) {
-      this.error = 'Debe seleccionar un cronograma';
-      return false;
-    }
-    return true;
+  cerrarModalEditarFecha() {
+    this.mostrarModalEditarFecha = false;
+    this.fechaEditando = null;
   }
+
+  async guardarEdicionFecha() {
+    if (!this.fechaEditando?.titulo?.trim()) { this.error = 'El título es requerido'; return; }
+    if (!this.fechaEditando.fecha_limite)    { this.error = 'La fecha es requerida'; return; }
+    try {
+      this.loading = true;
+      this.error = '';
+      await this.apiService.actualizarFechaImportante(
+        this.proyectoSeleccionado.id,
+        String(this.fechaEditando.id),
+        {
+          titulo:      this.fechaEditando.titulo.trim(),
+          descripcion: this.fechaEditando.descripcion?.trim() || '',
+          tipo_fecha:  this.fechaEditando.tipo_fecha,
+          fecha_limite: this.fechaEditando.fecha_limite,
+          prioridad:   this.fechaEditando.prioridad
+        }
+      ).toPromise();
+      this.notificationService.success('Fecha actualizada exitosamente');
+      await this.cargarFechasImportantes();
+      this.cerrarModalEditarFecha();
+    } catch (e: any) {
+      this.error = 'Error al actualizar: ' + (e.error?.message || e.message);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  // ===== ELIMINAR FECHA =====
+
+  async eliminarFecha(fecha: any) {
+    const ok = await this.notificationService.confirm(
+      `¿Estás seguro de eliminar "${fecha.titulo}"?`,
+      'Eliminar Fecha', 'Eliminar', 'Cancelar'
+    );
+    if (!ok) return;
+    try {
+      this.loading = true;
+      await this.apiService.eliminarFechaImportante(
+        this.proyectoSeleccionado.id, String(fecha.id)
+      ).toPromise();
+      this.notificationService.success('Fecha eliminada');
+      await this.cargarFechasImportantes();
+    } catch (e: any) {
+      this.error = 'Error al eliminar: ' + (e.error?.message || e.message);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  // ===== MARCAR COMPLETADA =====
+
+  async toggleCompletada(fecha: any) {
+    try {
+      const nueva = !fecha.completada;
+      await this.apiService.marcarFechaCompletada(
+        this.proyectoSeleccionado.id, String(fecha.id), nueva
+      ).toPromise();
+      fecha.completada = nueva;
+      this.notificationService.success(nueva ? 'Marcada como completada' : 'Desmarcada');
+      this.cdr.detectChanges();
+    } catch (e: any) {
+      this.error = 'Error al actualizar estado: ' + (e.error?.message || e.message);
+    }
+  }
+
+  // ===== VISTA Y EXPORTAR =====
+
+  setVista(vista: 'lista' | 'timeline') {
+    this.vistaActual = vista;
+  }
+
+  exportarCronograma() {
+    window.print();
+  }
+
+  // ===== UTILIDADES =====
 
   limpiarMensajes() {
     this.error = '';
@@ -482,314 +437,6 @@ export class CronogramasComponent implements OnInit {
   }
 
   volver() {
-    // Usar history.back() para volver a la página anterior sin activar guards
     window.history.back();
-  }
-
-  // Métodos adicionales requeridos por el template
-  cerrarModal() {
-    this.mostrarModalCronograma = false;
-    this.mostrarModalHito = false;
-    this.mostrarModalRevision = false;
-    this.showModalCronograma = false;
-    this.showModalHito = false;
-    this.limpiarMensajes();
-  }
-
-  async crearCronograma() {
-    if (!this.nuevoCronograma.nombre_cronograma?.trim()) {
-      this.error = 'El nombre del cronograma es requerido';
-      return;
-    }
-
-    try {
-      this.loading = true;
-      this.cargando = true;
-      this.error = '';
-      
-      const cronogramaData = {
-        ...this.nuevoCronograma,
-        proyecto_id: this.proyectoSeleccionado.id
-      };
-
-      await this.apiService.crearCronograma(this.proyectoSeleccionado.id, cronogramaData).toPromise();
-      this.success = 'Cronograma creado exitosamente';
-      
-      await this.cargarCronogramas();
-      this.cerrarModal();
-    } catch (error: any) {
-      this.error = 'Error al crear cronograma: ' + (error.error?.message || error.message);
-    } finally {
-      this.loading = false;
-      this.cargando = false;
-    }
-  }
-
-  async crearHito() {
-    if (!this.nuevoHito.nombre_hito?.trim()) {
-      this.error = 'El nombre del hito es requerido';
-      return;
-    }
-
-    if (!this.nuevoHito.fecha_limite) {
-      this.error = 'La fecha límite es requerida';
-      return;
-    }
-
-    try {
-      this.loading = true;
-      this.cargando = true;
-      this.error = '';
-      
-      const formData = new FormData();
-      formData.append('nombre_hito', this.nuevoHito.nombre_hito);
-      formData.append('descripcion', this.nuevoHito.descripcion || '');
-      formData.append('fecha_limite', this.nuevoHito.fecha_limite);
-      formData.append('tipo_hito', this.nuevoHito.tipo_hito || 'entrega');
-      
-      if (this.archivoSeleccionado) {
-        formData.append('archivo', this.archivoSeleccionado);
-      }
-
-      await this.apiService.crearHitoCronograma(this.cronogramaActivo.id, formData).toPromise();
-      this.success = 'Hito creado exitosamente';
-      
-      await this.cargarCronogramas();
-      this.cerrarModal();
-    } catch (error: any) {
-      this.error = 'Error al crear hito: ' + (error.error?.message || error.message);
-    } finally {
-      this.loading = false;
-      this.cargando = false;
-    }
-  }
-
-  abrirModalRevision(hito: any) {
-    this.hitoEditando = hito;
-    this.revisionHito = {
-      comentarios_profesor: '',
-      calificacion: null,
-      estado: 'aprobado'
-    };
-    this.mostrarModalRevision = true;
-  }
-
-  async revisarHito() {
-    if (!this.revisionHito.comentarios_profesor?.trim()) {
-      this.error = 'Los comentarios son requeridos';
-      return;
-    }
-
-    if (!this.revisionHito.estado) {
-      this.error = 'El estado es requerido';
-      return;
-    }
-
-    try {
-      this.loading = true;
-      this.cargando = true;
-      this.error = '';
-      
-      await this.apiService.revisarHito(
-        this.hitoEditando.id, 
-        this.revisionHito
-      ).toPromise();
-      
-      this.success = 'Revisión guardada exitosamente';
-      
-      await this.cargarCronogramas();
-      this.cerrarModal();
-    } catch (error: any) {
-      this.error = 'Error al guardar revisión: ' + (error.error?.message || error.message);
-    } finally {
-      this.loading = false;
-      this.cargando = false;
-    }
-  }
-
-  obtenerIconoTipoHito(tipo: string): string {
-    const iconos: { [key: string]: string } = {
-      'entrega': 'fas fa-upload',
-      'revision': 'fas fa-search',
-      'presentacion': 'fas fa-presentation',
-      'evaluacion': 'fas fa-check-circle',
-      'reunion': 'fas fa-users'
-    };
-    return iconos[tipo] || 'fas fa-flag';
-  }
-
-  obtenerClaseEstado(estado: string): string {
-    const clases: { [key: string]: string } = {
-      'pendiente': 'badge-warning',
-      'en_progreso': 'badge-info',
-      'entregado': 'badge-primary',
-      'aprobado': 'badge-success',
-      'rechazado': 'badge-danger',
-      'correcciones': 'badge-warning'
-    };
-    return clases[estado] || 'badge-secondary';
-  }
-
-  // ===== MÉTODOS PARA FECHAS IMPORTANTES =====
-
-  async cargarFechasImportantes() {
-    if (!this.proyectoSeleccionado?.id) return;
-    
-    try {
-      this.loadingFechas = true;
-      const response = await this.apiService.getFechasImportantesProyecto(this.proyectoSeleccionado.id).toPromise();
-      
-      if (response && (response as any).success) {
-        this.fechasImportantes = (response as any).data.fechas_importantes || [];
-      } else {
-        this.fechasImportantes = [];
-      }
-      console.log('📅 Fechas importantes cargadas:', this.fechasImportantes.length);
-      this.cdr.detectChanges();
-    } catch (error: any) {
-      console.error('Error al cargar fechas importantes:', error);
-      this.error = 'Error al cargar fechas importantes';
-      this.fechasImportantes = [];
-      this.cdr.detectChanges();
-    } finally {
-      this.loadingFechas = false;
-    }
-  }
-
-  abrirModalFecha() {
-    this.mostrarModalFecha = true;
-    this.nuevaFecha = {
-      titulo: '',
-      descripcion: '',
-      tipo_fecha: 'entrega',
-      fecha_limite: null
-    };
-  }
-
-  cerrarModalFecha() {
-    this.mostrarModalFecha = false;
-    this.nuevaFecha = {
-      titulo: '',
-      descripcion: '',
-      tipo_fecha: 'entrega',
-      fecha_limite: null
-    };
-  }
-
-  async crearFechaImportante() {
-    if (!this.proyectoSeleccionado?.id) {
-      this.error = 'No hay proyecto seleccionado';
-      return;
-    }
-
-    if (!this.nuevaFecha.titulo?.trim()) {
-      this.error = 'El título es requerido';
-      return;
-    }
-
-    if (!this.nuevaFecha.fecha_limite) {
-      this.error = 'La fecha límite es requerida';
-      return;
-    }
-
-    try {
-      this.loading = true;
-      this.error = '';
-
-      const fechaData = {
-        titulo: this.nuevaFecha.titulo.trim(),
-        descripcion: this.nuevaFecha.descripcion?.trim() || '',
-        tipo_fecha: this.nuevaFecha.tipo_fecha,
-        fecha_limite: this.nuevaFecha.fecha_limite
-      };
-
-      await this.apiService.crearFechaImportante(this.proyectoSeleccionado.id, fechaData).toPromise();
-      
-      this.notificationService.success('Fecha importante creada exitosamente');
-      await this.cargarFechasImportantes();
-      this.cerrarModalFecha();
-    } catch (error: any) {
-      console.error('Error al crear fecha importante:', error);
-      this.error = 'Error al crear fecha importante: ' + (error.error?.message || error.message);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  async eliminarFecha(fecha: any) {
-    const confirmado = await this.notificationService.confirm(
-      `¿Estás seguro de eliminar la fecha "${fecha.titulo}"?`,
-      'Eliminar Fecha',
-      'Eliminar',
-      'Cancelar'
-    );
-
-    if (!confirmado) return;
-
-    try {
-      this.notificationService.warning('Funcionalidad de eliminar en desarrollo');
-    } catch (error: any) {
-      console.error('Error al eliminar fecha:', error);
-      this.notificationService.error('Error al eliminar fecha');
-    }
-  }
-
-  async eliminarFechaImportante(fechaId: string) {
-    const confirmed = await this.notificationService.confirm(
-      '¿Estás seguro de que quieres eliminar esta fecha importante?',
-      'Eliminar Fecha',
-      'Eliminar',
-      'Cancelar'
-    );
-    if (!confirmed) return;
-
-    if (!this.proyectoSeleccionado?.id) {
-      console.error('❌ No hay proyecto seleccionado');
-      return;
-    }
-
-    try {
-      this.loading = true;
-      await this.apiService.eliminarFechaImportante(this.proyectoSeleccionado.id, fechaId).toPromise();
-      
-      this.success = 'Fecha importante eliminada exitosamente';
-      await this.cargarFechasImportantes();
-    } catch (error: any) {
-      console.error('Error al eliminar fecha importante:', error);
-      this.error = 'Error al eliminar fecha importante: ' + (error.error?.message || error.message);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  getFechaEstado(fecha: any): string {
-    if (fecha.completada) return 'completada';
-    
-    const hoy = new Date();
-    const fechaLimite = new Date(fecha.fecha_limite);
-    
-    hoy.setHours(0, 0, 0, 0);
-    fechaLimite.setHours(0, 0, 0, 0);
-    
-    if (fechaLimite < hoy) return 'vencida';
-    if (fechaLimite.getTime() === hoy.getTime()) return 'hoy';
-    return 'pendiente';
-  }
-
-  getFechaClaseEstado(fecha: any): string {
-    const estado = this.getFechaEstado(fecha);
-    return `fecha-${estado}`;
-  }
-
-  formatearTipoFecha(tipo: string): string {
-    const tipos: { [key: string]: string } = {
-      'entrega': 'Entrega',
-      'reunion': 'Reunión',
-      'evaluacion': 'Evaluación',
-      'hito': 'Hito',
-      'deadline': 'Fecha límite',
-      'presentacion': 'Presentación'
-    };
-    return tipos[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
   }
 }

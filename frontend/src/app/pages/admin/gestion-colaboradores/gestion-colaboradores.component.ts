@@ -3,18 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ColaboradoresExternosService, ColaboradorExterno, EntidadExterna } from '../../../services/colaboradores-externos.service';
 import { environment } from '../../../../environments/environment';
 
@@ -24,18 +13,7 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatTableModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatCheckboxModule
+    MatSnackBarModule
   ],
   templateUrl: './gestion-colaboradores.component.html',
   styleUrls: ['./gestion-colaboradores.component.scss']
@@ -45,7 +23,6 @@ export class GestionColaboradoresComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private http = inject(HttpClient);
-  private dialog = inject(MatDialog);
 
   colaboradores = signal<ColaboradorExterno[]>([]);
   entidades = signal<EntidadExterna[]>([]);
@@ -53,8 +30,6 @@ export class GestionColaboradoresComponent implements OnInit {
   mostrarFormulario = signal(false);
   busqueda = '';
   
-  displayedColumns = ['nombre', 'entidad', 'tipo', 'contacto', 'verificado', 'acciones'];
-
   nuevoColaborador: ColaboradorExterno = this.getColaboradorVacio();
 
   tiposColaborador = [

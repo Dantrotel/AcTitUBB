@@ -81,7 +81,7 @@ export class ListarPropuestasComponent implements OnInit {
       this.userRole = payload.rol_id || '';
       this.esEstudiante = String(this.userRole) === '1'; // 1 para estudiante
       this.esProfesor = String(this.userRole) === '2'; // 2 para profesor
-      this.esAdmin = String(this.userRole) === '3'; // 3 para admin
+      this.esAdmin = String(this.userRole) === '3' || String(this.userRole) === '4'; // 3=admin, 4=super-admin
       // Puedes agregar un log si necesitas debug, pero no un objeto suelto
       // console.log({ rut: this.userRut, rol_id: this.userRole, tipo_rol_id: typeof this.userRole, esEstudiante: this.esEstudiante, esProfesor: this.esProfesor, esAdmin: this.esAdmin });
     } catch {
@@ -118,24 +118,8 @@ export class ListarPropuestasComponent implements OnInit {
             
             const todasLasPropuestas = Array.isArray(propuestasData) ? propuestasData : [];
             
-            
             // Filtrar propuestas según el rol del usuario
-            if (this.esEstudiante) {
-              
-              // Estudiantes ven solo sus propias propuestas
-              this.propuestas = todasLasPropuestas.filter(propuesta => {
-                // Comparar con y sin espacios
-                const propuestaRut = propuesta.estudiante_rut?.trim();
-                const userRut = this.userRut?.trim();
-                return propuestaRut === userRut;
-              });
-              
-              
-              // Verificación temporal: si no se encontraron propuestas, mostrar todas para debugging
-              if (this.propuestas.length === 0) {
-                this.propuestas = todasLasPropuestas;
-              }
-            } else if (this.esProfesor) {
+            if (this.esProfesor) {
               // Profesores ven propuestas asignadas a ellos
               this.propuestas = todasLasPropuestas.filter(propuesta => {
                 return propuesta.profesor_rut === this.userRut;

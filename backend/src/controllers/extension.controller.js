@@ -1,4 +1,5 @@
 import * as extensionModel from '../models/extension.model.js';
+import { pool } from '../db/connectionDB.js';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -122,8 +123,17 @@ export const obtenerSolicitudesPorProyecto = async (req, res) => {
 
         // Verificar permisos (estudiante del proyecto, profesor asignado o admin/superadmin)
         if (rol_id !== '3' && rol_id !== '4') {
-            // TODO: Verificar que sea estudiante del proyecto o profesor asignado
-            // Por ahora permitimos acceso a todos
+            const [esEstudiante] = await pool.execute(
+                'SELECT 1 FROM estudiantes_proyectos WHERE proyecto_id = ? AND estudiante_rut = ? LIMIT 1',
+                [proyectoId, usuario_rut]
+            );
+            const [esProfesor] = await pool.execute(
+                'SELECT 1 FROM asignaciones_proyectos WHERE proyecto_id = ? AND profesor_rut = ? AND activo = TRUE LIMIT 1',
+                [proyectoId, usuario_rut]
+            );
+            if (esEstudiante.length === 0 && esProfesor.length === 0) {
+                return res.status(403).json({ message: 'No tienes acceso a las solicitudes de este proyecto' });
+            }
         }
 
         const solicitudes = await extensionModel.obtenerSolicitudesPorProyecto(proyectoId, estado);

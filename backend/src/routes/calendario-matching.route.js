@@ -706,23 +706,15 @@ router.post('/reuniones/:id/confirmar', async (req, res) => {
         }
         
         const reunion = reuniones[0];
-        
-        // Actualizar estado de la reunión
-        const nuevoEstado = confirmado ? 'confirmada' : 'pendiente';
-        
-        await pool.execute(
-            `UPDATE reuniones_calendario 
-             SET estado = ?, updated_at = NOW() 
-             WHERE id = ?`,
-            [nuevoEstado, id]
-        );
-        
-        
-        
+
+        // El estado de reuniones_calendario solo acepta 'programada', 'realizada', 'cancelada'.
+        // Una reunión 'programada' ya es una reunión confirmada; no se cambia el estado.
         res.json({
             success: true,
-            data: { id, estado: nuevoEstado },
-            message: `Reunión ${confirmado ? 'confirmada' : 'marcada como pendiente'} exitosamente`
+            data: { id, estado: reunion.estado },
+            message: confirmado
+                ? 'Asistencia a la reunión confirmada exitosamente'
+                : 'Confirmación registrada'
         });
         
     } catch (error) {
@@ -783,44 +775,6 @@ router.get('/historial-reuniones', async (req, res) => {
     } catch (error) {
         
         res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-/**
- * POST /api/calendario-matching/reuniones/:id/marcar-realizada
- * Marcar una reunión como realizada
- */
-router.post('/reuniones/:id/marcar-realizada', async (req, res) => {
-    try {
-        const { user } = req;
-        const { id } = req.params;
-        const { acta_reunion } = req.body;
-        
-        const resultado = await ReunionesModel.actualizarEstadoReunion(
-            id,
-            'realizada',
-            user.rut,
-            { acta_reunion: acta_reunion || '' }
-        );
-        
-        if (resultado) {
-            res.json({
-                success: true,
-                message: 'Reunión marcada como realizada exitosamente'
-            });
-        } else {
-            res.status(404).json({
-                success: false,
-                message: 'Reunión no encontrada o sin permisos'
-            });
-        }
-        
-    } catch (error) {
-        
-        res.status(400).json({
             success: false,
             message: error.message
         });
@@ -960,6 +914,95 @@ router.get('/profesores', async (req, res) => {
             success: false,
             data: [], // Siempre devolver un array vacío
             message: error.message || 'Error interno del servidor'
+        });
+    }
+});
+
+// ===== ENDPOINTS DE BLOQUEOS DE HORARIOS =====
+
+/**
+ * POST /api/calendario-matching/bloqueos
+ * Crear un bloqueo de horario
+ */
+router.post('/bloqueos', async (req, res) => {
+    try {
+        const { user } = req;
+        const { fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, tipo } = req.body;
+
+        if (!fecha_inicio || !fecha_fin || !motivo || !tipo) {
+            return res.status(400).json({
+                success: false,
+                message: 'Campos requeridos: fecha_inicio, fecha_fin, motivo, tipo'
+            });
+        }
+
+        const id = await CalendarioMatchingModel.crearBloqueo(user.rut, { fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, tipo });
+
+        res.status(201).json({
+            success: true,
+            data: { id },
+            message: 'Bloqueo de horario creado exitosamente'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/calendario-matching/bloqueos
+ * Obtener bloqueos activos del usuario autenticado
+ */
+router.get('/bloqueos', async (req, res) => {
+    try {
+        const { user } = req;
+
+        const bloqueos = await CalendarioMatchingModel.obtenerBloqueosUsuario(user.rut);
+
+        res.json({
+            success: true,
+            data: bloqueos,
+            message: `Bloqueos de horario de ${user.nombre}`
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+/**
+ * DELETE /api/calendario-matching/bloqueos/:id
+ * Eliminar un bloqueo de horario
+ */
+router.delete('/bloqueos/:id', async (req, res) => {
+    try {
+        const { user } = req;
+        const { id } = req.params;
+
+        const eliminado = await CalendarioMatchingModel.eliminarBloqueo(id, user.rut);
+
+        if (!eliminado) {
+            return res.status(404).json({
+                success: false,
+                message: 'Bloqueo no encontrado o no tienes permisos para eliminarlo'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Bloqueo de horario eliminado exitosamente'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 });

@@ -7,10 +7,27 @@ import { cacheMiddleware, invalidateOnMutation } from '../config/cache.js';
 
 const routerProject = e.Router();
 
+// Wrapper para capturar errores de multer y devolver JSON 400 en vez de 500
+const uploadConManejo = (uploadMiddleware) => (req, res, next) => {
+  uploadMiddleware(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'El archivo excede el tamaño máximo de 10MB' });
+      }
+      return res.status(400).json({ success: false, message: err.message || 'Error al procesar el archivo' });
+    }
+    next();
+  });
+};
+
 // ===== RUTAS GENERALES (Con control de permisos automático) =====
 
 // Obtener todos los proyectos (filtrados por permisos del usuario)
 routerProject.get('/', verifySession, cacheMiddleware('proyectos'), ProjectController.getProjects);
+
+// Gestión de notificaciones (deben estar ANTES de /:projectId para evitar conflicto)
+routerProject.get('/notificaciones', verifySession, ProjectController.obtenerNotificaciones);
+routerProject.patch('/notificaciones/:notificacionId/leer', verifySession, ProjectController.marcarNotificacionLeida);
 
 // Obtener proyecto específico por ID (con verificación de permisos)
 routerProject.get('/:projectId', verifySession, cacheMiddleware('proyectos'), ProjectController.getDetailProject);
@@ -74,14 +91,18 @@ routerProject.patch('/cronogramas/:cronogramaId/aprobar', verifySession, checkRo
 // ✅ Gestión de hitos del cronograma (MEJORADO con peso, críticos, dependencias)
 routerProject.post('/cronogramas/:cronogramaId/hitos', verifySession, checkRole('2'), ProjectController.crearHitoCronograma);
 routerProject.get('/cronogramas/:cronogramaId/hitos', verifySession, ProjectController.obtenerHitosCronograma);
+routerProject.put('/cronogramas/:cronogramaId/hitos/:hitoId', verifySession, checkRole('2'), ProjectController.actualizarHitoCronograma);
+routerProject.delete('/cronogramas/:cronogramaId/hitos/:hitoId', verifySession, checkRole('2'), ProjectController.eliminarHitoCronograma);
+
+// ✅ Entregas de hitos (gestión completa)
+routerProject.get('/:projectId/cronogramas/:cronogramaId/hitos/:hitoId/entregas', verifySession, ProjectController.obtenerEntregasHito);
+routerProject.post('/:projectId/cronogramas/:cronogramaId/hitos/:hitoId/entregas', verifySession, checkRole('1'), uploadConManejo(uploadPropuesta), ProjectController.crearEntregaHito);
+routerProject.put('/:projectId/cronogramas/:cronogramaId/hitos/:hitoId/entregas/:entregaId', verifySession, checkRole('1'), ProjectController.actualizarEntregaHito);
+routerProject.delete('/:projectId/cronogramas/:cronogramaId/hitos/:hitoId/entregas/:entregaId', verifySession, checkRole('1'), ProjectController.eliminarEntregaHito);
 
 // ✅ Entregas y revisiones de hitos (CON emails y notificaciones automáticas)
-routerProject.post('/hitos/:hitoId/entregar', verifySession, checkRole('1'), uploadPropuesta, ProjectController.entregarHito);
+routerProject.post('/hitos/:hitoId/entregar', verifySession, checkRole('1'), uploadConManejo(uploadPropuesta), ProjectController.entregarHito);
 routerProject.patch('/hitos/:hitoId/revisar', verifySession, checkRole('2'), ProjectController.revisarHito);
-
-// Gestión de notificaciones
-routerProject.get('/notificaciones', verifySession, ProjectController.obtenerNotificaciones);
-routerProject.patch('/notificaciones/:notificacionId/leer', verifySession, ProjectController.marcarNotificacionLeida);
 
 // Configuración de alertas
 routerProject.post('/:projectId/alertas', verifySession, checkRole('2'), ProjectController.configurarAlertas);

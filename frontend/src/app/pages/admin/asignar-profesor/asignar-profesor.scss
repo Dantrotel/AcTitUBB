@@ -1,555 +1,255 @@
-// Variables de colores UBB (unificadas)
-$primary-color: #004b8d;
-$secondary-color: #0066cc;
-$secondary-color-light: #2989d8;
-$secondary-color-lighter: #7db9e8;
-$secondary-color-dark: #0c3d80;
-$danger-color: #dc3545;
-$danger-color-light: #e53935;
-$danger-color-dark: #7f0000;
-$white-color: #ffffff;
-$light-color: #f8f9fa;
-$gray-color: #e9ecef;
-$dark-color: #212529;
-$success-color: #28a745;
-$warning-color: #ffc107;
-$accent-color: #00a8ff;
-$info-color: #17a2b8;
-$light-gray: $light-color;
-$dark-gray: $dark-color;
-$border-color: $gray-color;
-$text-muted: #6c757d;
+@use 'sass:color';
 
-// Contenedor principal
+$primary: #004b8d; $blue: #0066cc; $green: #28a745; $orange: #fd7e14;
+$red: #dc3545; $info: #17a2b8; $gray: #6c757d;
+$border: #dee2e6; $bg: #f4f6f9; $white: #fff; $text: #212529; $muted: #6c757d;
+$shadow: 0 1px 4px rgba(0,0,0,.08); $radius: 8px;
+
+// ── Container ─────────────────────────────────────────────────────────────────
 .asignar-profesor-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, $light-gray 0%, #e9ecef 100%);
-  padding: 20px;
+  background: $bg;
+  padding: 1rem 1.25rem;
 
-  // Header principal
+  // ── Main Header ─────────────────────────────────────────────────────────────
   .main-header {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-    color: white;
-    padding: 30px;
-    border-radius: 15px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(0, 75, 141, 0.3);
+    background: linear-gradient(135deg, $primary 0%, $blue 100%);
+    color: $white;
+    padding: 0.75rem 1.25rem;
+    border-radius: $radius;
+    margin-bottom: 1rem;
     text-align: center;
 
     h1 {
-      margin: 0;
-      font-size: 2.5rem;
+      margin: 0 0 0.2rem;
+      font-size: 1rem;
       font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    p {
-      margin: 0;
-      opacity: 0.9;
-      font-size: 1.1rem;
-    }
-  }
-
-  // Estados de carga y error
-  .loading-state, .error-state {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-
-    .loading-spinner, .error-icon {
-      i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-      }
-    }
-
-    .loading-spinner i {
-      color: $primary-color;
-      animation: spin 1s linear infinite;
-    }
-
-    .error-icon i {
-      color: $danger-color;
-    }
-
-    h3 {
-      font-size: 1.5rem;
-      color: $dark-gray;
-      margin-bottom: 0.5rem;
-    }
-
-    p {
-      color: $text-muted;
-      font-size: 1.1rem;
-      margin-bottom: 0;
-    }
-  }
-
-  // Contenido principal
-  .asignacion-content {
-    display: grid;
-    gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  // Tarjetas generales
-  .propuesta-info-card,
-  .asignacion-form-card,
-  .profesores-card {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: transform 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-    }
-
-    .card-header {
-      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-      color: white;
-      padding: 20px 25px;
-
-      h2 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        i {
-          font-size: 1.2rem;
-        }
-      }
-    }
-
-    .card-content {
-      padding: 25px;
-    }
-  }
-
-  // Información de la propuesta
-  .propuesta-details {
-    .detail-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-      padding: 15px;
-      background: $light-gray;
-      border-radius: 10px;
-      border-left: 4px solid $primary-color;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .detail-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-width: 180px;
-        font-weight: 600;
-        color: $dark-gray;
-
-        i {
-          color: $primary-color;
-          width: 16px;
-          font-size: 1.1rem;
-        }
-      }
-
-      .detail-value {
-        flex: 1;
-        color: $dark-gray;
-        font-weight: 500;
-
-        .estado-badge {
-          padding: 8px 16px;
-          border-radius: 25px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-
-          &.estado-pendiente {
-            background: rgba($warning-color, 0.15);
-            color: #856404;
-            border: 1px solid rgba($warning-color, 0.3);
-          }
-
-          &.estado-revision {
-            background: rgba($info-color, 0.15);
-            color: $info-color;
-            border: 1px solid rgba($info-color, 0.3);
-          }
-
-          &.estado-aprobada {
-            background: rgba($success-color, 0.15);
-            color: #155724;
-            border: 1px solid rgba($success-color, 0.3);
-          }
-
-          &.estado-rechazada {
-            background: rgba($danger-color, 0.15);
-            color: #721c24;
-            border: 1px solid rgba($danger-color, 0.3);
-          }
-
-          &.estado-correcciones {
-            background: rgba($accent-color, 0.15);
-            color: $accent-color;
-            border: 1px solid rgba($accent-color, 0.3);
-          }
-
-          &.estado-sin-estado {
-            background: rgba($text-muted, 0.15);
-            color: $text-muted;
-            border: 1px solid rgba($text-muted, 0.3);
-          }
-        }
-      }
-    }
-  }
-
-  // Formulario de asignación
-  .form-group {
-    margin-bottom: 20px;
-
-    label {
-      display: block;
-      font-weight: 600;
-      color: $dark-gray;
-      margin-bottom: 8px;
-      font-size: 1rem;
-    }
-
-    .form-select {
-      width: 100%;
-      padding: 12px 15px;
-      border: 2px solid $border-color;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: white;
-
-      &:focus {
-        outline: none;
-        border-color: $primary-color;
-        box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.1);
-      }
-
-      &:disabled {
-        background: $light-gray;
-        cursor: not-allowed;
-        opacity: 0.7;
-      }
-    }
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-top: 25px;
-
-    button {
-      flex: 1;
-      min-width: 150px;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-
-      &:hover:not(:disabled) {
-        transform: translateY(-2px);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      i {
-        font-size: 1rem;
-      }
+      gap: 0.5rem;
+      i { font-size: 0.95rem; }
     }
+
+    p { margin: 0; font-size: 0.78rem; opacity: .85; }
   }
 
-  // Lista de profesores
-  .profesores-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 20px;
-
-    .profesor-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
-      background: $light-gray;
-      border-radius: 12px;
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-        transform: scaleY(0);
-        transition: transform 0.3s ease;
-      }
-
-      &:hover {
-        border-color: $primary-color;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 75, 141, 0.15);
-
-        &::before {
-          transform: scaleY(1);
-        }
-      }
-
-      .profesor-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex: 1;
-
-        .profesor-avatar {
-          width: 60px;
-          height: 60px;
-          background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 1.5rem;
-          box-shadow: 0 4px 15px rgba(0, 75, 141, 0.3);
-        }
-
-        .profesor-details {
-          h4 {
-            margin: 0 0 5px 0;
-            color: $dark-gray;
-            font-size: 1.1rem;
-            font-weight: 600;
-          }
-
-          p {
-            margin: 0 0 3px 0;
-            color: $text-muted;
-            font-size: 0.9rem;
-
-            &.profesor-email {
-              color: $primary-color;
-              font-style: italic;
-              font-weight: 500;
-            }
-          }
-        }
-      }
-
-      .profesor-actions {
-        button {
-          padding: 10px 16px;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 0.9rem;
-          background: linear-gradient(135deg, $success-color 0%, #20c997 100%);
-          color: white;
-          box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
-
-          &:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-          }
-
-          &:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-          }
-
-          i {
-            font-size: 0.9rem;
-          }
-        }
-      }
-    }
-  }
-
-  // Botones específicos
-  .btn-primary {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-    color: white;
-    box-shadow: 0 2px 10px rgba(0, 75, 141, 0.3);
-
-    &:hover:not(:disabled) {
-      box-shadow: 0 4px 15px rgba(0, 75, 141, 0.4);
-    }
-  }
-
-  .btn-secondary {
-    background: $light-gray;
-    color: $primary-color;
-    border: 2px solid $primary-color;
-    box-shadow: 0 2px 10px rgba(0, 75, 141, 0.1);
-
-    &:hover:not(:disabled) {
-      background: $primary-color;
-      color: white;
-      box-shadow: 0 4px 15px rgba(0, 75, 141, 0.3);
-    }
-  }
-
-  .btn-volver {
-    background: linear-gradient(135deg, $text-muted 0%, #495057 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 2px 10px rgba(108, 117, 125, 0.3);
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
-    }
-  }
-
-  .btn-danger {
-    background: linear-gradient(135deg, $danger-color 0%, #c82333 100%);
-    color: white;
-    box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
-
-    &:hover:not(:disabled) {
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-    }
-  }
-
-  // Footer
-  .main-footer {
-    background: $dark-gray;
-    color: white;
+  // ── Loading / Error ──────────────────────────────────────────────────────────
+  .loading-state, .error-state {
     text-align: center;
-    padding: 20px;
-    margin-top: 30px;
-    border-radius: 10px;
+    padding: 2rem 1.5rem;
+    background: $white;
+    border: 1px solid $border;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    margin-bottom: 0.875rem;
 
-    .footer-content {
-      p {
-        margin: 0;
-        font-size: 0.9rem;
-        opacity: 0.8;
-      }
+    .loading-spinner i, .error-icon i {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: block;
     }
+    .loading-spinner i { color: $blue; animation: spin 1s linear infinite; }
+    .error-icon i      { color: $red; }
+
+    h3 { font-size: 0.92rem; color: $text; margin: 0 0 0.25rem; }
+    p  { font-size: 0.82rem; color: $muted; margin: 0; }
   }
 
-  // Animaciones
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  // ── Asignacion Content ───────────────────────────────────────────────────────
+  .asignacion-content {
+    display: grid;
+    gap: 0.875rem;
+    max-width: 1100px;
+    margin: 0 auto;
   }
 
-  // Responsive
-  @media (max-width: 768px) {
-    padding: 15px;
+  // ── Cards ──────────────────────────────────────────────────────────────────
+  .propuesta-info-card,
+  .asignacion-form-card,
+  .profesores-card {
+    background: $white;
+    border: 1px solid $border;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    overflow: hidden;
 
-    .main-header {
-      padding: 20px;
-      margin-bottom: 20px;
+    .card-header {
+      background: linear-gradient(135deg, $primary 0%, $blue 100%);
+      color: $white;
+      padding: 0.6rem 0.875rem;
 
-      h1 {
-        font-size: 2rem;
+      h2 {
+        margin: 0; font-size: 0.88rem; font-weight: 700;
+        display: flex; align-items: center; gap: 0.4rem;
+        i { font-size: 0.85rem; }
       }
     }
 
-    .form-actions {
-      flex-direction: column;
+    .card-content { padding: 0.875rem; }
+  }
 
-      button {
-        width: 100%;
-      }
-
-      .btn-volver {
-        order: 3; // Colocar el botón volver al final
-      }
-    }
-
+  // ── Propuesta Details ────────────────────────────────────────────────────────
+  .propuesta-details {
     .detail-row {
-      flex-direction: column;
+      display: flex;
       align-items: flex-start;
-      gap: 10px;
+      margin-bottom: 0.5rem;
+      padding: 0.55rem 0.75rem;
+      background: $bg;
+      border-radius: 5px;
+      border-left: 3px solid $primary;
+      gap: 0.75rem;
+
+      &:last-child { margin-bottom: 0; }
 
       .detail-label {
-        min-width: auto;
-      }
-    }
-
-    .form-actions {
-      flex-direction: column;
-
-      button {
-        width: 100%;
-      }
-    }
-
-    .profesores-grid {
-      grid-template-columns: 1fr;
-      gap: 15px;
-    }
-
-    .profesor-item {
-      flex-direction: column;
-      gap: 15px;
-      text-align: center;
-
-      .profesor-info {
-        flex-direction: column;
+        display: flex; align-items: center; gap: 0.4rem;
+        min-width: 145px; font-weight: 600; font-size: 0.8rem; color: $text; flex-shrink: 0;
+        i { color: $primary; font-size: 0.82rem; width: 14px; }
       }
 
-      .profesor-actions {
-        width: 100%;
+      .detail-value {
+        flex: 1; color: $muted; font-size: 0.82rem;
 
-        button {
-          width: 100%;
-          justify-content: center;
+        .estado-badge {
+          padding: 0.2rem 0.6rem; border-radius: 12px;
+          font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+          &.estado-pendiente   { background: #fff3cd; color: #856404; }
+          &.estado-revision    { background: #cfe2ff; color: #084298; }
+          &.estado-aprobada    { background: #d4edda; color: #155724; }
+          &.estado-rechazada   { background: #f8d7da; color: #721c24; }
+          &.estado-correcciones{ background: #d1ecf1; color: #0c5460; }
+          &.estado-sin-estado  { background: #e9ecef; color: #495057; }
         }
       }
     }
   }
 
-  @media (max-width: 480px) {
-    .card-content {
-      padding: 20px;
-    }
+  // ── Info Message ─────────────────────────────────────────────────────────────
+  .info-message {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    padding: 0.6rem 0.75rem; background: #cfe2ff;
+    border-radius: 5px; border-left: 3px solid $blue;
+    margin-bottom: 0.75rem;
+    i { color: $blue; font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+    p { margin: 0; font-size: 0.8rem; color: #084298; }
+  }
 
-    .profesor-item {
-      padding: 15px;
+  // ── Form Group ────────────────────────────────────────────────────────────────
+  .form-group {
+    margin-bottom: 0.75rem;
+    label {
+      display: block; font-weight: 600; color: $text;
+      margin-bottom: 0.28rem; font-size: 0.8rem;
+    }
+    .form-select {
+      width: 100%; padding: 0.45rem 0.75rem;
+      border: 1px solid $border; border-radius: 5px;
+      font-size: 0.82rem; background: $white; box-sizing: border-box;
+      transition: border-color .18s;
+      &:focus { outline: none; border-color: $blue; box-shadow: 0 0 0 2px rgba(0,102,204,.1); }
+      &:disabled { background: $bg; cursor: not-allowed; opacity: .7; }
     }
   }
-} 
+
+  // ── Form Actions ─────────────────────────────────────────────────────────────
+  .form-actions {
+    display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem;
+
+    button {
+      flex: 1; min-width: 120px;
+      padding: 0.45rem 0.75rem; border: none; border-radius: 5px;
+      font-weight: 600; font-size: 0.8rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+      transition: opacity .15s;
+      &:hover:not(:disabled) { opacity: .88; }
+      &:disabled { opacity: .6; cursor: not-allowed; }
+      i { font-size: 0.82rem; }
+    }
+  }
+
+  // ── Profesores Grid ───────────────────────────────────────────────────────────
+  .profesores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.625rem;
+  }
+
+  .profesor-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem; background: $bg; border-radius: 6px;
+    border: 1px solid $border; transition: all .15s;
+
+    &:hover {
+      border-color: $primary;
+      box-shadow: 0 2px 8px rgba(0,75,141,.12);
+    }
+
+    .profesor-info {
+      display: flex; align-items: center; gap: 0.7rem; flex: 1;
+      .profesor-avatar {
+        width: 42px; height: 42px;
+        background: linear-gradient(135deg, $primary 0%, $blue 100%);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: $white; font-size: 1.1rem; flex-shrink: 0;
+      }
+      .profesor-details {
+        h4 { margin: 0 0 0.18rem; color: $text; font-size: 0.85rem; font-weight: 600; }
+        p  { margin: 0 0 0.12rem; color: $muted; font-size: 0.76rem;
+          &.profesor-email { color: $blue; font-style: italic; }
+        }
+      }
+    }
+
+    .profesor-actions button {
+      padding: 0.38rem 0.7rem; border: none; border-radius: 5px;
+      font-weight: 600; cursor: pointer; font-size: 0.78rem;
+      display: flex; align-items: center; gap: 0.3rem;
+      background: $green; color: $white;
+      transition: opacity .15s;
+      &:hover:not(:disabled) { opacity: .85; }
+      &:disabled { opacity: .6; cursor: not-allowed; }
+      i { font-size: 0.8rem; }
+    }
+  }
+
+  // ── Button Colors ─────────────────────────────────────────────────────────────
+  .btn-primary  { background: $primary; color: $white; }
+  .btn-secondary { background: $bg; color: $primary; border: 1px solid $primary; }
+  .btn-danger   { background: $red; color: $white; }
+  .btn-volver   { background: $muted; color: $white; }
+
+  // ── Footer ─────────────────────────────────────────────────────────────────────
+  .main-footer {
+    background: $text;
+    color: $white;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    margin-top: 1.25rem;
+    border-radius: 6px;
+    .footer-content p { margin: 0; font-size: 0.76rem; opacity: .75; }
+  }
+
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  // ── Responsive ────────────────────────────────────────────────────────────────
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+
+    .main-header h1 { font-size: 0.92rem; }
+
+    .form-actions { flex-direction: column; button { width: 100%; } }
+
+    .detail-row { flex-direction: column; gap: 0.25rem;
+      .detail-label { min-width: auto; }
+    }
+
+    .profesores-grid { grid-template-columns: 1fr; }
+
+    .profesor-item { flex-direction: column; gap: 0.625rem;
+      .profesor-info { flex-direction: column; text-align: center; }
+      .profesor-actions button { width: 100%; justify-content: center; }
+    }
+  }
+}

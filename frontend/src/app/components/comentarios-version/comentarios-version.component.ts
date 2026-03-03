@@ -2,14 +2,6 @@ import { Component, Inject, OnInit, signal, inject, computed } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { VersionesPlantillasService, ComentarioVersion, VersionDocumento } from '../../services/versiones-plantillas.service';
 
@@ -25,24 +17,21 @@ interface DialogData {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatDividerModule,
-    MatProgressSpinnerModule
+    MatDialogModule
   ],
   template: `
-    <h2 mat-dialog-title>
-      <mat-icon>comment</mat-icon>
-      Comentarios - {{ data.version.numero_version }}
-    </h2>
+    <div class="dialog-header">
+      <h2>
+        <i class="fas fa-comments"></i>
+        Comentarios - {{ data.version.numero_version }}
+      </h2>
+      <button class="btn-close" (click)="cerrar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
 
-    <mat-dialog-content>
-      <!-- Información de la versión -->
+    <div mat-dialog-content class="dialog-body">
+      <!-- Info versión -->
       <div class="version-info">
         <div class="info-row">
           <span class="label">Archivo:</span>
@@ -50,24 +39,24 @@ interface DialogData {
         </div>
         <div class="info-row">
           <span class="label">Estado:</span>
-          <mat-chip [class]="'chip-estado-' + data.version.estado">
+          <span [ngClass]="'chip chip-estado-' + data.version.estado">
             {{ getEstadoLabel(data.version.estado) }}
-          </mat-chip>
+          </span>
         </div>
       </div>
 
-      <mat-divider></mat-divider>
+      <hr class="divider" />
 
       <!-- Lista de comentarios -->
       <div class="comentarios-container">
         @if (cargando()) {
           <div class="loading">
-            <mat-spinner diameter="40"></mat-spinner>
+            <div class="spinner"></div>
             <p>Cargando comentarios...</p>
           </div>
         } @else if (comentarios().length === 0) {
           <div class="empty-state">
-            <mat-icon>chat_bubble_outline</mat-icon>
+            <i class="fas fa-comment-dots"></i>
             <p>No hay comentarios aún</p>
             @if (puedeComentarComputed()) {
               <span class="hint">Sé el primero en agregar un comentario</span>
@@ -79,27 +68,27 @@ interface DialogData {
               <div class="comentario-item" [class.resuelto]="comentario.resuelto">
                 <div class="comentario-header">
                   <div class="autor-info">
-                    <mat-icon class="avatar-icon">account_circle</mat-icon>
+                    <div class="avatar-circle">{{ comentario.autor_nombre.charAt(0).toUpperCase() }}</div>
                     <div>
                       <strong>{{ comentario.autor_nombre }}</strong>
                       <span class="rol">{{ getRolLabel(comentario.autor_rol) }}</span>
                     </div>
                   </div>
                   <div class="comentario-meta">
-                    <mat-chip [class]="'chip-tipo-' + comentario.tipo_comentario" class="small-chip">
+                    <span [ngClass]="'chip chip-tipo-' + comentario.tipo_comentario">
                       {{ getTipoLabel(comentario.tipo_comentario) }}
-                    </mat-chip>
-                    <mat-chip [class]="'chip-prioridad-' + comentario.prioridad" class="small-chip">
-                      <mat-icon>{{ getPrioridadIcon(comentario.prioridad) }}</mat-icon>
+                    </span>
+                    <span [ngClass]="'chip chip-prioridad-' + comentario.prioridad">
+                      <i [class]="getPrioridadIcon(comentario.prioridad)"></i>
                       {{ comentario.prioridad }}
-                    </mat-chip>
+                    </span>
                   </div>
                 </div>
 
                 <div class="comentario-content">
                   @if (comentario.seccion_referencia) {
                     <div class="seccion-ref">
-                      <mat-icon>location_on</mat-icon>
+                      <i class="fas fa-map-marker-alt"></i>
                       <span>{{ comentario.seccion_referencia }}</span>
                     </div>
                   }
@@ -109,16 +98,15 @@ interface DialogData {
                 <div class="comentario-footer">
                   <span class="fecha">{{ formatearFecha(comentario.created_at) }}</span>
                   @if (puedeComentarComputed() && !comentario.resuelto) {
-                    <button mat-button (click)="resolverComentario(comentario)" class="btn-resolver">
-                      <mat-icon>check_circle</mat-icon>
+                    <button class="btn btn-sm btn-outline-success" (click)="resolverComentario(comentario)">
+                      <i class="fas fa-check-circle"></i>
                       Marcar como Resuelto
                     </button>
                   }
                   @if (comentario.resuelto) {
-                    <mat-chip class="chip-resuelto">
-                      <mat-icon>check_circle</mat-icon>
-                      Resuelto
-                    </mat-chip>
+                    <span class="chip chip-resuelto">
+                      <i class="fas fa-check-circle"></i> Resuelto
+                    </span>
                   }
                 </div>
               </div>
@@ -127,78 +115,73 @@ interface DialogData {
         }
       </div>
 
-      <!-- Formulario para nuevo comentario (solo profesores) -->
+      <!-- Formulario nuevo comentario -->
       @if (puedeComentarComputed() && mostrarFormulario()) {
-        <mat-divider></mat-divider>
-        
+        <hr class="divider" />
         <div class="nuevo-comentario">
           <h3>
-            <mat-icon>add_comment</mat-icon>
+            <i class="fas fa-comment-medical"></i>
             Agregar Comentario
           </h3>
 
           <form [formGroup]="formularioComentario" class="comentario-form">
             <div class="form-row">
-              <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>Tipo de Comentario</mat-label>
-                <mat-select formControlName="tipo_comentario">
-                  <mat-option value="general">General</mat-option>
-                  <mat-option value="sugerencia">Sugerencia</mat-option>
-                  <mat-option value="error">Error / Corrección</mat-option>
-                  <mat-option value="aprobacion">Aprobación</mat-option>
-                  <mat-option value="rechazo">Rechazo</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>Prioridad</mat-label>
-                <mat-select formControlName="prioridad">
-                  <mat-option value="baja">
-                    <mat-icon>arrow_downward</mat-icon>
-                    Baja
-                  </mat-option>
-                  <mat-option value="media">
-                    <mat-icon>remove</mat-icon>
-                    Media
-                  </mat-option>
-                  <mat-option value="alta">
-                    <mat-icon>arrow_upward</mat-icon>
-                    Alta
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+              <div class="form-group flex-1">
+                <label class="form-label">Tipo de Comentario</label>
+                <select class="form-input" formControlName="tipo_comentario">
+                  <option value="general">General</option>
+                  <option value="sugerencia">Sugerencia</option>
+                  <option value="error">Error / Corrección</option>
+                  <option value="aprobacion">Aprobación</option>
+                  <option value="rechazo">Rechazo</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Prioridad</label>
+                <select class="form-input" formControlName="prioridad">
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </div>
             </div>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Sección Referenciada (Opcional)</mat-label>
-              <input matInput 
-                     formControlName="seccion_referencia"
-                     placeholder='Ej: "Capítulo 3", "Página 15", "Introducción"'>
-              <mat-hint>Indica la sección específica del documento</mat-hint>
-            </mat-form-field>
+            <div class="form-group">
+              <label class="form-label">Sección Referenciada (Opcional)</label>
+              <input
+                class="form-input"
+                type="text"
+                formControlName="seccion_referencia"
+                placeholder='Ej: "Capítulo 3", "Página 15", "Introducción"'
+              />
+              <span class="form-hint">Indica la sección específica del documento</span>
+            </div>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Comentario</mat-label>
-              <textarea matInput 
-                        formControlName="comentario"
-                        rows="4"
-                        placeholder="Escribe tu comentario aquí..."
-                        required></textarea>
-              <mat-hint>{{ formularioComentario.get('comentario')?.value?.length || 0 }} caracteres</mat-hint>
-            </mat-form-field>
+            <div class="form-group">
+              <label class="form-label">Comentario <span class="required">*</span></label>
+              <textarea
+                class="form-input"
+                formControlName="comentario"
+                rows="4"
+                placeholder="Escribe tu comentario aquí..."
+              ></textarea>
+              <span class="form-hint">{{ formularioComentario.get('comentario')?.value?.length || 0 }} caracteres</span>
+            </div>
 
             <div class="form-actions">
-              <button mat-button type="button" (click)="ocultarFormulario()">
+              <button type="button" class="btn btn-ghost" (click)="ocultarFormulario()">
                 Cancelar
               </button>
-              <button mat-raised-button 
-                      color="primary" 
-                      (click)="agregarComentario()"
-                      [disabled]="!formularioComentario.valid || enviando()">
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="agregarComentario()"
+                [disabled]="!formularioComentario.valid || enviando()"
+              >
                 @if (enviando()) {
-                  <mat-spinner diameter="20"></mat-spinner>
+                  <span class="spinner-sm"></span>
                 } @else {
-                  <mat-icon>send</mat-icon>
+                  <i class="fas fa-paper-plane"></i>
                 }
                 Enviar Comentario
               </button>
@@ -208,55 +191,90 @@ interface DialogData {
       }
 
       @if (puedeComentarComputed() && !mostrarFormulario()) {
-        <button mat-raised-button color="primary" class="btn-agregar" (click)="mostrarFormularioAgregar()">
-          <mat-icon>add_comment</mat-icon>
-          Agregar Comentario
-        </button>
+        <div class="btn-agregar-wrap">
+          <button class="btn btn-primary btn-block" (click)="mostrarFormularioAgregar()">
+            <i class="fas fa-comment-medical"></i>
+            Agregar Comentario
+          </button>
+        </div>
       }
-    </mat-dialog-content>
+    </div>
 
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="cerrar()">Cerrar</button>
-    </mat-dialog-actions>
+    <div mat-dialog-actions class="dialog-footer">
+      <button class="btn btn-ghost" (click)="cerrar()">Cerrar</button>
+    </div>
   `,
   styles: [`
-    h2 {
+    .dialog-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin: 0;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
+      color: #fff;
+
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
     }
 
-    mat-dialog-content {
-      min-width: 700px;
-      max-height: 80vh;
+    .btn-close {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+
+      &:hover { background: rgba(255,255,255,0.25); }
+    }
+
+    .dialog-body {
+      min-width: 680px;
+      max-height: 72vh;
       overflow-y: auto;
       padding: 0 !important;
+
+      &::-webkit-scrollbar { width: 5px; }
+      &::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     }
 
     .version-info {
-      padding: 20px 24px;
-      background: #f5f5f5;
+      padding: 16px 24px;
+      background: #f8f9fa;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
 
-      .info-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 8px;
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
 
-        .label {
-          font-weight: 500;
-          color: #666;
-        }
+      .label { font-weight: 500; color: #666; font-size: 13px; }
+      .value { color: #333; font-size: 13px; }
+    }
 
-        .value {
-          color: #333;
-        }
-      }
+    .divider {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 0;
     }
 
     .comentarios-container {
       padding: 20px 24px;
-      min-height: 200px;
+      min-height: 160px;
     }
 
     .loading, .empty-state {
@@ -266,54 +284,59 @@ interface DialogData {
       justify-content: center;
       padding: 40px;
       text-align: center;
+      color: #aaa;
 
-      mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: #ccc;
-        margin-bottom: 15px;
-      }
-
-      p {
-        margin: 10px 0;
-        color: #666;
-      }
-
-      .hint {
-        font-size: 14px;
-        color: #999;
-      }
+      i { font-size: 48px; margin-bottom: 12px; }
+      p { margin: 0 0 6px 0; color: #777; }
+      .hint { font-size: 13px; }
     }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #004b8d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    .spinner-sm {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .comentarios-lista {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .comentario-item {
-      padding: 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      background: white;
-      transition: all 0.3s ease;
+      padding: 14px 16px;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      background: #fff;
+      transition: box-shadow 0.2s;
 
-      &:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      }
-
-      &.resuelto {
-        opacity: 0.7;
-        background: #f9f9f9;
-      }
+      &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+      &.resuelto { opacity: 0.65; background: #fafafa; }
     }
 
     .comentario-header {
       display: flex;
       justify-content: space-between;
-      align-items: start;
-      margin-bottom: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .autor-info {
@@ -321,63 +344,75 @@ interface DialogData {
       align-items: center;
       gap: 10px;
 
-      .avatar-icon {
-        font-size: 32px;
-        width: 32px;
-        height: 32px;
-        color: #666;
-      }
+      strong { display: block; font-size: 13px; color: #222; }
+      .rol { font-size: 11px; color: #999; }
+    }
 
-      strong {
-        display: block;
-        margin-bottom: 2px;
-      }
-
-      .rol {
-        font-size: 12px;
-        color: #999;
-      }
+    .avatar-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #004b8d, #0066cc);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
     }
 
     .comentario-meta {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
+      align-items: center;
     }
 
-    .small-chip {
-      height: 24px;
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
       font-size: 11px;
-      
-      mat-icon {
-        font-size: 14px;
-        width: 14px;
-        height: 14px;
-      }
+      font-weight: 600;
     }
+
+    .chip-resuelto { background: #e8f5e9; color: #2e7d32; }
+    .chip-tipo-general { background: #e3f2fd; color: #1565c0; }
+    .chip-tipo-sugerencia { background: #fff3e0; color: #e65100; }
+    .chip-tipo-error { background: #ffebee; color: #b71c1c; }
+    .chip-tipo-aprobacion { background: #e8f5e9; color: #2e7d32; }
+    .chip-tipo-rechazo { background: #fce4ec; color: #880e4f; }
+    .chip-prioridad-baja { background: #e8f5e9; color: #2e7d32; }
+    .chip-prioridad-media { background: #fff3e0; color: #e65100; }
+    .chip-prioridad-alta { background: #ffebee; color: #b71c1c; }
+    .chip-estado-borrador { background: #eceff1; color: #455a64; }
+    .chip-estado-enviado { background: #e3f2fd; color: #1565c0; }
+    .chip-estado-en_revision { background: #fff3e0; color: #e65100; }
+    .chip-estado-revisado { background: #e0f2f1; color: #00695c; }
+    .chip-estado-aprobado { background: #e8f5e9; color: #2e7d32; }
+    .chip-estado-rechazado { background: #ffebee; color: #b71c1c; }
 
     .comentario-content {
-      margin: 12px 0;
+      margin: 10px 0;
 
       .seccion-ref {
         display: flex;
         align-items: center;
-        gap: 5px;
-        color: #666;
-        font-size: 13px;
-        margin-bottom: 8px;
-
-        mat-icon {
-          font-size: 16px;
-          width: 16px;
-          height: 16px;
-        }
+        gap: 6px;
+        color: #777;
+        font-size: 12px;
+        margin-bottom: 6px;
+        i { color: #004b8d; }
       }
 
       .comentario-texto {
         margin: 0;
         line-height: 1.6;
         color: #333;
+        font-size: 14px;
       }
     }
 
@@ -385,105 +420,113 @@ interface DialogData {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 12px;
-
-      .fecha {
-        font-size: 12px;
-        color: #999;
-      }
-
-      .btn-resolver {
-        mat-icon {
-          margin-right: 4px;
-        }
-      }
+      margin-top: 10px;
+      .fecha { font-size: 11px; color: #bbb; }
     }
 
-    .chip-resuelto {
-      background: #E8F5E9 !important;
-      color: #388E3C !important;
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
     }
 
-    .chip-tipo-general { background: #E3F2FD; color: #1976D2; }
-    .chip-tipo-sugerencia { background: #FFF3E0; color: #F57C00; }
-    .chip-tipo-error { background: #FFEBEE; color: #C62828; }
-    .chip-tipo-aprobacion { background: #E8F5E9; color: #388E3C; }
-    .chip-tipo-rechazo { background: #FCE4EC; color: #C2185B; }
-
-    .chip-prioridad-baja { background: #E8F5E9; color: #388E3C; }
-    .chip-prioridad-media { background: #FFF3E0; color: #F57C00; }
-    .chip-prioridad-alta { background: #FFEBEE; color: #C62828; }
-
-    .chip-estado-borrador { background: #ECEFF1; color: #546E7A; }
-    .chip-estado-enviado { background: #E3F2FD; color: #1976D2; }
-    .chip-estado-en_revision { background: #FFF3E0; color: #F57C00; }
-    .chip-estado-revisado { background: #E0F2F1; color: #00796B; }
-    .chip-estado-aprobado { background: #E8F5E9; color: #388E3C; }
-    .chip-estado-rechazado { background: #FFEBEE; color: #C62828; }
+    .btn-primary { background: #004b8d; color: #fff; &:hover:not(:disabled) { background: #003a6e; } }
+    .btn-ghost { background: transparent; color: #555; border: 1px solid #ddd; &:hover { background: #f5f5f5; } }
+    .btn-sm { padding: 4px 12px; font-size: 12px; }
+    .btn-block { width: calc(100% - 48px); justify-content: center; }
+    .btn-outline-success { background: transparent; color: #2e7d32; border: 1px solid #a5d6a7; &:hover { background: #e8f5e9; } }
 
     .nuevo-comentario {
       padding: 20px 24px;
       background: #f9f9f9;
 
       h3 {
+        margin: 0 0 18px 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: #333;
         display: flex;
         align-items: center;
         gap: 8px;
-        margin: 0 0 20px 0;
-        color: #333;
+        i { color: #004b8d; }
       }
     }
 
     .comentario-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .form-row {
       display: flex;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .flex-1 {
-      flex: 1;
+    .flex-1 { flex: 1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      .required { color: #e53935; }
     }
 
-    .full-width {
-      width: 100%;
+    .form-input {
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+      font-family: inherit;
+
+      &:focus { border-color: #004b8d; }
     }
+
+    select.form-input { cursor: pointer; }
+    textarea.form-input { resize: vertical; min-height: 90px; }
+
+    .form-hint { font-size: 11px; color: #aaa; }
 
     .form-actions {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      margin-top: 10px;
+      padding-top: 4px;
     }
 
-    .btn-agregar {
-      margin: 20px 24px;
-      width: calc(100% - 48px);
+    .btn-agregar-wrap {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: center;
     }
 
-    mat-dialog-actions {
-      padding: 20px 24px;
-      margin: 0;
+    .dialog-footer {
+      padding: 14px 24px;
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid #eee;
+      margin: 0 !important;
+      min-height: unset !important;
     }
 
     @media (max-width: 768px) {
-      mat-dialog-content {
-        min-width: auto;
-        width: 100%;
-      }
-
-      .form-row {
-        flex-direction: column;
-      }
-
-      .comentario-header {
-        flex-direction: column;
-        gap: 10px;
-      }
+      .dialog-body { min-width: auto; width: 100%; }
+      .form-row { flex-direction: column; }
+      .comentario-header { flex-direction: column; }
     }
   `]
 })
@@ -526,7 +569,7 @@ export class ComentariosVersionComponent implements OnInit {
         this.comentarios.set(response.comentarios);
         this.cargando.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al cargar comentarios', 'Cerrar', { duration: 3000 });
         this.cargando.set(false);
       }
@@ -539,16 +582,11 @@ export class ComentariosVersionComponent implements OnInit {
 
   ocultarFormulario() {
     this.mostrarFormulario.set(false);
-    this.formularioComentario.reset({
-      tipo_comentario: 'general',
-      prioridad: 'media'
-    });
+    this.formularioComentario.reset({ tipo_comentario: 'general', prioridad: 'media' });
   }
 
   agregarComentario() {
-    if (!this.formularioComentario.valid) {
-      return;
-    }
+    if (!this.formularioComentario.valid) return;
 
     this.enviando.set(true);
 
@@ -562,7 +600,7 @@ export class ComentariosVersionComponent implements OnInit {
         this.ocultarFormulario();
         this.enviando.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al agregar comentario', 'Cerrar', { duration: 3000 });
         this.enviando.set(false);
       }
@@ -575,7 +613,7 @@ export class ComentariosVersionComponent implements OnInit {
         this.snackBar.open('Comentario marcado como resuelto', 'Cerrar', { duration: 2000 });
         this.cargarComentarios();
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al resolver comentario', 'Cerrar', { duration: 3000 });
       }
     });
@@ -616,11 +654,11 @@ export class ComentariosVersionComponent implements OnInit {
 
   getPrioridadIcon(prioridad: string): string {
     const icons: Record<string, string> = {
-      baja: 'arrow_downward',
-      media: 'remove',
-      alta: 'arrow_upward'
+      baja: 'fas fa-arrow-down',
+      media: 'fas fa-minus',
+      alta: 'fas fa-arrow-up'
     };
-    return icons[prioridad] || 'remove';
+    return icons[prioridad] || 'fas fa-minus';
   }
 
   formatearFecha(fecha: Date): string {

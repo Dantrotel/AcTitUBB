@@ -1,756 +1,269 @@
 @use 'sass:color';
 
-// Variables de colores institucionales UBB
-$primary-color: #004b8d;
-$secondary-color: #0066cc;
-$accent-color: #ff6b35;
-$success-color: #28a745;
-$warning-color: #ffc107;
-$danger-color: #dc3545;
-$info-color: #17a2b8;
-$light-gray: #f8f9fa;
-$dark-gray: #343a40;
+$primary:#004b8d; $blue:#0066cc; $green:#28a745; $orange:#fd7e14;
+$red:#dc3545; $info:#17a2b8; $gray:#6c757d;
+$border:#dee2e6; $bg:#f4f6f9; $white:#fff; $text:#212529; $muted:#6c757d;
+$shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
 
-.gestion-reuniones-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 20px;
+// ── Container ─────────────────────────────────────────────────────────────────
+.gestion-reuniones-container { background: $bg; padding: 1rem 1.25rem; }
 
-  .header {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-    color: white;
-    padding: 30px;
-    border-radius: 15px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(0, 75, 141, 0.3);
+// ── Header ────────────────────────────────────────────────────────────────────
+.header {
+  background: linear-gradient(135deg, $primary 0%, $blue 100%);
+  color: $white;
+  padding: 0.75rem 1.25rem;
+  border-radius: $radius;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .header-content {
+    h1 { margin: 0; font-size: 1rem; font-weight: 700; }
+    p  { margin: 0.1rem 0 0; font-size: 0.75rem; opacity: .88; }
+  }
+
+  .header-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    gap: 0.5rem;
+    .btn-volver-header {
+      background: rgba(255,255,255,.18); color: $white;
+      border: 1px solid rgba(255,255,255,.5); padding: 0.38rem 0.8rem;
+      border-radius: 5px; font-size: 0.79rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 0.35rem;
+      &:hover { background: rgba(255,255,255,.3); }
+    }
+    .btn-actualizar {
+      background: rgba(255,255,255,.9); color: $primary;
+      border: none; padding: 0.38rem 0.8rem;
+      border-radius: 5px; font-size: 0.79rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 0.35rem;
+      &:hover { background: $white; }
+      &:disabled { opacity: .6; cursor: not-allowed; }
+    }
+  }
+}
 
-    .header-content {
+// ── Loading ───────────────────────────────────────────────────────────────────
+.loading-container {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 2.5rem 1rem; background: $white; border: 1px solid $border; border-radius: $radius;
+  .spinner {
+    width: 34px; height: 34px; border: 3px solid $border; border-top: 3px solid $blue;
+    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 0.625rem;
+  }
+  h3 { color: $primary; margin: 0 0 0.25rem; font-size: 0.9rem; font-weight: 600; }
+  p  { color: $muted; margin: 0; font-size: 0.8rem; }
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+.messages { margin-bottom: 0.75rem; }
+.alert {
+  padding: 0.625rem 1rem; border-radius: 6px; margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; font-weight: 500;
+  &.alert-error   { background: rgba($red,.08);   color: color.adjust($red,$lightness:-10%);   border: 1px solid rgba($red,.25); }
+  &.alert-success { background: rgba($green,.08); color: color.adjust($green,$lightness:-10%); border: 1px solid rgba($green,.25); }
+}
+
+// ── Filtros section ───────────────────────────────────────────────────────────
+.filtros-section {
+  background: $white; border: 1px solid $border; border-radius: $radius;
+  overflow: hidden; margin-bottom: 0.875rem; box-shadow: $shadow;
+
+  .section-header {
+    background: linear-gradient(135deg, $primary, $blue); color: $white; padding: 0.5rem 0.875rem;
+    h3 { margin: 0; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+  }
+}
+
+.filtros-grid {
+  padding: 0.875rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.625rem;
+  align-items: end;
+
+  .filtro-group {
+    label { display: block; margin-bottom: 4px; color: $text; font-size: 0.78rem; font-weight: 600; }
+    .form-control {
+      width: 100%; padding: 0.45rem 0.75rem; border: 1px solid $border;
+      border-radius: 6px; font-size: 0.82rem; color: $text; background: $white;
+      &:focus { outline: none; border-color: $blue; box-shadow: 0 0 0 2px rgba($blue,.12); }
+    }
+  }
+
+  .filtro-actions .btn {
+    background: $muted; color: $white; border: none;
+    padding: 0.42rem 0.875rem; border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 0.35rem;
+    &:hover { background: color.adjust($muted, $lightness: -8%); }
+  }
+}
+
+// ── Reuniones section ─────────────────────────────────────────────────────────
+.reuniones-section {
+  background: $white; border: 1px solid $border; border-radius: $radius;
+  overflow: hidden; box-shadow: $shadow;
+
+  .section-header {
+    background: linear-gradient(135deg, $primary, $blue); color: $white;
+    padding: 0.5rem 0.875rem;
+    display: flex; justify-content: space-between; align-items: center;
+    h3 { margin: 0; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+    .contador { background: rgba(255,255,255,.2); padding: 0.18rem 0.6rem; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
+  }
+}
+
+.reuniones-grid {
+  padding: 0.875rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.75rem;
+}
+
+.reunion-card {
+  background: $white; border: 1px solid $border; border-radius: $radius;
+  padding: 0.75rem; transition: box-shadow .15s;
+  &:hover { box-shadow: 0 3px 10px rgba(0,0,0,.1); }
+
+  &.status-programada  { border-left: 3px solid $info; }
+  &.status-confirmada  { border-left: 3px solid $green; }
+  &.status-completada  { border-left: 3px solid $primary; opacity: .85; }
+  &.status-cancelada   { border-left: 3px solid $red; opacity: .65; }
+  &.proxima            { border-left: 3px solid $orange; }
+
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;
+    .reunion-info {
       flex: 1;
-      text-align: center;
-
-      h1 {
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-      }
-
-      p {
-        margin: 10px 0 0 0;
-        opacity: 0.9;
-        font-size: 1.1rem;
-      }
+      h4 { margin: 0 0 0.2rem; color: $primary; font-size: 0.85rem; font-weight: 700; }
+      .fecha { color: $muted; font-size: 0.75rem; }
     }
+    .status-section { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+  }
 
-    .header-actions {
-      display: flex;
-      gap: 15px;
+  .estado-badge {
+    display: inline-block; padding: 0.18rem 0.55rem; border-radius: 10px;
+    font-size: 0.65rem; font-weight: 700;
+    &.status-programada  { background: rgba($info,.12);    color: $info; }
+    &.status-confirmada  { background: rgba($green,.12);   color: color.adjust($green,$lightness:-10%); }
+    &.status-completada  { background: rgba($primary,.1);  color: $primary; }
+    &.status-cancelada   { background: rgba($red,.12);     color: $red; }
+  }
 
-      .btn-volver-header {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+  .alertas .alerta-proxima {
+    background: rgba($orange,.12);
+    color: $orange;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    animation: pulse 2s infinite;
+  }
 
-        &:hover {
-          background: rgba(255, 255, 255, 0.3);
-          border-color: rgba(255, 255, 255, 0.5);
-          transform: translateY(-2px);
-        }
+  .card-content {
+    .horario, .motivo, .comentarios {
+      display: flex; align-items: flex-start; gap: 0.4rem;
+      margin-bottom: 0.3rem; color: $text; font-size: 0.78rem;
+      i { color: $primary; margin-top: 1px; flex-shrink: 0; width: 14px; font-size: 0.72rem; }
+      span { line-height: 1.4; }
+    }
+    .motivo span { font-weight: 600; }
+    .comentarios { font-style: italic; color: $muted; font-size: 0.75rem; }
 
-        i {
-          font-size: 0.9rem;
-        }
-      }
-
-      .btn-actualizar {
-        background: rgba(255, 255, 255, 0.9);
-        color: $primary-color;
-        border: none;
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        &:hover {
-          background: white;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        i {
-          font-size: 0.9rem;
-        }
+    .confirmaciones {
+      display: flex; gap: 0.5rem; margin: 0.4rem 0;
+      .confirmacion {
+        display: flex; align-items: center; gap: 0.25rem;
+        padding: 0.18rem 0.5rem; border-radius: 10px; font-size: 0.65rem;
+        background: $bg; color: $muted;
+        &.confirmada { background: rgba($green,.12); color: color.adjust($green,$lightness:-10%); }
       }
     }
   }
 
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    text-align: center;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid #e9ecef;
-      border-top: 4px solid $primary-color;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    h3 {
-      color: $primary-color;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-
-    p {
-      color: #6c757d;
-      margin: 0;
+  .card-actions {
+    margin-top: 0.625rem; padding-top: 0.625rem; border-top: 1px solid $border;
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+    .btn {
+      flex: 1; min-width: 90px; padding: 0.35rem 0.6rem;
+      border: none; border-radius: 5px; font-weight: 600; font-size: 0.75rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+      &.btn-confirmar  { background: $green;   color: $white; &:hover { background: color.adjust($green,$lightness:-8%); } }
+      &.btn-cancelar   { background: $red;     color: $white; &:hover { background: color.adjust($red,$lightness:-8%); } }
+      &.btn-reprogramar{ background: $orange;  color: $white; &:hover { background: color.adjust($orange,$lightness:-8%); } }
+      &.btn-secondary  { background: $muted;   color: $white; &:hover { background: color.adjust($muted,$lightness:-8%); } }
     }
   }
+}
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+// ── Empty state ───────────────────────────────────────────────────────────────
+.empty-state {
+  text-align: center; padding: 2.5rem 1rem; color: $muted;
+  i  { font-size: 2.5rem; margin-bottom: 0.625rem; color: $border; display: block; }
+  h4 { margin: 0 0 0.3rem; font-size: 0.9rem; font-weight: 700; color: $text; }
+  p  { margin: 0; font-size: 0.78rem; }
+}
 
-  .messages {
-    margin-bottom: 20px;
+// ── Modal ─────────────────────────────────────────────────────────────────────
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1050;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
 
-    .alert {
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 500;
+  .modal-content {
+    background: $white; border-radius: 10px; width: 100%; max-width: 540px;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,.2);
 
-      &.alert-error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-
-      &.alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-      }
-
-      i {
-        font-size: 1.2rem;
-      }
-    }
-  }
-
-  .filtros-section {
-    background: white;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-
-    .section-header {
-      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-      color: white;
-      padding: 20px 25px;
-
-      h3 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        i {
-          font-size: 1.2rem;
-        }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.875rem 1rem; background: $bg; border-bottom: 1px solid $border;
+      h3 { color: $primary; margin: 0; font-size: 0.95rem; font-weight: 700; }
+      .btn-close {
+        background: none; border: none; font-size: 1rem; color: $muted; cursor: pointer;
+        padding: 4px; border-radius: 4px;
+        &:hover { background: $border; color: $text; }
       }
     }
 
-    .filtros-grid {
-      padding: 25px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      align-items: end;
-
-      .filtro-group {
-        label {
-          display: block;
-          margin-bottom: 8px;
-          color: #495057;
-          font-weight: 500;
+    .opciones-reprogramacion {
+      padding: 1rem;
+      .opciones-grid { display: grid; gap: 0.625rem; }
+      .opcion-card {
+        background: $bg; border: 1px solid $border; border-radius: 7px;
+        padding: 0.75rem; cursor: pointer; transition: all .15s;
+        &:hover { border-color: $primary; background: rgba($primary,.04); }
+        &.selected { border-color: $primary; background: rgba($primary,.08); }
+        .fecha-hora {
+          display: flex; justify-content: space-between; align-items: center;
+          .fecha { font-weight: 700; color: $primary; font-size: 0.82rem; }
+          .hora  { color: $muted; font-size: 0.78rem; }
         }
-
-        .form-control {
-          width: 100%;
-          padding: 12px 15px;
-          border: 2px solid #e9ecef;
-          border-radius: 8px;
-          font-size: 1rem;
-          transition: all 0.3s ease;
-
-          &:focus {
-            outline: none;
-            border-color: $primary-color;
-            box-shadow: 0 0 0 3px rgba(0, 75, 141, 0.1);
-          }
-        }
-      }
-
-      .filtro-actions {
-        .btn {
-          background: #6c757d;
-          color: white;
-          border: none;
-          padding: 12px 20px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-
-          &:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-          }
-
-          i {
-            font-size: 0.9rem;
-          }
-        }
-      }
-    }
-  }
-
-  .reuniones-section {
-    background: white;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-
-    .section-header {
-      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-      color: white;
-      padding: 20px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      h3 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        i {
-          font-size: 1.2rem;
-        }
-      }
-
-      .contador {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-weight: 500;
+        .disponibilidad { margin-top: 0.25rem; font-size: 0.72rem; color: $green; }
       }
     }
 
-    .reuniones-grid {
-      padding: 25px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-      gap: 20px;
-
-      .reunion-card {
-        background: white;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 20px;
-        transition: all 0.3s ease;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-          border-color: $primary-color;
-        }
-
-        &.status-programada {
-          border-left: 4px solid $info-color;
-        }
-
-        &.status-confirmada {
-          border-left: 4px solid $success-color;
-        }
-
-        &.status-completada {
-          border-left: 4px solid $primary-color;
-          opacity: 0.8;
-        }
-
-        &.status-cancelada {
-          border-left: 4px solid $danger-color;
-          opacity: 0.6;
-        }
-
-        &.proxima {
-          background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(255, 107, 53, 0.1) 100%);
-          border-color: $accent-color;
-        }
-
-        &.pasada {
-          opacity: 0.7;
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 15px;
-
-          .reunion-info {
-            flex: 1;
-
-            h4 {
-              margin: 0 0 5px 0;
-              color: $primary-color;
-              font-size: 1.1rem;
-              font-weight: 600;
-            }
-
-            .fecha {
-              color: #6c757d;
-              font-size: 0.9rem;
-            }
-          }
-
-          .status-section {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-
-            .estado-badge {
-              padding: 6px 12px;
-              border-radius: 20px;
-              font-size: 0.8rem;
-              font-weight: 600;
-
-              &.status-programada {
-                background: $info-color;
-                color: white;
-              }
-
-              &.status-confirmada {
-                background: $success-color;
-                color: white;
-              }
-
-              &.status-completada {
-                background: $primary-color;
-                color: white;
-              }
-
-              &.status-cancelada {
-                background: $danger-color;
-                color: white;
-              }
-            }
-
-            .alertas {
-              .alerta-proxima {
-                background: $accent-color;
-                color: white;
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 0.7rem;
-                font-weight: 600;
-                animation: pulse 2s infinite;
-              }
-            }
-          }
-        }
-
-        .card-content {
-          .horario, .motivo, .comentarios {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 10px;
-            color: #495057;
-
-            i {
-              color: $primary-color;
-              margin-top: 2px;
-              flex-shrink: 0;
-              width: 16px;
-            }
-
-            span {
-              line-height: 1.4;
-            }
-          }
-
-          .motivo span {
-            font-weight: 500;
-          }
-
-          .comentarios {
-            font-style: italic;
-            color: #6c757d;
-            font-size: 0.9rem;
-          }
-
-          .confirmaciones {
-            display: flex;
-            gap: 15px;
-            margin: 10px 0;
-
-            .confirmacion-item {
-              .confirmacion {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                padding: 4px 10px;
-                border-radius: 12px;
-                font-size: 0.8rem;
-                background: #e9ecef;
-                color: #6c757d;
-
-                &.confirmada {
-                  background: $success-color;
-                  color: white;
-                }
-
-                i {
-                  font-size: 0.75rem;
-                }
-              }
-            }
-          }
-        }
-
-        .card-actions {
-          margin-top: 15px;
-          padding-top: 15px;
-          border-top: 1px solid #e9ecef;
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-
-          .btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-
-            &.btn-confirmar {
-              background: $success-color;
-              color: white;
-
-              &:hover {
-                background: color.adjust($success-color, $lightness: -10%);
-                transform: translateY(-1px);
-              }
-            }
-
-            &.btn-cancelar {
-              background: $danger-color;
-              color: white;
-
-              &:hover {
-                background: color.adjust($danger-color, $lightness: -10%);
-                transform: translateY(-1px);
-              }
-            }
-
-            &.btn-reprogramar {
-              background: $warning-color;
-              color: white;
-
-              &:hover {
-                background: color.adjust($warning-color, $lightness: -10%);
-                transform: translateY(-1px);
-              }
-            }
-
-            &.btn-secondary {
-              background: #6c757d;
-              color: white;
-
-              &:hover {
-                background: #5a6268;
-                transform: translateY(-1px);
-              }
-            }
-
-            i {
-              font-size: 0.8rem;
-            }
-          }
-        }
-      }
-    }
-
-    .empty-state {
-      padding: 60px 20px;
-      text-align: center;
-      color: #6c757d;
-
-      i {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        color: #dee2e6;
-      }
-
-      h4 {
-        margin-bottom: 10px;
-        color: #495057;
-      }
-
-      p {
-        margin: 0;
-      }
-    }
-  }
-
-  // Modal para reprogramación
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-
-    .modal-content {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e9ecef;
-
-        h3 {
-          color: $primary-color;
-          margin: 0;
-          font-weight: 600;
-        }
-
-        .btn-close {
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          color: #6c757d;
-          cursor: pointer;
-
-          &:hover {
-            color: $danger-color;
-          }
-        }
-      }
-
-      .opciones-reprogramacion {
-        .opciones-grid {
-          display: grid;
-          gap: 15px;
-
-          .opcion-card {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-
-            &:hover {
-              border-color: $primary-color;
-              background: rgba(0, 75, 141, 0.05);
-            }
-
-            &.selected {
-              border-color: $primary-color;
-              background: rgba(0, 75, 141, 0.1);
-            }
-
-            .fecha-hora {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-
-              .fecha {
-                font-weight: 600;
-                color: $primary-color;
-              }
-
-              .hora {
-                color: #6c757d;
-              }
-            }
-
-            .disponibilidad {
-              margin-top: 5px;
-              font-size: 0.8rem;
-              color: $success-color;
-            }
-          }
-        }
-      }
-
-      .modal-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: flex-end;
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid #e9ecef;
-
-        .btn {
-          padding: 12px 24px;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-
-          &.btn-cancelar {
-            background: #6c757d;
-            color: white;
-
-            &:hover {
-              background: #5a6268;
-            }
-          }
-
-          &.btn-confirmar {
-            background: $primary-color;
-            color: white;
-
-            &:hover {
-              background: color.adjust($primary-color, $lightness: -10%);
-            }
-          }
-        }
+    .modal-actions {
+      display: flex; gap: 0.5rem; justify-content: flex-end;
+      padding: 0.875rem 1rem; border-top: 1px solid $border;
+      .btn {
+        padding: 0.42rem 0.875rem; border: none; border-radius: 5px;
+        font-weight: 600; font-size: 0.8rem; cursor: pointer;
+        &.btn-cancelar  { background: $muted;   color: $white; &:hover { background: color.adjust($muted,$lightness:-8%); } }
+        &.btn-confirmar { background: $primary; color: $white; &:hover { background: $blue; } }
       }
     }
   }
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 1;
-  }
-}
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: .65; } 100% { opacity: 1; } }
 
-// Responsive Design
+// ── Responsive ────────────────────────────────────────────────────────────────
 @media (max-width: 768px) {
-  .gestion-reuniones-container {
-    padding: 15px;
-
-    .header {
-      flex-direction: column;
-      gap: 20px;
-      text-align: center;
-
-      .header-content h1 {
-        font-size: 2rem;
-      }
-
-      .header-actions {
-        justify-content: center;
-      }
-    }
-
-    .filtros-section .filtros-grid {
-      grid-template-columns: 1fr;
-      padding: 15px;
-    }
-
-    .reuniones-section .reuniones-grid {
-      grid-template-columns: 1fr;
-      padding: 15px;
-
-      .reunion-card .card-actions {
-        .btn {
-          flex: 1 1 100%;
-          margin-bottom: 10px;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-        }
-      }
-    }
-
-    .modal-overlay .modal-content {
-      padding: 20px;
-      width: 95%;
-    }
-  }
+  .reuniones-grid { grid-template-columns: 1fr; }
+  .filtros-grid   { grid-template-columns: 1fr; }
+  .header         { flex-direction: column; gap: 0.625rem; }
+  .reunion-card .card-actions .btn { flex: 1 1 100%; }
 }

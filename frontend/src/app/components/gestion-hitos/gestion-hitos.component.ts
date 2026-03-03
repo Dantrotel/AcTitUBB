@@ -1,315 +1,301 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api';
-import { RevisionEntregaComponent } from '../revision-entrega/revision-entrega.component';
 import { NotificationService } from '../../services/notification.service';
-import { 
-  Hito, 
-  Entrega, 
-  CreateHitoRequest, 
+import {
+  Hito,
+  Entrega,
+  CreateHitoRequest,
   UpdateHitoRequest,
   CreateEntregaRequest,
-  RevisionEntregaRequest,
   validarHito,
   validarEntrega,
   HITO_CONSTRAINTS,
-  ENTREGA_CONSTRAINTS 
+  ENTREGA_CONSTRAINTS
 } from '../../interfaces/hitos-entregas.interface';
 
 @Component({
   selector: 'app-gestion-hitos',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RevisionEntregaComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
     <div class="gestion-hitos-container">
-      <div class="header-section">
-        <h2>Gestión de Hitos y Entregas</h2>
-        <div class="filter-controls">
-          <select [(ngModel)]="filtroEstado" (change)="filtrarHitos()" class="form-select">
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="en_progreso">En Progreso</option>
-            <option value="completado">Completados</option>
-            <option value="retrasado">Retrasados</option>
-          </select>
-          <select [(ngModel)]="filtroTipo" (change)="filtrarHitos()" class="form-select">
-            <option value="">Todos los tipos</option>
-            <option value="entregable">Entregables</option>
-            <option value="revision">Revisiones</option>
-            <option value="presentacion">Presentaciones</option>
-          </select>
+
+      <!-- ── Header ─────────────────────────────────────────── -->
+      <div class="gh-header">
+        <h2 class="gh-title"><i class="fas fa-flag-checkered"></i> Hitos y Entregas</h2>
+        <div class="gh-header-right">
+          <div class="gh-filters">
+            <select [(ngModel)]="filtroEstado" (change)="filtrarHitos()" class="gh-select">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="en_progreso">En Progreso</option>
+              <option value="aprobado">Aprobados</option>
+              <option value="retrasado">Retrasados</option>
+            </select>
+            <select [(ngModel)]="filtroTipo" (change)="filtrarHitos()" class="gh-select">
+              <option value="">Todos los tipos</option>
+              <option value="entregable">Entregables</option>
+              <option value="revision">Revisiones</option>
+              <option value="presentacion">Presentaciones</option>
+            </select>
+          </div>
+          <button *ngIf="puedeCrearHitos()" (click)="abrirModalCrearHito()" class="gh-btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Hito
+          </button>
         </div>
-        <button 
-          *ngIf="puedeCrearHitos()" 
-          (click)="abrirModalCrearHito()" 
-          class="btn btn-primary">
-          <i class="fas fa-plus"></i> Nuevo Hito
-        </button>
       </div>
 
-      <!-- Lista de Hitos -->
-      <div class="hitos-grid">
-        <div *ngFor="let hito of hitosFiltrados" class="hito-card" [class.retrasado]="esHitoRetrasado(hito)">
-          <div class="hito-header">
-            <div class="hito-info">
-              <h3>{{ hito.nombre }}</h3>
-              <span class="hito-tipo badge" [class]="'badge-' + hito.tipo_hito">{{ hito.tipo_hito }}</span>
-              <span class="hito-estado badge" [class]="'badge-' + hito.estado">{{ hito.estado }}</span>
-              <span class="hito-prioridad badge" [class]="'badge-prioridad-' + hito.prioridad">{{ hito.prioridad }}</span>
+      <!-- ── Empty state ──────────────────────────────────── -->
+      <div class="gh-empty" *ngIf="hitosFiltrados.length === 0">
+        <i class="fas fa-flag"></i>
+        <p>No hay hitos registrados para este proyecto</p>
+      </div>
+
+      <!-- ── Hitos list ──────────────────────────────────── -->
+      <div class="gh-list">
+        <div *ngFor="let hito of hitosFiltrados"
+             class="hito-card"
+             [class.hito-card--pendiente]="hito.estado === 'pendiente'"
+             [class.hito-card--en-progreso]="hito.estado === 'en_progreso'"
+             [class.hito-card--aprobado]="hito.estado === 'aprobado'"
+             [class.hito-card--retrasado]="esHitoRetrasado(hito)">
+
+          <!-- Card header -->
+          <div class="hito-card-header">
+            <div [class]="'hito-icon-wrap hito-icon-' + hito.tipo_hito">
+              <i class="fas fa-file-alt"    *ngIf="hito.tipo_hito === 'entrega_documento'"></i>
+              <i class="fas fa-search"      *ngIf="hito.tipo_hito === 'revision_avance'"></i>
+              <i class="fas fa-users"       *ngIf="hito.tipo_hito === 'reunion_seguimiento'"></i>
+              <i class="fas fa-microphone"  *ngIf="hito.tipo_hito === 'defensa'"></i>
+              <i class="fas fa-flag"        *ngIf="!['entrega_documento','revision_avance','reunion_seguimiento','defensa'].includes(hito.tipo_hito)"></i>
             </div>
-            <div class="hito-actions" *ngIf="puedeEditarHito(hito)">
-              <button (click)="editarHito(hito)" class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-edit"></i>
+
+            <div class="hito-card-body">
+              <div class="hito-card-top">
+                <span class="hito-nombre">{{ hito.nombre }}</span>
+                <div class="hito-badges">
+                  <span [ngClass]="['hito-badge', 'hito-badge-estado-' + hito.estado]">{{ hito.estado }}</span>
+                  <span [ngClass]="['hito-badge', 'hito-badge-tipo-' + hito.tipo_hito]">{{ hito.tipo_hito }}</span>
+                  <span [ngClass]="['hito-badge', 'hito-badge-prioridad-' + hito.prioridad]" *ngIf="hito.prioridad">{{ hito.prioridad }}</span>
+                  <span class="hito-badge hito-badge-critico" *ngIf="hito.obligatorio">
+                    <i class="fas fa-exclamation-triangle"></i> Crítico
+                  </span>
+                </div>
+              </div>
+              <p class="hito-descripcion" *ngIf="hito.descripcion">{{ hito.descripcion }}</p>
+              <div class="hito-meta">
+                <span class="hito-meta-item" *ngIf="hito.fecha_inicio">
+                  <i class="fas fa-calendar-plus"></i> Inicio: {{ formatearFecha(hito.fecha_inicio) }}
+                </span>
+                <span class="hito-meta-item" [class.hito-meta-item--vencido]="esHitoRetrasado(hito)">
+                  <i class="fas fa-calendar-times"></i> Límite: {{ formatearFecha(hito.fecha_limite) }}
+                </span>
+                <span class="hito-meta-item">
+                  <i class="fas fa-weight-hanging"></i> Peso: {{ hito.peso_porcentual }}%
+                </span>
+              </div>
+            </div>
+
+            <div class="hito-card-actions" *ngIf="puedeEditarHito(hito)">
+              <button (click)="editarHito(hito)" class="gh-icon-btn gh-icon-btn--edit" title="Editar">
+                <i class="fas fa-pencil-alt"></i>
               </button>
-              <button (click)="eliminarHito(hito)" class="btn btn-sm btn-outline-danger">
-                <i class="fas fa-trash"></i>
+              <button (click)="eliminarHito(hito)" class="gh-icon-btn gh-icon-btn--delete" title="Eliminar">
+                <i class="fas fa-trash-alt"></i>
               </button>
             </div>
           </div>
 
-          <div class="hito-details">
-            <p class="hito-descripcion">{{ hito.descripcion }}</p>
-            <div class="hito-fechas">
-              <div class="fecha-item">
-                <i class="fas fa-calendar-start"></i>
-                <span>Inicio: {{ hito.fecha_inicio ? formatearFecha(hito.fecha_inicio) : 'No definido' }}</span>
-              </div>
-              <div class="fecha-item">
-                <i class="fas fa-calendar-times"></i>
-                <span>Límite: {{ formatearFecha(hito.fecha_limite) }}</span>
-              </div>
-            </div>
-            <div class="hito-meta">
-              <span class="peso">Peso: {{ hito.peso_porcentual }}%</span>
-              <span class="obligatorio" *ngIf="hito.obligatorio">
-                <i class="fas fa-exclamation-circle"></i> Obligatorio
+          <!-- Entregas sub-section -->
+          <div class="hito-entregas" *ngIf="hito.acepta_entregas">
+            <div class="hito-entregas-header">
+              <span class="hito-entregas-count">
+                <i class="fas fa-paperclip"></i>
+                Entregas
+                <span class="count-badge">{{ obtenerEntregasHito(hito.id.toString()).length }}/{{ obtenerMaxEntregas(hito) }}</span>
               </span>
-            </div>
-          </div>
-
-          <!-- Sección de Entregas -->
-          <div class="entregas-section" *ngIf="hito.acepta_entregas">
-            <div class="entregas-header">
-              <h4>Entregas ({{ obtenerEntregasHito(hito.id.toString()).length }}/{{ obtenerMaxEntregas(hito) }})</h4>
-              <button 
-                *ngIf="puedeSubirEntrega(hito)" 
-                (click)="abrirModalSubirEntrega(hito)" 
-                class="btn btn-sm btn-success">
-                <i class="fas fa-upload"></i> Subir Entrega
+              <button *ngIf="puedeSubirEntrega(hito)" (click)="abrirModalSubirEntrega(hito)" class="gh-btn-upload">
+                <i class="fas fa-upload"></i> Subir entrega
               </button>
             </div>
 
-            <div class="entregas-list">
-              <div *ngFor="let entrega of obtenerEntregasHito(hito.id.toString())" class="entrega-item">
-                <div class="entrega-info">
-                  <div class="entrega-archivo">
-                    <i class="fas fa-file"></i>
-                    <span>{{ entrega.archivo_nombre }}</span>
-                    <small class="texto-muted">v{{ entrega.version }}</small>
+            <div class="hito-entregas-body" *ngIf="obtenerEntregasHito(hito.id.toString()).length > 0">
+              <div *ngFor="let entrega of obtenerEntregasHito(hito.id.toString())" class="entrega-row">
+                <div class="entrega-row-main">
+                  <div class="entrega-file-icon"><i class="fas fa-file-alt"></i></div>
+                  <div class="entrega-info">
+                    <span class="entrega-nombre">{{ entrega.archivo_nombre }}</span>
+                    <div class="entrega-meta">
+                      <span class="entrega-version">v{{ entrega.version }}</span>
+                      <span class="entrega-fecha">{{ formatearFecha(entrega.fecha_entrega) }}</span>
+                      <span [ngClass]="['hito-badge', 'hito-badge-estado-' + entrega.estado]">{{ entrega.estado }}</span>
+                    </div>
                   </div>
-                  <div class="entrega-meta">
-                    <span class="entrega-fecha">{{ formatearFecha(entrega.fecha_entrega) }}</span>
-                    <span class="entrega-estado badge" [class]="'badge-' + entrega.estado">{{ entrega.estado }}</span>
-                    <span *ngIf="entrega.calificacion" class="calificacion">{{ entrega.calificacion }}/100</span>
+                  <div class="entrega-actions">
+                    <button (click)="descargarEntrega(entrega)" class="gh-icon-btn gh-icon-btn--download" title="Descargar">
+                      <i class="fas fa-download"></i>
+                    </button>
+                    <button *ngIf="puedeEliminarEntrega(entrega)" (click)="eliminarEntrega(entrega)"
+                            class="gh-icon-btn gh-icon-btn--delete" title="Eliminar">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
                   </div>
                 </div>
-                <div class="entrega-actions">
-                  <button (click)="descargarEntrega(entrega)" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-download"></i>
-                  </button>
-                  <button 
-                    *ngIf="puedeRevisarEntrega(entrega)" 
-                    (click)="abrirModalRevisarEntrega(entrega)" 
-                    class="btn btn-sm btn-outline-warning">
-                    <i class="fas fa-eye"></i> Revisar
-                  </button>
-                  <button 
-                    *ngIf="puedeEliminarEntrega(entrega)" 
-                    (click)="eliminarEntrega(entrega)" 
-                    class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-                <div *ngIf="entrega.retroalimentacion" class="entrega-retroalimentacion">
-                  <h5>Retroalimentación:</h5>
-                  <p>{{ entrega.retroalimentacion }}</p>
+                <div class="entrega-retroalimentacion" *ngIf="entrega.retroalimentacion">
+                  <i class="fas fa-comment-dots"></i>
+                  <span>{{ entrega.retroalimentacion }}</span>
                 </div>
               </div>
+            </div>
+
+            <div class="hito-sin-entregas" *ngIf="obtenerEntregasHito(hito.id.toString()).length === 0">
+              <i class="fas fa-inbox"></i> Aún no hay entregas para este hito
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Modal Crear/Editar Hito -->
-      <div class="modal" [class.show]="mostrarModalHito" *ngIf="mostrarModalHito">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">{{ hitoEditando ? 'Editar Hito' : 'Crear Nuevo Hito' }}</h5>
-              <button (click)="cerrarModalHito()" class="btn-close"></button>
-            </div>
-            <form [formGroup]="formHito" (ngSubmit)="guardarHito()">
-              <div class="modal-body">
-                <div class="row">
-                  <div class="col-md-6">
-                    <label class="form-label">Nombre del Hito *</label>
-                    <input type="text" formControlName="nombre_hito" class="form-control" 
-                           [class.is-invalid]="formHito.get('nombre_hito')?.invalid && formHito.get('nombre_hito')?.touched"
-                           placeholder="Ej: Entrega Capítulo 1">
-                    <div class="invalid-feedback" *ngIf="formHito.get('nombre_hito')?.invalid && formHito.get('nombre_hito')?.touched">
-                      El nombre es requerido (3-100 caracteres)
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Tipo de Hito *</label>
-                    <select formControlName="tipo_hito" class="form-select" 
-                            [class.is-invalid]="formHito.get('tipo_hito')?.invalid && formHito.get('tipo_hito')?.touched">
-                      <option value="">Seleccionar tipo</option>
-                      <option value="entrega_documento">📄 Entrega de Documento</option>
-                      <option value="revision_avance">🔍 Revisión de Avance</option>
-                      <option value="reunion_seguimiento">👥 Reunión de Seguimiento</option>
-                      <option value="evaluacion">📊 Evaluación</option>
-                      <option value="defensa">🎤 Defensa/Presentación</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div class="mb-3">
-                  <label class="form-label">Descripción</label>
-                  <textarea formControlName="descripcion" class="form-control" rows="3" 
-                            [class.is-invalid]="formHito.get('descripcion')?.invalid && formHito.get('descripcion')?.touched"></textarea>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Fecha Límite de Entrega *</label>
-                  <input type="datetime-local" formControlName="fecha_limite" class="form-control" 
-                         [class.is-invalid]="formHito.get('fecha_limite')?.invalid && formHito.get('fecha_limite')?.touched">
-                  <div class="form-text">Fecha y hora máxima para entregar este hito</div>
-                </div>
-
-                <div class="row">
-                  <div class="col-md-6">
-                    <label class="form-label">
-                      Peso en el Proyecto * 
-                      <i class="fas fa-info-circle text-info ms-1" 
-                         title="Importancia del hito en el proyecto (0-100%). La suma de todos los hitos debe ser 100%"></i>
-                    </label>
-                    <div class="input-group">
-                      <input type="number" formControlName="peso_en_proyecto" class="form-control" 
-                             min="0" max="100" step="0.5" placeholder="25"
-                             [class.is-invalid]="formHito.get('peso_en_proyecto')?.invalid && formHito.get('peso_en_proyecto')?.touched">
-                      <span class="input-group-text">%</span>
-                    </div>
-                    <div class="form-text">Peso asignado a este hito del total del proyecto</div>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Depende de (Opcional)</label>
-                    <select formControlName="hito_predecesor_id" class="form-select">
-                      <option [value]="null">Sin dependencia</option>
-                      <option *ngFor="let h of hitos" [value]="h.id">
-                        {{ h.nombre_hito }}
-                      </option>
-                    </select>
-                    <div class="form-text">Hito que debe completarse antes de este</div>
-                  </div>
-                </div>
-
-                <div class="row mt-3">
-                  <div class="col-md-12">
-                    <div class="form-check">
-                      <input type="checkbox" formControlName="es_critico" class="form-check-input" id="checkCritico">
-                      <label class="form-check-label" for="checkCritico">
-                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                        <strong>Hito Crítico/Obligatorio</strong>
-                      </label>
-                    </div>
-                    <small class="form-text text-muted d-block mt-1">
-                      Los hitos críticos son obligatorios para aprobar el proyecto. 
-                      Se resaltan con badge rojo y generan alertas automáticas.
-                    </small>
-                  </div>
-                </div>
-
-                <div class="alert alert-danger" *ngIf="erroresValidacion.length > 0">
-                  <ul class="mb-0">
-                    <li *ngFor="let error of erroresValidacion">{{ error }}</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" (click)="cerrarModalHito()" class="btn btn-secondary">Cancelar</button>
-                <button type="submit" [disabled]="formHito.invalid || guardandoHito" class="btn btn-primary">
-                  <span *ngIf="guardandoHito" class="spinner-border spinner-border-sm me-2"></span>
-                  {{ hitoEditando ? 'Actualizar' : 'Crear' }} Hito
-                </button>
-              </div>
-            </form>
+      <!-- ── Modal Crear/Editar Hito ───────────────────── -->
+      <div class="gh-modal-overlay" *ngIf="mostrarModalHito" (click)="cerrarModalHito()">
+        <div class="gh-modal gh-modal--lg" (click)="$event.stopPropagation()">
+          <div class="gh-modal-header">
+            <h3><i class="fas fa-flag"></i> {{ hitoEditando ? 'Editar Hito' : 'Crear Nuevo Hito' }}</h3>
+            <button (click)="cerrarModalHito()" class="gh-modal-close"><i class="fas fa-times"></i></button>
           </div>
+          <form [formGroup]="formHito" (ngSubmit)="guardarHito()">
+            <div class="gh-modal-body">
+              <div class="gh-form-row">
+                <div class="gh-form-group">
+                  <label class="gh-label">Nombre del Hito <span class="gh-req">*</span></label>
+                  <input type="text" formControlName="nombre_hito" class="gh-input"
+                         [class.gh-input--invalid]="formHito.get('nombre_hito')?.invalid && formHito.get('nombre_hito')?.touched"
+                         placeholder="Ej: Entrega Capítulo 1">
+                  <span class="gh-error-msg" *ngIf="formHito.get('nombre_hito')?.invalid && formHito.get('nombre_hito')?.touched">
+                    El nombre es requerido (3-100 caracteres)
+                  </span>
+                </div>
+                <div class="gh-form-group">
+                  <label class="gh-label">Tipo de Hito <span class="gh-req">*</span></label>
+                  <select formControlName="tipo_hito" class="gh-input"
+                          [class.gh-input--invalid]="formHito.get('tipo_hito')?.invalid && formHito.get('tipo_hito')?.touched">
+                    <option value="">Seleccionar tipo</option>
+                    <option value="entrega_documento">📄 Entrega de Documento</option>
+                    <option value="revision_avance">🔍 Revisión de Avance</option>
+                    <option value="reunion_seguimiento">👥 Reunión de Seguimiento</option>
+                    <option value="defensa">🎤 Defensa/Presentación</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="gh-form-group">
+                <label class="gh-label">Descripción</label>
+                <textarea formControlName="descripcion" class="gh-input gh-textarea" rows="3"
+                          [class.gh-input--invalid]="formHito.get('descripcion')?.invalid && formHito.get('descripcion')?.touched"></textarea>
+              </div>
+
+              <div class="gh-form-group">
+                <label class="gh-label">Fecha Límite de Entrega <span class="gh-req">*</span></label>
+                <input type="datetime-local" formControlName="fecha_limite" class="gh-input"
+                       [class.gh-input--invalid]="formHito.get('fecha_limite')?.invalid && formHito.get('fecha_limite')?.touched">
+                <span class="gh-hint">Fecha y hora máxima para entregar este hito</span>
+              </div>
+
+              <div class="gh-form-row">
+                <div class="gh-form-group">
+                  <label class="gh-label">Peso en el Proyecto <span class="gh-req">*</span></label>
+                  <div class="gh-input-group">
+                    <input type="number" formControlName="peso_en_proyecto" class="gh-input"
+                           min="0" max="100" step="0.5" placeholder="25"
+                           [class.gh-input--invalid]="formHito.get('peso_en_proyecto')?.invalid && formHito.get('peso_en_proyecto')?.touched">
+                    <span class="gh-input-addon">%</span>
+                  </div>
+                  <span class="gh-hint">Importancia relativa del hito (0–100%)</span>
+                </div>
+                <div class="gh-form-group">
+                  <label class="gh-label">Depende de (Opcional)</label>
+                  <select formControlName="hito_predecesor_id" class="gh-input">
+                    <option [value]="null">Sin dependencia</option>
+                    <option *ngFor="let h of hitos" [value]="h.id">{{ h.nombre_hito }}</option>
+                  </select>
+                  <span class="gh-hint">Hito que debe completarse antes de este</span>
+                </div>
+              </div>
+
+              <div class="gh-check-row">
+                <label class="gh-check-label">
+                  <input type="checkbox" formControlName="es_critico" class="gh-check-input" id="checkCritico">
+                  <span>
+                    <strong><i class="fas fa-exclamation-triangle"></i> Hito Crítico / Obligatorio</strong>
+                    <small>Los hitos críticos son obligatorios para aprobar el proyecto y generan alertas automáticas.</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="gh-alert gh-alert--danger" *ngIf="erroresValidacion.length > 0">
+                <ul><li *ngFor="let error of erroresValidacion">{{ error }}</li></ul>
+              </div>
+            </div>
+            <div class="gh-modal-footer">
+              <button type="button" (click)="cerrarModalHito()" class="gh-btn-secondary">Cancelar</button>
+              <button type="submit" [disabled]="formHito.invalid || guardandoHito" class="gh-btn-primary">
+                <i class="fas fa-spinner fa-spin" *ngIf="guardandoHito"></i>
+                {{ hitoEditando ? 'Actualizar' : 'Crear' }} Hito
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
-      <!-- Modal Subir Entrega -->
-      <div class="modal" [class.show]="mostrarModalEntrega" *ngIf="mostrarModalEntrega">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Subir Entrega - {{ hitoSeleccionado?.nombre }}</h5>
-              <button (click)="cerrarModalEntrega()" class="btn-close"></button>
-            </div>
-            <form (ngSubmit)="subirEntrega()">
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label class="form-label">Archivo *</label>
-                  <input type="file" (change)="seleccionarArchivo($event)" class="form-control" 
-                         accept=".pdf,.doc,.docx,.zip,.rar,.txt,.jpg,.png" required>
-                  <div class="form-text">
-                    Formatos permitidos: PDF, DOC, DOCX, ZIP, RAR, TXT, JPG, PNG (Máx. 50MB)
-                  </div>
-                </div>
-                
-                <div class="mb-3">
-                  <label class="form-label">Comentarios</label>
-                  <textarea [(ngModel)]="comentariosEntrega" name="comentarios" class="form-control" 
-                            rows="3" maxlength="1000"></textarea>
-                  <div class="form-text">{{ comentariosEntrega.length }}/1000 caracteres</div>
-                </div>
-
-                <div class="form-check">
-                  <input type="checkbox" [(ngModel)]="esEntregaFinal" name="final" class="form-check-input">
-                  <label class="form-check-label">Marcar como entrega final</label>
-                </div>
-
-                <div class="alert alert-danger" *ngIf="erroresEntrega.length > 0">
-                  <ul class="mb-0">
-                    <li *ngFor="let error of erroresEntrega">{{ error }}</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" (click)="cerrarModalEntrega()" class="btn btn-secondary">Cancelar</button>
-                <button type="submit" [disabled]="!archivoSeleccionado || subiendoEntrega" class="btn btn-primary">
-                  <span *ngIf="subiendoEntrega" class="spinner-border spinner-border-sm me-2"></span>
-                  Subir Entrega
-                </button>
-              </div>
-            </form>
+      <!-- ── Modal Subir Entrega ────────────────────────── -->
+      <div class="gh-modal-overlay" *ngIf="mostrarModalEntrega" (click)="cerrarModalEntrega()">
+        <div class="gh-modal" (click)="$event.stopPropagation()">
+          <div class="gh-modal-header">
+            <h3><i class="fas fa-upload"></i> Subir Entrega</h3>
+            <button (click)="cerrarModalEntrega()" class="gh-modal-close"><i class="fas fa-times"></i></button>
           </div>
+          <form (ngSubmit)="subirEntrega()">
+            <div class="gh-modal-body">
+              <div class="gh-hito-ref" *ngIf="hitoSeleccionado">
+                <i class="fas fa-flag"></i> {{ hitoSeleccionado.nombre }}
+              </div>
+              <div class="gh-form-group">
+                <label class="gh-label">Archivo <span class="gh-req">*</span></label>
+                <input type="file" (change)="seleccionarArchivo($event)" class="gh-input gh-input-file"
+                       accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar" required>
+                <span class="gh-hint">PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR — Máx. 10 MB</span>
+              </div>
+              <div class="gh-form-group">
+                <label class="gh-label">Comentarios</label>
+                <textarea [(ngModel)]="comentariosEntrega" name="comentarios"
+                          class="gh-input gh-textarea" rows="3" maxlength="1000"></textarea>
+                <span class="gh-hint">{{ comentariosEntrega.length }}/1000 caracteres</span>
+              </div>
+              <label class="gh-check-label">
+                <input type="checkbox" [(ngModel)]="esEntregaFinal" name="final" class="gh-check-input">
+                <span><strong>Marcar como entrega final</strong></span>
+              </label>
+              <div class="gh-alert gh-alert--danger" *ngIf="erroresEntrega.length > 0">
+                <ul><li *ngFor="let error of erroresEntrega">{{ error }}</li></ul>
+              </div>
+            </div>
+            <div class="gh-modal-footer">
+              <button type="button" (click)="cerrarModalEntrega()" class="gh-btn-secondary">Cancelar</button>
+              <button type="submit" [disabled]="!archivoSeleccionado || subiendoEntrega" class="gh-btn-primary">
+                <i class="fas fa-spinner fa-spin" *ngIf="subiendoEntrega"></i>
+                Subir Entrega
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
-      <!-- Componente de Revisión de Entregas -->
-      <app-revision-entrega
-        [entrega]="entregaParaRevisar"
-        [mostrarModal]="mostrarModalRevision"
-        (modalCerrado)="cerrarModalRevision()"
-        (revisionGuardada)="onRevisionGuardada()">
-      </app-revision-entrega>
     </div>
   `,
   styleUrl: './gestion-hitos.component.scss'
 })
-export class GestionHitosComponent implements OnInit {
+export class GestionHitosComponent implements OnInit, OnChanges {
   @Input() projectId!: string;
   @Input() cronogramaId!: string;
   @Input() userRole!: string; // '1' = estudiante, '2' = profesor, '3' = admin
@@ -325,10 +311,8 @@ export class GestionHitosComponent implements OnInit {
   
   mostrarModalHito = false;
   mostrarModalEntrega = false;
-  mostrarModalRevision = false;
   hitoEditando: Hito | null = null;
   hitoSeleccionado: Hito | null = null;
-  entregaParaRevisar: Entrega | null = null;
   
   formHito: FormGroup;
   erroresValidacion: string[] = [];
@@ -357,7 +341,15 @@ export class GestionHitosComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.cargarHitos();
+    if (this.cronogramaId) {
+      this.cargarHitos();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['cronogramaId'] && this.cronogramaId && !changes['cronogramaId'].firstChange) {
+      this.cargarHitos();
+    }
   }
 
   // Carga inicial de datos (Sistema Unificado ✅)
@@ -398,13 +390,29 @@ export class GestionHitosComponent implements OnInit {
   }
 
   cargarEntregasHito(hitoId: string) {
-    this.apiService.obtenerEntregasHito(this.projectId, this.cronogramaId, hitoId).subscribe({
-      next: (response: any) => {
-        this.entregas[hitoId] = response.data || [];
-      },
-      error: (error: any) => {
-      }
-    });
+    // El backend no tiene un endpoint separado para entregas.
+    // La entrega está embebida en el propio hito.
+    const hito = this.hitos.find(h => h.id.toString() === hitoId);
+    if (hito && hito.archivo_entrega && hito.fecha_entrega) {
+      this.entregas[hitoId] = [{
+        id: hitoId,
+        hito_id: hitoId,
+        estudiante_rut: '',
+        estudiante_nombre: '',
+        archivo_nombre: hito.nombre_archivo_original || hito.archivo_entrega,
+        archivo_url: hito.archivo_entrega,
+        archivo_tamano: 0,
+        comentarios: hito.comentarios_estudiante || '',
+        fecha_entrega: hito.fecha_entrega,
+        estado: hito.estado as any,
+        retroalimentacion: hito.comentarios_profesor ?? undefined,
+        fecha_revision: hito.updated_at,
+        version: 1,
+        es_entrega_final: hito.estado === 'aprobado'
+      }];
+    } else {
+      this.entregas[hitoId] = [];
+    }
   }
 
   // Métodos de filtrado
@@ -434,10 +442,6 @@ export class GestionHitosComponent implements OnInit {
     
     return entregasEstudiante.length < maxEntregas && 
            new Date() <= new Date(hito.fecha_limite);
-  }
-
-  puedeRevisarEntrega(entrega: Entrega): boolean {
-    return (this.userRole === '2' || this.userRole === '3') && entrega.estado === 'entregado';
   }
 
   puedeEliminarEntrega(entrega: Entrega): boolean {
@@ -503,8 +507,12 @@ export class GestionHitosComponent implements OnInit {
     if (this.formHito.invalid) return;
 
     const datosHito = this.formHito.value;
-    this.erroresValidacion = validarHito(datosHito);
-    
+    // Al editar, no validar fecha en el pasado (el hito puede tener fecha vencida)
+    const errores = validarHito(datosHito);
+    this.erroresValidacion = this.hitoEditando
+      ? errores.filter(e => !e.includes('pasado'))
+      : errores;
+
     if (this.erroresValidacion.length > 0) return;
 
     this.guardandoHito = true;
@@ -520,7 +528,9 @@ export class GestionHitosComponent implements OnInit {
         this.hitosActualizados.emit();
       },
       error: (error) => {
-        this.erroresValidacion = ['Error al guardar el hito. Intente nuevamente.'];
+        this.guardandoHito = false;
+        const msg = error?.error?.message || error?.message || 'Error al guardar el hito. Intente nuevamente.';
+        this.erroresValidacion = [msg];
       },
       complete: () => {
         this.guardandoHito = false;
@@ -583,26 +593,17 @@ export class GestionHitosComponent implements OnInit {
 
     this.subiendoEntrega = true;
 
-    const formData = new FormData();
-    formData.append('archivo', this.archivoSeleccionado);
-    formData.append('comentarios', this.comentariosEntrega);
-    formData.append('es_entrega_final', this.esEntregaFinal.toString());
-
-    this.apiService.crearEntregaHito(
-      this.projectId, 
-      this.cronogramaId, 
-      this.hitoSeleccionado.id.toString(), 
-      formData
-    ).subscribe({
+    const hitoId = this.hitoSeleccionado.id.toString();
+    this.apiService.entregarHito(hitoId, this.archivoSeleccionado, this.comentariosEntrega).subscribe({
       next: () => {
-        this.cerrarModalEntrega();
-        this.cargarEntregasHito(this.hitoSeleccionado!.id.toString());
-      },
-      error: (error) => {
-        this.erroresEntrega = ['Error al subir la entrega. Intente nuevamente.'];
-      },
-      complete: () => {
         this.subiendoEntrega = false;
+        this.cerrarModalEntrega();
+        this.cargarHitos();
+      },
+      error: (err: any) => {
+        this.subiendoEntrega = false;
+        const msg = err?.error?.message || err?.error?.error || 'Error al subir la entrega. Intente nuevamente.';
+        this.erroresEntrega = [msg];
       }
     });
   }
@@ -628,34 +629,8 @@ export class GestionHitosComponent implements OnInit {
     
     if (!confirmed) return;
 
-    this.apiService.eliminarEntregaHito(
-      this.projectId, 
-      this.cronogramaId, 
-      entrega.hito_id, 
-      entrega.id
-    ).subscribe({
-      next: () => {
-        this.cargarEntregasHito(entrega.hito_id);
-      },
-      error: (error) => {
-        alert('Error al eliminar la entrega');
-      }
-    });
+    // El backend no soporta eliminación de entregas individuales.
+    alert('La eliminación de entregas no está disponible en el sistema actual.');
   }
 
-  abrirModalRevisarEntrega(entrega: Entrega) {
-    this.entregaParaRevisar = entrega;
-    this.mostrarModalRevision = true;
-  }
-
-  cerrarModalRevision() {
-    this.mostrarModalRevision = false;
-    this.entregaParaRevisar = null;
-  }
-
-  onRevisionGuardada() {
-    if (this.entregaParaRevisar) {
-      this.cargarEntregasHito(this.entregaParaRevisar.hito_id);
-    }
-  }
 }

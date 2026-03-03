@@ -2,12 +2,6 @@ import { Component, Inject, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { VersionesPlantillasService } from '../../services/versiones-plantillas.service';
 
@@ -23,165 +17,198 @@ interface DialogData {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSelectModule,
-    MatProgressBarModule
+    MatDialogModule
   ],
   template: `
-    <h2 mat-dialog-title>
-      <mat-icon>upload</mat-icon>
-      Subir Nueva Versión
-    </h2>
+    <div class="dialog-header">
+      <h2>
+        <i class="fas fa-upload"></i>
+        Subir Nueva Versión
+      </h2>
+      <button class="btn-close" (click)="cerrar()" [disabled]="subiendo()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
 
-    <mat-dialog-content>
+    <div mat-dialog-content class="dialog-body">
       <form [formGroup]="formulario" class="upload-form">
-        <!-- Área de carga de archivo -->
-        <div class="file-upload-area" 
-             [class.drag-over]="dragOver()"
-             (dragover)="onDragOver($event)"
-             (dragleave)="onDragLeave($event)"
-             (drop)="onDrop($event)"
-             (click)="fileInput.click()">
-          
+        <!-- Área de carga -->
+        <div
+          class="file-upload-area"
+          [class.drag-over]="dragOver()"
+          [class.has-file]="archivoSeleccionado()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
           @if (!archivoSeleccionado()) {
             <div class="upload-placeholder">
-              <mat-icon>cloud_upload</mat-icon>
+              <i class="fas fa-cloud-upload-alt"></i>
               <p>Arrastra un archivo aquí o haz clic para seleccionar</p>
               <span class="file-types">Archivos permitidos: PDF, DOCX, DOC (Máx. 50MB)</span>
             </div>
           } @else {
             <div class="file-selected">
-              <mat-icon>insert_drive_file</mat-icon>
+              <i class="fas fa-file-alt file-icon"></i>
               <div class="file-info">
                 <strong>{{ archivoSeleccionado()?.name }}</strong>
                 <span>{{ formatearTamano(archivoSeleccionado()?.size || 0) }}</span>
               </div>
-              <button mat-icon-button type="button" (click)="removerArchivo($event)">
-                <mat-icon>close</mat-icon>
+              <button type="button" class="btn-remove" (click)="removerArchivo($event)">
+                <i class="fas fa-times"></i>
               </button>
             </div>
           }
-
-          <input #fileInput 
-                 type="file" 
-                 hidden 
-                 accept=".pdf,.doc,.docx"
-                 (change)="onFileSelected($event)">
+          <input #fileInput type="file" hidden accept=".pdf,.doc,.docx" (change)="onFileSelected($event)" />
         </div>
 
-        <!-- Tipo de versión (solo para profesores) -->
+        <!-- Tipo de versión (solo profesores) -->
         @if (esProfesor) {
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tipo de Versión</mat-label>
-            <mat-select formControlName="tipo_version">
-              <mat-option value="profesor_revision">Revisión con Anotaciones</mat-option>
-              <mat-option value="profesor_comentarios">Solo Comentarios</mat-option>
-            </mat-select>
-            <mat-hint>Selecciona si subes un archivo anotado o solo comentarios</mat-hint>
-          </mat-form-field>
+          <div class="form-group">
+            <label class="form-label">Tipo de Versión</label>
+            <select class="form-input" formControlName="tipo_version">
+              <option value="profesor_revision">Revisión con Anotaciones</option>
+              <option value="profesor_comentarios">Solo Comentarios</option>
+            </select>
+            <span class="form-hint">Selecciona si subes un archivo anotado o solo comentarios</span>
+          </div>
         }
 
         <!-- Descripción de cambios -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Descripción de Cambios</mat-label>
-          <textarea matInput 
-                    formControlName="descripcion_cambios"
-                    rows="3"
-                    placeholder="Describe los cambios realizados en esta versión"></textarea>
+        <div class="form-group">
+          <label class="form-label">Descripción de Cambios <span class="required">*</span></label>
+          <textarea
+            class="form-input"
+            formControlName="descripcion_cambios"
+            rows="3"
+            placeholder="Describe los cambios realizados en esta versión"
+          ></textarea>
           @if (esEstudiante) {
-            <mat-hint>Ejemplo: Correcciones al capítulo 2, nuevas referencias agregadas</mat-hint>
+            <span class="form-hint">Ejemplo: Correcciones al capítulo 2, nuevas referencias agregadas</span>
           }
-        </mat-form-field>
+        </div>
 
-        <!-- Cambios principales (opcional) -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Resumen de Cambios Principales (Opcional)</mat-label>
-          <textarea matInput 
-                    formControlName="cambios_principales"
-                    rows="2"
-                    placeholder="Lista breve de los cambios más importantes"></textarea>
-          <mat-hint>Ejemplo: 1. Marco teórico ampliado, 2. Metodología corregida</mat-hint>
-        </mat-form-field>
+        <!-- Cambios principales -->
+        <div class="form-group">
+          <label class="form-label">Resumen de Cambios Principales (Opcional)</label>
+          <textarea
+            class="form-input"
+            formControlName="cambios_principales"
+            rows="2"
+            placeholder="Lista breve de los cambios más importantes"
+          ></textarea>
+          <span class="form-hint">Ejemplo: 1. Marco teórico ampliado, 2. Metodología corregida</span>
+        </div>
 
-        <!-- Comentarios generales (solo profesores) -->
+        <!-- Comentarios generales (profesores) -->
         @if (esProfesor) {
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Comentarios Generales</mat-label>
-            <textarea matInput 
-                      formControlName="comentarios_generales"
-                      rows="4"
-                      placeholder="Escribe tus comentarios generales sobre el documento"></textarea>
-            <mat-hint>Feedback general que verá el estudiante</mat-hint>
-          </mat-form-field>
+          <div class="form-group">
+            <label class="form-label">Comentarios Generales</label>
+            <textarea
+              class="form-input"
+              formControlName="comentarios_generales"
+              rows="4"
+              placeholder="Escribe tus comentarios generales sobre el documento"
+            ></textarea>
+            <span class="form-hint">Feedback general que verá el estudiante</span>
+          </div>
         }
 
         <!-- Barra de progreso -->
         @if (subiendo()) {
           <div class="progress-container">
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <div class="progress-bar">
+              <div class="progress-fill"></div>
+            </div>
             <p>Subiendo archivo...</p>
           </div>
         }
       </form>
-    </mat-dialog-content>
+    </div>
 
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="cerrar()" [disabled]="subiendo()">
+    <div mat-dialog-actions class="dialog-footer">
+      <button class="btn btn-ghost" (click)="cerrar()" [disabled]="subiendo()">
         Cancelar
       </button>
-      <button mat-raised-button 
-              color="primary" 
-              (click)="subirVersion()"
-              [disabled]="!formulario.valid || !archivoSeleccionado() || subiendo()">
-        <mat-icon>upload</mat-icon>
+      <button
+        class="btn btn-primary"
+        (click)="subirVersion()"
+        [disabled]="!formulario.valid || !archivoSeleccionado() || subiendo()"
+      >
+        @if (subiendo()) {
+          <span class="spinner-sm"></span>
+        } @else {
+          <i class="fas fa-upload"></i>
+        }
         Subir Versión
       </button>
-    </mat-dialog-actions>
+    </div>
   `,
   styles: [`
-    h2 {
+    .dialog-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin: 0;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
+      color: #fff;
+
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
     }
 
-    mat-dialog-content {
+    .btn-close {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+
+      &:hover:not(:disabled) { background: rgba(255,255,255,0.25); }
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
+
+    .dialog-body {
       min-width: 500px;
-      max-height: 70vh;
+      max-height: 68vh;
       overflow-y: auto;
+      padding: 20px 24px !important;
+
+      &::-webkit-scrollbar { width: 5px; }
+      &::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     }
 
     .upload-form {
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      padding: 10px 0;
+      gap: 18px;
     }
 
     .file-upload-area {
       border: 2px dashed #ccc;
       border-radius: 12px;
-      padding: 40px;
+      padding: 36px 24px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.25s;
       background: #fafafa;
 
-      &:hover {
-        border-color: #2196F3;
-        background: #f5f5f5;
-      }
-
-      &.drag-over {
-        border-color: #2196F3;
-        background: #e3f2fd;
-        transform: scale(1.02);
-      }
+      &:hover { border-color: #004b8d; background: #f0f7ff; }
+      &.drag-over { border-color: #004b8d; background: #ddeeff; transform: scale(1.01); }
+      &.has-file { border-style: solid; border-color: #004b8d; background: #f0f7ff; padding: 16px 20px; }
     }
 
     .upload-placeholder {
@@ -189,87 +216,144 @@ interface DialogData {
       flex-direction: column;
       align-items: center;
       gap: 10px;
+      color: #555;
 
-      mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: #2196F3;
-      }
-
-      p {
-        margin: 0;
-        font-size: 16px;
-        color: #333;
-      }
-
-      .file-types {
-        font-size: 12px;
-        color: #999;
-      }
+      i { font-size: 52px; color: #004b8d; }
+      p { margin: 0; font-size: 15px; }
+      .file-types { font-size: 12px; color: #aaa; }
     }
 
     .file-selected {
       display: flex;
       align-items: center;
-      gap: 15px;
-      padding: 15px;
-      background: white;
-      border-radius: 8px;
-
-      mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        color: #2196F3;
-      }
-
-      .file-info {
-        flex: 1;
-        text-align: left;
-        
-        strong {
-          display: block;
-          margin-bottom: 5px;
-          color: #333;
-        }
-
-        span {
-          color: #999;
-          font-size: 12px;
-        }
-      }
+      gap: 14px;
+      text-align: left;
     }
 
-    .full-width {
-      width: 100%;
+    .file-icon {
+      font-size: 40px;
+      color: #004b8d;
+      flex-shrink: 0;
     }
+
+    .file-info {
+      flex: 1;
+      strong { display: block; font-size: 14px; color: #333; margin-bottom: 3px; }
+      span { font-size: 12px; color: #999; }
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: 1px solid #ffcdd2;
+      color: #e53935;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+
+      &:hover { background: #ffebee; }
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      .required { color: #e53935; }
+    }
+
+    .form-input {
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+      font-family: inherit;
+
+      &:focus { border-color: #004b8d; }
+    }
+
+    select.form-input { cursor: pointer; }
+    textarea.form-input { resize: vertical; }
+
+    .form-hint { font-size: 11px; color: #aaa; }
 
     .progress-container {
-      padding: 20px;
       text-align: center;
-
-      p {
-        margin-top: 10px;
-        color: #666;
-      }
+      p { margin: 10px 0 0 0; font-size: 13px; color: #666; }
     }
 
-    mat-dialog-actions {
-      padding: 20px 24px;
-      margin: 0;
+    .progress-bar {
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 60%;
+      background: linear-gradient(90deg, #004b8d, #0066cc);
+      border-radius: 3px;
+      animation: progress-anim 1.5s ease-in-out infinite;
+    }
+
+    @keyframes progress-anim {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .dialog-footer {
+      padding: 14px 24px !important;
+      display: flex;
+      justify-content: flex-end;
       gap: 10px;
+      border-top: 1px solid #eee;
+      margin: 0 !important;
+      min-height: unset !important;
     }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 7px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
+
+    .btn-primary { background: #004b8d; color: #fff; &:hover:not(:disabled) { background: #003a6e; } }
+    .btn-ghost { background: transparent; color: #555; border: 1px solid #ddd; &:hover:not(:disabled) { background: #f5f5f5; } }
+
+    .spinner-sm {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 600px) {
-      mat-dialog-content {
-        min-width: auto;
-        width: 100%;
-      }
-
-      .file-upload-area {
-        padding: 20px;
-      }
+      .dialog-body { min-width: auto; width: 100%; }
+      .file-upload-area { padding: 24px; }
     }
   `]
 })
@@ -317,36 +401,29 @@ export class SubirVersionComponent {
     event.preventDefault();
     event.stopPropagation();
     this.dragOver.set(false);
-
     const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      this.procesarArchivo(files[0]);
-    }
+    if (files && files.length > 0) this.procesarArchivo(files[0]);
   }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.procesarArchivo(input.files[0]);
-    }
+    if (input.files && input.files.length > 0) this.procesarArchivo(input.files[0]);
   }
 
   procesarArchivo(file: File) {
-    // Validar tipo de archivo
-    const tiposPermitidos = ['application/pdf', 'application/msword', 
-                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const tiposPermitidos = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
     if (!tiposPermitidos.includes(file.type)) {
       this.snackBar.open('Solo se permiten archivos PDF y DOCX', 'Cerrar', { duration: 3000 });
       return;
     }
-
-    // Validar tamaño (50MB)
-    const tamanoMaximo = 50 * 1024 * 1024;
-    if (file.size > tamanoMaximo) {
+    if (file.size > 50 * 1024 * 1024) {
       this.snackBar.open('El archivo no debe superar los 50MB', 'Cerrar', { duration: 3000 });
       return;
     }
-
     this.archivoSeleccionado.set(file);
   }
 
@@ -356,9 +433,7 @@ export class SubirVersionComponent {
   }
 
   subirVersion() {
-    if (!this.formulario.valid || !this.archivoSeleccionado()) {
-      return;
-    }
+    if (!this.formulario.valid || !this.archivoSeleccionado()) return;
 
     this.subiendo.set(true);
 
@@ -373,11 +448,11 @@ export class SubirVersionComponent {
     });
 
     this.versionesService.subirVersion(formData).subscribe({
-      next: (response) => {
+      next: () => {
         this.snackBar.open('Versión subida exitosamente', 'Cerrar', { duration: 3000 });
         this.dialogRef.close(true);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al subir versión', 'Cerrar', { duration: 3000 });
         this.subiendo.set(false);
       }

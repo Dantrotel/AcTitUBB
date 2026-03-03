@@ -1,166 +1,146 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { VersionesPlantillasService, PlantillaDocumento } from '../../../services/versiones-plantillas.service';
 
 @Component({
   selector: 'app-plantillas-estudiante',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatInputModule,
-    MatProgressSpinnerModule
-  ],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="plantillas-container">
       <div class="page-header">
-        <div class="header-content">
+        <div>
           <h1>
-            <mat-icon>description</mat-icon>
+            <i class="fas fa-file-alt"></i>
             Plantillas de Documentos
           </h1>
-          <p class="subtitle">
-            Descarga las plantillas oficiales para tus documentos de titulación
-          </p>
+          <p class="subtitle">Descarga las plantillas oficiales para tus documentos de titulación</p>
         </div>
       </div>
 
       <!-- Filtros -->
-      <mat-card class="filtros-card">
+      <div class="filtros-card">
         <div class="filtros-container">
-          <mat-form-field appearance="outline">
-            <mat-label>Tipo de Documento</mat-label>
-            <mat-select [(ngModel)]="tipoFiltro" (selectionChange)="aplicarFiltros()">
-              <mat-option value="">Todos los tipos</mat-option>
-              <mat-option value="propuesta">Propuesta</mat-option>
-              <mat-option value="informe_avance">Informe de Avance</mat-option>
-              <mat-option value="informe_final">Informe Final</mat-option>
-              <mat-option value="presentacion">Presentación</mat-option>
-              <mat-option value="poster">Póster</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="form-group">
+            <label class="form-label">Tipo de Documento</label>
+            <select class="form-input" [(ngModel)]="tipoFiltro" (ngModelChange)="aplicarFiltros()">
+              <option value="">Todos los tipos</option>
+              <option value="propuesta">Propuesta</option>
+              <option value="informe_avance">Informe de Avance</option>
+              <option value="informe_final">Informe Final</option>
+              <option value="presentacion">Presentación</option>
+              <option value="poster">Póster</option>
+            </select>
+          </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Buscar</mat-label>
-            <input matInput 
-                   [(ngModel)]="busqueda"
-                   (ngModelChange)="aplicarFiltros()"
-                   placeholder="Buscar plantillas...">
-            <mat-icon matPrefix>search</mat-icon>
-          </mat-form-field>
+          <div class="form-group search-group">
+            <label class="form-label">Buscar</label>
+            <div class="search-input-wrap">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                class="form-input search-input"
+                [(ngModel)]="busqueda"
+                (ngModelChange)="aplicarFiltros()"
+                placeholder="Buscar plantillas..."
+              />
+            </div>
+          </div>
 
-          <button mat-raised-button (click)="limpiarFiltros()">
-            <mat-icon>clear</mat-icon>
+          <button class="btn btn-ghost" (click)="limpiarFiltros()">
+            <i class="fas fa-times"></i>
             Limpiar
           </button>
         </div>
-      </mat-card>
+      </div>
 
       <!-- Lista de plantillas -->
       @if (cargando()) {
         <div class="loading-container">
-          <mat-spinner></mat-spinner>
+          <div class="spinner"></div>
           <p>Cargando plantillas...</p>
         </div>
       } @else if (plantillasFiltradas().length === 0) {
-        <mat-card class="empty-state">
-          <mat-icon>folder_open</mat-icon>
+        <div class="empty-state">
+          <i class="fas fa-folder-open"></i>
           <h2>No se encontraron plantillas</h2>
           <p>No hay plantillas disponibles con los filtros seleccionados</p>
-        </mat-card>
+        </div>
       } @else {
         <!-- Plantillas obligatorias -->
         @if (plantillasObligatorias().length > 0) {
           <div class="seccion-plantillas">
             <h2 class="seccion-titulo">
-              <mat-icon>priority_high</mat-icon>
+              <i class="fas fa-exclamation-circle"></i>
               Plantillas Obligatorias
             </h2>
             <div class="plantillas-grid">
               @for (plantilla of plantillasObligatorias(); track plantilla.id) {
-                <mat-card class="plantilla-card obligatoria">
-                  <mat-card-header>
-                    <div class="card-header-content">
-                      <mat-icon class="tipo-icon">
-                        {{ obtenerIconoTipo(plantilla.tipo_documento) }}
-                      </mat-icon>
+                <div class="plantilla-card obligatoria">
+                  <div class="card-header">
+                    <div class="card-header-left">
+                      <div class="tipo-icon-wrap">
+                        <i [class]="getFAIconoTipo(plantilla.tipo_documento)"></i>
+                      </div>
                       <div class="header-info">
-                        <mat-card-title>{{ plantilla.nombre }}</mat-card-title>
-                        <mat-card-subtitle>{{ getTipoLabel(plantilla.tipo_documento) }}</mat-card-subtitle>
+                        <h3>{{ plantilla.nombre }}</h3>
+                        <span class="subtitle-small">{{ getTipoLabel(plantilla.tipo_documento) }}</span>
                       </div>
                     </div>
-                    <mat-chip class="chip-obligatoria">
-                      <mat-icon>star</mat-icon>
+                    <span class="chip chip-obligatoria">
+                      <i class="fas fa-star"></i>
                       Obligatoria
-                    </mat-chip>
-                  </mat-card-header>
+                    </span>
+                  </div>
 
-                  <mat-card-content>
+                  <div class="card-body">
                     @if (plantilla.descripcion) {
                       <p class="descripcion">{{ plantilla.descripcion }}</p>
                     }
 
                     <div class="plantilla-metadata">
                       <div class="metadata-item">
-                        <mat-icon>insert_drive_file</mat-icon>
+                        <i class="fas fa-file"></i>
                         <span>{{ plantilla.archivo_nombre }}</span>
                       </div>
-
                       <div class="metadata-item">
-                        <mat-icon>straighten</mat-icon>
+                        <i class="fas fa-weight"></i>
                         <span>{{ formatearTamano(plantilla.archivo_tamano_kb) }}</span>
                       </div>
-
                       @if (plantilla.formato_requerido) {
                         <div class="metadata-item">
-                          <mat-icon>description</mat-icon>
+                          <i class="fas fa-file-alt"></i>
                           <span>Formato: {{ plantilla.formato_requerido }}</span>
                         </div>
                       }
-
                       <div class="metadata-item">
-                        <mat-icon>download</mat-icon>
+                        <i class="fas fa-download"></i>
                         <span>{{ plantilla.descargas }} descargas</span>
                       </div>
                     </div>
 
                     @if (plantilla.instrucciones) {
-                      <div class="instrucciones-section">
+                      <div class="instrucciones-box">
                         <strong>Instrucciones:</strong>
                         <p>{{ plantilla.instrucciones }}</p>
                       </div>
                     }
-                  </mat-card-content>
+                  </div>
 
-                  <mat-card-actions>
-                    <button mat-raised-button color="primary" (click)="descargarPlantilla(plantilla)">
-                      <mat-icon>download</mat-icon>
+                  <div class="card-footer">
+                    <button class="btn btn-primary" (click)="descargarPlantilla(plantilla)">
+                      <i class="fas fa-download"></i>
                       Descargar Plantilla
                     </button>
                     @if (plantilla.ejemplo_url) {
-                      <button mat-button (click)="abrirEjemplo(plantilla.ejemplo_url)">
-                        <mat-icon>visibility</mat-icon>
+                      <button class="btn btn-ghost" (click)="abrirEjemplo(plantilla.ejemplo_url)">
+                        <i class="fas fa-eye"></i>
                         Ver Ejemplo
                       </button>
                     }
-                  </mat-card-actions>
-                </mat-card>
+                  </div>
+                </div>
               }
             </div>
           </div>
@@ -170,57 +150,55 @@ import { VersionesPlantillasService, PlantillaDocumento } from '../../../service
         @if (plantillasOpcionales().length > 0) {
           <div class="seccion-plantillas">
             <h2 class="seccion-titulo">
-              <mat-icon>library_books</mat-icon>
+              <i class="fas fa-book"></i>
               Plantillas Opcionales
             </h2>
             <div class="plantillas-grid">
               @for (plantilla of plantillasOpcionales(); track plantilla.id) {
-                <mat-card class="plantilla-card">
-                  <mat-card-header>
-                    <div class="card-header-content">
-                      <mat-icon class="tipo-icon">
-                        {{ obtenerIconoTipo(plantilla.tipo_documento) }}
-                      </mat-icon>
+                <div class="plantilla-card">
+                  <div class="card-header">
+                    <div class="card-header-left">
+                      <div class="tipo-icon-wrap">
+                        <i [class]="getFAIconoTipo(plantilla.tipo_documento)"></i>
+                      </div>
                       <div class="header-info">
-                        <mat-card-title>{{ plantilla.nombre }}</mat-card-title>
-                        <mat-card-subtitle>{{ getTipoLabel(plantilla.tipo_documento) }}</mat-card-subtitle>
+                        <h3>{{ plantilla.nombre }}</h3>
+                        <span class="subtitle-small">{{ getTipoLabel(plantilla.tipo_documento) }}</span>
                       </div>
                     </div>
                     @if (plantilla.version_plantilla) {
-                      <mat-chip class="chip-version">v{{ plantilla.version_plantilla }}</mat-chip>
+                      <span class="chip chip-version">v{{ plantilla.version_plantilla }}</span>
                     }
-                  </mat-card-header>
+                  </div>
 
-                  <mat-card-content>
+                  <div class="card-body">
                     @if (plantilla.descripcion) {
                       <p class="descripcion">{{ plantilla.descripcion }}</p>
                     }
 
                     <div class="plantilla-metadata">
                       <div class="metadata-item">
-                        <mat-icon>insert_drive_file</mat-icon>
+                        <i class="fas fa-file"></i>
                         <span>{{ plantilla.archivo_nombre }}</span>
                       </div>
-
                       <div class="metadata-item">
-                        <mat-icon>straighten</mat-icon>
+                        <i class="fas fa-weight"></i>
                         <span>{{ formatearTamano(plantilla.archivo_tamano_kb) }}</span>
                       </div>
-
                       <div class="metadata-item">
-                        <mat-icon>download</mat-icon>
+                        <i class="fas fa-download"></i>
                         <span>{{ plantilla.descargas }} descargas</span>
                       </div>
                     </div>
-                  </mat-card-content>
+                  </div>
 
-                  <mat-card-actions>
-                    <button mat-raised-button color="primary" (click)="descargarPlantilla(plantilla)">
-                      <mat-icon>download</mat-icon>
+                  <div class="card-footer">
+                    <button class="btn btn-primary" (click)="descargarPlantilla(plantilla)">
+                      <i class="fas fa-download"></i>
                       Descargar
                     </button>
-                  </mat-card-actions>
-                </mat-card>
+                  </div>
+                </div>
               }
             </div>
           </div>
@@ -236,49 +214,92 @@ import { VersionesPlantillasService, PlantillaDocumento } from '../../../service
     }
 
     .page-header {
-      margin-bottom: 30px;
-
-      .header-content {
-        h1 {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          margin: 0 0 10px 0;
-          font-size: 32px;
-          color: #333;
-
-          mat-icon {
-            font-size: 40px;
-            width: 40px;
-            height: 40px;
-            color: #2196F3;
-          }
-        }
-
-        .subtitle {
-          margin: 0;
-          color: #666;
-          font-size: 16px;
-          padding-left: 55px;
-        }
+      margin-bottom: 28px;
+      h1 {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin: 0 0 6px 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a2e;
+        i { color: #004b8d; }
       }
+      .subtitle { margin: 0; color: #666; font-size: 14px; }
     }
 
     .filtros-card {
-      margin-bottom: 30px;
-      
-      .filtros-container {
-        display: flex;
-        gap: 20px;
-        align-items: center;
-        flex-wrap: wrap;
-
-        mat-form-field {
-          flex: 1;
-          min-width: 200px;
-        }
-      }
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border: 1px solid #f0f0f0;
     }
+
+    .filtros-container {
+      display: flex;
+      gap: 16px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .search-group { flex: 2; }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .form-input {
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      &:focus { border-color: #004b8d; }
+    }
+
+    .search-input-wrap {
+      position: relative;
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+        font-size: 13px;
+      }
+      .search-input { padding-left: 34px; width: 100%; box-sizing: border-box; }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-primary { background: #004b8d; color: #fff; &:hover { background: #003a6e; } }
+    .btn-ghost { background: transparent; color: #555; border: 1px solid #ddd; &:hover { background: #f5f5f5; } }
 
     .loading-container, .empty-state {
       display: flex;
@@ -287,198 +308,156 @@ import { VersionesPlantillasService, PlantillaDocumento } from '../../../service
       justify-content: center;
       padding: 80px 20px;
       text-align: center;
-
-      mat-icon {
-        font-size: 80px;
-        width: 80px;
-        height: 80px;
-        color: #ccc;
-        margin-bottom: 20px;
-      }
-
-      h2 {
-        margin: 0 0 10px 0;
-        color: #666;
-      }
-
-      p {
-        color: #999;
-      }
+      color: #aaa;
+      i { font-size: 64px; margin-bottom: 16px; }
+      h2 { margin: 0 0 8px 0; color: #666; }
+      p { color: #999; margin: 0; }
     }
 
-    .seccion-plantillas {
-      margin-bottom: 40px;
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #004b8d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 14px;
+    }
 
-      .seccion-titulo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0 0 20px 0;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #e0e0e0;
-        color: #333;
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        mat-icon {
-          color: #2196F3;
-        }
-      }
+    .seccion-plantillas { margin-bottom: 36px; }
+
+    .seccion-titulo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8e8e8;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      i { color: #004b8d; }
     }
 
     .plantillas-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 18px;
     }
 
     .plantilla-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      border: 1px solid #f0f0f0;
       display: flex;
       flex-direction: column;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
+      overflow: hidden;
 
       &:hover {
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        transform: translateY(-4px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
       }
 
       &.obligatoria {
-        border: 2px solid #FF9800;
-        background: linear-gradient(to bottom, #FFF3E0 0%, white 10%);
-      }
-
-      mat-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 16px;
-
-        .card-header-content {
-          display: flex;
-          gap: 15px;
-          align-items: start;
-          flex: 1;
-
-          .tipo-icon {
-            font-size: 40px;
-            width: 40px;
-            height: 40px;
-            color: #2196F3;
-          }
-
-          .header-info {
-            flex: 1;
-
-            mat-card-title {
-              font-size: 18px;
-              margin-bottom: 5px;
-            }
-
-            mat-card-subtitle {
-              color: #666;
-            }
-          }
-        }
-      }
-
-      mat-card-content {
-        flex: 1;
-        
-        .descripcion {
-          margin: 0 0 15px 0;
-          color: #555;
-          line-height: 1.5;
-        }
-
-        .plantilla-metadata {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 15px;
-
-          .metadata-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #666;
-            font-size: 14px;
-
-            mat-icon {
-              font-size: 18px;
-              width: 18px;
-              height: 18px;
-              color: #999;
-            }
-          }
-        }
-
-        .instrucciones-section {
-          margin-top: 15px;
-          padding: 12px;
-          background: #E3F2FD;
-          border-radius: 6px;
-          border-left: 3px solid #2196F3;
-
-          strong {
-            display: block;
-            margin-bottom: 5px;
-            color: #1976D2;
-          }
-
-          p {
-            margin: 0;
-            font-size: 13px;
-            color: #555;
-            line-height: 1.5;
-          }
-        }
-      }
-
-      mat-card-actions {
-        display: flex;
-        gap: 10px;
-        padding: 16px;
-        border-top: 1px solid #e0e0e0;
+        border: 2px solid #f57c00;
+        background: linear-gradient(to bottom, #fff8f0 0%, #fff 8%);
       }
     }
 
-    .chip-obligatoria {
-      background: #FF9800 !important;
-      color: white !important;
-      font-weight: 500;
-
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-      }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 18px 18px 12px 18px;
+      border-bottom: 1px solid #f5f5f5;
     }
 
-    .chip-version {
-      background: #E3F2FD;
-      color: #1976D2;
+    .card-header-left {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      flex: 1;
+    }
+
+    .tipo-icon-wrap {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #004b8d;
+      flex-shrink: 0;
+    }
+
+    .header-info {
+      flex: 1;
+      h3 { margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #1a1a2e; }
+      .subtitle-small { font-size: 12px; color: #777; }
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .chip-obligatoria { background: #f57c00; color: #fff; }
+    .chip-version { background: #e3f2fd; color: #1565c0; }
+
+    .card-body {
+      padding: 14px 18px;
+      flex: 1;
+
+      .descripcion { margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5; }
+    }
+
+    .plantilla-metadata {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .metadata-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #666;
+      font-size: 12px;
+      i { color: #aaa; width: 14px; text-align: center; }
+    }
+
+    .instrucciones-box {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #e3f2fd;
+      border-radius: 6px;
+      border-left: 3px solid #004b8d;
+      strong { display: block; margin-bottom: 4px; color: #004b8d; font-size: 12px; }
+      p { margin: 0; font-size: 12px; color: #555; line-height: 1.5; }
+    }
+
+    .card-footer {
+      display: flex;
+      gap: 10px;
+      padding: 14px 18px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafafa;
     }
 
     @media (max-width: 768px) {
-      .plantillas-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .filtros-container {
-        flex-direction: column;
-
-        mat-form-field, button {
-          width: 100%;
-        }
-      }
-
-      .page-header .header-content h1 {
-        font-size: 24px;
-
-        mat-icon {
-          font-size: 32px;
-          width: 32px;
-          height: 32px;
-        }
-      }
+      .plantillas-grid { grid-template-columns: 1fr; }
+      .filtros-container { flex-direction: column; }
     }
   `]
 })
@@ -494,31 +473,19 @@ export class PlantillasEstudianteComponent implements OnInit {
 
   plantillasFiltradas = computed(() => {
     let resultado = this.plantillas();
-
-    // Filtrar por tipo
-    if (this.tipoFiltro) {
-      resultado = resultado.filter(p => p.tipo_documento === this.tipoFiltro);
-    }
-
-    // Filtrar por búsqueda
+    if (this.tipoFiltro) resultado = resultado.filter(p => p.tipo_documento === this.tipoFiltro);
     if (this.busqueda) {
       const busquedaLower = this.busqueda.toLowerCase();
-      resultado = resultado.filter(p => 
+      resultado = resultado.filter(p =>
         p.nombre.toLowerCase().includes(busquedaLower) ||
         p.descripcion?.toLowerCase().includes(busquedaLower)
       );
     }
-
     return resultado;
   });
 
-  plantillasObligatorias = computed(() => {
-    return this.plantillasFiltradas().filter(p => p.obligatoria);
-  });
-
-  plantillasOpcionales = computed(() => {
-    return this.plantillasFiltradas().filter(p => !p.obligatoria);
-  });
+  plantillasObligatorias = computed(() => this.plantillasFiltradas().filter(p => p.obligatoria));
+  plantillasOpcionales = computed(() => this.plantillasFiltradas().filter(p => !p.obligatoria));
 
   ngOnInit() {
     this.cargarPlantillas();
@@ -531,16 +498,14 @@ export class PlantillasEstudianteComponent implements OnInit {
         this.plantillas.set(response.plantillas);
         this.cargando.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al cargar plantillas', 'Cerrar', { duration: 3000 });
         this.cargando.set(false);
       }
     });
   }
 
-  aplicarFiltros() {
-    // Los filtros se aplican automáticamente gracias a los computed signals
-  }
+  aplicarFiltros() {}
 
   limpiarFiltros() {
     this.tipoFiltro = '';
@@ -557,10 +522,9 @@ export class PlantillasEstudianteComponent implements OnInit {
         link.click();
         window.URL.revokeObjectURL(url);
         this.snackBar.open('Descarga iniciada', 'Cerrar', { duration: 2000 });
-        // Refrescar plantillas para actualizar contador de descargas
         setTimeout(() => this.cargarPlantillas(), 1000);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al descargar plantilla', 'Cerrar', { duration: 3000 });
       }
     });
@@ -570,8 +534,17 @@ export class PlantillasEstudianteComponent implements OnInit {
     window.open(url, '_blank');
   }
 
-  obtenerIconoTipo(tipo: string): string {
-    return this.versionesService.obtenerIconoTipoDocumento(tipo);
+  getFAIconoTipo(tipo: string): string {
+    const icons: Record<string, string> = {
+      propuesta: 'fas fa-lightbulb',
+      informe_avance: 'fas fa-chart-line',
+      informe_final: 'fas fa-file-check',
+      presentacion: 'fas fa-presentation',
+      poster: 'fas fa-image',
+      acta: 'fas fa-scroll',
+      otro: 'fas fa-file-alt'
+    };
+    return icons[tipo] || 'fas fa-file-alt';
   }
 
   getTipoLabel(tipo: string): string {

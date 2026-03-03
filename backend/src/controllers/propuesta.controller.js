@@ -87,8 +87,8 @@ export const crearPropuestaController = async (req, res) => {
     if (!modalidad || !['desarrollo_software', 'investigacion'].includes(modalidad)) {
       errores.push('modalidad debe ser "desarrollo_software" o "investigacion"');
     }
-    if (!numero_estudiantes || ![1, 2].includes(parseInt(numero_estudiantes))) {
-      errores.push('numero_estudiantes debe ser 1 o 2');
+    if (!numero_estudiantes || ![1, 2, 3].includes(parseInt(numero_estudiantes))) {
+      errores.push('numero_estudiantes debe ser 1, 2 o 3');
     }
     if (!duracion_estimada_semestres || ![1, 2].includes(parseInt(duracion_estimada_semestres))) {
       errores.push('duracion_estimada_semestres debe ser 1 o 2');
@@ -105,8 +105,8 @@ export const crearPropuestaController = async (req, res) => {
     }
 
     if (errores.length > 0) {
-      console.log('❌ Errores de validación:', errores);
-      return res.status(400).json({ 
+      logger.warn('Errores de validación en propuesta', { errores });
+      return res.status(400).json({
         message: 'Faltan datos obligatorios o son inválidos',
         errores: errores
       });
@@ -115,7 +115,7 @@ export const crearPropuestaController = async (req, res) => {
     // Validar fecha
     const fechaDate = new Date(fecha_envio);
     if (isNaN(fechaDate)) {
-      console.log('❌ Fecha inválida:', fecha_envio);
+      logger.warn('Fecha inválida en propuesta', { fecha_envio });
       return res.status(400).json({ 
         message: 'La fecha_envio no es válida. Formato esperado: YYYY-MM-DD',
         fecha_recibida: fecha_envio
@@ -151,7 +151,7 @@ export const crearPropuestaController = async (req, res) => {
     // Guardar archivo inicial en historial
     if (archivo) {
       try {
-        console.log(`📦 Guardando archivo inicial en historial: ${archivo}`);
+        logger.info('Guardando archivo inicial en historial', { archivo });
         await PropuestasService.guardarArchivoPropuesta(
           nuevaPropuestaId,
           'propuesta_inicial',
@@ -160,16 +160,16 @@ export const crearPropuestaController = async (req, res) => {
           estudiante_rut,
           'Versión inicial de la propuesta'
         );
-        console.log(`✅ Archivo inicial guardado en historial`);
+        logger.info('Archivo inicial guardado en historial');
       } catch (error) {
-        console.error(`⚠️ Error al guardar archivo inicial en historial: ${error.message}`);
+        logger.warn('Error al guardar archivo inicial en historial', { error: error.message });
         // No fallar la creación si falla el guardado del historial
       }
     }
 
     return res.status(201).json({ message: 'Propuesta creada exitosamente', id: nuevaPropuestaId });
   } catch (error) {
-    console.error('Error al crear propuesta:', error);
+    logger.error('Error al crear propuesta', { error: error.message });
     return res.status(500).json({ message: 'Error interno del servidor', details: error.message });
   }
 };
@@ -181,7 +181,7 @@ export const getPropuestasEstudiante = async (req, res) => {
   try {
     const estudiante_rut = req.rut; // El RUT viene del middleware de autenticación
 
-    console.log('🔍 Debug - Obteniendo propuestas para estudiante:', estudiante_rut);
+    logger.debug('Obteniendo propuestas para estudiante', { rut: estudiante_rut });
 
     const propuestas = await PropuestasService.getPropuestasByEstudiante(estudiante_rut);
     
@@ -191,7 +191,7 @@ export const getPropuestasEstudiante = async (req, res) => {
 
     return res.json(propuestas);
   } catch (error) {
-    console.error('Error al obtener propuestas del estudiante:', error);
+    logger.error('Error al obtener propuestas del estudiante', { error: error.message });
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -262,13 +262,13 @@ export const revisarPropuesta = async (req, res) => {
     const carrerasAdministradas = req.user?.carreras_administradas || [];
     const archivoRevision = req.file; // Multer agrega el archivo aquí
 
-    console.log('=== DEBUG REVISAR PROPUESTA ===');
-    console.log('ID propuesta:', id);
-    console.log('Body completo:', JSON.stringify(req.body, null, 2));
-    console.log('comentarios_profesor:', comentarios_profesor || 'FALTA');
-    console.log('estado:', estado || 'FALTA');
-    console.log('Archivo:', archivoRevision ? archivoRevision.filename : 'Sin archivo');
-    console.log('User info:', { rut: userRut, role: userRole, carreras: carrerasAdministradas });
+    logger.info('Iniciando revisión de propuesta', {
+      id,
+      estado: estado || 'FALTA',
+      archivo: archivoRevision ? archivoRevision.filename : 'sin archivo',
+      rut: userRut,
+      role: userRole
+    });
 
     // Validación mejorada con más información
     const errores = [];
@@ -283,8 +283,8 @@ export const revisarPropuesta = async (req, res) => {
     }
 
     if (errores.length > 0) {
-      console.log('❌ Errores de validación:', errores);
-      return res.status(400).json({ 
+      logger.warn('Errores de validación en revisión', { errores });
+      return res.status(400).json({
         message: 'Faltan comentarios o estado.',
         errores: errores,
         datosRecibidos: {
@@ -301,7 +301,7 @@ export const revisarPropuesta = async (req, res) => {
 
     const estadosValidos = ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'];
     if (!estadosValidos.includes(estado)) {
-      console.log('❌ Estado inválido:', estado);
+      logger.warn('Estado inválido en revisión de propuesta', { estado });
       return res.status(400).json({ 
         message: 'Estado inválido.',
         estadoRecibido: estado,
@@ -309,9 +309,7 @@ export const revisarPropuesta = async (req, res) => {
       });
     }
 
-    console.log('✅ Validación exitosa - procesando...');
-    console.log('Estado recibido:', estado);
-    console.log('Estados válidos:', estadosValidos);
+    logger.debug('Validación de revisión exitosa', { estado });
 
     // Verificar permisos según rol
     // SuperAdmin: puede revisar todas las propuestas
@@ -350,7 +348,7 @@ export const revisarPropuesta = async (req, res) => {
         });
       }
 
-      console.log('✅ Admin verificado - puede revisar propuesta de carrera:', estudianteInfo[0].carrera_nombre);
+      logger.debug('Admin verificado para revisión', { carrera: estudianteInfo[0].carrera_nombre });
     }
     // SuperAdmin (rol 4) y Profesores (rol 2) no necesitan verificación adicional aquí
 
@@ -396,18 +394,18 @@ export const revisarPropuesta = async (req, res) => {
       notifyPropuestaAprobada(resultado.estudiante_rut, {
         propuesta_id: id,
         titulo: resultado.titulo || 'Tu propuesta',
-        comentarios: comentarios_profesor,
+        comentarios: comentariosNormalizados,
         proyecto_id: resultado.proyecto_id
       });
-      logger.info('Propuesta aprobada - notificación enviada', { 
-        propuesta_id: id, 
-        estudiante: resultado.estudiante_rut 
+      logger.info('Propuesta aprobada - notificación enviada', {
+        propuesta_id: id,
+        estudiante: resultado.estudiante_rut
       });
     } else if (estado === 'rechazada' && resultado.estudiante_rut) {
       notifyPropuestaRechazada(resultado.estudiante_rut, {
         propuesta_id: id,
         titulo: resultado.titulo || 'Tu propuesta',
-        comentarios: comentarios_profesor
+        comentarios: comentariosNormalizados
       });
       logger.info('Propuesta rechazada - notificación enviada', { 
         propuesta_id: id, 
@@ -435,8 +433,7 @@ export const obtenerPropuestas = async (req, res) => {
   try {
     const { rol_id, carrera_id } = req.user || {};
     
-    console.log('🔍 obtenerPropuestas - req.user:', req.user);
-    console.log('🔍 obtenerPropuestas - rol_id:', rol_id, 'carrera_id:', carrera_id);
+    logger.debug('obtenerPropuestas', { rol_id, carrera_id });
     
     // Los estudiantes (rol 1) deben usar /estudiante/mis-propuestas
     if (rol_id === 1 || rol_id === '1') {
@@ -450,13 +447,11 @@ export const obtenerPropuestas = async (req, res) => {
     // Si es super admin (rol 4) o no tiene carrera, ver todas las propuestas
     const carreraFiltro = (rol_id === 3 && carrera_id) ? carrera_id : null;
     
-    console.log('🔍 obtenerPropuestas - carreraFiltro:', carreraFiltro);
-    
     const propuestas = await PropuestasService.obtenerPropuestas(carreraFiltro);
-    console.log(`✅ Propuestas obtenidas (rol ${rol_id}, carrera ${carreraFiltro || 'todas'}):`, propuestas.length);
+    logger.info('Propuestas obtenidas', { rol_id, carreraFiltro: carreraFiltro || 'todas', total: propuestas.length });
     return res.json(propuestas);
   } catch (error) {
-    console.error('❌ Error en obtenerPropuestas:', error);
+    logger.error('Error en obtenerPropuestas', { error: error.message });
     return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
@@ -467,28 +462,17 @@ export const obtenerPropuestaPorId = async (req, res) => {
     const userRut = req.rut;
     const userRole = req.rol_id;
 
-    console.log('🔍 Debug permisos - ID propuesta:', id);
-    console.log('🔍 Debug permisos - User RUT:', userRut);
-    console.log('🔍 Debug permisos - User Role:', userRole);
+    logger.debug('Verificando permisos de propuesta', { id, rut: userRut, role: userRole });
 
     const propuesta = await PropuestasService.obtenerPropuestaPorId(id, userRut, userRole);
     if (!propuesta) return res.status(404).json({ message: 'Propuesta no encontrada' });
 
-    console.log('🔍 Debug permisos - Propuesta encontrada:', {
-      id: propuesta.id,
-      estudiante_rut: propuesta.estudiante_rut,
-      profesor_rut: propuesta.profesor_rut
-    });
-
     // SuperAdmin y Admin tienen acceso total (verificación directa)
     if (userRole === 4 || userRole === 3) {
-      console.log('✅ Admin/SuperAdmin - acceso directo concedido');
       return res.json(propuesta);
     }
 
-    // Verificar permisos de visualización para otros roles
     const puedeVer = await PropuestasService.verificarPermisosVisualizacion(propuesta, userRut, userRole);
-    console.log('🔍 Debug permisos - Puede ver:', puedeVer);
 
     if (!puedeVer) {
       return res.status(403).json({ message: 'No tienes permisos para ver esta propuesta' });
@@ -496,7 +480,7 @@ export const obtenerPropuestaPorId = async (req, res) => {
 
     return res.json(propuesta);
   } catch (error) {
-    console.error(error);
+    logger.error('Error al obtener propuesta por ID', { error: error.message, id: req.params.id });
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -525,7 +509,7 @@ export const eliminarPropuesta = async (req, res) => {
 
     return res.json({ message: 'Propuesta eliminada correctamente' });
   } catch (error) {
-    console.error(error);
+    logger.error('Error al eliminar propuesta', { error: error.message, id: req.params.id });
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -575,7 +559,7 @@ export const ActualizarPropuesta = async (req, res) => {
     );
     
     if (!permisoActualizacion.puede_actualizar) {
-      console.log('❌ No puede actualizar propuesta:', permisoActualizacion.motivo);
+      logger.warn('No puede actualizar propuesta', { motivo: permisoActualizacion.motivo, id });
       return res.status(403).json({ 
         message: permisoActualizacion.motivo,
         fecha_limite: permisoActualizacion.fecha_limite,
@@ -583,7 +567,7 @@ export const ActualizarPropuesta = async (req, res) => {
         fuera_de_plazo: true
       });
     }
-    console.log('✅ Puede actualizar propuesta:', permisoActualizacion.motivo);
+    logger.debug('Puede actualizar propuesta', { motivo: permisoActualizacion.motivo });
 
     let archivoPath = undefined; // undefined significa que no se actualiza el archivo
     let nombreArchivoOriginal = undefined;
@@ -595,7 +579,7 @@ export const ActualizarPropuesta = async (req, res) => {
       // GUARDAR archivo anterior en historial (NO eliminarlo)
       if (propuesta.archivo) {
         try {
-          console.log(`📦 Guardando archivo anterior en historial: ${propuesta.archivo}`);
+          logger.info('Guardando archivo anterior en historial', { archivo: propuesta.archivo });
           await PropuestasService.guardarArchivoPropuesta(
             id,
             'correccion_estudiante',
@@ -604,16 +588,16 @@ export const ActualizarPropuesta = async (req, res) => {
             estudiante_rut,
             'Versión anterior antes de corrección'
           );
-          console.log(`✅ Archivo anterior guardado en historial`);
+          logger.info('Archivo anterior guardado en historial');
         } catch (error) {
-          console.error(`⚠️ Error al guardar archivo anterior en historial: ${error.message}`);
+          logger.warn('Error al guardar archivo anterior en historial', { error: error.message });
           // No fallar la actualización si falla el guardado del historial
         }
       }
       
       // Guardar el nuevo archivo en historial también
       try {
-        console.log(`📦 Guardando nuevo archivo en historial: ${archivoPath}`);
+        logger.info('Guardando nuevo archivo en historial', { archivo: archivoPath });
         await PropuestasService.guardarArchivoPropuesta(
           id,
           'correccion_estudiante',
@@ -622,9 +606,9 @@ export const ActualizarPropuesta = async (req, res) => {
           estudiante_rut,
           'Nueva versión con correcciones'
         );
-        console.log(`✅ Nuevo archivo guardado en historial`);
+        logger.info('Nuevo archivo guardado en historial');
       } catch (error) {
-        console.error(`⚠️ Error al guardar nuevo archivo en historial: ${error.message}`);
+        logger.warn('Error al guardar nuevo archivo en historial', { error: error.message });
       }
     }
 
@@ -652,7 +636,7 @@ export const ActualizarPropuesta = async (req, res) => {
 
     return res.json({ message: 'Propuesta actualizada correctamente' });
   } catch (error) {
-    console.error(error);
+    logger.error('Error al actualizar propuesta', { error: error.message, id: req.params.id });
     return res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -666,7 +650,7 @@ export const getPropuestasPorProfesor = async (req, res) => {
 
     res.status(200).json(propuestas);
   } catch (error) {
-    console.error('Error al obtener propuestas del profesor:', error);
+    logger.error('Error al obtener propuestas del profesor', { error: error.message });
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -679,7 +663,7 @@ export const obtenerHistorialRevisiones = async (req, res) => {
     
     return res.status(200).json(historial);
   } catch (error) {
-    console.error('Error al obtener historial de revisiones:', error);
+    logger.error('Error al obtener historial de revisiones', { error: error.message });
     return res.status(500).json({ 
       message: 'Error al obtener el historial de revisiones',
       details: error.message 
@@ -696,7 +680,7 @@ export const obtenerArchivosPropuesta = async (req, res) => {
     
     return res.status(200).json(archivos);
   } catch (error) {
-    console.error('Error al obtener archivos de propuesta:', error);
+    logger.error('Error al obtener archivos de propuesta', { error: error.message });
     return res.status(500).json({ 
       message: 'Error al obtener los archivos',
       details: error.message 
@@ -729,7 +713,7 @@ export const descargarArchivo = async (req, res) => {
     // Descargar archivo con nombre original
     return res.download(filePath, archivo.nombre_archivo_original);
   } catch (error) {
-    console.error('Error al descargar archivo:', error);
+    logger.error('Error al descargar archivo', { error: error.message });
     return res.status(500).json({ 
       message: 'Error al descargar el archivo',
       details: error.message 
@@ -777,8 +761,8 @@ export const subirCorreccion = async (req, res) => {
       'Corrección del estudiante'
     );
     
-    // Actualizar estado de la propuesta a "revision" para que el profesor la revise nuevamente
-    await PropuestasService.actualizarEstadoPropuesta(id, 'revision');
+    // Actualizar estado de la propuesta a "en_revision" para que el profesor la revise nuevamente
+    await PropuestasService.actualizarEstadoPropuesta(id, 'en_revision');
     
     logger.info('Corrección de estudiante subida', { 
       propuesta_id: id, 

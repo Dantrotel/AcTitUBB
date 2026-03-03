@@ -47,6 +47,12 @@ export class DocumentosProyectoComponent implements OnInit {
   comentarios: string = '';
   cargando: boolean = false;
   mostrarFormulario: boolean = false;
+
+  // Corrección por documento
+  correccionDocumentoId: number | null = null;
+  archivoCorreccion: File | null = null;
+  comentariosCorreccion: string = '';
+  subiendoCorreccion: boolean = false;
   
   // Información del usuario actual
   userData: any;
@@ -62,6 +68,7 @@ export class DocumentosProyectoComponent implements OnInit {
     { value: 'documento_final', label: 'Documento Final' },
     { value: 'formulario', label: 'Formulario' },
     { value: 'acta_reunion', label: 'Acta de Reunión' },
+    { value: 'correccion', label: 'Corrección / Revisión' },
     { value: 'otro', label: 'Otro' }
   ];
 
@@ -145,7 +152,20 @@ export class DocumentosProyectoComponent implements OnInit {
   }
 
   descargarDocumento(documentoId: number): void {
-    window.open(`http://localhost:3000/api/v1/documentos/${documentoId}/download`, '_blank');
+    this.apiService.descargarDocumentoProyecto(documentoId).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const doc = this.documentos.find(d => d.id === documentoId);
+        a.download = doc?.nombre_original || `documento-${documentoId}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.notificationService.error('Error al descargar el documento');
+      }
+    });
   }
 
   async actualizarEstado(documentoId: number, nuevoEstado: string): Promise<void> {
@@ -204,6 +224,51 @@ export class DocumentosProyectoComponent implements OnInit {
     if (!this.mostrarFormulario) {
       this.resetearFormulario();
     }
+  }
+
+  abrirFormCorreccion(documentoId: number): void {
+    this.correccionDocumentoId = (this.correccionDocumentoId === documentoId) ? null : documentoId;
+    this.archivoCorreccion = null;
+    this.comentariosCorreccion = '';
+  }
+
+  onArchivoCorreccionSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.archivoCorreccion = input.files[0];
+    }
+  }
+
+  subirCorreccion(docOriginal: Documento): void {
+    if (!this.archivoCorreccion) {
+      this.notificationService.warning('Selecciona un archivo de corrección');
+      return;
+    }
+
+    this.subiendoCorreccion = true;
+    const formData = new FormData();
+    formData.append('archivo', this.archivoCorreccion);
+    formData.append('tipo_documento', 'correccion');
+    formData.append('estado', 'en_revision');
+    formData.append('comentarios',
+      `Corrección del documento "${docOriginal.nombre_original}"` +
+      (this.comentariosCorreccion ? `: ${this.comentariosCorreccion}` : '')
+    );
+
+    this.apiService.post(`/documentos/${this.proyectoId}`, formData).subscribe({
+      next: () => {
+        this.notificationService.success('Corrección subida exitosamente');
+        this.correccionDocumentoId = null;
+        this.archivoCorreccion = null;
+        this.comentariosCorreccion = '';
+        this.subiendoCorreccion = false;
+        this.cargarDocumentos();
+      },
+      error: () => {
+        this.notificationService.error('Error al subir la corrección');
+        this.subiendoCorreccion = false;
+      }
+    });
   }
 
   aplicarFiltros(): void {

@@ -17,9 +17,9 @@ $sidebar-icon: rgba(255,255,255,0.42);
 $sidebar-icon-active: #7db9e8;
 
 // Layout
-$sidebar-width: 264px;
-$sidebar-collapsed-width: 68px;
-$topbar-height: 64px;
+$sidebar-width: 248px;
+$sidebar-collapsed-width: 60px;
+$topbar-height: 52px;
 
 // Topbar – clean white
 $topbar-bg: #ffffff;
@@ -179,7 +179,7 @@ $tablet: 1024px;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0.875rem 0;
+  padding: 0.5rem 0;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -223,16 +223,16 @@ $tablet: 1024px;
 .menu-link {
   display: flex;
   align-items: center;
-  padding: 0.625rem 0.875rem;
+  padding: 0.45rem 0.75rem;
   color: $sidebar-text;
   text-decoration: none;
   border-radius: 8px;
   border-left: 3px solid transparent;
   transition: all $transition-fast;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  gap: 0.75rem;
+  gap: 0.625rem;
   position: relative;
 
   &:hover {
@@ -256,7 +256,7 @@ $tablet: 1024px;
 
   .sidebar-collapsed & {
     justify-content: center;
-    padding: 0.625rem;
+    padding: 0.45rem;
     border-left: none;
     border-radius: 8px;
   }
@@ -332,7 +332,7 @@ $tablet: 1024px;
 .submenu-link {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0.875rem 0.5rem 2.75rem;
+  padding: 0.35rem 0.75rem 0.35rem 2.5rem;
   color: rgba(255,255,255,0.48);
   text-decoration: none;
   font-size: 0.8125rem;
@@ -379,7 +379,7 @@ $tablet: 1024px;
 // Footer del Sidebar (Usuario)
 .sidebar-footer {
   border-top: 1px solid $sidebar-border;
-  padding: 0.75rem 0.625rem;
+  padding: 0.5rem 0.5rem;
   position: relative;
   flex-shrink: 0;
   background: rgba(0,0,0,0.15);
@@ -388,8 +388,8 @@ $tablet: 1024px;
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 0.75rem;
+  gap: 0.5rem;
+  padding: 0.45rem 0.625rem;
   border-radius: 8px;
   transition: background $transition-fast;
   cursor: pointer;
@@ -568,8 +568,8 @@ $tablet: 1024px;
   border-bottom: 1px solid $topbar-border;
   display: flex;
   align-items: center;
-  padding: 0 1.5rem;
-  gap: 1rem;
+  padding: 0 1.25rem;
+  gap: 0.75rem;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -731,12 +731,12 @@ $tablet: 1024px;
 
 .page-content {
   flex: 1;
-  padding: 1.75rem 2rem;
+  padding: 1.25rem 1.5rem;
   background: $content-bg;
   overflow-x: hidden;
 
   @media (max-width: $mobile) {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 }
 
@@ -747,10 +747,10 @@ $tablet: 1024px;
 .app-footer {
   background: $topbar-bg;
   border-top: 1px solid $topbar-border;
-  padding: 1rem 2rem;
+  padding: 0.5rem 1.5rem;
 
   @media (max-width: $mobile) {
-    padding: 1rem;
+    padding: 0.5rem 1rem;
   }
 }
 
@@ -824,7 +824,7 @@ $tablet: 1024px;
   z-index: 999;
   animation: fadeIn 0.2s ease-out;
 
-  @media (min-width: $mobile + 1) {
+  @media (min-width: calc($mobile + 1px)) {
     display: none;
   }
 }

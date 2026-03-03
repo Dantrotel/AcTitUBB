@@ -1,1109 +1,856 @@
-@use "sass:color";
+@use 'sass:color';
 
-// Variables de colores UBB (unificadas)
-$primary-color: #004b8d;
-$secondary-color: #0066cc;
-$secondary-color-light: #2989d8;
-$secondary-color-lighter: #7db9e8;
-$secondary-color-dark: #0c3d80;
-$danger-color: #dc3545;
-$danger-color-light: #e53935;
-$danger-color-dark: #7f0000;
-$white-color: #ffffff;
-$light-color: #f8f9fa;
-$gray-color: #e9ecef;
-$dark-color: #212529;
-$success-color: #28a745;
-$warning-color: #ffc107;
-$accent-color: #00a8ff;
-$info-color: #17a2b8;
-$light-gray: $light-color;
-$dark-gray: $dark-color;
-$border-color: $gray-color;
-$text-muted: #6c757d;
+// ===== VARIABLES =====
+$primary: #004b8d; $blue: #0066cc; $green: #28a745; $orange: #fd7e14;
+$red: #dc3545; $info: #17a2b8; $gray: #6c757d;
+$border: #dee2e6; $bg: #f4f6f9; $white: #fff; $text: #212529; $muted: #6c757d;
+$shadow: 0 1px 4px rgba(0,0,0,.08); $radius: 8px;
+// Legacy aliases
+$success: $green; $warning: $orange; $danger: $red; $light: $bg; $dark: $text;
 
+// ===== MIXINS =====
+@mixin panel {
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 8px;
+  box-shadow: $shadow;
+}
+
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.38rem 0.75rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, opacity 0.18s ease;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// ===== CONTAINER =====
 .gestion-calendario-container {
+  background: $bg;
   min-height: 100vh;
-  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-  
-  .header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    padding: 2rem;
+  padding: 0;
+
+  // ===== PAGE HEADER =====
+  .page-header-integrated {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    justify-content: space-between;
+    padding: 0.875rem 1rem;
+    background: $white;
+    border: 1px solid $border;
+    border-left: 4px solid $primary;
+    border-radius: $radius;
+    margin-bottom: 1rem;
+    box-shadow: $shadow;
 
-    .header-content {
-      flex: 1;
-      text-align: center;
-
+    .header-left {
       h1 {
-        color: white;
-        font-size: 2.5rem;
+        font-size: 1.1rem;
         font-weight: 700;
-        margin: 0 0 0.5rem 0;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-
-        i {
-          margin-right: 1rem;
-          color: $accent-color;
-        }
-      }
-
-      p {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1.2rem;
+        color: $primary;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        i { font-size: 0.95rem; }
+      }
+      .header-subtitle {
+        font-size: 0.72rem;
+        color: $muted;
+        margin: 0.15rem 0 0;
+        display: block;
       }
     }
 
-    .header-actions {
-      .btn-volver-header {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
-        &:hover {
-          background: rgba(255, 255, 255, 0.3);
-          border-color: rgba(255, 255, 255, 0.5);
-          transform: translateY(-2px);
-        }
-      }
+    .total-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: rgba($primary, 0.07);
+      border: 1px solid rgba($primary, 0.15);
+      border-radius: 6px;
+      padding: 0.3rem 0.75rem;
+      min-width: 52px;
+      .total-number { font-size: 1.1rem; font-weight: 800; color: $primary; line-height: 1; }
+      .total-label  { font-size: 0.62rem; color: $muted; text-transform: uppercase; letter-spacing: 0.04em; }
     }
   }
 
-  .loading-container, .error-container {
+  // ===== LOADING / ERROR =====
+  .loading-container,
+  .error-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 4rem 2rem;
-    color: white;
+    padding: 2.5rem 1rem;
+    color: $muted;
     text-align: center;
 
-    .loading-spinner, .error-icon {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-      
-      i {
-        animation: spin 2s linear infinite;
-      }
+    .loading-spinner,
+    .error-icon {
+      font-size: 2rem;
+      margin-bottom: 0.6rem;
+
+      i { animation: spin 1.5s linear infinite; }
     }
 
-    .error-icon i {
-      animation: none;
-      color: $warning-color;
-    }
+    .error-icon i { animation: none; color: $warning; }
 
-    h3 {
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-    }
-
-    p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-      margin-bottom: 1.5rem;
-    }
+    h3 { font-size: 1rem; margin-bottom: 0.25rem; color: $dark; }
+    p  { font-size: 0.8rem; margin-bottom: 0.75rem; }
   }
 
-  // Secciones principales
-  .nueva-fecha-section, .estadisticas-section, .fechas-section {
-    margin: 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  // ===== SECTIONS =====
+  .nueva-fecha-section,
+  .estadisticas-section,
+  .fechas-section,
+  .fechas-importantes-section {
+    margin: 0.875rem;
+    @include panel;
     overflow: hidden;
 
     .section-header {
-      background: linear-gradient(135deg, $light-gray 0%, #ffffff 100%);
-      padding: 1.5rem 2rem;
-      border-bottom: 1px solid $border-color;
+      background: $light;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid $border;
       display: flex;
       justify-content: space-between;
       align-items: center;
 
       h2 {
-        color: $dark-gray;
-        font-size: 1.5rem;
+        color: $dark;
+        font-size: 0.92rem;
         font-weight: 600;
         margin: 0;
 
-        i {
-          margin-right: 0.5rem;
-          color: $primary-color;
-        }
+        i { margin-right: 0.4rem; color: $primary; }
       }
 
-      .btn-toggle, .section-actions .btn-secondary {
-        background: $primary-color;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+      .btn-toggle,
+      .section-actions .btn-secondary {
+        @include btn-base;
+        background: $primary;
+        color: $white;
+        font-size: 0.78rem;
 
-        &:hover {
-          background: color.adjust($primary-color, $lightness: -10%);
-          transform: translateY(-2px);
-        }
+        &:hover { background: color.adjust($primary, $lightness: -8%); }
       }
     }
   }
 
-  // Formulario
+  // ===== FORM COLLAPSIBLE =====
   .formulario-container {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
 
-    &.visible {
-      max-height: 500px;
-    }
+    &.visible { max-height: 600px; }
 
-    form {
-      padding: 2rem;
-    }
+    form { padding: 1rem; }
   }
 
+  // ===== FORM GRID =====
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.875rem;
+    margin-bottom: 1rem;
 
     .form-group {
       display: flex;
       flex-direction: column;
 
-      &.full-width {
-        grid-column: 1 / -1;
-      }
+      &.full-width { grid-column: 1 / -1; }
 
       &.checkbox-group {
         flex-direction: row;
         align-items: center;
-        padding: 1rem;
-        background: linear-gradient(135deg, rgba(0, 123, 255, 0.05), rgba(0, 123, 255, 0.02));
-        border: 2px solid rgba(0, 123, 255, 0.2);
-        border-radius: 8px;
-        transition: all 0.3s ease;
+        padding: 0.6rem 0.75rem;
+        background: rgba($primary, 0.04);
+        border: 1px solid rgba($primary, 0.18);
+        border-radius: 6px;
 
-        &:hover {
-          border-color: $primary-color;
-          background: linear-gradient(135deg, rgba(0, 123, 255, 0.08), rgba(0, 123, 255, 0.04));
-        }
+        &:hover { border-color: $primary; }
       }
 
       .checkbox-label {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.6rem;
         cursor: pointer;
         width: 100%;
 
         input[type="checkbox"] {
-          width: 24px;
-          height: 24px;
+          width: 16px;
+          height: 16px;
           cursor: pointer;
-          accent-color: $primary-color;
+          accent-color: $primary;
         }
 
         .checkbox-text {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: 0.15rem;
 
-          i {
-            color: $primary-color;
-            font-size: 1.2rem;
-            margin-right: 0.5rem;
-          }
+          i { color: $primary; font-size: 0.88rem; margin-right: 0.3rem; }
 
-          strong {
-            color: $dark-gray;
-            font-size: 1.05rem;
-          }
+          strong { color: $dark; font-size: 0.85rem; }
 
-          .help-text {
-            color: $text-muted;
-            font-size: 0.9rem;
-            font-style: italic;
-          }
+          .help-text { color: $muted; font-size: 0.73rem; font-style: italic; }
         }
       }
 
       label {
         font-weight: 600;
-        color: $dark-gray;
-        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        color: $dark;
+        margin-bottom: 0.3rem;
       }
 
-      input, select, textarea {
-        border: 2px solid $border-color;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
-
-        &:focus {
-          outline: none;
-          border-color: $primary-color;
-        }
-      }
-
+      input,
+      select,
       textarea {
-        resize: vertical;
-        min-height: 80px;
+        border: 1px solid $border;
+        border-radius: 5px;
+        padding: 0.38rem 0.6rem;
+        font-size: 0.82rem;
+        transition: border-color 0.18s ease;
+
+        &:focus { outline: none; border-color: $primary; }
       }
+
+      textarea { resize: vertical; min-height: 60px; }
+
+      small { font-size: 0.72rem; color: $muted; margin-top: 0.2rem; }
     }
   }
 
+  // ===== FORM ACTIONS =====
   .form-actions {
     display: flex;
-    gap: 1rem;
-    justify-content: flex-start;
-
-    .btn-primary, .btn-secondary {
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: none;
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-    }
+    gap: 0.5rem;
 
     .btn-primary {
-      background: linear-gradient(135deg, $success-color 0%, color.adjust($success-color, $lightness: -10%) 100%);
-      color: white;
+      @include btn-base;
+      background: $success;
+      color: $white;
 
-      &:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba($success-color, 0.4);
-      }
+      &:hover:not(:disabled) { background: color.adjust($success, $lightness: -8%); }
     }
 
     .btn-secondary {
-      background: linear-gradient(135deg, $text-muted 0%, color.adjust($text-muted, $lightness: -10%) 100%);
-      color: white;
+      @include btn-base;
+      background: $muted;
+      color: $white;
 
-      &:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba($text-muted, 0.4);
-      }
+      &:hover:not(:disabled) { background: color.adjust($muted, $lightness: -8%); }
     }
   }
 
-  // Estadísticas
+  // ===== STATS GRID =====
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    padding: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.75rem;
+    padding: 0.875rem;
 
     .stat-card {
-      background: linear-gradient(135deg, $light-gray 0%, #ffffff 100%);
-      border-radius: 10px;
-      padding: 1.5rem;
-      border: 1px solid $border-color;
+      @include panel;
+      padding: 0.75rem;
       display: flex;
       align-items: center;
-      gap: 1rem;
-      transition: transform 0.3s ease;
-
-      &:hover {
-        transform: translateY(-2px);
-      }
+      gap: 0.75rem;
+      border-left: 4px solid $primary;
 
       .stat-icon {
-        background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-        color: white;
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
+        background: $primary;
+        color: $white;
+        width: 36px;
+        height: 36px;
+        border-radius: 7px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1rem;
+        flex-shrink: 0;
       }
 
       .stat-content {
         .stat-number {
-          font-size: 2rem;
+          font-size: 1.4rem;
           font-weight: 700;
-          color: $primary-color;
+          color: $primary;
           line-height: 1;
         }
 
         .stat-label {
-          font-size: 0.9rem;
-          color: $text-muted;
+          font-size: 0.73rem;
+          color: $muted;
           font-weight: 500;
         }
       }
     }
   }
 
-  // Lista de fechas
+  // ===== FECHAS GRID (cards) =====
   .fechas-grid {
     display: grid;
-    gap: 1.5rem;
-    padding: 2rem;
+    gap: 0.75rem;
+    padding: 0.875rem;
 
     .fecha-card {
-      background: white;
-      border-radius: 10px;
-      border: 1px solid $border-color;
+      @include panel;
       overflow: hidden;
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      }
 
       .fecha-header {
         display: flex;
         align-items: center;
-        padding: 1.5rem;
-        gap: 1rem;
+        padding: 0.75rem 0.875rem;
+        gap: 0.75rem;
 
         .fecha-icon {
-          background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-          color: white;
-          width: 50px;
-          height: 50px;
-          border-radius: 10px;
+          background: $primary;
+          color: $white;
+          width: 36px;
+          height: 36px;
+          border-radius: 7px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.5rem;
+          font-size: 1rem;
+          flex-shrink: 0;
         }
 
         .fecha-info {
           flex: 1;
 
           h3 {
-            font-size: 1.3rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            color: $dark-gray;
-            margin: 0 0 0.5rem 0;
+            color: $dark;
+            margin: 0 0 0.18rem 0;
           }
 
-          .fecha-date {
-            color: $text-muted;
-            font-weight: 500;
-            margin: 0;
-          }
+          .fecha-date { color: $muted; font-size: 0.78rem; margin: 0; }
         }
 
         .fecha-actions {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.3rem;
 
-          .btn-edit, .btn-delete {
+          .btn-edit,
+          .btn-delete {
             background: none;
             border: none;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 4px 6px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-
-            &:hover {
-              transform: translateY(-2px);
-            }
+            font-size: 0.82rem;
+            transition: background 0.18s ease;
           }
 
           .btn-edit {
-            color: $info-color;
-            &:hover {
-              background: rgba($info-color, 0.1);
-            }
+            color: $info;
+            &:hover { background: rgba($info, 0.1); }
           }
 
           .btn-delete {
-            color: $danger-color;
-            &:hover {
-              background: rgba($danger-color, 0.1);
-            }
+            color: $danger;
+            &:hover { background: rgba($danger, 0.1); }
           }
         }
       }
 
       .fecha-details {
-        padding: 0 1.5rem 1rem 1.5rem;
-        
-        p {
-          color: $text-muted;
-          margin: 0;
-          line-height: 1.5;
-        }
+        padding: 0 0.875rem 0.5rem 0.875rem;
+        p { color: $muted; margin: 0; font-size: 0.78rem; line-height: 1.4; }
       }
 
       .fecha-meta {
-        background: $light-gray;
-        padding: 1rem 1.5rem;
+        background: $light;
+        padding: 0.45rem 0.875rem;
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
         align-items: center;
         flex-wrap: wrap;
-        border-top: 1px solid $border-color;
+        border-top: 1px solid $border;
 
         .tipo-badge {
-          background: $primary-color;
-          color: white;
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 0.8rem;
+          background: $primary;
+          color: $white;
+          padding: 2px 7px;
+          border-radius: 10px;
+          font-size: 0.72rem;
           font-weight: 500;
         }
 
-        .creador, .fecha-creacion {
-          font-size: 0.9rem;
-          color: $text-muted;
+        .creador,
+        .fecha-creacion { font-size: 0.72rem; color: $muted; }
+      }
+    }
+  }
+
+  // ===== FECHA-IMPORTANTE CARDS =====
+  .fechas-importantes-container {
+    padding: 0.875rem;
+
+    .loading-fechas,
+    .empty-fechas {
+      text-align: center;
+      padding: 1.5rem;
+      color: $muted;
+      font-size: 0.82rem;
+
+      i { font-size: 1.5rem; margin-bottom: 0.4rem; display: block; opacity: 0.4; }
+    }
+
+    .fecha-importante-card {
+      @include panel;
+      margin-bottom: 0.6rem;
+      overflow: hidden;
+
+      .fecha-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.875rem;
+        border-bottom: 1px solid $border;
+        background: $light;
+      }
+
+      .fecha-body {
+        padding: 0.6rem 0.875rem;
+
+        h4 { font-size: 0.88rem; font-weight: 600; color: $dark; margin: 0 0 0.3rem 0; }
+
+        .proyecto-info,
+        .estudiante-info {
+          font-size: 0.78rem;
+          color: $muted;
+          margin: 0.15rem 0;
+
+          i { margin-right: 0.3rem; color: $primary; }
+        }
+
+        .fecha-meta {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 0.4rem;
+          font-size: 0.75rem;
+          color: $muted;
+
+          i { margin-right: 0.25rem; }
         }
       }
     }
   }
 
-  // Estado vacío
+  // ===== EDIT FORM INLINE =====
+  .fecha-edit-form {
+    padding: 0.875rem;
+    background: $light;
+
+    h4 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: $dark;
+      margin: 0 0 0.6rem 0;
+    }
+  }
+
+  // ===== EMPTY STATE =====
   .empty-state {
     text-align: center;
-    padding: 4rem 2rem;
-    color: $text-muted;
+    padding: 2rem;
+    color: $muted;
 
     .empty-icon {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-      color: $border-color;
-    }
-
-    h3 {
-      font-size: 1.5rem;
+      font-size: 2.5rem;
       margin-bottom: 0.5rem;
+      color: $border;
     }
 
-    p {
-      margin-bottom: 2rem;
-    }
+    h3 { font-size: 0.95rem; margin-bottom: 0.25rem; color: $dark; }
+    p  { font-size: 0.8rem; margin-bottom: 1rem; }
 
     .btn-primary {
-      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      @include btn-base;
+      background: $primary;
+      color: $white;
 
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba($primary-color, 0.4);
-      }
+      &:hover { background: color.adjust($primary, $lightness: -8%); }
     }
   }
 
-  // Botón volver móvil
-  .volver-section {
-    margin: 2rem;
-    display: none;
-    justify-content: flex-start;
 
-    .btn-volver {
-      background: linear-gradient(135deg, $text-muted 0%, color.adjust($text-muted, $lightness: -10%) 100%);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 2px 10px rgba($text-muted, 0.3);
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba($text-muted, 0.4);
-      }
-    }
-
-    &.mobile-only {
-      display: flex;
-    }
-  }
-
-  // Footer
-  .footer {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    padding: 1.5rem 2rem;
-    text-align: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    margin-top: 2rem;
-
-    p {
-      color: white;
-      margin: 0;
-      font-size: 0.9rem;
-    }
-  }
 }
 
-// Modal
+// ===== MODAL =====
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 
   .modal-content {
-    background: white;
-    border-radius: 12px;
-    max-width: 500px;
-    width: 90%;
+    background: $white;
+    border: 1px solid $border;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    max-width: 480px;
+    width: 92%;
     max-height: 90vh;
     overflow: auto;
 
     .modal-header {
-      background: $light-gray;
-      padding: 1.5rem 2rem;
-      border-bottom: 1px solid $border-color;
+      background: $light;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid $border;
       display: flex;
       justify-content: space-between;
       align-items: center;
 
-      h3 {
-        margin: 0;
-        color: $dark-gray;
-        font-weight: 600;
-      }
+      h3 { margin: 0; font-size: 0.92rem; font-weight: 600; color: $dark; }
 
       .close-btn {
         background: none;
         border: none;
-        font-size: 1.5rem;
-        color: $text-muted;
+        font-size: 1rem;
+        color: $muted;
         cursor: pointer;
-        padding: 0;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 24px; height: 24px;
+        display: flex; align-items: center; justify-content: center;
         border-radius: 50%;
-        transition: all 0.3s ease;
+        transition: background 0.18s ease;
 
-        &:hover {
-          background: rgba($danger-color, 0.1);
-          color: $danger-color;
-        }
+        &:hover { background: rgba($danger, 0.1); color: $danger; }
       }
     }
 
     .modal-body {
-      padding: 2rem;
+      padding: 0.875rem 1rem;
 
-      p {
-        margin-bottom: 1rem;
-        line-height: 1.5;
-      }
+      p { margin-bottom: 0.5rem; font-size: 0.82rem; line-height: 1.45; }
 
-      .warning {
-        color: $warning-color;
-        font-weight: 500;
-      }
+      .warning { color: $warning; font-weight: 600; font-size: 0.8rem; }
     }
 
     .modal-actions {
-      padding: 1.5rem 2rem;
-      border-top: 1px solid $border-color;
+      padding: 0.6rem 1rem;
+      border-top: 1px solid $border;
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
       justify-content: flex-end;
 
-      .btn-danger, .btn-secondary {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        border: none;
-
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-      }
-
       .btn-danger {
-        background: $danger-color;
-        color: white;
+        @include btn-base;
+        background: $danger;
+        color: $white;
 
-        &:hover:not(:disabled) {
-          background: color.adjust($danger-color, $lightness: -10%);
-        }
+        &:hover:not(:disabled) { background: color.adjust($danger, $lightness: -8%); }
       }
 
       .btn-secondary {
-        background: $border-color;
-        color: $dark-gray;
+        @include btn-base;
+        background: $border;
+        color: $dark;
 
-        &:hover:not(:disabled) {
-          background: color.adjust($border-color, $lightness: -10%);
-        }
+        &:hover:not(:disabled) { background: color.adjust($border, $lightness: -8%); }
       }
     }
   }
 }
 
-// Tipos de fecha
-.fecha-card {
-  &.tipo-academica .fecha-icon {
-    background: linear-gradient(135deg, $info-color 0%, color.adjust($info-color, $lightness: -10%) 100%);
-  }
-  
-  &.tipo-entrega .fecha-icon {
-    background: linear-gradient(135deg, $warning-color 0%, color.adjust($warning-color, $lightness: -10%) 100%);
-  }
-  
-  &.tipo-defensa .fecha-icon {
-    background: linear-gradient(135deg, $danger-color 0%, color.adjust($danger-color, $lightness: -10%) 100%);
-  }
-  
-  &.tipo-reunion .fecha-icon {
-    background: linear-gradient(135deg, $success-color 0%, color.adjust($success-color, $lightness: -10%) 100%);
-  }
-}
-
-// Animaciones
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-// ===== ESTILOS PARA CALENDARIO GENERAL =====
+// ===== CALENDARIO GENERAL SECTION =====
 .calendario-general-section {
-  margin: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
+  margin: 0.875rem;
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 8px;
+  box-shadow: $shadow;
+  padding: 0.875rem;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid $border;
+
+    h2 {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: $dark;
+      margin: 0;
+
+      i { color: $primary; margin-right: 0.4rem; }
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 0.4rem;
+
+      button {
+        @include btn-base;
+        background: $primary;
+        color: $white;
+
+        &:hover { background: color.adjust($primary, $lightness: -8%); }
+      }
+    }
+  }
 }
 
+// ===== STATS CALENDARIO =====
 .estadisticas-calendario {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.875rem;
 
   .stat-card {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.5rem;
-    border-radius: 10px;
-    background: $light-gray;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid $border;
 
-    &.danger {
-      background: #ffe6e6;
-      .stat-icon { color: $danger-color; }
-    }
+    &.danger  { background: #fff0f0; border-left: 4px solid $danger;  .stat-icon { color: $danger; } }
+    &.warning { background: #fffbf0; border-left: 4px solid $warning; .stat-icon { color: $warning; } }
+    &.info    { background: #f0f8ff; border-left: 4px solid $info;    .stat-icon { color: $info; } }
+    &.success { background: #f0fff4; border-left: 4px solid $success; .stat-icon { color: $success; } }
 
-    &.warning {
-      background: #fff8e1;
-      .stat-icon { color: $warning-color; }
-    }
-
-    &.info {
-      background: #e7f7f9;
-      .stat-icon { color: $info-color; }
-    }
-
-    &.success {
-      background: #e6f9e6;
-      .stat-icon { color: $success-color; }
-    }
-
-    .stat-icon {
-      font-size: 2.5rem;
-    }
+    .stat-icon { font-size: 1.4rem; }
 
     .stat-content {
-      .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: $dark-gray;
-      }
-
-      .stat-label {
-        font-size: 0.9rem;
-        color: $text-muted;
-        font-weight: 500;
-      }
+      .stat-number { font-size: 1.25rem; font-weight: 700; color: $dark; }
+      .stat-label  { font-size: 0.72rem; color: $muted; font-weight: 500; }
     }
   }
 }
 
+// ===== FILTROS =====
 .filtros-calendario {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 0.6rem;
+  margin-bottom: 0.875rem;
   flex-wrap: wrap;
 
   .form-select {
     flex: 1;
-    min-width: 200px;
-    padding: 0.75rem;
-    border: 1px solid $border-color;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background: white;
+    min-width: 180px;
+    padding: 0.38rem 0.6rem;
+    border: 1px solid $border;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    background: $white;
     cursor: pointer;
-    transition: all 0.3s ease;
 
-    &:focus {
-      outline: none;
-      border-color: $primary-color;
-      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-    }
+    &:focus { outline: none; border-color: $primary; }
   }
 
   .btn-clear-filters {
-    padding: 0.75rem 1.5rem;
-    background: $danger-color;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    @include btn-base;
+    background: $danger;
+    color: $white;
 
-    &:hover {
-      background: color.adjust($danger-color, $lightness: -10%);
-      transform: translateY(-2px);
-    }
+    &:hover { background: color.adjust($danger, $lightness: -8%); }
   }
 }
 
+// ===== TABLE =====
 .calendario-table-container {
   overflow-x: auto;
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
 }
 
 .calendario-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: $white;
+  font-size: 0.82rem;
 
   thead {
-    background: $light-gray;
+    background: $light;
 
-    tr th {
-      padding: 1rem;
+    th {
+      padding: 0.45rem 0.875rem;
       text-align: left;
       font-weight: 600;
-      color: $dark-gray;
-      border-bottom: 2px solid $border-color;
+      font-size: 0.78rem;
+      color: $dark;
+      border-bottom: 2px solid $border;
       white-space: nowrap;
     }
   }
 
-  tbody {
-    tr {
-      border-bottom: 1px solid $border-color;
-      transition: all 0.3s ease;
+  tbody tr {
+    border-bottom: 1px solid $border;
+    transition: background 0.15s ease;
 
-      &:hover {
-        background: $light-gray;
-        transform: scale(1.01);
+    &:hover   { background: $light; }
+    &.estado-vencida { background: #fff0f0; }
+    &.estado-hoy     { background: #fffbf0; }
+
+    td {
+      padding: 0.45rem 0.875rem;
+      vertical-align: middle;
+
+      &.fecha-col {
+        font-weight: 600;
+        white-space: nowrap;
+        i { margin-right: 0.3rem; color: $primary; }
       }
 
-      &.estado-vencida {
-        background: #ffe6e6;
+      &.titulo-col,
+      &.proyecto-col {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
-      &.estado-hoy {
-        background: #fff8e1;
+      &.proyecto-col { color: $muted; }
+
+      &.estudiante-col,
+      &.profesores-col {
+        white-space: nowrap;
+        i { margin-right: 0.25rem; color: $muted; }
       }
 
-      td {
-        padding: 1rem;
-        vertical-align: middle;
-
-        &.fecha-col {
-          font-weight: 600;
-          color: $dark-gray;
-          white-space: nowrap;
-
-          i {
-            margin-right: 0.5rem;
-            color: $primary-color;
-          }
-        }
-
-        &.titulo-col {
-          max-width: 250px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        &.proyecto-col {
-          max-width: 200px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          color: $text-muted;
-        }
-
-        &.estudiante-col,
-        &.profesores-col {
-          white-space: nowrap;
-
-          i {
-            margin-right: 0.3rem;
-            color: $text-muted;
-          }
-        }
-
-        &.dias-col {
-          text-align: center;
-        }
-      }
+      &.dias-col { text-align: center; }
     }
   }
 
   .tipo-badge {
-    padding: 0.3rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 0.75rem;
     font-weight: 500;
     white-space: nowrap;
 
-    &.tipo-entrega_final {
-      background: #ffc107;
-      color: #000;
-    }
-
-    &.tipo-defensa {
-      background: #dc3545;
-      color: white;
-    }
-
-    &.tipo-presentacion {
-      background: #17a2b8;
-      color: white;
-    }
-
-    &.tipo-entrega_avance {
-      background: #6c757d;
-      color: white;
-    }
-
-    &.tipo-revision_parcial {
-      background: #007bff;
-      color: white;
-    }
+    &.tipo-entrega_final   { background: $warning;  color: #000; }
+    &.tipo-defensa         { background: $danger;   color: $white; }
+    &.tipo-presentacion    { background: $info;     color: $white; }
+    &.tipo-entrega_avance  { background: $muted;    color: $white; }
+    &.tipo-revision_parcial{ background: $blue;     color: $white; }
   }
 
   .estado-badge {
-    padding: 0.3rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 0.75rem;
     font-weight: 500;
     white-space: nowrap;
 
-    &.estado-vencida {
-      background: $danger-color;
-      color: white;
-    }
-
-    &.estado-hoy {
-      background: $warning-color;
-      color: #000;
-    }
-
-    &.estado-pendiente {
-      background: $info-color;
-      color: white;
-    }
-
-    &.estado-completada {
-      background: $success-color;
-      color: white;
-    }
+    &.estado-vencida   { background: $danger;  color: $white; }
+    &.estado-hoy       { background: $warning; color: #000; }
+    &.estado-pendiente { background: $info;    color: $white; }
+    &.estado-completada{ background: $success; color: $white; }
   }
 
   .dias-restantes {
-    padding: 0.4rem 0.9rem;
-    border-radius: 15px;
-    font-size: 0.9rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
     font-weight: 600;
     display: inline-block;
 
-    &.vencido {
-      background: $danger-color;
-      color: white;
-    }
-
-    &.hoy {
-      background: $warning-color;
-      color: #000;
-      animation: pulse 2s infinite;
-    }
-
-    &.urgente {
-      background: #ff6b6b;
-      color: white;
-    }
-
-    &.proximo {
-      background: #ffc107;
-      color: #000;
-    }
-
-    &.normal {
-      background: $info-color;
-      color: white;
-    }
+    &.vencido { background: $danger;  color: $white; }
+    &.hoy     { background: $warning; color: #000; }
+    &.urgente { background: #ff6b6b;  color: $white; }
+    &.proximo { background: $warning; color: #000; }
+    &.normal  { background: $info;    color: $white; }
   }
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
+// ===== EMPTY / LOADING =====
 .empty-calendario,
 .loading-calendario {
   text-align: center;
-  padding: 3rem;
-  color: $text-muted;
+  padding: 1.75rem;
+  color: $muted;
+  font-size: 0.82rem;
 
   i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    opacity: 0.4;
   }
 
-  p {
-    font-size: 1.1rem;
-  }
+  p { font-size: 0.82rem; }
 }
 
-.loading-calendario i {
-  animation: spin 1s linear infinite;
+.loading-calendario i { animation: spin 1s linear infinite; }
+
+// Tipo badges on fecha-cards
+.fecha-card {
+  &.tipo-academica .fecha-icon { background: $info; }
+  &.tipo-entrega   .fecha-icon { background: $warning; }
+  &.tipo-defensa   .fecha-icon { background: $danger; }
+  &.tipo-reunion   .fecha-icon { background: $success; }
 }
 
-// Responsive
+// ===== KEYFRAMES =====
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// ===== RESPONSIVE =====
 @media (max-width: 768px) {
   .gestion-calendario-container {
-    .header {
+    .page-header-integrated {
       flex-direction: column;
-      text-align: center;
-      gap: 1rem;
-
-      .header-content h1 {
-        font-size: 2rem;
-      }
-
-      .header-actions {
-        display: none;
-      }
+      align-items: flex-start;
+      gap: 0.5rem;
+      h1 { font-size: 0.92rem; }
     }
 
-    .nueva-fecha-section, .estadisticas-section, .fechas-section {
-      margin: 1rem;
-    }
+    .nueva-fecha-section,
+    .estadisticas-section,
+    .fechas-section,
+    .fechas-importantes-section { margin: 0.5rem; }
 
-    .form-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    .fecha-header {
-      flex-direction: column;
-      text-align: center;
-      gap: 1rem !important;
-
-      .fecha-actions {
-        justify-content: center;
-      }
-    }
-
-    .volver-section.mobile-only {
-      display: flex !important;
-    }
-
-    // Calendario General responsive
-    .calendario-general-section {
-      margin: 1rem;
-      padding: 1rem;
-    }
-
-    .estadisticas-calendario {
-      grid-template-columns: 1fr;
-    }
-
-    .filtros-calendario {
-      flex-direction: column;
-
-      .form-select {
-        width: 100%;
-      }
-    }
-
-    .calendario-table-container {
-      overflow-x: scroll;
-    }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
   }
+
+  .calendario-general-section {
+    margin: 0.5rem;
+    padding: 0.6rem;
+  }
+
+  .estadisticas-calendario { grid-template-columns: 1fr 1fr; }
+
+  .filtros-calendario {
+    flex-direction: column;
+    .form-select { width: 100%; }
+  }
+
+  .calendario-table-container { overflow-x: scroll; }
 }

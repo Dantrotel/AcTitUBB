@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CronogramaCompletoComponent } from '../../components/cronograma-completo/cronograma-completo.component';
 import { DocumentosProyectoComponent } from '../../components/documentos-proyecto/documentos-proyecto.component';
-import { HistorialVersionesComponent } from '../../components/historial-versiones/historial-versiones.component';
 import { ColaboradoresProyectoComponent } from '../../components/colaboradores-proyecto/colaboradores-proyecto.component';
 import { RevisionHitosProfesorComponent } from '../../components/revision-hitos-profesor/revision-hitos-profesor.component';
 import { ApiService } from '../../services/api';
@@ -11,7 +10,7 @@ import { ApiService } from '../../services/api';
 @Component({
   selector: 'app-proyecto-cronograma',
   standalone: true,
-  imports: [CommonModule, RouterModule, CronogramaCompletoComponent, DocumentosProyectoComponent, HistorialVersionesComponent, ColaboradoresProyectoComponent, RevisionHitosProfesorComponent],
+  imports: [CommonModule, RouterModule, CronogramaCompletoComponent, DocumentosProyectoComponent, ColaboradoresProyectoComponent, RevisionHitosProfesorComponent],
   templateUrl: './proyecto-cronograma.component.html',
   styleUrl: './proyecto-cronograma.component.scss'
 })
@@ -23,8 +22,6 @@ export class ProyectoCronogramaComponent implements OnInit {
   tabActiva = 'cronograma';
   
   proyecto: any = null;
-  avances: any[] = [];
-  avanceSeleccionado: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -37,10 +34,16 @@ export class ProyectoCronogramaComponent implements OnInit {
     const projectIdStr = this.route.snapshot.paramMap.get('id') || '';
     this.projectId = parseInt(projectIdStr, 10);
     
-    // Obtener datos del usuario desde el servicio de autenticación
-    // Esto debería venir de tu servicio de autenticación existente
-    this.userRole = localStorage.getItem('rol_id') || '1';
-    this.userRut = localStorage.getItem('rut') || '';
+    // Leer rol y rut desde el payload del JWT guardado al hacer login
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      this.userRole = (userData.rol_id ?? '1').toString();
+      this.userRut = userData.rut || '';
+    } else {
+      this.userRole = '1';
+      this.userRut = '';
+    }
 
     // Leer el parámetro 'tab' de la URL para abrir la pestaña correcta
     this.route.queryParams.subscribe(params => {
@@ -59,7 +62,6 @@ export class ProyectoCronogramaComponent implements OnInit {
     this.apiService.getDashboardProyecto(this.projectId.toString()).subscribe({
       next: (response: any) => {
         this.proyecto = response.data;
-        this.cargarAvances();
         this.cdr.detectChanges();
       },
       error: (error: any) => {
@@ -67,27 +69,6 @@ export class ProyectoCronogramaComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  cargarAvances() {
-    this.apiService.getAvancesByProyecto(this.projectId.toString()).subscribe({
-      next: (response: any) => {
-        this.avances = response.data || [];
-        if (this.avances.length > 0) {
-          this.avanceSeleccionado = this.avances[0];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (error: any) => {
-        console.error('Error al cargar avances:', error);
-        this.avances = [];
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  seleccionarAvance(avance: any) {
-    this.avanceSeleccionado = avance;
   }
 
   obtenerCronograma() {

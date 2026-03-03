@@ -52,6 +52,10 @@ export class GestionCalendarioComponent implements OnInit {
     es_global: false
   };
 
+  // Edición inline de fechas
+  fechaEnEdicion: any = null;
+  guardandoEdicion = false;
+
   // Modal de eliminación
   mostrarModalEliminar = false;
   fechaAEliminar: any = null;
@@ -257,9 +261,44 @@ export class GestionCalendarioComponent implements OnInit {
   }
 
   editarFecha(fecha: any) {
-    // Por ahora mostrar la información de la fecha
-    this.notificationService.info('Editar fecha', `${fecha.titulo}\nFecha: ${fecha.fecha}\nTipo: ${fecha.tipo_fecha}`);
-    // TODO: Implementar modal de edición
+    this.fechaEnEdicion = {
+      id: fecha.id,
+      titulo: fecha.titulo,
+      descripcion: fecha.descripcion || '',
+      fecha: fecha.fecha,
+      hora_limite: fecha.hora_limite || '23:59',
+      tipo_fecha: fecha.tipo_fecha,
+      es_global: fecha.es_global
+    };
+  }
+
+  cancelarEdicion() {
+    this.fechaEnEdicion = null;
+    this.guardandoEdicion = false;
+  }
+
+  guardarEdicion() {
+    if (!this.fechaEnEdicion) return;
+
+    if (!this.fechaEnEdicion.titulo || !this.fechaEnEdicion.fecha || !this.fechaEnEdicion.tipo_fecha) {
+      this.notificationService.warning('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    this.guardandoEdicion = true;
+
+    this.apiService.actualizarFecha(this.fechaEnEdicion.id, this.fechaEnEdicion).subscribe({
+      next: (response: any) => {
+        this.notificationService.success('Fecha actualizada exitosamente');
+        this.fechaEnEdicion = null;
+        this.guardandoEdicion = false;
+        this.cargarDatos();
+      },
+      error: (error: any) => {
+        this.notificationService.error('Error al actualizar la fecha', error.error?.message || 'Error desconocido');
+        this.guardandoEdicion = false;
+      }
+    });
   }
 
   confirmarEliminar(fecha: any) {

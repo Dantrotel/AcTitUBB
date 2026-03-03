@@ -1,14 +1,18 @@
 <div class="page-container">
-  <nav class="navbar">
-    <button class="btn-back" (click)="volver()">
-      <i class="fas fa-arrow-left"></i>
-      Volver
-    </button>
-    <h1>
-      <i class="fas fa-calendar-check"></i>
-      Gestión del Período de Propuestas
-    </h1>
-  </nav>
+  <div class="page-header-compact">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-calendar-check"></i>
+        Gestión del Período de Propuestas
+      </h1>
+    </div>
+    <div class="header-right">
+      <button class="btn-volver" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+    </div>
+  </div>
 
   <div class="page-content">
     <!-- Alerts -->

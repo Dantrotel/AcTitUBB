@@ -13,7 +13,8 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendConfirmationEmail = async (email, token) => {
-  const confirmationUrl = `http://localhost:3000/api/v1/users/confirm/${token}`;
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+  const confirmationUrl = `${backendUrl}/api/v1/users/confirm/${token}`;
 
   const mailOptions = {
     from: `"AcTitUBB" <${process.env.EMAIL_USER}>`,
@@ -345,7 +346,7 @@ export const sendRespuestaReunionEmail = async (estudianteEmail, estudianteNombr
 };
 
 export const sendPasswordResetEmail = async (email, nombre, passwordTemporal, rut) => {
-  const loginUrl = `http://localhost:4200/login`; // URL del frontend
+  const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/login`;
 
   const mailOptions = {
     from: `"AcTitUBB - Administración" <${process.env.EMAIL_USER}>`,

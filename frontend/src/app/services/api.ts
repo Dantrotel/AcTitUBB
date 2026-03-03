@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000/api/v1';  // Usa el proxy de Nginx para conectar al backend
+  private baseUrl = environment.apiUrl;
    private getHeaders() {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
@@ -528,12 +529,6 @@ export class ApiService {
     });
   }
 
-  getPropuestasAsignadasAProfesor(rut: string) {
-    return this.http.get(`${this.baseUrl}/admin/profesores/${rut}/propuestas`, {
-      headers: this.getHeaders()
-    });
-  }
-
   // Gestión de asignaciones
   getAsignaciones() {
     return this.http.get(`${this.baseUrl}/admin/asignaciones`, {
@@ -656,7 +651,6 @@ export class ApiService {
   revisarHito(hitoId: string, revision: any) {
     const revisionData = {
       comentarios_profesor: revision.retroalimentacion || revision.comentarios_profesor,
-      calificacion: revision.calificacion,
       estado: revision.estado === 'aprobado' ? 'aprobado' : 'requiere_correcciones'
     };
 
@@ -720,7 +714,7 @@ export class ApiService {
   /** @deprecated Usar entregarHito() en su lugar */
   completarHito(id: string, hitoId: string) {
     console.warn('⚠️ completarHito() está DEPRECATED. Usar entregarHito()');
-    return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}/completar`, {}, {
+    return this.http.patch(`${this.baseUrl}/projects/${id}/hitos/${hitoId}/completar`, {}, {
       headers: this.getHeaders()
     });
   }
@@ -1025,7 +1019,7 @@ export class ApiService {
 
   // Descargar archivo de entrega
   descargarArchivoEntrega(nombreArchivo: string) {
-    return this.http.get(`${this.baseUrl}/uploads/propuestas/${nombreArchivo}`, {
+    return this.http.get(`${this.baseUrl}/descargar/${nombreArchivo}`, {
       headers: this.getHeaders(),
       responseType: 'blob'
     });
@@ -1541,6 +1535,14 @@ export class ApiService {
   getAvancesByProyecto(proyectoId: string) {
     return this.http.get(`${this.baseUrl}/proyectos/${proyectoId}/avances`, {
       headers: this.getHeaders()
+    });
+  }
+
+  // Descargar documento de proyecto (autenticado)
+  descargarDocumentoProyecto(documentoId: number) {
+    return this.http.get(`${this.baseUrl}/documentos/${documentoId}/download`, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
     });
   }
 

@@ -48,7 +48,7 @@
             <i class="fas fa-chart-line"></i>
           </div>
           <div class="stat-content">
-            <h3>{{ estadisticas()!.promedio_proyectos_profesor.toFixed(1) || '0.0' }}</h3>
+            <h3>{{ (+estadisticas()!.promedio_proyectos_profesor || 0).toFixed(1) }}</h3>
             <p>Promedio por Profesor</p>
           </div>
         </div>
@@ -88,8 +88,8 @@
                 Guía
               </th>
               <th class="text-center">
-                <i class="fas fa-file-signature" title="Profesor de Asignatura"></i>
-                Asignatura
+                <i class="fas fa-file-signature" title="Profesor Informante"></i>
+                Informante
               </th>
               <th class="text-center">
                 <i class="fas fa-search" title="Profesor Revisor"></i>

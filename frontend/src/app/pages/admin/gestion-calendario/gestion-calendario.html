@@ -1,14 +1,17 @@
 <div class="gestion-calendario-container">
-  <div class="header">
-    <div class="header-content">
-      <h1><i class="fas fa-calendar-alt"></i> Gestión de Calendario</h1>
-      <p>Gestiona las fechas globales del sistema académico</p>
+  <div class="page-header-integrated">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-calendar-alt"></i>
+        Gestión de Calendario
+      </h1>
+      <span class="header-subtitle">Gestiona las fechas globales del sistema académico</span>
     </div>
-    <div class="header-actions">
-      <button class="btn-volver-header" (click)="volver()">
-        <i class="fas fa-arrow-left"></i>
-        Volver
-      </button>
+    <div class="header-right">
+      <div class="total-badge" *ngIf="fechasGlobales.length">
+        <span class="total-number">{{ fechasGlobales.length }}</span>
+        <span class="total-label">Fechas</span>
+      </div>
     </div>
   </div>
 
@@ -103,8 +106,7 @@
                   <option value="entrega_parcial">Entrega Parcial</option>
                   <option value="entrega_final">Entrega Final/Memoria</option>
                 </optgroup>
-                <optgroup label="📊 Evaluaciones">
-                  <option value="evaluacion">Evaluación</option>
+                <optgroup label="� Presentaciones y Defensas">
                   <option value="revision">Revisión</option>
                   <option value="presentacion">Presentación</option>
                   <option value="defensa">Defensa Final</option>
@@ -290,33 +292,95 @@
 
       <div class="fechas-grid" *ngIf="fechasGlobales.length > 0; else noFechas">
         <div class="fecha-card" *ngFor="let fecha of fechasGlobales" [class]="'tipo-' + fecha.tipo_fecha">
-          <div class="fecha-header">
-            <div class="fecha-icon">
-              <i [class]="getIconoTipoFecha(fecha.tipo_fecha)"></i>
+
+          <!-- Formulario de edición inline -->
+          <ng-container *ngIf="fechaEnEdicion?.id === fecha.id; else vistaFecha">
+            <div class="fecha-edit-form">
+              <h4><i class="fas fa-edit"></i> Editando: {{fecha.titulo}}</h4>
+              <form (ngSubmit)="guardarEdicion()" #editForm="ngForm">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Título *</label>
+                    <input type="text" name="edit_titulo" [(ngModel)]="fechaEnEdicion.titulo" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Fecha *</label>
+                    <input type="date" name="edit_fecha" [(ngModel)]="fechaEnEdicion.fecha" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Hora Límite</label>
+                    <input type="time" name="edit_hora" [(ngModel)]="fechaEnEdicion.hora_limite">
+                  </div>
+                  <div class="form-group">
+                    <label>Tipo *</label>
+                    <select name="edit_tipo" [(ngModel)]="fechaEnEdicion.tipo_fecha" required>
+                      <option value="">Seleccionar tipo...</option>
+                      <option value="academica">Evento Académico General</option>
+                      <option value="inicio_semestre">Inicio de Semestre</option>
+                      <option value="fin_semestre">Fin de Semestre</option>
+                      <option value="feriado">Feriado / No Laborable</option>
+                      <option value="entrega_propuesta">Entrega de Propuestas</option>
+                      <option value="entrega">Entrega General</option>
+                      <option value="entrega_avance">Entrega de Avance</option>
+                      <option value="entrega_final">Entrega Final/Memoria</option>
+                      <option value="defensa">Defensa Final</option>
+                      <option value="revision">Revisión</option>
+                      <option value="reunion">Reunión</option>
+                      <option value="hito">Hito del Proyecto</option>
+                      <option value="deadline">Fecha Límite</option>
+                      <option value="otro">Otro</option>
+                    </select>
+                  </div>
+                  <div class="form-group full-width">
+                    <label>Descripción</label>
+                    <textarea name="edit_desc" [(ngModel)]="fechaEnEdicion.descripcion" rows="2"></textarea>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary" [disabled]="!editForm.form.valid || guardandoEdicion">
+                    <i class="fas fa-save"></i>
+                    {{guardandoEdicion ? 'Guardando...' : 'Guardar'}}
+                  </button>
+                  <button type="button" class="btn-secondary" (click)="cancelarEdicion()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
             </div>
-            <div class="fecha-info">
-              <h3>{{fecha.titulo}}</h3>
-              <p class="fecha-date">{{formatearFechaCompleta(fecha.fecha)}}</p>
+          </ng-container>
+
+          <!-- Vista normal de la fecha -->
+          <ng-template #vistaFecha>
+            <div class="fecha-header">
+              <div class="fecha-icon">
+                <i [class]="getIconoTipoFecha(fecha.tipo_fecha)"></i>
+              </div>
+              <div class="fecha-info">
+                <h3>{{fecha.titulo}}</h3>
+                <p class="fecha-date">{{formatearFechaCompleta(fecha.fecha)}}</p>
+              </div>
+              <div class="fecha-actions">
+                <button class="btn-edit" (click)="editarFecha(fecha)" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-delete" (click)="confirmarEliminar(fecha)" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
             </div>
-            <div class="fecha-actions">
-              <button class="btn-edit" (click)="editarFecha(fecha)" title="Editar">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn-delete" (click)="confirmarEliminar(fecha)" title="Eliminar">
-                <i class="fas fa-trash"></i>
-              </button>
+
+            <div class="fecha-details" *ngIf="fecha.descripcion">
+              <p>{{fecha.descripcion}}</p>
             </div>
-          </div>
-          
-          <div class="fecha-details" *ngIf="fecha.descripcion">
-            <p>{{fecha.descripcion}}</p>
-          </div>
-          
-          <div class="fecha-meta">
-            <span class="tipo-badge">{{getTipoFechaLabel(fecha.tipo_fecha)}}</span>
-            <span class="creador">Creado por: {{fecha.nombre_creador}}</span>
-            <span class="fecha-creacion">{{fecha.created_at | date:'short':'es-ES'}}</span>
-          </div>
+
+            <div class="fecha-meta">
+              <span class="tipo-badge">{{getTipoFechaLabel(fecha.tipo_fecha)}}</span>
+              <span class="creador">Creado por: {{fecha.nombre_creador}}</span>
+              <span class="fecha-creacion">{{fecha.created_at | date:'short':'es-ES'}}</span>
+            </div>
+          </ng-template>
+
         </div>
       </div>
 
@@ -473,18 +537,6 @@
       </div>
     </div>
 
-    <!-- Botón volver móvil -->
-    <div class="volver-section mobile-only">
-      <button class="btn-volver" (click)="volver()">
-        <i class="fas fa-arrow-left"></i>
-        Volver al Panel Jefe de Curso
-      </button>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="footer">
-    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Títulos</p>
   </div>
 </div>
 

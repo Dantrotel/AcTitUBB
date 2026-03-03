@@ -9,6 +9,7 @@ export const subirDocumento = async ({
   tamanio_bytes,
   mime_type,
   subido_por,
+  version = 1,
   estado = 'borrador',
   comentarios = null
 }) => {
@@ -16,11 +17,11 @@ export const subirDocumento = async ({
     const [result] = await pool.execute(
       `INSERT INTO documentos_proyecto (
         proyecto_id, tipo_documento, nombre_archivo, nombre_original, ruta_archivo,
-        tamanio_bytes, mime_type, subido_por, estado, comentarios
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        tamanio_bytes, mime_type, subido_por, version, estado, comentarios
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         proyecto_id, tipo_documento, nombre_archivo, nombre_original, ruta_archivo,
-        tamanio_bytes, mime_type, subido_por, estado, comentarios
+        tamanio_bytes, mime_type, subido_por, version, estado, comentarios
       ]
     );
     return result.insertId;

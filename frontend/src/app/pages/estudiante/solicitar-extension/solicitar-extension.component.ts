@@ -156,6 +156,11 @@ export class SolicitarExtensionComponent implements OnInit {
   }
 
   validarFormulario(): boolean {
+    if (!this.proyectoId) {
+      this.error = 'No se ha identificado el proyecto. Por favor, accede desde tu proyecto.';
+      return false;
+    }
+
     if (!this.fechaImportanteId) {
       this.error = 'Debe seleccionar una fecha importante';
       return false;
@@ -220,7 +225,7 @@ export class SolicitarExtensionComponent implements OnInit {
           // Limpiar formulario
           setTimeout(() => {
             this.limpiarFormulario();
-            this.router.navigate(['/estudiante/proyecto']);
+            this.router.navigate(['/estudiante/mi-proyecto']);
           }, 2000);
         },
         error: (error: any) => {

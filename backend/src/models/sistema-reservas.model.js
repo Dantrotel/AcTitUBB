@@ -255,7 +255,7 @@ export const reservarHorario = async (reservaData) => {
              FROM solicitudes_reunion
              WHERE profesor_rut = ?
              AND fecha_propuesta = ?
-             AND estado IN ('pendiente', 'aceptada')
+             AND estado IN ('pendiente', 'aceptada_profesor', 'aceptada_estudiante', 'confirmada')
              AND (
                  (hora_propuesta < ? AND DATE_ADD(hora_propuesta, INTERVAL duracion_minutos MINUTE) > ?) OR
                  (hora_propuesta >= ? AND hora_propuesta < ?)
@@ -309,7 +309,7 @@ export const reservarHorario = async (reservaData) => {
                 fecha_propuesta, hora_propuesta, tipo_reunion,
                 accion, realizado_por, comentarios
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'reserva_realizada', ?, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'solicitud_creada', ?, ?)`,
             [
                 solicitud_id,
                 proyecto_id,
@@ -389,7 +389,7 @@ export const responderReserva = async (solicitud_id, profesor_rut, respuesta, co
             // 2a. ACEPTAR: Actualizar solicitud
             await connection.execute(
                 `UPDATE solicitudes_reunion 
-                 SET estado = 'aceptada', 
+                 SET estado = 'aceptada_profesor',
                      comentarios_profesor = ?,
                      fecha_respuesta_profesor = NOW()
                  WHERE id = ?`,
@@ -432,7 +432,7 @@ export const responderReserva = async (solicitud_id, profesor_rut, respuesta, co
                     fecha_propuesta, hora_propuesta, tipo_reunion,
                     accion, realizado_por, comentarios
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aceptada', ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aceptada_profesor', ?, ?)`,
                 [
                     reunion_id, solicitud_id, solicitud.proyecto_id,
                     solicitud.profesor_rut, solicitud.estudiante_rut,
@@ -672,11 +672,30 @@ export const eliminarDisponibilidad = async (disponibilidad_id, usuario_rut) => 
  */
 export const obtenerSolicitudesPendientesProfesor = async (profesor_rut) => {
     const query = `
-        SELECT * FROM v_solicitudes_pendientes
-        WHERE profesor_rut = ?
-        ORDER BY created_at DESC
+        SELECT
+            sr.id,
+            sr.proyecto_id,
+            sr.profesor_rut,
+            sr.estudiante_rut,
+            DATE_FORMAT(sr.fecha_propuesta, '%Y-%m-%d') as fecha_propuesta,
+            sr.hora_propuesta,
+            sr.duracion_minutos,
+            sr.tipo_reunion,
+            sr.descripcion,
+            sr.estado,
+            sr.creado_por,
+            sr.comentarios_estudiante,
+            sr.created_at,
+            p.titulo as proyecto_titulo,
+            ue.nombre as estudiante_nombre,
+            ue.email as estudiante_email
+        FROM solicitudes_reunion sr
+        INNER JOIN proyectos p ON sr.proyecto_id = p.id
+        INNER JOIN usuarios ue ON sr.estudiante_rut = ue.rut
+        WHERE sr.profesor_rut = ? AND sr.estado = 'pendiente'
+        ORDER BY sr.fecha_propuesta ASC, sr.hora_propuesta ASC
     `;
-    
+
     const [rows] = await pool.execute(query, [profesor_rut]);
     return rows;
 };

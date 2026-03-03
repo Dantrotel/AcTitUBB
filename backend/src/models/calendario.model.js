@@ -75,7 +75,8 @@ export const obtenerFechasGlobales = async () => {
 
 // Obtener fechas próximas (globales visibles para todos)
 export const obtenerFechasProximas = async (limite = 10) => {
-    const [rows] = await pool.execute(`
+    const limiteInt = Math.max(1, Math.min(50, parseInt(limite) || 10));
+    const [rows] = await pool.query(`
         SELECT f.id,
                f.titulo,
                f.descripcion,
@@ -95,8 +96,8 @@ export const obtenerFechasProximas = async (limite = 10) => {
         AND f.activa = TRUE
         AND f.fecha >= CURDATE()
         ORDER BY f.fecha ASC
-        LIMIT ?
-    `, [limite]);
+        LIMIT ${limiteInt}
+    `);
     return rows;
 };
 
@@ -156,25 +157,115 @@ export const obtenerFechasProfesor = async (profesor_rut) => {
 };
 
 // Obtener fechas de un estudiante
+// Reglas de visibilidad:
+//   1. Fechas globales creadas por admin (rol_id 3) o super admin (rol_id 4)
+//   2. Fechas de profesores ASIGNADOS al proyecto del estudiante (guia, informante, sala)
 export const obtenerFechasEstudiante = async (estudiante_rut) => {
     const [rows] = await pool.execute(`
-        SELECT f.*, 
+        SELECT DISTINCT
+               f.id,
+               f.titulo,
+               f.descripcion,
+               DATE_FORMAT(f.fecha_inicio, '%Y-%m-%d') AS fecha_inicio,
+               f.hora_inicio,
+               DATE_FORMAT(f.fecha, '%Y-%m-%d') AS fecha,
+               f.hora_limite,
+               f.tipo_fecha,
+               f.es_global,
+               f.creado_por_rut,
+               f.habilitada,
+               f.permite_extension,
+               f.requiere_entrega,
+               f.activa,
                u.nombre AS nombre_creador,
+               u.rol_id AS creador_rol_id,
                up.nombre AS nombre_profesor
         FROM fechas f
         LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
         LEFT JOIN usuarios up ON f.profesor_rut = up.rut
-        WHERE (f.estudiante_rut = ? OR f.es_global = TRUE)
-        AND f.activa = TRUE
+        WHERE f.activa = TRUE
+        AND (
+            -- 1. Fechas globales de admin (rol 3) o super admin (rol 4)
+            (f.es_global = TRUE AND u.rol_id IN (3, 4))
+
+            -- 2. Fechas de profesores asignados al proyecto del estudiante
+            OR (
+                f.es_global = FALSE
+                AND f.estudiante_rut = ?
+                AND EXISTS (
+                    SELECT 1
+                    FROM asignaciones_proyectos ap
+                    INNER JOIN proyectos p ON ap.proyecto_id = p.id
+                    WHERE ap.profesor_rut = COALESCE(f.profesor_rut, f.creado_por_rut)
+                      AND ap.activo = TRUE
+                      AND (
+                          p.estudiante_rut = ?
+                          OR EXISTS (
+                              SELECT 1 FROM estudiantes_proyectos ep
+                              WHERE ep.proyecto_id = p.id AND ep.estudiante_rut = ?
+                          )
+                      )
+                )
+            )
+        )
         ORDER BY f.fecha ASC
-    `, [estudiante_rut]);
-        return rows;
+    `, [estudiante_rut, estudiante_rut, estudiante_rut]);
+    return rows;
+};
+
+// Obtener fechas próximas para un estudiante (con el mismo filtro de visibilidad)
+export const obtenerFechasProximasEstudiante = async (estudiante_rut, limite = 5) => {
+    const [rows] = await pool.execute(`
+        SELECT DISTINCT
+               f.id,
+               f.titulo,
+               f.descripcion,
+               DATE_FORMAT(f.fecha, '%Y-%m-%d') AS fecha,
+               f.tipo_fecha,
+               f.es_global,
+               f.creado_por_rut,
+               f.habilitada,
+               u.nombre AS nombre_creador,
+               DATEDIFF(f.fecha, CURDATE()) AS dias_restantes
+        FROM fechas f
+        LEFT JOIN usuarios u ON f.creado_por_rut = u.rut
+        WHERE f.activa = TRUE
+          AND f.fecha >= CURDATE()
+          AND (
+              -- 1. Fechas globales de admin (rol 3) o super admin (rol 4)
+              (f.es_global = TRUE AND u.rol_id IN (3, 4))
+
+              -- 2. Fechas de profesores asignados al proyecto del estudiante
+              OR (
+                  f.es_global = FALSE
+                  AND f.estudiante_rut = ?
+                  AND EXISTS (
+                      SELECT 1
+                      FROM asignaciones_proyectos ap
+                      INNER JOIN proyectos p ON ap.proyecto_id = p.id
+                      WHERE ap.profesor_rut = COALESCE(f.profesor_rut, f.creado_por_rut)
+                        AND ap.activo = TRUE
+                        AND (
+                            p.estudiante_rut = ?
+                            OR EXISTS (
+                                SELECT 1 FROM estudiantes_proyectos ep
+                                WHERE ep.proyecto_id = p.id AND ep.estudiante_rut = ?
+                            )
+                        )
+                  )
+              )
+          )
+        ORDER BY f.fecha ASC
+        LIMIT ?
+    `, [estudiante_rut, estudiante_rut, estudiante_rut, limite]);
+    return rows;
 };
 
 // Alias para compatibilidad con controladores existentes
 export const crearFechaEspecifica = crearFechaProfesor;
 export const obtenerFechasPorProfesor = obtenerFechasProfesor;
 export const obtenerFechasParaEstudiante = obtenerFechasEstudiante;
+export const obtenerFechasProximasParaEstudiante = obtenerFechasProximasEstudiante;
 
 // Obtener estadísticas de fechas
 export const obtenerEstadisticasFechas = async () => {
@@ -396,6 +487,8 @@ export default {
     crearFechaEspecifica,
     obtenerFechasGlobales,
     obtenerFechasProximas,
+    obtenerFechasProximasEstudiante,
+    obtenerFechasProximasParaEstudiante,
     obtenerFechaPorId,
     obtenerFechasProyecto,
     obtenerFechasProfesor,

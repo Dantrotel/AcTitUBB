@@ -34,7 +34,7 @@
         <div class="usuarios-list">
           @for (usuario of usuariosBuscados(); track usuario.rut) {
             <div class="usuario-item" (click)="iniciarConversacionCon(usuario)">
-              <div class="avatar avatar-sm">{{ usuario.nombre?.charAt(0)?.toUpperCase() }}</div>
+              <div class="avatar avatar-sm">{{ usuario.nombre.charAt(0).toUpperCase() }}</div>
               <div class="usuario-info">
                 <div class="usuario-nombre">{{ usuario.nombre }}</div>
                 <div class="usuario-detalle">{{ usuario.email }} · {{ usuario.rol }}</div>
@@ -72,7 +72,7 @@
             [class.activa]="conversacionSeleccionada()?.id === conv.id"
             (click)="seleccionarConversacion(conv)"
           >
-            <div class="avatar">{{ conv.otro_usuario_nombre?.charAt(0)?.toUpperCase() }}</div>
+            <div class="avatar">{{ conv.otro_usuario_nombre.charAt(0).toUpperCase() }}</div>
             <div class="conv-info">
               <div class="conv-row">
                 <span class="conv-nombre">{{ conv.otro_usuario_nombre }}</span>

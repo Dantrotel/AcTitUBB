@@ -26,7 +26,7 @@ export const obtenerComisionPorProyecto = async (proyectoId) => {
             LEFT JOIN usuarios admin ON ce.asignado_por = admin.rut
             WHERE ce.proyecto_id = ? AND ce.activo = TRUE
             ORDER BY 
-                FIELD(ce.rol_comision, 'presidente', 'secretario', 'vocal', 'suplente')
+                FIELD(ce.rol_comision, 'profesor_guia', 'profesor_informante', 'tercer_integrante')
         `, [proyectoId]);
 
         return rows;
@@ -46,15 +46,16 @@ export const verificarComisionCompleta = async (proyectoId) => {
         const [rows] = await pool.query(`
             SELECT 
                 COUNT(*) as total_miembros,
-                SUM(CASE WHEN rol_comision = 'presidente' THEN 1 ELSE 0 END) as tiene_presidente,
-                SUM(CASE WHEN rol_comision = 'secretario' THEN 1 ELSE 0 END) as tiene_secretario,
-                SUM(CASE WHEN rol_comision = 'vocal' THEN 1 ELSE 0 END) as vocales
+                SUM(CASE WHEN rol_comision = 'profesor_guia' THEN 1 ELSE 0 END) as tiene_profesor_guia,
+                SUM(CASE WHEN rol_comision = 'profesor_informante' THEN 1 ELSE 0 END) as tiene_profesor_informante,
+                SUM(CASE WHEN rol_comision = 'tercer_integrante' THEN 1 ELSE 0 END) as tiene_tercer_integrante
             FROM comision_evaluadora
             WHERE proyecto_id = ? AND activo = TRUE
         `, [proyectoId]);
 
         const estado = rows[0];
-        estado.completa = estado.tiene_presidente > 0 && estado.tiene_secretario > 0 && estado.vocales >= 1;
+        // El tercer integrante es opcional; la comisión es operativa con Profesor Guía + Profesor Informante
+        estado.completa = estado.tiene_profesor_guia > 0 && estado.tiene_profesor_informante > 0;
         
         return estado;
     } catch (error) {
@@ -76,8 +77,8 @@ export const agregarMiembroComision = async ({ proyecto_id, profesor_rut, rol_co
             WHERE proyecto_id = ? AND rol_comision = ? AND activo = TRUE
         `, [proyecto_id, rol_comision]);
 
-        if (existente.length > 0 && rol_comision !== 'vocal') {
-            throw new Error(`Ya existe un ${rol_comision} asignado a este proyecto`);
+        if (existente.length > 0) {
+            throw new Error(`Ya existe un ${rol_comision.replace(/_/g, ' ')} asignado a este proyecto`);
         }
 
         // Validar que el profesor no esté ya en la comisión
@@ -158,8 +159,8 @@ export const actualizarRolMiembro = async (comisionId, nuevoRol) => {
             WHERE proyecto_id = ? AND rol_comision = ? AND activo = TRUE AND id != ?
         `, [miembro[0].proyecto_id, nuevoRol, comisionId]);
 
-        if (existente.length > 0 && nuevoRol !== 'vocal') {
-            throw new Error(`Ya existe un ${nuevoRol} en este proyecto`);
+        if (existente.length > 0) {
+            throw new Error(`Ya existe un ${nuevoRol.replace(/_/g, ' ')} en este proyecto`);
         }
 
         const [result] = await pool.query(`
@@ -188,13 +189,13 @@ export const obtenerProyectosConComision = async () => {
                 p.estudiante_rut,
                 u.nombre AS estudiante_nombre,
                 COUNT(ce.id) as total_miembros,
-                SUM(CASE WHEN ce.rol_comision = 'presidente' THEN 1 ELSE 0 END) as tiene_presidente,
-                SUM(CASE WHEN ce.rol_comision = 'secretario' THEN 1 ELSE 0 END) as tiene_secretario,
-                SUM(CASE WHEN ce.rol_comision = 'vocal' THEN 1 ELSE 0 END) as total_vocales,
+                SUM(CASE WHEN ce.rol_comision = 'profesor_guia' THEN 1 ELSE 0 END) as tiene_profesor_guia,
+                SUM(CASE WHEN ce.rol_comision = 'profesor_informante' THEN 1 ELSE 0 END) as tiene_profesor_informante,
+                SUM(CASE WHEN ce.rol_comision = 'tercer_integrante' THEN 1 ELSE 0 END) as tiene_tercer_integrante,
                 CASE 
-                    WHEN SUM(CASE WHEN ce.rol_comision = 'presidente' THEN 1 ELSE 0 END) > 0
-                         AND SUM(CASE WHEN ce.rol_comision = 'secretario' THEN 1 ELSE 0 END) > 0
-                         AND SUM(CASE WHEN ce.rol_comision = 'vocal' THEN 1 ELSE 0 END) >= 1
+                    WHEN SUM(CASE WHEN ce.rol_comision = 'profesor_guia' THEN 1 ELSE 0 END) > 0
+                         AND SUM(CASE WHEN ce.rol_comision = 'profesor_informante' THEN 1 ELSE 0 END) > 0
+                    -- El tercer integrante es opcional, no afecta a comision_completa
                     THEN TRUE 
                     ELSE FALSE 
                 END as comision_completa

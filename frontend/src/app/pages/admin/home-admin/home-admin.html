@@ -2,57 +2,42 @@
 <!-- Contenido principal -->
 <div class="main-container">
   <!-- Header con bienvenida -->
-  <div class="welcome-header">
+  <div class="welcome-section">
     <div class="welcome-content">
-      <h1>Panel Jefe de Curso</h1>
-      <p>Gestión completa del sistema de propuestas de título</p>
-    </div>
-
-    <!-- Panel de Notificaciones -->
-    <div class="notifications-menu" style="position:relative; cursor:pointer;"
-         (click)="togglePanelNotificaciones()">
-      <i class="fas fa-bell" style="font-size:1.4rem;"></i>
-      <span *ngIf="notificacionesNoLeidas > 0" class="notification-badge">{{ notificacionesNoLeidas }}</span>
-
-      <div *ngIf="mostrarPanelNotificaciones" class="dropdown-menu notifications-dropdown show"
-           (click)="$event.stopPropagation()">
-        <div class="panel-header">
-          <h3>Notificaciones</h3>
-          <button class="btn-small" (click)="marcarTodasComoLeidas()"
-                  *ngIf="notificacionesNoLeidas > 0">
-            Marcar todas como leídas
-          </button>
-        </div>
-
-        <div class="notifications-list" *ngIf="notificaciones.length > 0">
-          <div *ngFor="let notificacion of notificaciones"
-               class="notification-item"
-               [class.no-leida]="!notificacion.leida"
-               (click)="marcarComoLeida(notificacion)">
-            <div class="notification-icon" [style.color]="obtenerColorNotificacion(notificacion.tipo)">
-              <i [class]="obtenerIconoNotificacion(notificacion.tipo)"></i>
-            </div>
-            <div class="notification-content">
-              <h4>{{ notificacion.titulo }}</h4>
-              <p>{{ notificacion.mensaje }}</p>
-              <span class="notification-time">{{ formatearTiempoNotificacion(notificacion.fecha) }}</span>
-            </div>
-            <button class="notification-close"
-                    (click)="eliminarNotificacion(notificacion.id); $event.stopPropagation()">
-              <i class="fas fa-times"></i>
-            </button>
+      <div class="welcome-text">
+        <h1>
+          <i class="fas fa-user-tie"></i>
+          Panel Jefe de Curso
+        </h1>
+        <p class="status-text">
+          <i class="fas fa-university"></i>
+          Gestión completa del sistema de propuestas de título
+        </p>
+        <div class="welcome-stats" *ngIf="dashboard">
+          <div class="stat-chip">
+            <i class="fas fa-file-alt"></i>
+            <span>{{ dashboard.metricas_generales?.total_propuestas || 0 }} Propuestas</span>
           </div>
-        </div>
-
-        <div *ngIf="notificaciones.length === 0" class="no-notifications">
-          <i class="fas fa-bell-slash"></i>
-          <p>No hay notificaciones</p>
+          <div class="stat-chip">
+            <i class="fas fa-folder-open"></i>
+            <span>{{ dashboard.metricas_generales?.total_proyectos_activos || 0 }} Proyectos</span>
+          </div>
+          <div class="stat-chip">
+            <i class="fas fa-users"></i>
+            <span>{{ dashboard.metricas_generales?.total_estudiantes || 0 }} Estudiantes</span>
+          </div>
         </div>
       </div>
     </div>
-
-    <div class="welcome-icon">
-      <i class="fas fa-user-tie"></i>
+    <div class="welcome-illustration">
+      <div class="illustration-container">
+        <i class="fas fa-university"></i>
+        <div class="floating-elements">
+          <i class="fas fa-chart-bar"></i>
+          <i class="fas fa-users"></i>
+          <i class="fas fa-file-alt"></i>
+        </div>
+      </div>
     </div>
   </div>
 

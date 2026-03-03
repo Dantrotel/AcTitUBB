@@ -8,12 +8,22 @@ const router = Router();
 // ===== RUTAS DE PROFESOR PARA PROYECTOS =====
 
 /**
+ * GET /profesor/proyectos
+ * Obtener todos los proyectos asignados al profesor autenticado
+ */
+router.get('/proyectos',
+    verifySession,
+    checkRole('2'),
+    ProjectController.getProyectosAsignados
+);
+
+/**
  * GET /profesor/proyectos/:projectId/fechas-importantes
  * Obtener fechas importantes de un proyecto asignado al profesor
  */
-router.get('/proyectos/:projectId/fechas-importantes', 
-    verifySession, 
-    checkRole('2'), 
+router.get('/proyectos/:projectId/fechas-importantes',
+    verifySession,
+    checkRole('2'),
     ProjectController.obtenerFechasImportantes
 );
 
@@ -41,10 +51,20 @@ router.put('/proyectos/:projectId/fechas-importantes/:fechaId',
  * DELETE /profesor/proyectos/:projectId/fechas-importantes/:fechaId
  * Eliminar fecha importante de un proyecto asignado al profesor
  */
-router.delete('/proyectos/:projectId/fechas-importantes/:fechaId', 
-    verifySession, 
-    checkRole('2'), 
+router.delete('/proyectos/:projectId/fechas-importantes/:fechaId',
+    verifySession,
+    checkRole('2'),
     ProjectController.eliminarFechaImportante
+);
+
+/**
+ * PATCH /profesor/proyectos/:proyectoId/fechas-importantes/:fechaId/completar
+ * Marcar una fecha importante como completada
+ */
+router.patch('/proyectos/:projectId/fechas-importantes/:fechaId/completar',
+    verifySession,
+    checkRole('2'),
+    ProjectController.marcarFechaImportanteCompletada
 );
 
 // ===== RUTAS DE REPORTES Y MÉTRICAS =====

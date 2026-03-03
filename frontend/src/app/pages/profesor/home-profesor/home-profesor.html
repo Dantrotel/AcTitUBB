@@ -1,583 +1,275 @@
-
-<!-- Contenido principal -->
 <div class="main-container">
-  <div class="welcome-section">
-    <div class="welcome-content">
-      <div class="welcome-text">
-        <h1>
-          <i class="fas fa-chalkboard-teacher"></i> 
-          ¡Bienvenido, {{profesor.nombre || 'Profesor'}}!
-        </h1>
-        <p class="status-text">
-          <i class="fas fa-university"></i>
-          Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título
-        </p>
-        <div class="welcome-stats">
-          <div class="stat-chip">
-            <i class="fas fa-tasks"></i>
-            <span>{{ estadisticas.pendientes || 0 }} Pendientes</span>
-          </div>
-          <div class="stat-chip">
-            <i class="fas fa-project-diagram"></i>
-            <span>{{ estadisticasProyectos.totalProyectos || 0 }} Proyectos</span>
-          </div>
-        </div>
-      </div>
+
+  <!-- ===== HEADER COMPACTO ===== -->
+  <div class="page-header">
+    <div class="header-info">
+      <h1><i class="fas fa-chalkboard-teacher"></i> {{ profesor.nombre || 'Profesor' }}</h1>
+      <span class="header-sub">Universidad del Bío-Bío &nbsp;·&nbsp; Sistema de Proyectos de Título</span>
     </div>
-    
-    <div class="welcome-illustration">
-      <div class="illustration-container">
-        <i class="fas fa-graduation-cap"></i>
-        <div class="floating-elements">
-          <i class="fas fa-star"></i>
-          <i class="fas fa-lightbulb"></i>
-          <i class="fas fa-trophy"></i>
-        </div>
+
+    <div class="header-chips">
+      <div class="chip chip-blue">
+        <i class="fas fa-folder-open"></i>
+        {{ estadisticasProyectos.totalProyectos }} proyecto{{ estadisticasProyectos.totalProyectos !== 1 ? 's' : '' }}
       </div>
+      @if (estadisticasProyectos.enDesarrollo > 0) {
+        <div class="chip chip-green">
+          <i class="fas fa-cogs"></i>
+          {{ estadisticasProyectos.enDesarrollo }} en desarrollo
+        </div>
+      }
+      @if (dashboard?.avances_pendientes?.length > 0) {
+        <div class="chip chip-orange">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ dashboard.avances_pendientes.length }} por revisar
+        </div>
+      }
+      @if (estadisticas.pendientes > 0) {
+        <div class="chip chip-red">
+          <i class="fas fa-clock"></i>
+          {{ estadisticas.pendientes }} pendientes
+        </div>
+      }
     </div>
+
+    <button class="btn-cal" (click)="abrirCalendario()">
+      <i class="fas fa-calendar-alt"></i> Calendario
+    </button>
   </div>
 
-  <!-- Dashboard Analytics Section -->
-  @if (dashboard && !loadingDashboard) {
-    <div class="analytics-section">
-      <div class="section-title">
-        <i class="fas fa-chart-line"></i>
-        <h2>Analytics del Profesor</h2>
-      </div>
+  <!-- ===== LOADING ===== -->
+  @if (loadingDashboard) {
+    <div class="loading-bar">
+      <i class="fas fa-spinner fa-spin"></i> Cargando información...
+    </div>
+  }
 
-      <!-- Propuestas por Estado -->
-      <div class="propuestas-stats-grid">
-        <div class="subsection-title">
-          <i class="fas fa-file-alt"></i>
-          <h3>Propuestas por Estado</h3>
-        </div>
-        
-        <div class="stats-cards-row">
-          @for (estado of dashboard.propuestas_por_estado; track estado.estado) {
-            <div class="stat-card-mini" 
-                 [class.pendiente]="estado.estado === 'pendiente'"
-                 [class.aprobada]="estado.estado === 'aprobada'"
-                 [class.rechazada]="estado.estado === 'rechazada'"
-                 [class.revision]="estado.estado === 'en_revision'">
-              <div class="stat-icon">
-                @if (estado.estado === 'pendiente') {
-                  <i class="fas fa-clock"></i>
-                } @else if (estado.estado === 'aprobada') {
-                  <i class="fas fa-check-circle"></i>
-                } @else if (estado.estado === 'rechazada') {
-                  <i class="fas fa-times-circle"></i>
-                } @else {
-                  <i class="fas fa-spinner"></i>
-                }
-              </div>
-              <div class="stat-content">
-                <h4>{{ estado.total }}</h4>
-                <p>{{ estado.estado }}</p>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
+  <!-- ===== GRID PRINCIPAL ===== -->
+  <div class="main-grid">
 
-      <!-- Proyectos por Rol -->
-      <div class="proyectos-rol-section">
-        <div class="subsection-title">
-          <i class="fas fa-user-tag"></i>
-          <h3>Mis Proyectos por Rol</h3>
-        </div>
-        
-        <div class="roles-grid">
-          @for (rol of dashboard.proyectos_por_rol; track rol.rol) {
-            <div class="rol-card">
-              <div class="rol-header">
-                <i class="fas fa-graduation-cap"></i>
-                <h4>{{ rol.rol === 'guia' ? 'Profesor Guía' : rol.rol === 'asignatura' ? 'Profesor de Asignatura' : rol.rol }}</h4>
-              </div>
-              <div class="rol-stats">
-                <div class="rol-number">{{ rol.total }}</div>
-                <div class="rol-label">proyecto{{ rol.total !== 1 ? 's' : '' }}</div>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
+    <!-- ========== COLUMNA IZQUIERDA ========== -->
+    <div class="left-col">
 
-      <!-- Avances Pendientes de Revisión -->
-      <div class="avances-pendientes-section">
-        <div class="subsection-title">
-          <i class="fas fa-clipboard-check"></i>
-          <h3>Avances Pendientes de Revisión ({{ dashboard.avances_pendientes?.length || 0 }})</h3>
-        </div>
-        
-        @if (dashboard.avances_pendientes && dashboard.avances_pendientes.length > 0) {
-          <div class="avances-list">
-            @for (avance of dashboard.avances_pendientes.slice(0, 5); track avance.id) {
-              <div class="avance-item">
-                <div class="avance-icon">
-                  <i class="fas fa-file-upload"></i>
-                </div>
-                <div class="avance-content">
-                  <h4>{{ avance.titulo }}</h4>
-                  <div class="avance-meta">
-                    <span class="proyecto-info">
-                      <i class="fas fa-folder"></i>
-                      {{ avance.proyecto_titulo }}
-                    </span>
-                    <span class="estudiante-info">
-                      <i class="fas fa-user-graduate"></i>
-                      {{ avance.estudiante_nombre }}
-                    </span>
-                  </div>
-                  <div class="avance-fecha">
-                    <i class="fas fa-calendar"></i>
-                    Enviado: {{ avance.fecha_envio | date:'dd/MM/yyyy HH:mm' }}
-                  </div>
-                </div>
-                <div class="avance-actions">
-                  <span class="estado-badge sin-revisar">Sin revisar</span>
-                  <button class="btn-icon-small" (click)="navegarAProyecto(avance.proyecto_id)">
-                    <i class="fas fa-arrow-right"></i>
-                  </button>
-                </div>
-              </div>
-            }
+      <!-- Avances pendientes de revisión (LO MÁS URGENTE) -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fas fa-clipboard-check"></i>
+            <h3>Avances pendientes de revisión</h3>
           </div>
+          <span class="count-badge" [class.badge-danger]="(dashboard?.avances_pendientes?.length || 0) > 0">
+            {{ dashboard?.avances_pendientes?.length || 0 }}
+          </span>
+        </div>
+
+        @if (dashboard?.avances_pendientes?.length > 0) {
+          @for (avance of dashboard.avances_pendientes.slice(0, 5); track avance.id) {
+            <div class="item-row clickable" (click)="navegarAProyecto(avance.proyecto_id)">
+              <div class="item-icon icon-blue"><i class="fas fa-file-upload"></i></div>
+              <div class="item-body">
+                <span class="item-title">{{ avance.titulo }}</span>
+                <span class="item-sub">
+                  <i class="fas fa-folder"></i> {{ avance.proyecto_titulo }}
+                  &nbsp;·&nbsp;
+                  <i class="fas fa-user-graduate"></i> {{ avance.estudiante_nombre }}
+                </span>
+              </div>
+              <div class="item-end">
+                <span class="tag tag-orange">Sin revisar</span>
+                <i class="fas fa-chevron-right arrow"></i>
+              </div>
+            </div>
+          }
+          @if (dashboard.avances_pendientes.length > 5) {
+            <div class="panel-footer">
+              <span class="footer-note">+{{ dashboard.avances_pendientes.length - 5 }} avance(s) más</span>
+            </div>
+          }
         } @else {
-          <div class="empty-state-small">
-            <i class="fas fa-check-double"></i>
-            <p>No hay avances pendientes de revisión</p>
+          <div class="empty-row">
+            <i class="fas fa-check-double success-icon"></i>
+            <span>No hay avances pendientes de revisión</span>
           </div>
         }
       </div>
 
-      <!-- Propuestas Pendientes -->
-      @if (dashboard.propuestas_pendientes && dashboard.propuestas_pendientes.length > 0) {
-        <div class="propuestas-pendientes-section">
-          <div class="subsection-title">
+      <!-- Proyectos asignados -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fas fa-project-diagram"></i>
+            <h3>Mis Proyectos</h3>
+          </div>
+          <div class="panel-header-actions">
+            <span class="count-badge">{{ estadisticasProyectos.totalProyectos }}</span>
+            <button class="btn-link" (click)="navegarAProyectos()">
+              Cronogramas <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        @if (proyectosRecientes.length > 0) {
+          @for (proyecto of proyectosRecientes.slice(0, 6); track proyecto.id) {
+            <div class="project-row clickable" (click)="navegarAProyecto(proyecto.id)">
+              <div class="project-info">
+                <span class="project-name">{{ proyecto.titulo }}</span>
+                <span class="project-student">
+                  <i class="fas fa-user-graduate"></i> {{ proyecto.estudiante }}
+                  @if (proyecto.rol_profesor) {
+                    &nbsp;·&nbsp;
+                    <span class="rol-tag">{{ proyecto.rol_profesor === 'guia' ? 'Guía' : proyecto.rol_profesor === 'asignatura' ? 'Asignatura' : proyecto.rol_profesor }}</span>
+                  }
+                </span>
+              </div>
+              <div class="project-metrics">
+                <div class="mini-progress-wrap">
+                  <div class="mini-progress-bar">
+                    <div class="mini-fill" [style.width.%]="proyecto.porcentaje_avance || 0"></div>
+                  </div>
+                  <span class="pct-label">{{ formatearPorcentaje(proyecto.porcentaje_avance) }}</span>
+                </div>
+                <span class="estado-tag" [class]="getEstadoClase(proyecto.estado)">{{ proyecto.estado }}</span>
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="empty-row">
+            <i class="fas fa-inbox muted-icon"></i>
+            <span>No tienes proyectos asignados actualmente</span>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ========== COLUMNA DERECHA ========== -->
+    <div class="right-col">
+
+      <!-- Propuestas pendientes de revisión -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
             <i class="fas fa-inbox"></i>
-            <h3>Propuestas Pendientes de Revisión ({{ dashboard.propuestas_pendientes.length }})</h3>
+            <h3>Propuestas por revisar</h3>
           </div>
-          
-          <div class="propuestas-list">
-            @for (propuesta of dashboard.propuestas_pendientes.slice(0, 3); track propuesta.id) {
-              <div class="propuesta-item">
-                <div class="propuesta-header">
-                  <h4>{{ propuesta.titulo }}</h4>
-                  <span class="modalidad-badge">{{ propuesta.modalidad }}</span>
-                </div>
-                <div class="propuesta-meta">
-                  <span>
-                    <i class="fas fa-user-graduate"></i>
-                    {{ propuesta.estudiante_nombre }}
-                  </span>
-                  <span>
-                    <i class="fas fa-calendar"></i>
-                    {{ propuesta.fecha_creacion | date:'dd/MM/yyyy' }}
-                  </span>
-                </div>
-                <div class="propuesta-footer">
-                  <span class="dias-espera">
-                    <i class="fas fa-clock"></i>
-                    {{ propuesta.dias_espera }} día{{ propuesta.dias_espera !== 1 ? 's' : '' }} en espera
-                  </span>
-                  <button class="btn-primary-small" (click)="navegar('propuestas/asignadas')">
-                    Revisar
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
+          <span class="count-badge" [class.badge-warning]="(dashboard?.propuestas_pendientes?.length || 0) > 0">
+            {{ dashboard?.propuestas_pendientes?.length || 0 }}
+          </span>
         </div>
-      }
 
-      <!-- Estadísticas de Tiempos de Revisión -->
-      @if (dashboard.estadisticas_tiempos) {
-        <div class="tiempos-revision-section">
-          <div class="subsection-title">
-            <i class="fas fa-stopwatch"></i>
-            <h3>Estadísticas de Tiempos de Revisión</h3>
-          </div>
-          
-          <div class="tiempos-grid">
-            <div class="tiempo-card">
-              <div class="tiempo-icon promedio">
-                <i class="fas fa-tachometer-alt"></i>
+        @if (dashboard?.propuestas_pendientes?.length > 0) {
+          @for (prop of dashboard.propuestas_pendientes.slice(0, 4); track prop.id) {
+            <div class="item-row clickable" (click)="navegar('propuestas/asignadas')">
+              <div class="item-icon icon-orange"><i class="fas fa-file-alt"></i></div>
+              <div class="item-body">
+                <span class="item-title">{{ prop.titulo }}</span>
+                <span class="item-sub">
+                  <i class="fas fa-user-graduate"></i> {{ prop.estudiante_nombre }}
+                  &nbsp;·&nbsp;
+                  <i class="fas fa-clock"></i> {{ prop.dias_espera }} día{{ prop.dias_espera !== 1 ? 's' : '' }} en espera
+                </span>
               </div>
-              <div class="tiempo-content">
-                <h4>{{ dashboard.estadisticas_tiempos.promedio_dias_revision || 0 }}</h4>
-                <p>Días promedio</p>
+              <div class="item-end">
+                <span class="tag tag-gray">{{ prop.modalidad }}</span>
               </div>
             </div>
-            
-            <div class="tiempo-card">
-              <div class="tiempo-icon minimo">
-                <i class="fas fa-bolt"></i>
-              </div>
-              <div class="tiempo-content">
-                <h4>{{ dashboard.estadisticas_tiempos.minimo_dias_revision || 0 }}</h4>
-                <p>Mínimo (más rápido)</p>
-              </div>
-            </div>
-            
-            <div class="tiempo-card">
-              <div class="tiempo-icon maximo">
-                <i class="fas fa-hourglass-end"></i>
-              </div>
-              <div class="tiempo-content">
-                <h4>{{ dashboard.estadisticas_tiempos.maximo_dias_revision || 0 }}</h4>
-                <p>Máximo (más lento)</p>
-              </div>
-            </div>
+          }
+          <div class="panel-footer">
+            <button class="btn-primary-sm" (click)="navegar('propuestas/asignadas')">
+              Ir a revisar <i class="fas fa-arrow-right"></i>
+            </button>
           </div>
-        </div>
-      }
-    </div>
-  }
-
-  <!-- Dashboard Cards -->
-  <div class="dashboard-grid">
-    <div class="dashboard-card primary-card" (click)="navegar('propuestas/asignadas')">
-      <div class="card-icon">
-        <i class="fas fa-tasks"></i>
-      </div>
-      <div class="card-content">
-        <h3>Propuestas Asignadas</h3>
-        <p>Revisa las propuestas que estás evaluando actualmente</p>
-        <button class="btn-primary">
-          <i class="fas fa-eye"></i>
-          Ver asignadas
-        </button>
-      </div>
-    </div>
-    
-    <div class="dashboard-card secondary-card" (click)="navegar('propuestas/todas')">
-      <div class="card-icon">
-        <i class="fas fa-list-alt"></i>
-      </div>
-      <div class="card-content">
-        <h3>Todas las Propuestas</h3>
-        <p>Consulta el listado completo de propuestas del sistema</p>
-        <button class="btn-primary">
-          <i class="fas fa-search"></i>
-          Explorar
-        </button>
-      </div>
-    </div>
-    
-    <div class="dashboard-card accent-card">
-      <div class="card-icon">
-        <i class="fas fa-chart-bar"></i>
-      </div>
-      <div class="card-content">
-        <h3>Estadísticas</h3>
-        <div class="stats-item">
-          <i class="fas fa-file-alt"></i>
-          <span>{{ estadisticas.totalPropuestas || 0 }} Propuestas Totales</span>
-        </div>
-        <div class="stats-item">
-          <i class="fas fa-clock"></i>
-          <span>{{ estadisticas.pendientes || 0 }} Pendientes de Revisión</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="dashboard-card calendar-matching-card" (click)="navegar('profesor/calendario/dashboard')">
-      <div class="card-icon">
-        <i class="fas fa-calendar-week"></i>
-      </div>
-      <div class="card-content">
-        <h3>Gestión de Reuniones</h3>
-        <div class="stats-item">
-          <i class="fas fa-clock"></i>
-          <span>Disponibilidades configuradas</span>
-        </div>
-        <div class="stats-item">
-          <i class="fas fa-envelope"></i>
-          <span>Solicitudes pendientes</span>
-        </div>
-        <div class="stats-item">
-          <i class="fas fa-calendar-check"></i>
-          <span>Próximas reuniones</span>
-        </div>
-        <button class="btn-primary">
-          <i class="fas fa-tachometer-alt"></i>
-          Dashboard Reuniones
-        </button>
-      </div>
-    </div>
-    
-    <div class="dashboard-card action-card" (click)="abrirCalendario()">
-      <div class="card-icon">
-        <i class="fas fa-calendar-alt"></i>
-      </div>
-      <div class="card-content">
-        <h3>Calendario de Fechas</h3>
-        <div class="date-item" *ngFor="let fecha of proximasFechas">
-          <i [class]="fecha.icono"></i>
-          <span>{{fecha.titulo}}: {{fecha.fecha | date:'dd MMM'}}</span>
-        </div>
-        <div class="date-item" *ngIf="proximasFechas.length === 0">
-          <i class="fas fa-info-circle"></i>
-          <span>No hay fechas programadas</span>
-        </div>
-        <button class="btn-secondary">
-          <i class="fas fa-calendar"></i>
-          Ver Calendario
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Sección de Gestión de Proyectos -->
-  <div class="projects-section">
-    <div class="section-header">
-      <h2>
-        <i class="fas fa-project-diagram"></i>
-        Gestión de Proyectos
-      </h2>
-      <button class="btn-secondary" (click)="navegarAProyectos()">
-        <i class="fas fa-eye"></i>
-        Ver Todos
-      </button>
-    </div>
-
-    <!-- Dashboard de Proyectos -->
-    <div class="projects-dashboard">
-      <div class="project-stats-grid">
-        <div class="stat-card total">
-          <div class="stat-icon">
-            <i class="fas fa-folder-open"></i>
+        } @else {
+          <div class="empty-row">
+            <i class="fas fa-check-double success-icon"></i>
+            <span>Sin propuestas pendientes de revisión</span>
           </div>
-          <div class="stat-content">
-            <h3>{{ estadisticasProyectos.totalProyectos }}</h3>
-            <p>Proyectos Asignados</p>
-          </div>
-        </div>
-
-        <div class="stat-card development">
-          <div class="stat-icon">
-            <i class="fas fa-cogs"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{ estadisticasProyectos.enDesarrollo }}</h3>
-            <p>En Desarrollo</p>
-          </div>
-        </div>
-
-        <div class="stat-card milestones">
-          <div class="stat-icon">
-            <i class="fas fa-flag"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{ estadisticasProyectos.proximosHitos }}</h3>
-            <p>Próximos Hitos</p>
-          </div>
-        </div>
-
-        <div class="stat-card evaluations">
-          <div class="stat-icon">
-            <i class="fas fa-clipboard-check"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{ estadisticasProyectos.evaluacionesPendientes }}</h3>
-            <p>Evaluaciones Pendientes</p>
-          </div>
-        </div>
+        }
       </div>
 
-      <!-- Proyectos Recientes -->
-      <div class="recent-projects">
-        <h3>
-          <i class="fas fa-clock"></i>
-          Proyectos Recientes
-        </h3>
-        
-        <div class="projects-list" *ngIf="proyectosRecientes.length > 0">
-          <div class="project-item" *ngFor="let proyecto of proyectosRecientes" (click)="navegarAProyecto(proyecto.id)">
-            <div class="project-main-info">
-              <div class="project-header">
-                <h4>{{ proyecto.titulo }}</h4>
-                <span class="rol-badge">{{ proyecto.rol_profesor }}</span>
-              </div>
-              <p class="project-student">
-                <i class="fas fa-user-graduate"></i>
-                {{ proyecto.estudiante }}
-              </p>
-              <p class="project-description" *ngIf="proyecto.descripcion">
-                {{ proyecto.descripcion | slice:0:100 }}{{ proyecto.descripcion?.length > 100 ? '...' : '' }}
-              </p>
-            </div>
-            
-            <div class="project-metrics">
-              <div class="project-progress">
-                <label>Progreso</label>
-                <div class="progress-bar">
-                  <div class="progress-fill" [style.width.%]="proyecto.porcentaje_avance"></div>
-                </div>
-                <span class="progress-text">{{ formatearPorcentaje(proyecto.porcentaje_avance) }}</span>
-              </div>
-              
-              <div class="project-dates" *ngIf="proyecto.fecha_inicio">
-                <small class="date-info">
-                  <i class="fas fa-calendar-start"></i>
-                  Inicio: {{ proyecto.fecha_inicio | date:'dd/MM/yyyy' }}
-                </small>
-                <small class="date-info" *ngIf="proyecto.fecha_estimada_fin">
-                  <i class="fas fa-calendar-check"></i>
-                  Est. Fin: {{ proyecto.fecha_estimada_fin | date:'dd/MM/yyyy' }}
-                </small>
-              </div>
-            </div>
-            
-            <div class="project-status">
-              <span class="status-badge" [class]="getEstadoClase(proyecto.estado)">
-                {{ proyecto.estado }}
-              </span>
-              <small class="last-update">
-                <i class="fas fa-clock"></i>
-                {{ proyecto.fecha_actualizacion | date:'dd/MM/yyyy HH:mm' }}
-              </small>
-              
-              <!-- Acciones rápidas -->
-              <div class="quick-actions">
-                <button class="btn-icon" 
-                        (click)="$event.stopPropagation(); verDashboardProyecto(proyecto.id)"
-                        matTooltip="Ver Dashboard">
-                  <i class="fas fa-tachometer-alt"></i>
-                </button>
-                <button class="btn-icon" 
-                        (click)="$event.stopPropagation(); navegarAHitos()"
-                        matTooltip="Ver Hitos">
-                  <i class="fas fa-tasks"></i>
-                </button>
-              </div>
-            </div>
+      <!-- Acciones rápidas de navegación -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fas fa-bolt"></i>
+            <h3>Acciones rápidas</h3>
           </div>
         </div>
-
-        <div class="empty-state" *ngIf="proyectosRecientes.length === 0">
-          <i class="fas fa-inbox"></i>
-          <p>No tienes proyectos asignados actualmente</p>
-        </div>
-      </div>
-
-      <!-- Acciones de Proyecto -->
-      <div class="project-actions">
-        <div class="action-card" (click)="navegarAHitos()">
-          <div class="action-icon">
+        <div class="nav-grid">
+          <button class="nav-btn" (click)="navegar('propuestas/asignadas')">
             <i class="fas fa-tasks"></i>
-          </div>
-          <div class="action-content">
-            <h4>Gestionar Hitos</h4>
-            <p>Revisar y evaluar hitos de proyectos</p>
-            <span class="action-badge" *ngIf="estadisticasProyectos.proximosHitos > 0">
-              {{ estadisticasProyectos.proximosHitos }} pendientes
-            </span>
-          </div>
-        </div>
-
-        <div class="action-card featured-card" (click)="navegarAFechasImportantes()">
-          <div class="card-header">
-            <div class="action-icon">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <span class="action-badge featured">Para tesistas</span>
-          </div>
-          <div class="action-content">
-            <h4>Fechas Importantes</h4>
-            <p>Gestionar fechas límite y entregas importantes de tus estudiantes tesistas</p>
-            <div class="feature-highlights">
-              <span class="highlight">
-                <i class="fas fa-clock"></i>
-                Recordatorios automáticos
-              </span>
-              <span class="highlight">
-                <i class="fas fa-bell"></i>
-                Notificaciones próximas
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="action-card" (click)="navegar('profesor/cronogramas')">
-          <div class="action-icon">
+            <span>Propuestas Asignadas</span>
+          </button>
+          <button class="nav-btn" (click)="navegar('propuestas/todas')">
+            <i class="fas fa-list-alt"></i>
+            <span>Todas las Propuestas</span>
+          </button>
+          <button class="nav-btn" (click)="navegar('profesor/cronogramas')">
             <i class="fas fa-calendar-alt"></i>
-          </div>
-          <div class="action-content">
-            <h4>Gestionar Cronogramas</h4>
-            <p>Crear y revisar cronogramas de proyectos</p>
-          </div>
-        </div>
-
-        <div class="action-card" (click)="navegarAProyectos()">
-          <div class="action-icon">
+            <span>Cronogramas</span>
+          </button>
+          <button class="nav-btn" (click)="navegarAReportes()">
             <i class="fas fa-chart-line"></i>
-          </div>
-          <div class="action-content">
-            <h4>Ver Reportes</h4>
-            <p>Estadísticas y métricas de proyectos</p>
-          </div>
+            <span>Reportes</span>
+          </button>
+          <button class="nav-btn" (click)="navegar('profesor/calendario/dashboard')">
+            <i class="fas fa-calendar-week"></i>
+            <span>Gestión Reuniones</span>
+          </button>
+          <button class="nav-btn" (click)="navegarAFechasImportantes()">
+            <i class="fas fa-calendar-check"></i>
+            <span>Fechas Importantes</span>
+          </button>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Sección de acciones rápidas -->
-  <div class="quick-actions-section">
-    <h2>Acciones Rápidas</h2>
-    <div class="quick-actions-grid">
-      <div class="quick-action-item" (click)="navegar('propuestas/todas')">
-        <div class="action-icon">
-          <i class="fas fa-search"></i>
+      <!-- Estadísticas de tiempos de revisión (compacto) -->
+      @if (dashboard?.estadisticas_tiempos) {
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i class="fas fa-stopwatch"></i>
+              <h3>Tiempos de revisión</h3>
+            </div>
+          </div>
+          <div class="tiempos-row">
+            <div class="tiempo-stat">
+              <span class="tiempo-num">{{ dashboard.estadisticas_tiempos.promedio_dias_revision || 0 }}</span>
+              <span class="tiempo-label">Días promedio</span>
+            </div>
+            <div class="tiempo-divider"></div>
+            <div class="tiempo-stat">
+              <span class="tiempo-num green">{{ dashboard.estadisticas_tiempos.minimo_dias_revision || 0 }}</span>
+              <span class="tiempo-label">Mínimo</span>
+            </div>
+            <div class="tiempo-divider"></div>
+            <div class="tiempo-stat">
+              <span class="tiempo-num orange">{{ dashboard.estadisticas_tiempos.maximo_dias_revision || 0 }}</span>
+              <span class="tiempo-label">Máximo</span>
+            </div>
+          </div>
         </div>
-        <div class="action-content">
-          <h4>Buscar Propuestas</h4>
-          <p>Encuentra propuestas específicas</p>
-        </div>
-      </div>
-      
-      <div class="quick-action-item" (click)="navegar('propuestas/asignadas')">
-        <div class="action-icon">
-          <i class="fas fa-edit"></i>
-        </div>
-        <div class="action-content">
-          <h4>Revisar Pendientes</h4>
-          <p>Propuestas que requieren tu atención</p>
-        </div>
-      </div>
+      }
+
     </div>
   </div>
 </div>
 
-<!-- Footer -->
-<footer class="main-footer">
-  <div class="footer-content">
-    <p>&copy; {{fechaActual() | date:'yyyy'}} Universidad del Bío-Bío - Sistema de Gestión de Proyectos de Título</p>
-  </div>
-</footer>
-
-<!-- Modal del Calendario -->
-<app-calendar-modal 
+<!-- ===== MODAL CALENDARIO ===== -->
+<app-calendar-modal
   *ngIf="showCalendarModal"
   [propuestas]="[]"
   (close)="cerrarCalendario()">
 </app-calendar-modal>
 
-<!-- Modal de Gestión de Hitos -->
+<!-- ===== MODAL GESTIÓN DE HITOS ===== -->
 <div class="modal-overlay" *ngIf="mostrarGestionHitos" (click)="cerrarGestionHitos()">
   <div class="modal-hitos" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>
-        <i class="fas fa-tasks"></i>
-        Gestión de Hitos
-      </h2>
-      <button class="btn-close" (click)="cerrarGestionHitos()">
-        <i class="fas fa-times"></i>
-      </button>
+      <h2><i class="fas fa-tasks"></i> Gestión de Hitos</h2>
+      <button class="btn-close" (click)="cerrarGestionHitos()"><i class="fas fa-times"></i></button>
     </div>
-
     <div class="modal-body">
-      <!-- Selector de Proyecto -->
       <div class="proyecto-selector">
         <label>Proyecto:</label>
         <select [(ngModel)]="proyectoSeleccionado" (change)="seleccionarProyecto(proyectoSeleccionado)">
@@ -587,52 +279,36 @@
           </option>
         </select>
         <button class="btn-primary btn-sm" (click)="abrirModalCrearHito(proyectoSeleccionado)">
-          <i class="fas fa-plus"></i>
-          Nuevo Hito
+          <i class="fas fa-plus"></i> Nuevo Hito
         </button>
       </div>
-
-      <!-- Lista de Hitos -->
       <div class="hitos-container">
         <div class="loading" *ngIf="cargandoHitos">
-          <i class="fas fa-spinner fa-spin"></i>
-          Cargando hitos...
+          <i class="fas fa-spinner fa-spin"></i> Cargando hitos...
         </div>
-
         <div class="hitos-grid" *ngIf="!cargandoHitos && hitosActivos.length > 0">
-          <div class="hito-card" *ngFor="let hito of hitosActivos" 
+          <div class="hito-card" *ngFor="let hito of hitosActivos"
                [class]="getEstadoHitoClass(hito.estado)"
                [class.proximo]="esHitoProximo(hito.fecha_objetivo)"
                [class.retrasado]="esHitoRetrasado(hito.fecha_objetivo, hito.estado)">
-            
             <div class="hito-header">
               <div class="hito-tipo">
                 <i [class]="getTipoHitoIcon(hito.tipo_hito)"></i>
                 <span>{{ hito.tipo_hito }}</span>
               </div>
               <div class="hito-actions">
-                <button class="btn-icon" (click)="abrirModalEditarHito(hito)" matTooltip="Editar">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn-icon" *ngIf="hito.estado !== 'completado'" 
-                        (click)="completarHito(hito)" matTooltip="Completar">
-                  <i class="fas fa-check"></i>
-                </button>
+                <button class="btn-icon" (click)="abrirModalEditarHito(hito)"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon" *ngIf="hito.estado !== 'completado'" (click)="completarHito(hito)"><i class="fas fa-check"></i></button>
               </div>
             </div>
-
             <div class="hito-content">
               <h4>{{ hito.nombre }}</h4>
               <p class="hito-proyecto" *ngIf="hito.proyecto_titulo">
-                <i class="fas fa-folder"></i>
-                {{ hito.proyecto_titulo }}
+                <i class="fas fa-folder"></i> {{ hito.proyecto_titulo }}
                 <span class="estudiante">- {{ hito.estudiante_nombre }}</span>
               </p>
-              <p class="hito-descripcion" *ngIf="hito.descripcion">
-                {{ hito.descripcion }}
-              </p>
+              <p class="hito-descripcion" *ngIf="hito.descripcion">{{ hito.descripcion }}</p>
             </div>
-
             <div class="hito-footer">
               <div class="hito-fecha">
                 <i class="fas fa-calendar-day"></i>
@@ -644,16 +320,13 @@
                   ({{ mathHelper.abs(diasHastaVencimiento(hito.fecha_objetivo)) }} días de retraso)
                 </span>
               </div>
-              
               <div class="hito-metadatos">
                 <span class="peso">{{ hito.peso_en_proyecto }}%</span>
                 <span class="critico" *ngIf="hito.es_critico">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  Crítico
+                  <i class="fas fa-exclamation-triangle"></i> Crítico
                 </span>
               </div>
             </div>
-
             <div class="hito-progreso" *ngIf="hito.porcentaje_completado !== undefined">
               <div class="progress-bar">
                 <div class="progress-fill" [style.width.%]="hito.porcentaje_completado"></div>
@@ -662,15 +335,12 @@
             </div>
           </div>
         </div>
-
         <div class="empty-hitos" *ngIf="!cargandoHitos && hitosActivos.length === 0">
           <i class="fas fa-clipboard-list"></i>
           <h3>No hay hitos disponibles</h3>
           <p>{{ proyectoSeleccionado ? 'Este proyecto no tiene hitos creados' : 'No tienes proyectos con hitos' }}</p>
-          <button class="btn-primary" (click)="abrirModalCrearHito(proyectoSeleccionado)" 
-                  *ngIf="proyectoSeleccionado">
-            <i class="fas fa-plus"></i>
-            Crear Primer Hito
+          <button class="btn-primary" (click)="abrirModalCrearHito(proyectoSeleccionado)" *ngIf="proyectoSeleccionado">
+            <i class="fas fa-plus"></i> Crear Primer Hito
           </button>
         </div>
       </div>
@@ -678,33 +348,22 @@
   </div>
 </div>
 
-<!-- Modal Crear/Editar Hito -->
+<!-- ===== MODAL CREAR/EDITAR HITO ===== -->
 <div class="modal-overlay" *ngIf="mostrarModalHito" (click)="cerrarModalHito()">
   <div class="modal-form" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>
-        <i class="fas fa-plus-circle"></i>
-        {{ hitoEditando ? 'Editar Hito' : 'Crear Nuevo Hito' }}
-      </h3>
-      <button class="btn-close" (click)="cerrarModalHito()">
-        <i class="fas fa-times"></i>
-      </button>
+      <h3><i class="fas fa-plus-circle"></i> {{ hitoEditando ? 'Editar Hito' : 'Crear Nuevo Hito' }}</h3>
+      <button class="btn-close" (click)="cerrarModalHito()"><i class="fas fa-times"></i></button>
     </div>
-
     <form class="hito-form" (ngSubmit)="guardarHito()">
       <div class="form-group">
         <label for="nombre">Nombre del Hito *</label>
-        <input type="text" id="nombre" [(ngModel)]="nuevoHito.nombre" 
-               name="nombre" required placeholder="Ej: Análisis de Requerimientos">
+        <input type="text" id="nombre" [(ngModel)]="nuevoHito.nombre" name="nombre" required placeholder="Ej: Análisis de Requerimientos">
       </div>
-
       <div class="form-group">
         <label for="descripcion">Descripción</label>
-        <textarea id="descripcion" [(ngModel)]="nuevoHito.descripcion" 
-                  name="descripcion" rows="3" 
-                  placeholder="Describe los objetivos y entregables del hito..."></textarea>
+        <textarea id="descripcion" [(ngModel)]="nuevoHito.descripcion" name="descripcion" rows="3" placeholder="Describe los objetivos y entregables del hito..."></textarea>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label for="tipo_hito">Tipo de Hito *</label>
@@ -721,21 +380,16 @@
             <option value="cierre">Cierre</option>
           </select>
         </div>
-
         <div class="form-group">
           <label for="fecha_objetivo">Fecha Objetivo *</label>
-          <input type="date" id="fecha_objetivo" [(ngModel)]="nuevoHito.fecha_objetivo" 
-                 name="fecha_objetivo" required>
+          <input type="date" id="fecha_objetivo" [(ngModel)]="nuevoHito.fecha_objetivo" name="fecha_objetivo" required>
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label for="peso">Peso en Proyecto (%)</label>
-          <input type="number" id="peso" [(ngModel)]="nuevoHito.peso_en_proyecto" 
-                 name="peso" min="0" max="100" step="1">
+          <input type="number" id="peso" [(ngModel)]="nuevoHito.peso_en_proyecto" name="peso" min="0" max="100" step="1">
         </div>
-
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" [(ngModel)]="nuevoHito.es_critico" name="es_critico">
@@ -744,14 +398,10 @@
           </label>
         </div>
       </div>
-
       <div class="form-actions">
-        <button type="button" class="btn-secondary" (click)="cerrarModalHito()">
-          Cancelar
-        </button>
+        <button type="button" class="btn-secondary" (click)="cerrarModalHito()">Cancelar</button>
         <button type="submit" class="btn-primary">
-          <i class="fas fa-save"></i>
-          {{ hitoEditando ? 'Actualizar' : 'Crear' }} Hito
+          <i class="fas fa-save"></i> {{ hitoEditando ? 'Actualizar' : 'Crear' }} Hito
         </button>
       </div>
     </form>

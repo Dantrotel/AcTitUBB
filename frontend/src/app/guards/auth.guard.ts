@@ -1,21 +1,12 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, CanActivateChild, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { TokenService } from '../services/token.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthGuard implements CanActivate, CanActivateChild {
-  constructor(private router: Router) {}
-
-  private isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-      return payload.exp < currentTime;
-    } catch (error) {
-      return true; // Si hay error al parsear, considerar como expirado
-    }
-  }
+  constructor(private router: Router, private tokenService: TokenService) {}
 
   private clearAuthData(): void {
     localStorage.removeItem('token');
@@ -23,27 +14,13 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     localStorage.removeItem('userData');
   }
 
-  private getUserRole(): number | null {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.rol_id;
-    } catch (error) {
-      return null;
-    }
-  }
-
   canActivate(route: ActivatedRouteSnapshot): boolean {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
+    if (!this.tokenService.getPayload()) {
       this.router.navigate(['/login']);
       return false;
     }
 
-    if (this.isTokenExpired(token)) {
+    if (this.tokenService.isExpired()) {
       this.clearAuthData();
       this.router.navigate(['/login']);
       return false;
@@ -52,15 +29,18 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     // Verificar roles si están especificados en la ruta
     const requiredRoles = route.data['requiredRoles'] as number[] | undefined;
     if (requiredRoles && requiredRoles.length > 0) {
-      const userRole = this.getUserRole();
-      
-      if (userRole === null) {
-        this.router.navigate(['/login']);
-        return false;
-      }
+      const userRole = this.tokenService.getRolId();
 
-      if (!requiredRoles.includes(userRole)) {
-        this.router.navigate(['/login']);
+      if (userRole === null || !requiredRoles.includes(userRole)) {
+        // Usuario autenticado pero sin permiso → redirigir a su home, no al login
+        const homeRoutes: Record<number, string> = {
+          1: '/estudiante/home',
+          2: '/profesor/home',
+          3: '/admin/home',
+          4: '/super-admin/home'
+        };
+        const home = userRole !== null ? (homeRoutes[userRole] ?? '/login') : '/login';
+        this.router.navigate([home]);
         return false;
       }
     }

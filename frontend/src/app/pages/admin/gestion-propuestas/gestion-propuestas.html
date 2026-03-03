@@ -158,12 +158,6 @@
             Asignar Profesor
           </button>
 
-          <!-- Botón de evaluaciones (solo si tiene proyecto_id) -->
-          <button *ngIf="propuesta.proyecto_id" class="btn-info" (click)="abrirModalEvaluaciones(propuesta)">
-            <i class="fas fa-chart-line"></i>
-            Evaluaciones
-          </button>
-          
           <button class="btn-danger" (click)="eliminarPropuesta(propuesta.id)">
             <i class="fas fa-trash"></i>
             Eliminar
@@ -181,4 +175,3 @@
   </div>
 </footer>
 
-<!-- Modal de Evaluaciones deshabilitado - Las evaluaciones fueron eliminadas del sistema --> 

@@ -3,6 +3,7 @@ import { verifySession } from '../middlewares/verifySession.js';
 import { pool } from '../db/connectionDB.js';
 import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
 import { ProjectService } from '../services/project.service.js';
+import { logger } from '../config/logger.js';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.get('/proyecto/:proyecto_id', verifySession, async (req, res) => {
             data: profesores
         });
     } catch (error) {
-        console.error('Error al obtener asignaciones de profesores:', error);
+        logger.error('Error al obtener asignaciones de profesores', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -40,8 +41,8 @@ router.get('/profesor/:profesor_rut', verifySession, async (req, res) => {
         const { profesor_rut } = req.params;
         const { rol_profesor } = req.query;
         
-        // Verificar permisos: solo el mismo profesor, admin, o si es admin puede ver cualquier profesor
-        if (req.user.role_id !== 3 && req.user.rut !== profesor_rut) {
+        // Verificar permisos: solo el mismo profesor, admin o superadmin puede ver cualquier profesor
+        if (![3, 4].includes(req.user.role_id) && req.user.rut !== profesor_rut) {
             return res.status(403).json({
                 success: false,
                 message: 'No tienes permisos para ver las asignaciones de este profesor'
@@ -55,7 +56,7 @@ router.get('/profesor/:profesor_rut', verifySession, async (req, res) => {
             data: proyectos
         });
     } catch (error) {
-        console.error('Error al obtener proyectos del profesor:', error);
+        logger.error('Error al obtener proyectos del profesor', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -81,8 +82,8 @@ router.post('/multiples', verifySession, async (req, res) => {
             });
         }
         
-        // Solo admin puede asignar profesores
-        if (req.user.role_id !== 3) {
+        // Solo admin o superadmin puede asignar profesores
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden asignar profesores a proyectos'
@@ -104,7 +105,7 @@ router.post('/multiples', verifySession, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error al asignar múltiples profesores:', error);
+        logger.error('Error al asignar múltiples profesores', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -128,8 +129,8 @@ router.put('/proyecto/:proyecto_id/rol/:rol_profesor_id', verifySession, async (
             });
         }
         
-        // Solo admin puede cambiar asignaciones
-        if (req.user.role_id !== 3) {
+        // Solo admin o superadmin puede cambiar asignaciones
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden cambiar asignaciones de profesores'
@@ -151,7 +152,7 @@ router.put('/proyecto/:proyecto_id/rol/:rol_profesor_id', verifySession, async (
             data: nuevaAsignacion
         });
     } catch (error) {
-        console.error('Error al cambiar asignación de profesor:', error);
+        logger.error('Error al cambiar asignación de profesor', { error: error.message });
         res.status(400).json({
             success: false,
             message: error.message || 'Error interno del servidor'
@@ -167,8 +168,8 @@ router.delete('/proyecto/:proyecto_id/rol/:rol_profesor_id', verifySession, asyn
     try {
         const { proyecto_id, rol_profesor_id } = req.params;
         
-        // Solo admin puede remover asignaciones
-        if (req.user.role_id !== 3) {
+        // Solo admin o superadmin puede remover asignaciones
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden remover asignaciones de profesores'
@@ -192,7 +193,7 @@ router.delete('/proyecto/:proyecto_id/rol/:rol_profesor_id', verifySession, asyn
             message: 'Profesor removido del proyecto exitosamente'
         });
     } catch (error) {
-        console.error('Error al remover profesor:', error);
+        logger.error('Error al remover profesor', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -208,8 +209,8 @@ router.get('/disponibles/:rol_profesor_id', verifySession, async (req, res) => {
     try {
         const { rol_profesor_id } = req.params;
         
-        // Solo admin puede ver profesores disponibles
-        if (req.user.role_id !== 3) {
+        // Solo admin o superadmin puede ver profesores disponibles
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden ver profesores disponibles'
@@ -223,7 +224,7 @@ router.get('/disponibles/:rol_profesor_id', verifySession, async (req, res) => {
             data: profesoresDisponibles
         });
     } catch (error) {
-        console.error('Error al obtener profesores disponibles:', error);
+        logger.error('Error al obtener profesores disponibles', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -239,8 +240,8 @@ router.get('/estadisticas', verifySession, async (req, res) => {
     try {
         const { profesor_rut } = req.query;
         
-        // Solo admin puede ver estadísticas generales, profesores solo sus propias estadísticas
-        if (req.user.role_id !== 3) {
+        // Solo admin o superadmin puede ver estadísticas generales, profesores solo sus propias estadísticas
+        if (![3, 4].includes(req.user.role_id)) {
             if (profesor_rut && profesor_rut !== req.user.rut) {
                 return res.status(403).json({
                     success: false,
@@ -250,7 +251,7 @@ router.get('/estadisticas', verifySession, async (req, res) => {
         }
         
         const estadisticas = await asignacionesProfesoresModel.obtenerEstadisticasAsignaciones(
-            profesor_rut || (req.user.role_id === 2 ? req.user.rut : null)
+            profesor_rut || (![3, 4].includes(req.user.role_id) ? req.user.rut : null)
         );
         
         res.json({
@@ -258,7 +259,7 @@ router.get('/estadisticas', verifySession, async (req, res) => {
             data: estadisticas
         });
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        logger.error('Error al obtener estadísticas de asignaciones', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -297,7 +298,7 @@ router.get('/:asignacion_id', verifySession, async (req, res) => {
             data: asignacion
         });
     } catch (error) {
-        console.error('Error al obtener asignación:', error);
+        logger.error('Error al obtener asignación', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -311,28 +312,12 @@ router.get('/:asignacion_id', verifySession, async (req, res) => {
  */
 router.get('/admin/todas', verifySession, async (req, res) => {
     try {
-        // Verificar que sea admin (role_id = 3)
-        if (req.user.role_id !== 3) {
+        // Verificar que sea admin o superadmin
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden ver todas las asignaciones'
             });
-        }
-        
-        // Verificar estructura de la tabla roles_profesores
-        try {
-            console.log('🔍 Verificando estructura de roles_profesores...');
-            const [columns] = await pool.execute('DESCRIBE roles_profesores');
-            console.log('📋 Columnas disponibles:', columns.map(col => col.Field));
-            
-            const [roleCount] = await pool.execute('SELECT COUNT(*) as total FROM roles_profesores');
-            console.log('📊 Total de roles:', roleCount[0].total);
-            
-            // Verificar si la tabla tiene datos
-            const [sampleRoles] = await pool.execute('SELECT * FROM roles_profesores LIMIT 3');
-            console.log('🔍 Muestra de roles:', sampleRoles);
-        } catch (diagError) {
-            console.error('❌ Error en diagnóstico:', diagError);
         }
         
         const query = `
@@ -371,7 +356,7 @@ router.get('/admin/todas', verifySession, async (req, res) => {
             data: asignaciones
         });
     } catch (error) {
-        console.error('Error al obtener todas las asignaciones:', error);
+        logger.error('Error al obtener todas las asignaciones', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -385,8 +370,8 @@ router.get('/admin/todas', verifySession, async (req, res) => {
  */
 router.get('/admin/estadisticas', verifySession, async (req, res) => {
     try {
-        // Verificar que sea admin
-        if (req.user.role_id !== 3) {
+        // Verificar que sea admin o superadmin
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden ver las estadísticas generales'
@@ -400,7 +385,7 @@ router.get('/admin/estadisticas', verifySession, async (req, res) => {
             data: estadisticas
         });
     } catch (error) {
-        console.error('Error al obtener todas las asignaciones:', error);
+        logger.error('Error al obtener estadísticas generales de asignaciones', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -414,8 +399,8 @@ router.get('/admin/estadisticas', verifySession, async (req, res) => {
  */
 router.post('/', verifySession, async (req, res) => {
     try {
-        // Verificar que sea admin (role_id = 3)
-        if (req.user.role_id !== 3) {
+        // Verificar que sea admin o superadmin
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden crear asignaciones'
@@ -423,17 +408,6 @@ router.post('/', verifySession, async (req, res) => {
         }
         
         const { proyecto_id, profesor_rut, rol_profesor_id } = req.body;
-        
-        console.log('📝 Datos recibidos para asignación:', {
-            proyecto_id,
-            profesor_rut,
-            rol_profesor_id,
-            tipos: {
-                proyecto_id: typeof proyecto_id,
-                profesor_rut: typeof profesor_rut,
-                rol_profesor_id: typeof rol_profesor_id
-            }
-        });
         
         if (!proyecto_id || !profesor_rut || !rol_profesor_id) {
             return res.status(400).json({
@@ -482,7 +456,7 @@ router.post('/', verifySession, async (req, res) => {
             }
             
             // Si es diferente profesor, desasignar el anterior automáticamente
-            console.log(`🔄 Reemplazando profesor ${profesorActual} por ${profesor_rut} en rol ${rolProfesorIdNum} del proyecto ${proyectoIdNum}`);
+            logger.info('Reemplazando profesor en proyecto', { profesorAnterior: profesorActual, profesorNuevo: profesor_rut, rol: rolProfesorIdNum, proyecto: proyectoIdNum });
             
             const desasignarQuery = `
                 UPDATE asignaciones_proyectos 
@@ -505,7 +479,7 @@ router.post('/', verifySession, async (req, res) => {
             message: 'Asignación creada exitosamente'
         });
     } catch (error) {
-        console.error('Error al crear asignación:', error);
+        logger.error('Error al crear asignación', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -521,8 +495,8 @@ router.delete('/:proyecto_id/:profesor_rut', verifySession, async (req, res) => 
     try {
         const { proyecto_id, profesor_rut } = req.params;
         
-        // Solo admin puede desasignar profesores
-        if (req.user.role_id !== 3) {
+        // Solo admin o superadmin puede desasignar profesores
+        if (![3, 4].includes(req.user.role_id)) {
             return res.status(403).json({
                 success: false,
                 message: 'Solo los administradores pueden desasignar profesores'
@@ -543,7 +517,7 @@ router.delete('/:proyecto_id/:profesor_rut', verifySession, async (req, res) => 
             });
         }
     } catch (error) {
-        console.error('Error al desasignar profesor:', error);
+        logger.error('Error al desasignar profesor', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Error interno del servidor'

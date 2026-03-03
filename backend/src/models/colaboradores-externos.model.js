@@ -162,10 +162,10 @@ const colaboradoresExternosModel = {
   async asignarColaboradorAProyecto(datos, asignado_por) {
     try {
       const [result] = await pool.query(
-        `INSERT INTO colaboradores_proyectos 
-        (proyecto_id, colaborador_id, rol_en_proyecto, descripcion_rol, 
-         fecha_inicio, horas_dedicadas, frecuencia_interaccion, puede_evaluar, asignado_por) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO colaboradores_proyectos
+        (proyecto_id, colaborador_id, rol_en_proyecto, descripcion_rol,
+         fecha_inicio, horas_dedicadas, frecuencia_interaccion, asignado_por)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           datos.proyecto_id,
           datos.colaborador_id,
@@ -174,7 +174,6 @@ const colaboradoresExternosModel = {
           datos.fecha_inicio || new Date(),
           datos.horas_dedicadas || null,
           datos.frecuencia_interaccion || null,
-          datos.puede_evaluar || false,
           asignado_por
         ]
       );
@@ -238,51 +237,6 @@ const colaboradoresExternosModel = {
   },
 
   /**
-   * Crear evaluación de colaborador externo
-   */
-  async crearEvaluacion(datosEvaluacion) {
-    try {
-      const [result] = await pool.query(
-        `INSERT INTO evaluaciones_colaboradores_externos 
-        (colaborador_proyecto_id, proyecto_id, colaborador_id, estudiante_rut,
-         fecha_evaluacion, calificacion, asistencia_puntualidad, calidad_trabajo,
-         proactividad, trabajo_equipo, comunicacion, cumplimiento_plazos,
-         fortalezas, areas_mejora, comentarios_generales, recomendaria_estudiante) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          datosEvaluacion.colaborador_proyecto_id,
-          datosEvaluacion.proyecto_id,
-          datosEvaluacion.colaborador_id,
-          datosEvaluacion.estudiante_rut,
-          datosEvaluacion.fecha_evaluacion || new Date(),
-          datosEvaluacion.calificacion || null,
-          datosEvaluacion.asistencia_puntualidad || null,
-          datosEvaluacion.calidad_trabajo || null,
-          datosEvaluacion.proactividad || null,
-          datosEvaluacion.trabajo_equipo || null,
-          datosEvaluacion.comunicacion || null,
-          datosEvaluacion.cumplimiento_plazos || null,
-          datosEvaluacion.fortalezas || null,
-          datosEvaluacion.areas_mejora || null,
-          datosEvaluacion.comentarios_generales || null,
-          datosEvaluacion.recomendaria_estudiante || null
-        ]
-      );
-      
-      // Marcar evaluación como realizada
-      await pool.query(
-        'UPDATE colaboradores_proyectos SET evaluacion_realizada = TRUE WHERE id = ?',
-        [datosEvaluacion.colaborador_proyecto_id]
-      );
-      
-      return { id: result.insertId };
-    } catch (error) {
-      logger.error('Error creando evaluación', { error: error.message });
-      throw error;
-    }
-  },
-
-  /**
    * Verificar colaborador
    */
   async verificarColaborador(colaborador_id, verificado_por) {
@@ -317,8 +271,6 @@ const colaboradoresExternosModel = {
           cp.fecha_fin,
           cp.horas_dedicadas,
           cp.frecuencia_interaccion,
-          cp.puede_evaluar,
-          cp.evaluacion_realizada,
           cp.activo,
           cp.created_at,
           cp.updated_at,

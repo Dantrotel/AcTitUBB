@@ -1,13 +1,9 @@
 // Componente de notificaciones push en tiempo real
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { io, Socket } from 'socket.io-client';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 interface Notificacion {
   id?: string;
@@ -25,179 +21,191 @@ interface Notificacion {
 @Component({
   selector: 'app-notificaciones-push',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatBadgeModule,
-    MatMenuModule,
-    MatTooltipModule
-  ],
+  imports: [CommonModule],
   template: `
-    <div class="notificaciones-container">
-      <button 
-        mat-icon-button 
-        [matMenuTriggerFor]="menu"
-        [matBadge]="contadorNoLeidas()"
-        [matBadgeHidden]="contadorNoLeidas() === 0"
-        matBadgeColor="warn"
-        matTooltip="Notificaciones"
-        class="notification-button">
-        <mat-icon>notifications</mat-icon>
+    <div class="notif-wrapper" (click)="$event.stopPropagation()">
+      <!-- Botón campana -->
+      <button class="btn-bell" (click)="toggleMenu()" title="Notificaciones">
+        <i class="fas fa-bell"></i>
+        @if (contadorNoLeidas() > 0) {
+          <span class="notif-badge">{{ contadorNoLeidas() > 99 ? '99+' : contadorNoLeidas() }}</span>
+        }
       </button>
 
-      <mat-menu #menu="matMenu" class="notifications-menu" xPosition="before">
-        <div class="notifications-header" (click)="$event.stopPropagation()">
-          <h3>
-            <mat-icon>notifications_active</mat-icon>
-            Notificaciones
-          </h3>
-          @if (notificaciones().length > 0) {
-            <button mat-button (click)="marcarTodasLeidas()" class="mark-all-read">
-              <mat-icon>done_all</mat-icon>
-              Marcar todas como leídas
-            </button>
-          }
-        </div>
-
-        <div class="notifications-body">
-          @if (notificaciones().length === 0) {
-            <div class="no-notifications">
-              <mat-icon>notifications_none</mat-icon>
-              <p>No tienes notificaciones</p>
-            </div>
-          } @else {
-            @for (notif of notificaciones(); track notif.id) {
-              <div 
-                class="notification-item"
-                [class.unread]="!notif.read"
-                [class.notification-success]="notif.type === 'success'"
-                [class.notification-error]="notif.type === 'error'"
-                [class.notification-warning]="notif.type === 'warning'"
-                [class.notification-info]="notif.type === 'info'"
-                (click)="handleNotificationClick(notif)">
-                
-                <div class="notification-icon">
-                  <mat-icon>{{ getIcon(notif.type) }}</mat-icon>
-                </div>
-
-                <div class="notification-content">
-                  <div class="notification-title">{{ notif.title }}</div>
-                  <div class="notification-message">{{ notif.message }}</div>
-                  <div class="notification-time">{{ formatTime(notif.timestamp) }}</div>
-                </div>
-
-                @if (!notif.read) {
-                  <div class="notification-badge"></div>
-                }
-              </div>
+      <!-- Panel desplegable -->
+      @if (menuAbierto()) {
+        <div class="notif-panel">
+          <!-- Header -->
+          <div class="notif-panel-header">
+            <h3>
+              <i class="fas fa-bell"></i>
+              Notificaciones
+            </h3>
+            @if (notificaciones().length > 0) {
+              <button class="btn-mark-all" (click)="marcarTodasLeidas()">
+                <i class="fas fa-check-double"></i>
+                Todas leídas
+              </button>
             }
+          </div>
+
+          <!-- Cuerpo -->
+          <div class="notif-panel-body">
+            @if (notificaciones().length === 0) {
+              <div class="notif-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>No tienes notificaciones</p>
+              </div>
+            } @else {
+              @for (notif of notificaciones(); track notif.id) {
+                <div
+                  class="notif-item"
+                  [class.unread]="!notif.read"
+                  [class.type-success]="notif.type === 'success'"
+                  [class.type-error]="notif.type === 'error'"
+                  [class.type-warning]="notif.type === 'warning'"
+                  [class.type-info]="notif.type === 'info'"
+                  (click)="handleNotificationClick(notif)">
+                  <div class="notif-icon">
+                    <i [class]="getIcon(notif.type)"></i>
+                  </div>
+                  <div class="notif-content">
+                    <div class="notif-title">{{ notif.title }}</div>
+                    <div class="notif-message">{{ notif.message }}</div>
+                    <div class="notif-time">{{ formatTime(notif.timestamp) }}</div>
+                  </div>
+                  @if (!notif.read) {
+                    <span class="notif-dot"></span>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Footer -->
+          @if (notificaciones().length > 0) {
+            <div class="notif-panel-footer">
+              <button class="btn-clear" (click)="limpiarNotificaciones()">
+                <i class="fas fa-trash-alt"></i>
+                Limpiar todas
+              </button>
+            </div>
           }
         </div>
-
-        @if (notificaciones().length > 0) {
-          <div class="notifications-footer" (click)="$event.stopPropagation()">
-            <button mat-button (click)="limpiarNotificaciones()" class="clear-all">
-              <mat-icon>delete_sweep</mat-icon>
-              Limpiar todas
-            </button>
-          </div>
-        }
-      </mat-menu>
+      }
     </div>
   `,
   styles: [`
-    .notificaciones-container {
+    .notif-wrapper {
       position: relative;
     }
 
-    .notification-button {
+    .btn-bell {
+      position: relative;
+      background: transparent;
+      border: none;
       color: #fff;
-    }
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
 
-    ::ng-deep .notifications-menu {
-      .mat-mdc-menu-content {
-        padding: 0 !important;
+      &:hover {
+        background: rgba(255,255,255,0.15);
       }
     }
 
-    .notifications-header {
+    .notif-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #e53935;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .notif-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 380px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      overflow: hidden;
+      z-index: 1000;
+    }
+
+    .notif-panel-header {
       padding: 16px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%);
+      color: #fff;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
       h3 {
         margin: 0;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         display: flex;
         align-items: center;
         gap: 8px;
-
-        mat-icon {
-          font-size: 24px;
-          width: 24px;
-          height: 24px;
-        }
-      }
-
-      .mark-all-read {
-        color: white;
-        font-size: 12px;
-        padding: 4px 12px;
-        min-width: auto;
-
-        mat-icon {
-          font-size: 16px;
-          width: 16px;
-          height: 16px;
-          margin-right: 4px;
-        }
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
       }
     }
 
-    .notifications-body {
-      max-height: 400px;
+    .btn-mark-all {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+
+      &:hover {
+        background: rgba(255,255,255,0.25);
+      }
+    }
+
+    .notif-panel-body {
+      max-height: 380px;
       overflow-y: auto;
-      min-width: 380px;
 
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 3px;
-
-        &:hover {
-          background: #555;
-        }
-      }
+      &::-webkit-scrollbar { width: 5px; }
+      &::-webkit-scrollbar-track { background: #f5f5f5; }
+      &::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     }
 
-    .no-notifications {
+    .notif-empty {
       padding: 40px 20px;
       text-align: center;
       color: #999;
 
-      mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
+      i {
+        font-size: 40px;
         margin-bottom: 12px;
-        opacity: 0.5;
+        display: block;
+        opacity: 0.4;
       }
 
       p {
@@ -206,110 +214,90 @@ interface Notificacion {
       }
     }
 
-    .notification-item {
+    .notif-item {
       display: flex;
+      align-items: flex-start;
       gap: 12px;
-      padding: 16px;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
       cursor: pointer;
-      transition: all 0.2s;
       position: relative;
+      transition: background 0.15s;
 
-      &:hover {
-        background: #f5f5f5;
-      }
+      &:hover { background: #f7f9fc; }
 
-      &.unread {
-        background: #f0f7ff;
+      &.unread { background: #f0f7ff; }
+      &.unread:hover { background: #e3eeff; }
 
-        &:hover {
-          background: #e3f2fd;
-        }
-      }
-
-      &.notification-success .notification-icon {
-        color: #4caf50;
-      }
-
-      &.notification-error .notification-icon {
-        color: #f44336;
-      }
-
-      &.notification-warning .notification-icon {
-        color: #ff9800;
-      }
-
-      &.notification-info .notification-icon {
-        color: #2196f3;
-      }
-
-      .notification-icon {
-        flex-shrink: 0;
-        
-        mat-icon {
-          font-size: 28px;
-          width: 28px;
-          height: 28px;
-        }
-      }
-
-      .notification-content {
-        flex: 1;
-        min-width: 0;
-
-        .notification-title {
-          font-weight: 600;
-          font-size: 14px;
-          margin-bottom: 4px;
-          color: #333;
-        }
-
-        .notification-message {
-          font-size: 13px;
-          color: #666;
-          line-height: 1.4;
-          margin-bottom: 4px;
-          word-wrap: break-word;
-        }
-
-        .notification-time {
-          font-size: 11px;
-          color: #999;
-        }
-      }
-
-      .notification-badge {
-        width: 8px;
-        height: 8px;
-        background: #2196f3;
-        border-radius: 50%;
-        position: absolute;
-        top: 20px;
-        right: 16px;
-      }
+      &.type-success .notif-icon { color: #388e3c; }
+      &.type-error .notif-icon { color: #d32f2f; }
+      &.type-warning .notif-icon { color: #f57c00; }
+      &.type-info .notif-icon { color: #1976d2; }
     }
 
-    .notifications-footer {
-      padding: 12px;
+    .notif-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .notif-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notif-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #222;
+      margin-bottom: 3px;
+    }
+
+    .notif-message {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.45;
+      margin-bottom: 4px;
+      word-wrap: break-word;
+    }
+
+    .notif-time {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .notif-dot {
+      width: 8px;
+      height: 8px;
+      background: #1976d2;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .notif-panel-footer {
+      padding: 10px 16px;
       background: #fafafa;
-      border-top: 1px solid #e0e0e0;
+      border-top: 1px solid #eee;
       display: flex;
       justify-content: center;
+    }
 
-      .clear-all {
-        color: #f44336;
-        font-size: 13px;
+    .btn-clear {
+      background: transparent;
+      border: 1px solid #e53935;
+      color: #e53935;
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
 
-        mat-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
-          margin-right: 4px;
-        }
-
-        &:hover {
-          background: rgba(244, 67, 54, 0.05);
-        }
+      &:hover {
+        background: #ffebee;
       }
     }
   `]
@@ -318,8 +306,9 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
   private socket: Socket | null = null;
   private primeraConexion = true;
   notificaciones = signal<Notificacion[]>([]);
-  
-  contadorNoLeidas = computed(() => 
+  menuAbierto = signal(false);
+
+  contadorNoLeidas = computed(() =>
     this.notificaciones().filter(n => !n.read).length
   );
 
@@ -336,11 +325,22 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.menuAbierto()) {
+      this.menuAbierto.set(false);
+    }
+  }
+
+  toggleMenu() {
+    this.menuAbierto.update(v => !v);
+  }
+
   private conectarSocket() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    this.socket = io('http://localhost:3000', {
+    this.socket = io(environment.wsUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -353,22 +353,12 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
       this.primeraConexion = false;
     });
 
-    this.socket.on('connect_error', (error) => {
-    });
+    this.socket.on('connect_error', (error) => {});
+    this.socket.on('reconnect', (attemptNumber) => {});
+    this.socket.on('reconnect_attempt', (attemptNumber) => {});
+    this.socket.on('reconnect_error', (error) => {});
+    this.socket.on('reconnect_failed', () => {});
 
-    this.socket.on('reconnect', (attemptNumber) => {
-    });
-
-    this.socket.on('reconnect_attempt', (attemptNumber) => {
-    });
-
-    this.socket.on('reconnect_error', (error) => {
-    });
-
-    this.socket.on('reconnect_failed', () => {
-    });
-
-    // Escuchar todos los tipos de notificaciones
     const eventosNotificacion = [
       'propuesta:aprobada',
       'propuesta:rechazada',
@@ -381,8 +371,7 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
       'proyecto:inactividad',
       'proyecto:inactividad-estudiante',
       'fecha:recordatorio',
-      'fecha:recordatorio-proyecto',
-      'evaluacion:pendiente-urgente'
+      'fecha:recordatorio-proyecto'
     ];
 
     eventosNotificacion.forEach(evento => {
@@ -392,17 +381,9 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
     });
 
     this.socket.on('disconnect', (reason) => {
-      // No mostrar mensajes de desconexión durante el proceso de conexión inicial
-      if (this.primeraConexion) {
-        return;
-      }
-      
+      if (this.primeraConexion) return;
       if (reason === 'io server disconnect') {
-        // El servidor forzó la desconexión, reconectar manualmente
         this.socket?.connect();
-      } else if (reason === 'io client disconnect') {
-        // Desconexión manual, no mostrar error
-      } else {
       }
     });
   }
@@ -416,8 +397,7 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
     };
 
     const current = this.notificaciones();
-    this.notificaciones.set([notificacion, ...current].slice(0, 50)); // Máximo 50 notificaciones
-    
+    this.notificaciones.set([notificacion, ...current].slice(0, 50));
     this.guardarNotificaciones();
     this.mostrarNotificacionBrowser(notificacion);
   }
@@ -442,23 +422,21 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notif: Notificacion) {
-    // Marcar como leída
     const current = this.notificaciones();
-    const updated = current.map(n => 
+    const updated = current.map(n =>
       n.id === notif.id ? { ...n, read: true } : n
     );
     this.notificaciones.set(updated);
     this.guardarNotificaciones();
 
-    // Navegar si tiene acción
     if (notif.action?.url) {
       this.router.navigate([notif.action.url]);
+      this.menuAbierto.set(false);
     }
   }
 
   marcarTodasLeidas() {
-    const current = this.notificaciones();
-    const updated = current.map(n => ({ ...n, read: true }));
+    const updated = this.notificaciones().map(n => ({ ...n, read: true }));
     this.notificaciones.set(updated);
     this.guardarNotificaciones();
   }
@@ -479,18 +457,17 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
         const notifs = JSON.parse(saved);
         this.notificaciones.set(notifs.slice(0, 50));
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   getIcon(type: string): string {
     const icons: Record<string, string> = {
-      success: 'check_circle',
-      error: 'error',
-      warning: 'warning',
-      info: 'info'
+      success: 'fas fa-check-circle',
+      error: 'fas fa-times-circle',
+      warning: 'fas fa-exclamation-triangle',
+      info: 'fas fa-info-circle'
     };
-    return icons[type] || 'notifications';
+    return icons[type] || 'fas fa-bell';
   }
 
   formatTime(timestamp: string): string {
@@ -505,10 +482,10 @@ export class NotificacionesPushComponent implements OnInit, OnDestroy {
     if (minutes < 60) return `Hace ${minutes} min`;
     if (hours < 24) return `Hace ${hours}h`;
     if (days < 7) return `Hace ${days}d`;
-    
-    return date.toLocaleDateString('es-CL', { 
-      day: 'numeric', 
-      month: 'short' 
+
+    return date.toLocaleDateString('es-CL', {
+      day: 'numeric',
+      month: 'short'
     });
   }
 }

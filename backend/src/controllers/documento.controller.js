@@ -61,6 +61,7 @@ export const subirDocumento = async (req, res) => {
       tamanio_bytes: req.file.size,
       mime_type: req.file.mimetype,
       subido_por: rut,
+      version: nuevaVersion,
       estado: estado || 'borrador',
       comentarios: comentarios || null
     };
@@ -73,8 +74,8 @@ export const subirDocumento = async (req, res) => {
       version: nuevaVersion
     });
   } catch (error) {
-    
-    res.status(500).json({ message: 'Error al subir el documento' });
+    console.error('Error al subir documento:', error.message);
+    res.status(500).json({ message: error.message || 'Error al subir el documento' });
   }
 };
 

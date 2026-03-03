@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logger } from "../config/logger.js";
 
 dotenv.config();
 
@@ -22,10 +23,10 @@ export const waitForMySQL = async (retries = 10, delay = 3000) => {
                 port: DB_PORT,
             });
             await connection.end();
-            console.log("✅ MySQL está disponible");
+            logger.info('MySQL está disponible');
             return;
         } catch (err) {
-            console.log(`🔄 Esperando MySQL (${i + 1}/${retries})...`);
+            logger.warn(`Esperando MySQL (${i + 1}/${retries})...`);
             await new Promise(res => setTimeout(res, delay));
         }
     }
@@ -43,10 +44,10 @@ const initDatabase = async () => {
         });
 
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;`);
-        console.log(`✅ Base de datos '${DB_NAME}' verificada o creada.`);
+        logger.info(`Base de datos '${DB_NAME}' verificada o creada`);
         await connection.end();
     } catch (error) {
-        console.error("❌ Error creando la base de datos:", error);
+        logger.error('Error creando la base de datos', { error: error.message });
         throw error;
     }
 };
@@ -69,20 +70,21 @@ const checkTablesExist = async () => {
         const connection = await pool.getConnection();
 
         // Lista de tablas principales que indican que la BD ya está configurada
-        const mainTables = ['usuarios', 'roles', 'propuestas', 'proyectos'];
+        const mainTables = ['usuarios', 'estados_propuestas', 'propuestas', 'proyectos'];
         
         // Lista de tablas nuevas que podrían faltar
         const newTables = [
             'estados_propuestas', 'roles_profesores', 'asignaciones_propuestas',
             'asignaciones_proyectos', 'fechas', 'participantes_reuniones',
             'hitos_proyecto', 'cronogramas_proyecto',
-            'hitos_cronograma', 'notificaciones_proyecto', 'configuracion_alertas', ''
+            'hitos_cronograma', 'notificaciones_proyecto', 'configuracion_alertas',
+            'conversaciones', 'mensajes', 'mensajes_no_leidos'
         ];
         
         // Verificar tablas principales
         for (const table of mainTables) {
             try {
-                const [rows] = await connection.query(`SHOW TABLES LIKE '${table}'`);
+                const [rows] = await connection.query('SHOW TABLES LIKE ?', [table]);
                 if (rows.length === 0) {
                     connection.release();
                     return false; // Si falta alguna tabla principal, necesitamos crear todo
@@ -92,12 +94,12 @@ const checkTablesExist = async () => {
                 return false; // Error al verificar, asumimos que necesitamos crear
             }
         }
-        
+
         // Verificar tablas nuevas
         let missingNewTables = [];
         for (const table of newTables) {
             try {
-                const [rows] = await connection.query(`SHOW TABLES LIKE '${table}'`);
+                const [rows] = await connection.query('SHOW TABLES LIKE ?', [table]);
                 if (rows.length === 0) {
                     missingNewTables.push(table);
                 }
@@ -110,13 +112,13 @@ const checkTablesExist = async () => {
         
         // Si faltan tablas nuevas, necesitamos ejecutar el script
         if (missingNewTables.length > 0) {
-            console.log(`⚠️  Faltan tablas nuevas: ${missingNewTables.join(', ')}`);
+            logger.warn('Faltan tablas nuevas', { tablas: missingNewTables.join(', ') });
             return false;
         }
         
         return true; // Todas las tablas existen
     } catch (error) {
-        console.error("❌ Error verificando tablas existentes:", error);
+        logger.error('Error verificando tablas existentes', { error: error.message });
         return false;
     }
 };
@@ -128,7 +130,7 @@ const executeDatabaseScript = async () => {
         const tablesExist = await checkTablesExist();
         
         if (tablesExist) {
-            console.log("✅ Base de datos ya configurada, saltando creación de tablas...");
+            logger.info('Base de datos ya configurada, saltando creación de tablas');
             return;
         }
 
@@ -148,16 +150,14 @@ const executeDatabaseScript = async () => {
             port: DB_PORT,
         });
 
-        console.log("📖 Leyendo archivo database.sql...");
-        console.log("🔧 Ejecutando script SQL completo...");
+        logger.info('Leyendo y ejecutando script database.sql...');
 
         try {
             // Ejecutar el script completo de una vez
             await connection.query(databaseScript);
-            console.log("✅ Script database.sql ejecutado correctamente");
+            logger.info('Script database.sql ejecutado correctamente');
         } catch (error) {
-            // Si falla la ejecución completa, intentar comando por comando
-            console.log("⚠️  Ejecución completa falló, intentando comando por comando...");
+            logger.warn('Ejecución completa del script falló, intentando comando por comando...');
             
             // Dividir por líneas y ejecutar comandos simples
             const lines = databaseScript.split('\n');
@@ -179,7 +179,6 @@ const executeDatabaseScript = async () => {
                     try {
                         await connection.query(currentCommand);
                         commandCount++;
-                        console.log(`✅ Comando ${commandCount} ejecutado`);
                     } catch (error) {
                         // Ignorar errores de "already exists" y índices duplicados
                         if (error.code === 'ER_DUP_ENTRY' || 
@@ -208,10 +207,9 @@ const executeDatabaseScript = async () => {
                             error.code === 'ER_PARSE_ERROR' ||
                             error.message.includes('IF NOT EXISTS') ||
                             error.message.includes('syntax error')) {
-                            console.log(`⚠️  Comando ${commandCount + 1} ya existe o no aplica, continuando...`);
+                            // ignorar errores de duplicados y objetos ya existentes
                         } else {
-                            console.error(`❌ Error en comando:`, error.message);
-                            console.error(`   Comando: ${currentCommand.substring(0, 100)}...`);
+                            logger.error('Error en comando SQL', { error: error.message, cmd: currentCommand.substring(0, 100) });
                             throw error;
                         }
                     }
@@ -219,13 +217,13 @@ const executeDatabaseScript = async () => {
                 }
             }
             
-            console.log(`✅ ${commandCount} comandos ejecutados`);
+            logger.info(`Script SQL ejecutado`, { comandos: commandCount });
         }
 
         await connection.end();
         
     } catch (error) {
-        console.error("❌ Error ejecutando database.sql:", error);
+        logger.error('Error ejecutando database.sql', { error: error.message });
         throw error;
     }
 };
@@ -237,12 +235,13 @@ const verifyTables = async () => {
         
         // Verificar que las tablas principales existen
         const requiredTables = [
-            'roles', 'usuarios', 'estados_propuestas', 'propuestas', 
+            'usuarios', 'estados_propuestas', 'propuestas',
             'roles_profesores', 'asignaciones_propuestas', 'proyectos',
             'asignaciones_proyectos', 'avances', 'fechas',
             'reuniones', 'participantes_reuniones', 'hitos_proyecto',
             'cronogramas_proyecto', 'hitos_cronograma',
-            'historial_reuniones', 'documentos_proyecto'
+            'historial_reuniones', 'documentos_proyecto',
+            'conversaciones', 'mensajes', 'mensajes_no_leidos'
         ];
 
         let missingTables = [];
@@ -250,7 +249,7 @@ const verifyTables = async () => {
 
         for (const table of requiredTables) {
             try {
-                const [rows] = await connection.query(`SHOW TABLES LIKE '${table}'`);
+                const [rows] = await connection.query('SHOW TABLES LIKE ?', [table]);
                 if (rows.length === 0) {
                     missingTables.push(table);
                 } else {
@@ -263,29 +262,28 @@ const verifyTables = async () => {
 
         // Mostrar resumen
         if (existingTables.length > 0) {
-            console.log(`✅ Tablas existentes (${existingTables.length}): ${existingTables.join(', ')}`);
+            logger.info('Tablas verificadas', { existentes: existingTables.length, tablas: existingTables.join(', ') });
         }
-        
+
         if (missingTables.length > 0) {
-            console.log(`⚠️  Tablas faltantes (${missingTables.length}): ${missingTables.join(', ')}`);
+            logger.warn('Tablas faltantes', { faltantes: missingTables.length, tablas: missingTables.join(', ') });
         }
 
         // Verificar datos iniciales solo en tablas que existen
         try {
-            const [roles] = await connection.query('SELECT COUNT(*) as count FROM roles');
             const [estados] = await connection.query('SELECT COUNT(*) as count FROM estados_propuestas');
             const [rolesProfesores] = await connection.query('SELECT COUNT(*) as count FROM roles_profesores');
 
-            console.log(`📊 Datos iniciales: ${roles[0].count} roles, ${estados[0].count} estados, ${rolesProfesores[0].count} roles de profesores`);
+            logger.info('Datos iniciales verificados', { estados: estados[0].count, roles_profesores: rolesProfesores[0].count });
         } catch (error) {
-            console.log("⚠️  No se pudieron verificar algunos datos iniciales");
+            logger.warn('No se pudieron verificar algunos datos iniciales');
         }
 
         connection.release();
-        console.log("✅ Verificación de tablas completada");
-        
+        logger.info('Verificación de tablas completada');
+
     } catch (error) {
-        console.error("❌ Error verificando tablas:", error);
+        logger.error('Error verificando tablas', { error: error.message });
         throw error;
     }
 };
@@ -293,17 +291,17 @@ const verifyTables = async () => {
 // Función principal para inicializar todo
 export const initializeDatabase = async () => {
     try {
-        console.log("🚀 Iniciando inicialización de base de datos...");
+        logger.info('Iniciando inicialización de base de datos...');
         
     await waitForMySQL();
     await initDatabase();
         await executeDatabaseScript();
         await verifyTables();
         
-        console.log("🎉 Base de datos inicializada correctamente");
+        logger.info('Base de datos inicializada correctamente');
 
     } catch (error) {
-        console.error("❌ Error durante la inicialización de la base de datos:", error);
+        logger.error('Error durante la inicialización de la base de datos', { error: error.message });
         throw error;
     }
 };

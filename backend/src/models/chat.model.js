@@ -273,64 +273,51 @@ const chatModel = {
       let params = [];
       
       if (rol_id === 1) {
-        // ESTUDIANTE: Solo profesores de su proyecto + admin (jefe de carrera)
+        // ESTUDIANTE: Todos los profesores + admins, priorizando los de su proyecto
         query = `
-          SELECT DISTINCT u.rut, u.nombre, u.email, r.nombre as rol
+          SELECT DISTINCT u.rut, u.nombre, u.email,
+            CASE u.rol_id WHEN 1 THEN 'estudiante' WHEN 2 THEN 'profesor' WHEN 3 THEN 'admin' WHEN 4 THEN 'superadmin' ELSE 'unknown' END as rol,
+            CASE
+              WHEN u.rut IN (
+                SELECT DISTINCT ap.profesor_rut
+                FROM proyectos p
+                INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
+                WHERE p.estudiante_rut = ?
+              ) THEN 0
+              ELSE 1
+            END as prioridad
           FROM usuarios u
-          INNER JOIN roles r ON u.rol_id = r.id
-          WHERE u.rut != ? 
+          WHERE u.rut != ?
           AND u.confirmado = TRUE
-          AND (
-            -- Profesores asignados a proyectos del estudiante
-            u.rut IN (
-              SELECT DISTINCT ap.profesor_rut
-              FROM proyectos p
-              INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
-              WHERE p.estudiante_rut = ?
-            )
-            -- Jefe de carrera (administrador)
-            OR u.rol_id = 3
-          )
+          AND (u.rol_id = 2 OR u.rol_id = 3)
           AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)
-          ORDER BY 
-            CASE WHEN u.rol_id = 3 THEN 0 ELSE 1 END,
-            u.nombre
+          ORDER BY prioridad, u.nombre
           LIMIT 20
         `;
         params = [usuario_rut, usuario_rut, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`];
         
       } else if (rol_id === 2) {
-        // PROFESOR: Otros profesores + estudiantes de sus proyectos + admin
+        // PROFESOR: Todos los usuarios confirmados excepto él mismo, priorizando sus estudiantes
         query = `
-          SELECT DISTINCT u.rut, u.nombre, u.email, r.nombre as rol
+          SELECT DISTINCT u.rut, u.nombre, u.email,
+            CASE u.rol_id WHEN 1 THEN 'estudiante' WHEN 2 THEN 'profesor' WHEN 3 THEN 'admin' WHEN 4 THEN 'superadmin' ELSE 'unknown' END as rol,
+            CASE
+              WHEN u.rut IN (
+                SELECT DISTINCT p.estudiante_rut
+                FROM proyectos p
+                INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
+                WHERE ap.profesor_rut = ?
+              ) THEN 0
+              WHEN u.rol_id = 3 THEN 1
+              WHEN u.rol_id = 4 THEN 2
+              WHEN u.rol_id = 2 THEN 3
+              ELSE 4
+            END as prioridad
           FROM usuarios u
-          INNER JOIN roles r ON u.rol_id = r.id
-          WHERE u.rut != ? 
+          WHERE u.rut != ?
           AND u.confirmado = TRUE
-          AND (
-            -- Otros profesores
-            u.rol_id = 2
-            -- Estudiantes de proyectos donde está asignado
-            OR u.rut IN (
-              SELECT DISTINCT p.estudiante_rut
-              FROM proyectos p
-              INNER JOIN asignaciones_profesores ap ON p.id = ap.proyecto_id
-              WHERE ap.profesor_rut = ?
-            )
-            -- Admin (jefe de carrera)
-            OR u.rol_id = 3
-            -- Super Admin
-            OR u.rol_id = 4
-          )
           AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)
-          ORDER BY 
-            CASE 
-              WHEN u.rol_id = 3 THEN 0
-              WHEN u.rol_id = 4 THEN 1
-              WHEN u.rol_id = 2 THEN 2
-              ELSE 3
-            END,
-            u.nombre
+          ORDER BY prioridad, u.nombre
           LIMIT 20
         `;
         params = [usuario_rut, usuario_rut, `%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`];
@@ -338,9 +325,9 @@ const chatModel = {
       } else if (rol_id === 3 || rol_id === 4) {
         // ADMIN o SUPER ADMIN: Todos los usuarios confirmados
         query = `
-          SELECT u.rut, u.nombre, u.email, r.nombre as rol
+          SELECT u.rut, u.nombre, u.email,
+            CASE u.rol_id WHEN 1 THEN 'estudiante' WHEN 2 THEN 'profesor' WHEN 3 THEN 'admin' WHEN 4 THEN 'superadmin' ELSE 'unknown' END as rol
           FROM usuarios u
-          INNER JOIN roles r ON u.rol_id = r.id
           WHERE u.rut != ?
           AND u.confirmado = TRUE
           AND (u.nombre LIKE ? OR u.email LIKE ? OR u.rut LIKE ?)

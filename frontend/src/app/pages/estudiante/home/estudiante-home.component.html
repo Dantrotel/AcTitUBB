@@ -257,30 +257,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Card de Evaluaciones (solo cuando hay proyecto activo) -->
-    <div class="dashboard-card evaluation-card" *ngIf="proyectoActivo" (click)="navegarAProyecto()">
-      <div class="card-icon">
-        <i class="fas fa-star"></i>
-      </div>
-      <div class="card-content">
-        <h3>Evaluaciones</h3>
-        <div class="evaluaciones-summary">
-          <div class="eval-stat">
-            <span class="eval-number">{{ proyectoActivo.evaluaciones_total || 0 }}</span>
-            <span class="eval-label">Total</span>
-          </div>
-          <div class="eval-stat" *ngIf="proyectoActivo.promedio_evaluaciones">
-            <span class="eval-number">{{ proyectoActivo.promedio_evaluaciones | number:'1.1-1' }}</span>
-            <span class="eval-label">Promedio</span>
-          </div>
-        </div>
-        <button class="btn-warning">
-          <i class="fas fa-chart-bar"></i>
-          Ver Evaluaciones
-        </button>
-      </div>
-    </div>
   </div>
 
   <!-- Información extendida del proyecto (solo cuando hay proyecto activo) -->
@@ -538,9 +514,6 @@
               <div class="revision-item">
                 <span><strong>Fecha de revisión:</strong> {{ hito.fecha_revision | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
-              <div class="revision-item" *ngIf="hito.calificacion">
-                <span><strong>Calificación:</strong> {{ hito.calificacion }}/10</span>
-              </div>
               <div class="revision-item" *ngIf="hito.comentarios_revision">
                 <span><strong>Comentarios:</strong></span>
                 <p class="comentarios-profesor">{{ hito.comentarios_revision }}</p>
@@ -550,21 +523,12 @@
 
           <!-- Acciones del hito -->
           <div class="hito-acciones">
-            <button 
-              *ngIf="puedeEntregarHito(hito)" 
+            <button
+              *ngIf="puedeEntregarHito(hito)"
               class="btn-primary btn-entregar"
               (click)="abrirModalEntregarHito(hito)">
               <i class="fas fa-upload"></i>
               Entregar Hito
-            </button>
-            
-            <button 
-              *ngIf="!hito.entregado && !puedeEntregarHito(hito)" 
-              class="btn-completar"
-              (click)="completarHitoEstudiante(hito)"
-              [disabled]="loadingHitos">
-              <i class="fas fa-check"></i>
-              Marcar Completado
             </button>
 
             <div class="hito-estado-info" *ngIf="hito.entregado && !hito.revisado">

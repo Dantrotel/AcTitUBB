@@ -2,14 +2,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCardModule } from '@angular/material/card';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
 
@@ -23,93 +15,93 @@ interface Configuracion {
 @Component({
   selector: 'app-configuracion-sistema',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatIconModule,
-    MatButtonModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSlideToggleModule,
-    MatProgressSpinnerModule,
-    MatCardModule,
-    MatTooltipModule
-  ],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="configuracion-container">
-      <div class="header">
-        <h1>
-          <mat-icon>settings</mat-icon>
-          Configuración del Sistema
-        </h1>
-        <p>Gestiona los parámetros globales de la plataforma</p>
+      <div class="page-header">
+        <div>
+          <h1>
+            <i class="fas fa-cog"></i>
+            Configuración del Sistema
+          </h1>
+          <p>Gestiona los parámetros globales de la plataforma</p>
+        </div>
       </div>
 
       @if (cargando()) {
         <div class="loading">
-          <mat-spinner diameter="50"></mat-spinner>
+          <div class="spinner"></div>
           <p>Cargando configuraciones...</p>
         </div>
       } @else {
         <div class="configuraciones-grid">
           @for (config of configuraciones(); track config.clave) {
-            <mat-card class="config-card">
-              <mat-card-header>
-                <mat-card-title>
-                  <mat-icon>tune</mat-icon>
+            <div class="config-card">
+              <div class="config-card-header">
+                <h3>
+                  <i class="fas fa-sliders-h"></i>
                   {{ formatearClave(config.clave) }}
-                </mat-card-title>
-              </mat-card-header>
+                </h3>
+              </div>
 
-              <mat-card-content>
+              <div class="config-card-body">
                 <p class="descripcion">{{ config.descripcion }}</p>
 
                 @if (config.tipo_valor === 'entero') {
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Valor (días)</mat-label>
-                    <input 
-                      matInput 
-                      type="number" 
-                      [(ngModel)]="config.valor"
-                      min="0"
-                      [disabled]="guardando().has(config.clave)">
-                    <mat-icon matSuffix matTooltip="Número de días">calendar_today</mat-icon>
-                  </mat-form-field>
+                  <div class="form-group">
+                    <label class="form-label">Valor (días)</label>
+                    <div class="input-with-suffix">
+                      <input
+                        class="form-input"
+                        type="number"
+                        [(ngModel)]="config.valor"
+                        min="0"
+                        [disabled]="guardando().has(config.clave)"
+                      />
+                      <span class="input-suffix"><i class="fas fa-calendar-alt"></i></span>
+                    </div>
+                  </div>
                 } @else if (config.tipo_valor === 'booleano') {
-                  <div class="boolean-control">
-                    <mat-slide-toggle 
-                      [checked]="config.valor === 'true'"
-                      (change)="onToggleChange($event, config)"
-                      [disabled]="guardando().has(config.clave)">
-                      {{ config.valor === 'true' ? 'Activado' : 'Desactivado' }}
-                    </mat-slide-toggle>
+                  <div class="toggle-control">
+                    <label class="toggle-label">
+                      <input
+                        type="checkbox"
+                        class="toggle-input"
+                        [checked]="config.valor === 'true'"
+                        (change)="onToggleChange($event, config)"
+                        [disabled]="guardando().has(config.clave)"
+                      />
+                      <span class="toggle-slider"></span>
+                      <span class="toggle-text">{{ config.valor === 'true' ? 'Activado' : 'Desactivado' }}</span>
+                    </label>
                   </div>
                 } @else {
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Valor</mat-label>
-                    <input 
-                      matInput 
+                  <div class="form-group">
+                    <label class="form-label">Valor</label>
+                    <input
+                      class="form-input"
                       [(ngModel)]="config.valor"
-                      [disabled]="guardando().has(config.clave)">
-                  </mat-form-field>
+                      [disabled]="guardando().has(config.clave)"
+                    />
+                  </div>
                 }
 
                 <div class="config-actions">
-                  <button 
-                    mat-raised-button 
-                    color="primary"
+                  <button
+                    class="btn btn-primary"
                     (click)="guardarConfiguracion(config)"
-                    [disabled]="guardando().has(config.clave)">
+                    [disabled]="guardando().has(config.clave)"
+                  >
                     @if (guardando().has(config.clave)) {
-                      <mat-spinner diameter="20"></mat-spinner>
+                      <span class="spinner-sm"></span>
                     } @else {
-                      <mat-icon>save</mat-icon>
+                      <i class="fas fa-save"></i>
                     }
                     Guardar
                   </button>
                 </div>
-              </mat-card-content>
-            </mat-card>
+              </div>
+            </div>
           }
         </div>
       }
@@ -122,29 +114,24 @@ interface Configuracion {
       margin: 0 auto;
     }
 
-    .header {
+    .page-header {
       margin-bottom: 32px;
 
       h1 {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin: 0 0 8px 0;
-        color: #333;
-        font-size: 32px;
-
-        mat-icon {
-          font-size: 36px;
-          width: 36px;
-          height: 36px;
-          color: #667eea;
-        }
+        margin: 0 0 6px 0;
+        color: #1a1a2e;
+        font-size: 28px;
+        font-weight: 700;
+        i { color: #004b8d; }
       }
 
       p {
         margin: 0;
         color: #666;
-        font-size: 16px;
+        font-size: 15px;
       }
     }
 
@@ -155,86 +142,202 @@ interface Configuracion {
       justify-content: center;
       padding: 80px 20px;
       gap: 20px;
-
-      p {
-        color: #666;
-        font-size: 16px;
-      }
+      color: #666;
     }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #004b8d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .spinner-sm {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .configuraciones-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
     }
 
     .config-card {
-      mat-card-header {
-        mat-card-title {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #333;
-          font-size: 18px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 1px solid #f0f0f0;
+      overflow: hidden;
+    }
 
-          mat-icon {
-            color: #667eea;
-            font-size: 24px;
-            width: 24px;
-            height: 24px;
-          }
-        }
-      }
+    .config-card-header {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-bottom: 1px solid #e8e8e8;
 
-      mat-card-content {
-        padding-top: 16px;
-
-        .descripcion {
-          color: #666;
-          font-size: 14px;
-          line-height: 1.5;
-          margin-bottom: 16px;
-        }
-
-        .full-width {
-          width: 100%;
-        }
-
-        .boolean-control {
-          padding: 16px 0;
-
-          mat-slide-toggle {
-            font-size: 16px;
-          }
-        }
-
-        .config-actions {
-          margin-top: 16px;
-          display: flex;
-          justify-content: flex-end;
-
-          button {
-            mat-icon {
-              margin-right: 8px;
-            }
-
-            mat-spinner {
-              display: inline-block;
-              margin-right: 8px;
-            }
-          }
-        }
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        i { color: #004b8d; }
       }
     }
 
-    @media (max-width: 768px) {
-      .configuraciones-grid {
-        grid-template-columns: 1fr;
+    .config-card-body {
+      padding: 18px 20px;
+
+      .descripcion {
+        color: #666;
+        font-size: 13px;
+        line-height: 1.55;
+        margin-bottom: 16px;
+      }
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .input-with-suffix {
+      display: flex;
+      align-items: stretch;
+
+      .form-input {
+        flex: 1;
+        border-right: none;
+        border-radius: 7px 0 0 7px;
       }
 
-      .header h1 {
-        font-size: 24px;
+      .input-suffix {
+        padding: 0 12px;
+        background: #f0f4fa;
+        border: 1px solid #ddd;
+        border-radius: 0 7px 7px 0;
+        display: flex;
+        align-items: center;
+        color: #004b8d;
+        font-size: 14px;
       }
+    }
+
+    .form-input {
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
+
+      &:focus { border-color: #004b8d; }
+      &:disabled { background: #f8f8f8; color: #aaa; cursor: not-allowed; }
+    }
+
+    /* Toggle switch */
+    .toggle-control {
+      margin: 12px 0;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .toggle-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: relative;
+      width: 46px;
+      height: 24px;
+      background: #ddd;
+      border-radius: 12px;
+      transition: background 0.25s;
+      flex-shrink: 0;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        background: #fff;
+        border-radius: 50%;
+        transition: left 0.25s;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      }
+    }
+
+    .toggle-input:checked + .toggle-slider {
+      background: #004b8d;
+      &::after { left: 25px; }
+    }
+
+    .toggle-input:disabled + .toggle-slider {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .toggle-text {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .config-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 18px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    }
+
+    .btn-primary { background: #004b8d; color: #fff; &:hover:not(:disabled) { background: #003a6e; } }
+
+    @media (max-width: 768px) {
+      .configuraciones-grid { grid-template-columns: 1fr; }
+      .page-header h1 { font-size: 22px; }
     }
   `]
 })
@@ -260,10 +363,7 @@ export class ConfiguracionSistemaComponent implements OnInit {
         this.configuraciones.set(response.configuraciones);
       }
     } catch (error: any) {
-      this.notificationService.error(
-        'Error',
-        'No se pudieron cargar las configuraciones'
-      );
+      this.notificationService.error('Error', 'No se pudieron cargar las configuraciones');
     } finally {
       this.cargando.set(false);
     }
@@ -287,11 +387,8 @@ export class ConfiguracionSistemaComponent implements OnInit {
         );
       }
     } catch (error: any) {
-      this.notificationService.error(
-        'Error',
-        error.error?.message || 'No se pudo guardar la configuración'
-      );
-      await this.cargarConfiguraciones(); // Recargar valores originales
+      this.notificationService.error('Error', error.error?.message || 'No se pudo guardar la configuración');
+      await this.cargarConfiguraciones();
     } finally {
       const guardandoActual = this.guardando();
       guardandoActual.delete(config.clave);
@@ -299,8 +396,9 @@ export class ConfiguracionSistemaComponent implements OnInit {
     }
   }
 
-  onToggleChange(event: any, config: Configuracion) {
-    config.valor = event.checked ? 'true' : 'false';
+  onToggleChange(event: Event, config: Configuracion) {
+    const checked = (event.target as HTMLInputElement).checked;
+    config.valor = checked ? 'true' : 'false';
     this.guardarConfiguracion(config);
   }
 

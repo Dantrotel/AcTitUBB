@@ -32,8 +32,7 @@ export class FechasImportantesComponent implements OnInit {
     { value: 'entrega', label: 'Entrega' },
     { value: 'revision', label: 'Revisión' },
     { value: 'presentacion', label: 'Presentación' },
-    { value: 'reunion', label: 'Reunión' },
-    { value: 'evaluacion', label: 'Evaluación' }
+    { value: 'reunion', label: 'Reunión' }
   ];
 
   prioridades = [

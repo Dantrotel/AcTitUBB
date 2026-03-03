@@ -188,8 +188,7 @@ export class ActividadTiempoRealComponent implements OnInit, OnDestroy {
       'proyecto_aprobado': 'fas fa-check-circle',
       'documento_subido': 'fas fa-upload',
       'reunion_agendada': 'fas fa-calendar-plus',
-      'avance_registrado': 'fas fa-tasks',
-      'evaluacion_realizada': 'fas fa-star'
+      'avance_registrado': 'fas fa-tasks'
     };
     
     return iconos[tipo] || 'fas fa-circle';
@@ -206,8 +205,7 @@ export class ActividadTiempoRealComponent implements OnInit, OnDestroy {
       'proyecto_aprobado': '#4caf50',
       'documento_subido': '#ff9800',
       'reunion_agendada': '#9c27b0',
-      'avance_registrado': '#03a9f4',
-      'evaluacion_realizada': '#ffc107'
+      'avance_registrado': '#03a9f4'
     };
     
     return colores[tipo] || '#607d8b';
