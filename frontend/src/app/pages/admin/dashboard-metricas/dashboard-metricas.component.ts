@@ -456,7 +456,7 @@ export class DashboardMetricasComponent implements OnInit {
   async cargarEstadisticas() {
     this.cargando.set(true);
     try {
-      const response: any = await this.apiService.get('configuracion/estadisticas/globales').toPromise();
+      const response: any = await this.apiService.get('/configuracion/estadisticas/globales').toPromise();
       if (response.success) {
         this.estadisticas.set(response.estadisticas);
       }

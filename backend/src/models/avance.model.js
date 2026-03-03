@@ -172,6 +172,7 @@ export const crearHitoCronograma = async ({ cronograma_id, proyecto_id, nombre_h
 export const obtenerHitosCronograma = async (cronograma_id) => {
     const [rows] = await pool.execute(`
         SELECT h.*,
+               u.nombre as estudiante_nombre,
                CASE
                    WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado', 'revisado', 'aprobado')
                    THEN 'retrasado'
@@ -183,6 +184,9 @@ export const obtenerHitosCronograma = async (cronograma_id) => {
                    ELSE 0
                END as dias_retraso_calculado
         FROM hitos_cronograma h
+        LEFT JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
+        LEFT JOIN proyectos p ON c.proyecto_id = p.id
+        LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
         WHERE h.cronograma_id = ?
         ORDER BY h.fecha_limite ASC
     `, [cronograma_id]);
@@ -249,16 +253,30 @@ export const entregarHito = async (hito_id, { archivo_entrega, nombre_archivo_or
 };
 
 // Revisar hito entregado (CON AUDITORÍA)
-export const revisarHito = async (hito_id, { comentarios_profesor, calificacion, estado, actualizado_por_rut }) => {
+export const revisarHito = async (hito_id, { comentarios_profesor, calificacion, estado, actualizado_por_rut, archivo_retroalimentacion, nombre_archivo_retroalimentacion }) => {
+    const setClauses = [
+        'comentarios_profesor = ?',
+        'calificacion = ?',
+        'estado = ?',
+        'actualizado_por_rut = ?',
+        'updated_at = NOW()'
+    ];
+    const values = [comentarios_profesor, calificacion, estado, actualizado_por_rut];
+
+    if (archivo_retroalimentacion !== undefined) {
+        setClauses.push('archivo_retroalimentacion = ?');
+        values.push(archivo_retroalimentacion);
+    }
+    if (nombre_archivo_retroalimentacion !== undefined) {
+        setClauses.push('nombre_archivo_retroalimentacion = ?');
+        values.push(nombre_archivo_retroalimentacion);
+    }
+
+    values.push(hito_id);
+
     const [result] = await pool.execute(
-        `UPDATE hitos_cronograma 
-         SET comentarios_profesor = ?, 
-             calificacion = ?, 
-             estado = ?,
-             actualizado_por_rut = ?,
-             updated_at = NOW()
-         WHERE id = ?`,
-        [comentarios_profesor, calificacion, estado, actualizado_por_rut, hito_id]
+        `UPDATE hitos_cronograma SET ${setClauses.join(', ')} WHERE id = ?`,
+        values
     );
     return result.affectedRows > 0;
 };

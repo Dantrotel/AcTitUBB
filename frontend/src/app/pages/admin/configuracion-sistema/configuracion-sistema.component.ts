@@ -358,7 +358,7 @@ export class ConfiguracionSistemaComponent implements OnInit {
   async cargarConfiguraciones() {
     this.cargando.set(true);
     try {
-      const response: any = await this.apiService.get('configuracion').toPromise();
+      const response: any = await this.apiService.get('/configuracion').toPromise();
       if (response.success) {
         this.configuraciones.set(response.configuraciones);
       }

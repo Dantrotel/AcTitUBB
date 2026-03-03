@@ -173,7 +173,8 @@ export const obtenerEstadisticasGlobales = async (req, res) => {
         SUM(CASE WHEN rp.nombre = 'Profesor Guía' THEN 1 ELSE 0 END) as como_guia,
         SUM(CASE WHEN rp.nombre = 'Profesor Informante' THEN 1 ELSE 0 END) as como_informante
       FROM usuarios u
-      LEFT JOIN departamentos d ON u.departamento_id = d.id
+      LEFT JOIN profesores_departamentos pd ON u.rut = pd.profesor_rut AND pd.es_principal = TRUE AND pd.activo = TRUE
+      LEFT JOIN departamentos d ON pd.departamento_id = d.id
       LEFT JOIN asignaciones_proyectos ap ON u.rut = ap.profesor_rut AND ap.activo = TRUE
       LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
       WHERE u.rol_id IN (2, 3)
@@ -212,7 +213,7 @@ export const obtenerEstadisticasGlobales = async (req, res) => {
         SUM(CASE WHEN cumplido_en_fecha = TRUE THEN 1 ELSE 0 END) as entregas_a_tiempo,
         ROUND((SUM(CASE WHEN cumplido_en_fecha = TRUE THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as porcentaje_cumplimiento
       FROM hitos_cronograma
-      WHERE fecha_entrega_real IS NOT NULL
+      WHERE fecha_entrega IS NOT NULL
         AND created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
     `);
 

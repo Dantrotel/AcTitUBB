@@ -697,6 +697,8 @@ const revisarHito = async (req, res) => {
         const { hitoId } = req.params;
         const { comentarios_profesor, calificacion, estado } = req.body;
         const usuario_rut = req.user.rut;
+        const archivo_retroalimentacion = req.file?.filename ?? null;
+        const nombre_archivo_retroalimentacion = req.file?.originalname ?? null;
 
         if (!comentarios_profesor || !estado) {
             return res.status(400).json({ 
@@ -713,7 +715,9 @@ const revisarHito = async (req, res) => {
         const success = await ProjectService.revisarHito(hitoId, {
             comentarios_profesor,
             calificacion,
-            estado
+            estado,
+            archivo_retroalimentacion,
+            nombre_archivo_retroalimentacion
         }, usuario_rut);
 
         if (success) {

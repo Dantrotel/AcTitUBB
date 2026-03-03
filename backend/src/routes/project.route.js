@@ -1,7 +1,7 @@
 import e from 'express';
 import { ProjectController } from '../controllers/project.controller.js';
 import { checkRole, verifySession } from '../middlewares/verifySession.js';
-import { uploadPropuesta } from '../middlewares/uploader.js';
+import { uploadPropuesta, uploadRevision } from '../middlewares/uploader.js';
 import { validate, crearProyectoSchema } from '../middlewares/validators.js';
 import { cacheMiddleware, invalidateOnMutation } from '../config/cache.js';
 
@@ -102,7 +102,7 @@ routerProject.delete('/:projectId/cronogramas/:cronogramaId/hitos/:hitoId/entreg
 
 // ✅ Entregas y revisiones de hitos (CON emails y notificaciones automáticas)
 routerProject.post('/hitos/:hitoId/entregar', verifySession, checkRole('1'), uploadConManejo(uploadPropuesta), ProjectController.entregarHito);
-routerProject.patch('/hitos/:hitoId/revisar', verifySession, checkRole('2'), ProjectController.revisarHito);
+routerProject.patch('/hitos/:hitoId/revisar', verifySession, checkRole('2'), uploadConManejo(uploadRevision), ProjectController.revisarHito);
 
 // Configuración de alertas
 routerProject.post('/:projectId/alertas', verifySession, checkRole('2'), ProjectController.configurarAlertas);

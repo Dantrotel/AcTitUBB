@@ -317,9 +317,9 @@ export const obtenerFechasPorProfesorController = async (req, res) => {
     try {
         const profesor_rut = req.user?.rut;
 
-        if (req.user?.rol !== 'profesor') {
+        if (!req.user || req.user.rol === 'estudiante') {
             return res.status(403).json({ 
-                message: 'Solo los profesores pueden ver sus fechas' 
+                message: 'No tienes permisos para ver fechas de profesor' 
             });
         }
 

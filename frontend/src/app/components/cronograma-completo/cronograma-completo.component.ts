@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+﻿import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GestionHitosComponent } from '../gestion-hitos/gestion-hitos.component';
 import { ApiService } from '../../services/api';
@@ -7,7 +7,7 @@ interface Cronograma {
   id: string;
   project_id: string;
   nombre: string;
-  nombre_cronograma?: string; // Nombre específico del cronograma
+  nombre_cronograma?: string; // Nombre especÃ­fico del cronograma
   descripcion: string;
   fecha_inicio: string;
   fecha_fin: string;
@@ -47,25 +47,25 @@ export class CronogramaCompletoComponent implements OnInit {
   }
 
   cargarCronograma() {
-    console.log('🔄 Cargando cronograma del proyecto:', this.projectId);
+    console.log('ðŸ”„ Cargando cronograma del proyecto:', this.projectId);
     this.apiService.obtenerCronograma(this.projectId).subscribe({
       next: (response: any) => {
-        console.log('✅ Respuesta de cronograma recibida:', response);
-        // El backend puede devolver { cronograma: {...} } o { data: { cronograma: {...} } }
+        console.log('âœ… Respuesta de cronograma recibida:', response);
         this.cronograma = response.cronograma || response.data?.cronograma || null;
-        console.log('📋 Cronograma cargado:', this.cronograma);
+        console.log('ðŸ“‹ Cronograma cargado:', this.cronograma);
+
       },
       error: (error: any) => {
-        console.error('❌ Error al cargar cronograma:', error);
+        console.error('âŒ Error al cargar cronograma:', error);
         this.cronograma = null;
       }
     });
   }
 
   crearCronograma() {
-    console.log('🔨 Creando cronograma para proyecto:', this.projectId);
+    console.log('ðŸ”¨ Creando cronograma para proyecto:', this.projectId);
     
-    // Crear un cronograma básico con fechas por defecto
+    // Crear un cronograma bÃ¡sico con fechas por defecto
     const hoy = new Date();
     const fechaFin = new Date();
     fechaFin.setMonth(fechaFin.getMonth() + 6); // 6 meses desde hoy
@@ -78,18 +78,18 @@ export class CronogramaCompletoComponent implements OnInit {
       dias_alerta_previa: 3
     };
     
-    console.log('📋 Datos del cronograma a crear:', cronogramaData);
+    console.log('ðŸ“‹ Datos del cronograma a crear:', cronogramaData);
     
     this.apiService.crearCronograma(this.projectId, cronogramaData).subscribe({
       next: (response: any) => {
-        console.log('✅ Cronograma creado exitosamente:', response);
-        alert('✅ Cronograma creado exitosamente. Ahora puedes agregar hitos y entregas.');
+        console.log('âœ… Cronograma creado exitosamente:', response);
+        alert('âœ… Cronograma creado exitosamente. Ahora puedes agregar hitos y entregas.');
         this.cargarCronograma(); // Recargar el cronograma
       },
       error: (error: any) => {
-        console.error('❌ Error al crear cronograma:', error);
+        console.error('âŒ Error al crear cronograma:', error);
         const mensaje = error.error?.message || 'Error al crear el cronograma';
-        alert('❌ ' + mensaje);
+        alert('âŒ ' + mensaje);
       }
     });
   }
@@ -134,7 +134,7 @@ export class CronogramaCompletoComponent implements OnInit {
         tipo: 'warning',
         icono: 'fa-clock',
         titulo: 'Hitos Próximos',
-        mensaje: 'Tienes hitos que vencen en los próximos 3 días.'
+        mensaje: 'Tienes hitos que vencen en los próximos 3 dÃ­as.'
       });
     }
 
@@ -150,7 +150,7 @@ export class CronogramaCompletoComponent implements OnInit {
     }
   }
 
-  // Métodos de formateo y utilidades
+  // MÃ©todos de formateo y utilidades
   formatearPeriodo(): string {
     if (!this.cronograma) return '';
     
@@ -189,12 +189,12 @@ export class CronogramaCompletoComponent implements OnInit {
     return Math.round((this.estadisticas.hitos_completados / this.estadisticas.total_hitos) * 100);
   }
 
-  // Métodos de permisos
+  // MÃ©todos de permisos
   puedeEditarCronograma(): boolean {
     return this.userRole === '2' || this.userRole === '3'; // Solo profesores y admins
   }
 
-  // Métodos de acciones
+  // MÃ©todos de acciones
   editarCronograma() {
     // Abrir modal de edición de cronograma
   }
@@ -238,4 +238,5 @@ export class CronogramaCompletoComponent implements OnInit {
   toggleTimeline() {
     this.mostrarTimeline = !this.mostrarTimeline;
   }
+
 }

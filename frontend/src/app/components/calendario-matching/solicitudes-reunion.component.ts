@@ -167,7 +167,10 @@ export class SolicitudesReunionComponent implements OnInit {
   cargarSolicitudes() {
     console.log('🔄 Cargando solicitudes...');
     this.isLoading = true;
-    this.apiService.getMisSolicitudes().subscribe({
+    const request$ = this.userRole === 'profesor'
+      ? this.apiService.getSolicitudesPendientes()
+      : this.apiService.getMisSolicitudes();
+    request$.subscribe({
       next: (response: any) => {
         console.log('✅ Mis solicitudes (raw):', response);
         this.solicitudes = response.data || [];

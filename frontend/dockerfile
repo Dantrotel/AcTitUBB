@@ -50,7 +50,7 @@ RUN touch /var/run/nginx.pid && chown -R nginx:nginx /var/run/nginx.pid
 # Cambiar al usuario nginx para seguridad
 USER nginx
 
-EXPOSE 443
+EXPOSE 80
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

@@ -659,6 +659,18 @@ export class ApiService {
     });
   }
 
+  revisarHitoCompleto(hitoId: string, datos: { comentarios_profesor: string; estado: string } | FormData) {
+    const token = localStorage.getItem('token');
+    if (datos instanceof FormData) {
+      return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, datos, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+    return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, datos, {
+      headers: this.getHeaders()
+    });
+  }
+
   // Estadísticas de Cumplimiento
   getEstadisticasCumplimiento(proyectoId: string) {
     return this.http.get(`${this.baseUrl}/projects/${proyectoId}/estadisticas`, {
