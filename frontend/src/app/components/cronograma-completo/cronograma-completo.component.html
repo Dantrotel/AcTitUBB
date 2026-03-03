@@ -67,7 +67,7 @@
       </app-gestion-hitos>
     </div>
   </div>
-    
+
   <!-- Mensaje cuando no hay cronograma -->
   <div *ngIf="!cronograma?.id" class="no-cronograma-message">
     <div class="empty-state-icon">📅</div>
@@ -103,10 +103,4 @@
     </div>
   </div>
 
-  <!-- Acciones flotantes -->
-  <div class="floating-actions" *ngIf="cronograma?.id && userRole === '2'">
-    <button class="fab" (click)="editarCronograma()" title="Editar cronograma">
-      ✏️
-    </button>
-  </div>
 </div>

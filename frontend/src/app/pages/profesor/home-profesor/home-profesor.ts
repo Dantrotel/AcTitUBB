@@ -694,6 +694,7 @@ export class HomeProfesor implements OnInit {
 
   // Método para navegar a un proyecto específico
   navegarAProyecto(proyectoId: number) {
+    if (!proyectoId) return;
     this.router.navigate(['/profesor/proyecto', proyectoId]);
   }
 

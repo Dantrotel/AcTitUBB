@@ -126,11 +126,14 @@ export const obtenerDashboardProfesor = async (profesor_rut) => {
                 a.id,
                 a.titulo,
                 a.fecha_envio,
+                p.id as proyecto_id,
                 p.titulo as proyecto_titulo,
+                u.nombre as estudiante_nombre,
                 DATEDIFF(CURDATE(), a.fecha_envio) as dias_sin_revisar
             FROM avances a
             INNER JOIN proyectos p ON a.proyecto_id = p.id
             INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
+            LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
             WHERE ap.profesor_rut = ? 
                 AND ap.activo = TRUE
                 AND a.estado_id = 2

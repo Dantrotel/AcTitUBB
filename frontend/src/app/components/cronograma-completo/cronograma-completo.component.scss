@@ -55,3 +55,166 @@ $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
   display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,.2); transition: transform .15s;
   &:hover { transform: scale(1.08); }
 }
+
+// ===== REVISION PANELS =====
+
+.revision-section {
+  background: $white; border-radius: $radius; box-shadow: $shadow; overflow: hidden; margin-top: 14px;
+}
+
+.count-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; border-radius: 10px;
+  background: $orange; color: $white; font-size: .72rem; font-weight: 700;
+  padding: 0 5px; margin-left: 8px; vertical-align: middle;
+}
+
+.rev-loading, .rev-empty, .rev-sending {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  padding: 24px 16px; color: $muted; font-size: .85rem;
+}
+.rev-empty {
+  flex-direction: column; gap: 6px;
+  .rev-empty-icon { font-size: 2rem; color: $green; }
+  p { margin: 0; }
+}
+
+// Rev list items
+.rev-list { display: flex; flex-direction: column; gap: 10px; }
+
+.rev-item {
+  border: 1px solid $border; border-radius: 6px; overflow: hidden; transition: border-color .15s;
+  &--active { border-color: $blue; }
+}
+
+.rev-item-header {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px;
+}
+
+.rev-item-info { flex: 1; min-width: 0; }
+
+.rev-item-title { font-size: .9rem; font-weight: 600; color: $text; display: block; margin-bottom: 5px; }
+
+.rev-item-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
+
+.rev-meta-text { font-size: .78rem; color: $muted; display: flex; align-items: center; gap: 4px;
+  i { font-size: .72rem; }
+}
+
+.rev-student-comment {
+  font-size: .8rem; color: $text; background: color.adjust($bg, $lightness: -1%);
+  border-left: 3px solid $info; border-radius: 0 4px 4px 0;
+  padding: 6px 10px; margin: 6px 0 0; font-style: italic;
+  i { color: $info; margin-right: 5px; }
+}
+
+.rev-item-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+
+.btn-icon {
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid $border;
+  background: $white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; transition: all .15s;
+  &--blue { color: $blue; &:hover { background: $blue; color: $white; border-color: $blue; } }
+}
+
+.btn-rev {
+  padding: 6px 14px; border-radius: 6px; border: 1px solid $blue; background: $blue;
+  color: $white; font-size: .8rem; font-weight: 600; cursor: pointer; display: flex;
+  align-items: center; gap: 6px; transition: all .15s;
+  &:hover { background: color.adjust($blue, $lightness: -8%); }
+  &--cancel { background: $white; color: $muted; border-color: $border;
+    &:hover { background: $bg; } }
+}
+
+// Review form
+.rev-form {
+  border-top: 1px solid $border; background: color.adjust($bg, $lightness: 1%);
+  padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 10px;
+}
+
+.rev-form-row { display: flex; gap: 12px; align-items: flex-start; }
+
+.rev-form-group {
+  display: flex; flex-direction: column; gap: 4px;
+  &--grow { flex: 1; }
+  &--cal { width: 130px; flex-shrink: 0; }
+}
+
+.rev-label { font-size: .78rem; font-weight: 600; color: $text; }
+.rev-required { color: $red; }
+.rev-muted { color: $muted; font-weight: 400; }
+.rev-hint { font-size: .72rem; color: $muted; text-align: right; }
+
+.rev-textarea {
+  width: 100%; border: 1px solid $border; border-radius: 6px; padding: 8px 10px;
+  font-size: .83rem; resize: vertical; font-family: inherit; color: $text;
+  transition: border-color .15s; box-sizing: border-box;
+  &:focus { outline: none; border-color: $blue; }
+}
+
+.rev-input-cal {
+  width: 100%; border: 1px solid $border; border-radius: 6px; padding: 8px 10px;
+  font-size: 1rem; font-weight: 700; text-align: center; color: $text;
+  transition: border-color .15s;
+  &:focus { outline: none; border-color: $blue; }
+  &.cal-verde { color: $green; border-color: $green; }
+  &.cal-naranja { color: $orange; border-color: $orange; }
+  &.cal-rojo { color: $red; border-color: $red; }
+}
+
+.rev-form-btns {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+.btn-decision {
+  padding: 7px 16px; border-radius: 6px; border: none; font-size: .82rem; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
+  &:disabled { opacity: .5; cursor: not-allowed; }
+  &--ok { background: $green; color: $white;
+    &:not(:disabled):hover { background: color.adjust($green, $lightness: -8%); } }
+  &--warn { background: $orange; color: $white;
+    &:not(:disabled):hover { background: color.adjust($orange, $lightness: -8%); } }
+  &--danger { background: $red; color: $white;
+    &:not(:disabled):hover { background: color.adjust($red, $lightness: -8%); } }
+}
+
+// Rev badges
+.rev-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .72rem; font-weight: 600;
+  &--entregado  { background: rgba($orange,.12); color: color.adjust($orange,$lightness:-10%); }
+  &--aprobado   { background: rgba($green,.12);  color: color.adjust($green, $lightness:-8%); }
+  &--revisado   { background: rgba($blue,.1);    color: $blue; }
+  &--rechazado  { background: rgba($red,.12);    color: $red; }
+}
+
+// Historial table
+.rev-table-wrap { overflow-x: auto; }
+
+.rev-table {
+  width: 100%; border-collapse: collapse; font-size: .82rem;
+  th {
+    text-align: left; padding: 8px 12px; background: $bg;
+    font-size: .72rem; font-weight: 700; color: $muted;
+    text-transform: uppercase; letter-spacing: .3px;
+    border-bottom: 2px solid $border;
+  }
+  td {
+    padding: 10px 12px; border-bottom: 1px solid color.adjust($border, $lightness: 2%);
+    vertical-align: top; color: $text;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: color.adjust($bg, $lightness: 1%); }
+}
+
+.rev-hito-nombre { display: block; font-weight: 600; }
+.rev-hito-tipo { display: block; font-size: .72rem; color: $muted; margin-top: 2px; }
+
+.rev-cal {
+  display: inline-block; font-weight: 700; font-size: .9rem; padding: 2px 6px; border-radius: 4px;
+  &.cal-verde  { color: $green;  background: rgba($green,.1); }
+  &.cal-naranja{ color: $orange; background: rgba($orange,.1); }
+  &.cal-rojo   { color: $red;    background: rgba($red,.1); }
+}
+
+.rev-comentario { color: $text; }
+.rev-fecha { white-space: nowrap; color: $muted; }

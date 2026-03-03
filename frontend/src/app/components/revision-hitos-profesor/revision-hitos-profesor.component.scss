@@ -97,3 +97,148 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   &.aprobado:has(input:checked) { background: color.adjust($green, $lightness: 44%); border-color: $green; color: $green; }
   &.requiere-correcciones:has(input:checked) { background: color.adjust($orange, $lightness: 36%); border-color: $orange; color: $orange; }
 }
+
+// Active card state
+.hito-card.hito-activo { border-color: $blue; box-shadow: 0 0 0 2px rgba($blue,.12); }
+
+// Retroalimentación previa (already submitted)
+.retroalimentacion-previa {
+  margin-top: 8px; background: color.adjust($green, $lightness: 46%); border: 1px solid color.adjust($green, $lightness: 30%);
+  border-radius: 6px; padding: 8px 10px; font-size: .8rem;
+  label { font-weight: 600; color: $text; display: flex; align-items: center; gap: 5px; margin-bottom: 4px; i { color: $green; } }
+  p { margin: 0 0 4px; color: $text; }
+  small { font-size: .72rem; color: $muted; }
+}
+
+// Inline review form
+.inline-review-form {
+  border-top: 1px solid $border; background: color.adjust($bg, $lightness: .5%); padding: 14px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.form-row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.form-col { display: flex; flex-direction: column; gap: 4px; &--grow { flex: 1; min-width: 200px; } }
+
+.form-label { font-size: .78rem; font-weight: 600; color: $text; .req { color: $red; } .muted { font-weight: 400; color: $muted; } }
+.char-count { font-size: .72rem; color: $muted; text-align: right; }
+
+.decision-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn-decision {
+  padding: 7px 16px; border-radius: 6px; border: none; font-size: .82rem; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
+  &:disabled { opacity: .5; cursor: not-allowed; }
+  &--ok     { background: $green;  color: $white; &:not(:disabled):hover { background: color.adjust($green,  $lightness: -8%); } }
+  &--warn   { background: $orange; color: $white; &:not(:disabled):hover { background: color.adjust($orange, $lightness: -8%); } }
+  &--danger { background: $red;    color: $white; &:not(:disabled):hover { background: color.adjust($red,    $lightness: -8%); } }
+}
+
+.rev-sending { display: flex; align-items: center; gap: 8px; font-size: .83rem; color: $muted; i { color: $blue; } }
+
+// Panel B – Historial
+.historial-section { margin-top: 20px; background: $white; border: 1px solid $border; border-radius: $radius; box-shadow: $shadow; overflow: hidden; }
+
+.historial-title {
+  font-size: .9rem; font-weight: 700; color: $text; margin: 0; padding: 12px 14px;
+  border-bottom: 1px solid $border; background: $bg; display: flex; align-items: center; gap: 8px;
+  i { color: $blue; }
+}
+
+.historial-table-wrap { overflow-x: auto; }
+
+.historial-table {
+  width: 100%; border-collapse: collapse; font-size: .82rem;
+  th { text-align: left; padding: 8px 12px; background: color.adjust($bg, $lightness: -1%); font-size: .72rem; font-weight: 700; color: $muted; text-transform: uppercase; letter-spacing: .3px; border-bottom: 2px solid $border; }
+  td { padding: 10px 12px; border-bottom: 1px solid color.adjust($border, $lightness: 2%); vertical-align: top; color: $text; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: color.adjust($bg, $lightness: .5%); }
+}
+
+.hist-nombre { display: block; font-weight: 600; }
+.hist-tipo   { display: block; font-size: .72rem; color: $muted; margin-top: 2px; }
+.hist-comentario { display: block; color: $text; margin-bottom: 4px; }
+.hist-fecha  { white-space: nowrap; color: $muted; }
+.muted-text  { color: $muted; }
+
+// ===== Upload zone =====
+.upload-zone {
+  border: 2px dashed $border;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  transition: border-color .15s, background .15s, color .15s;
+  color: $muted;
+  font-size: .82rem;
+  user-select: none;
+
+  i { font-size: 1.1rem; flex-shrink: 0; }
+
+  &:hover:not(.upload-zone--has-file) {
+    border-color: $blue;
+    background: rgba($blue, .03);
+    color: $blue;
+  }
+
+  &--has-file {
+    border-style: solid;
+    border-color: $green;
+    background: rgba($green, .04);
+    color: $text;
+    cursor: default;
+    i { color: $green; }
+  }
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  span { font-weight: 500; }
+}
+
+.upload-hint { font-size: .72rem; color: $muted; margin: 0; }
+
+.upload-filename {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-remove-file {
+  background: none;
+  border: none;
+  color: $red;
+  cursor: pointer;
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-size: .85rem;
+  line-height: 1;
+  flex-shrink: 0;
+  &:hover { background: rgba($red, .1); }
+}
+
+// Download button in historial table for retroalimentacion docs
+.btn-dl-retro {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  background: none;
+  border: 1px solid $border;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: .73rem;
+  color: $blue;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+  i { font-size: .8rem; }
+  span { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &:hover { background: rgba($blue, .06); border-color: $blue; }
+}
+
