@@ -3,6 +3,7 @@ import * as fechasImportantesModel from '../models/fechas-importantes.model.js';
 import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
 import * as AvanceModel from '../models/avance.model.js';
 import { pool } from '../db/connectionDB.js';
+import { logger } from '../config/logger.js';
 
 const createProject = async (titulo, descripcion, estudianteId) => {
     if (!titulo || !descripcion) {
@@ -57,14 +58,14 @@ const crearProyectoDesdeAprobacion = async (propuestaData) => {
         // Crear el proyecto usando el modelo
         const proyectoId = await ProjectModel.crearProyectoCompleto(proyectoData);
 
-        console.log(`✅ Proyecto creado automáticamente: ID ${proyectoId} para propuesta ${id}`);
+        logger.info('Proyecto creado automáticamente', { proyectoId, propuestaId: id });
 
         // Transferir TODOS los estudiantes de la propuesta al proyecto
         await transferirEstudiantesAlProyecto(id, proyectoId);
 
         return proyectoId;
     } catch (error) {
-        console.error('Error al crear proyecto desde aprobación:', error);
+        logger.error('Error al crear proyecto desde aprobación', { error: error.message });
         throw error;
     }
 };
@@ -98,9 +99,9 @@ const transferirEstudiantesAlProyecto = async (propuesta_id, proyecto_id) => {
             );
         }
 
-        console.log(`✅ Transferidos ${estudiantes.length} estudiante(s) al proyecto ${proyecto_id}`);
+        logger.info('Estudiantes transferidos al proyecto', { cantidad: estudiantes.length, proyecto_id });
     } catch (error) {
-        console.error('Error al transferir estudiantes:', error);
+        logger.error('Error al transferir estudiantes', { error: error.message });
         throw error;
     }
 };
@@ -116,26 +117,26 @@ const transferirAsignacionesProfesores = async (propuesta_id, proyecto_id) => {
         const profesoresAsignados = await ProjectModel.obtenerProfesoresAsignadosPropuesta(propuesta_id);
         
         if (!profesoresAsignados || profesoresAsignados.length === 0) {
-            console.log('⚠️  No hay profesores asignados a la propuesta');
+            logger.warn('No hay profesores asignados a la propuesta', { propuesta_id });
             return;
         }
 
-        // Asignar cada profesor al proyecto con rol por defecto de 'profesor_guia'
+        // Asignar cada profesor al proyecto preservando su rol original de la propuesta
         for (const profesor of profesoresAsignados) {
             await asignacionesProfesoresModel.asignarProfesorAProyecto({
                 proyecto_id: proyecto_id,
                 profesor_rut: profesor.profesor_rut,
-                rol_profesor_id: 1, // 'profesor_guia' por defecto
+                rol_profesor_id: profesor.rol_profesor_id, // Preservar rol original
                 asignado_por: 'system' // Sistema automático
             });
         }
 
-        console.log(`✅ Transferidas asignaciones de ${profesoresAsignados.length} profesores al proyecto`);
+        logger.info('Asignaciones de profesores transferidas', { cantidad: profesoresAsignados.length, proyecto_id });
         
         // Verificar si ahora se cumplen los 3 roles y activar automáticamente el proyecto
         await verificarYActivarProyectoSiCompleto(proyecto_id);
     } catch (error) {
-        console.error('Error al transferir asignaciones de profesores:', error);
+        logger.error('Error al transferir asignaciones de profesores', { error: error.message });
         throw error;
     }
 };
@@ -150,7 +151,7 @@ const verificarYActivarProyectoSiCompleto = async (proyecto_id) => {
         const profesoresAsignados = await obtenerProfesoresProyecto(proyecto_id);
         
         if (!profesoresAsignados || profesoresAsignados.length === 0) {
-            console.log(`⚠️ Proyecto ${proyecto_id}: No hay profesores asignados`);
+            logger.warn('Proyecto sin profesores asignados', { proyecto_id });
             return false;
         }
 
@@ -164,7 +165,7 @@ const verificarYActivarProyectoSiCompleto = async (proyecto_id) => {
         const rolesRequeridos = rolesRequeridosData.map(rol => rol.id);
         
         if (rolesRequeridos.length === 0) {
-            console.log(`⚠️ No se encontraron roles básicos configurados en la BD`);
+            logger.warn('No se encontraron roles básicos configurados en la BD');
             return false;
         }
         
@@ -178,18 +179,36 @@ const verificarYActivarProyectoSiCompleto = async (proyecto_id) => {
         if (tieneRolGuia) {
             // Cambiar el estado del proyecto a 'en_desarrollo' (estado_id = 2)
             await actualizarEstadoProyecto(proyecto_id, 2);
-            console.log(`✅ Proyecto ${proyecto_id} activado automáticamente - Profesor guía asignado`);
-            
-            // TODO: Crear notificación para el estudiante
-            // await crearNotificacionProyectoActivado(proyecto_id);
+            logger.info('Proyecto activado automáticamente', { proyecto_id });
+
+            // Notificar a todos los estudiantes del proyecto
+            try {
+                const [estudiantesRows] = await pool.execute(
+                    'SELECT estudiante_rut FROM estudiantes_proyectos WHERE proyecto_id = ?',
+                    [proyecto_id]
+                );
+                for (const { estudiante_rut } of estudiantesRows) {
+                    await pool.execute(
+                        `INSERT INTO notificaciones_proyecto (usuario_rut, tipo, titulo, mensaje, proyecto_id, leida)
+                         VALUES (?, 'proyecto_activado', 'Proyecto Activado', ?, ?, FALSE)`,
+                        [
+                            estudiante_rut,
+                            'Tu proyecto ha sido activado. Se ha asignado un profesor guía y el trabajo puede comenzar.',
+                            proyecto_id
+                        ]
+                    );
+                }
+            } catch (notifError) {
+                logger.warn('No se pudo crear notificación de proyecto activado', { proyecto_id, error: notifError.message });
+            }
             
             return true;
         } else {
-            console.log(`⚠️ Proyecto ${proyecto_id}: Falta profesor guía. Asignados: [${rolesAsignados.join(', ')}]`);
+            logger.warn('Proyecto sin profesor guía, no activado', { proyecto_id, rolesAsignados });
             return false;
         }
     } catch (error) {
-        console.error('Error al verificar y activar proyecto:', error);
+        logger.error('Error al verificar y activar proyecto', { error: error.message });
         return false;
     }
 };
@@ -278,7 +297,7 @@ const crearFechasImportantesProyecto = async (proyecto_id, fechasPersonalizadas 
         return idsCreados;
     } else {
         // Ya no se crean fechas automáticas por defecto
-        console.log(`⚠️ No se crearon fechas automáticas para proyecto ${proyecto_id}. Las fechas deben ser creadas manualmente por los profesores.`);
+        logger.info('No se crearon fechas automáticas para proyecto, deben crearse manualmente', { proyecto_id });
         return [];
     }
 };
@@ -594,7 +613,7 @@ const obtenerCronogramaActivo = async (proyecto_id) => {
  * Obtener cronograma por ID (helper)
  */
 const obtenerCronogramaPorId = async (cronograma_id) => {
-    const [rows] = await pool.query(
+    const [rows] = await pool.execute(
         'SELECT * FROM cronogramas_proyecto WHERE id = ? LIMIT 1',
         [cronograma_id]
     );
@@ -675,26 +694,29 @@ const revisarHito = async (hito_id, revisionData, profesor_rut) => {
  */
 const obtenerInfoHito = async (hito_id) => {
     try {
-        const [rows] = await pool.query(`
-            SELECT 
+        const [rows] = await pool.execute(`
+            SELECT
                 h.id,
-                h.nombre as nombre_hito,
+                h.nombre_hito as nombre_hito,
                 h.descripcion,
                 p.id as proyecto_id,
                 p.titulo as proyecto_titulo,
-                p.estudiante_rut,
-                pg.profesor_rut as profesor_guia_rut
-            FROM hitos h
-            INNER JOIN cronogramas c ON h.cronograma_id = c.id
+                ep.estudiante_rut,
+                ap.profesor_rut as profesor_guia_rut
+            FROM hitos_cronograma h
+            INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
             INNER JOIN proyectos p ON c.proyecto_id = p.id
-            LEFT JOIN profesores_guias pg ON p.id = pg.proyecto_id AND pg.rol = 'guia'
+            LEFT JOIN estudiantes_proyectos ep ON p.id = ep.proyecto_id
+            LEFT JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id AND ap.activo = TRUE
+            LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+                AND (rp.nombre LIKE '%guía%' OR rp.nombre LIKE '%guia%' OR rp.nombre LIKE '%Guía%')
             WHERE h.id = ?
             LIMIT 1
         `, [hito_id]);
         
         return rows[0] || null;
     } catch (error) {
-        console.error('Error al obtener info del hito:', error);
+        logger.error('Error al obtener info del hito', { error: error.message });
         return null;
     }
 };
@@ -751,6 +773,13 @@ const esProfesorGuiaDelCronograma = async (cronograma_id, profesor_rut) => {
 };
 
 /**
+ * Verificar si el usuario es cualquier profesor asignado al cronograma
+ */
+const esProfesorAsignadoAlCronograma = async (cronograma_id, profesor_rut) => {
+    return await AvanceModel.esProfesorAsignadoAlCronograma(cronograma_id, profesor_rut);
+};
+
+/**
  * Verificar si el usuario puede ver el cronograma
  */
 const puedeVerCronograma = async (cronograma_id, usuario_rut, rol_usuario) => {
@@ -776,6 +805,22 @@ const esProfesorGuiaDelHito = async (hito_id, profesor_rut) => {
  */
 const notificacionPerteneceAUsuario = async (notificacion_id, usuario_rut) => {
     return await AvanceModel.notificacionPerteneceAUsuario(notificacion_id, usuario_rut);
+};
+
+const actualizarHitoCronograma = async (cronograma_id, hito_id, data) => {
+    return await AvanceModel.actualizarHitoCronograma(cronograma_id, hito_id, data);
+};
+
+const eliminarHitoCronograma = async (cronograma_id, hito_id) => {
+    return await AvanceModel.eliminarHitoCronograma(cronograma_id, hito_id);
+};
+
+const obtenerHitoPorId = async (hito_id) => {
+    return await AvanceModel.obtenerHitoPorId(hito_id);
+};
+
+const limpiarEntregaHito = async (hito_id) => {
+    return await AvanceModel.limpiarEntregaHito(hito_id);
 };
 
 export const ProjectService = {
@@ -830,11 +875,16 @@ export const ProjectService = {
     esProfesorGuia,
     esEstudianteDelCronograma,
     esProfesorGuiaDelCronograma,
+    esProfesorAsignadoAlCronograma,
     puedeVerProyecto,
     puedeVerCronograma,
     esEstudianteDelHito,
     esProfesorGuiaDelHito,
     notificacionPerteneceAUsuario,
+    actualizarHitoCronograma,
+    eliminarHitoCronograma,
+    obtenerHitoPorId,
+    limpiarEntregaHito,
     
     // Funciones para flujo automático propuesta → proyecto
     verificarYActivarProyectoSiCompleto

@@ -452,6 +452,47 @@ export const eliminarDisponibilidad = async (disponibilidad_id, usuario_rut) => 
     return result.affectedRows > 0;
 };
 
+// ===== GESTIÓN DE BLOQUEOS DE HORARIOS =====
+
+/**
+ * Crear un bloqueo de horario para un usuario
+ */
+export const crearBloqueo = async (usuario_rut, { fecha_inicio, fecha_fin, hora_inicio = null, hora_fin = null, motivo, tipo = 'personal' }) => {
+    const query = `
+        INSERT INTO bloqueos_horarios (usuario_rut, fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, tipo)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const [result] = await pool.execute(query, [usuario_rut, fecha_inicio, fecha_fin, hora_inicio, hora_fin, motivo, tipo]);
+    return result.insertId;
+};
+
+/**
+ * Obtener bloqueos activos de un usuario
+ */
+export const obtenerBloqueosUsuario = async (usuario_rut) => {
+    const query = `
+        SELECT * FROM bloqueos_horarios
+        WHERE usuario_rut = ? AND activo = TRUE
+        ORDER BY fecha_inicio ASC
+    `;
+    const [rows] = await pool.execute(query, [usuario_rut]);
+    return rows;
+};
+
+/**
+ * Eliminar (desactivar) un bloqueo de horario
+ * @returns {Promise<boolean>} true si se eliminó exitosamente
+ */
+export const eliminarBloqueo = async (id, usuario_rut) => {
+    const query = `
+        UPDATE bloqueos_horarios
+        SET activo = FALSE
+        WHERE id = ? AND usuario_rut = ?
+    `;
+    const [result] = await pool.execute(query, [id, usuario_rut]);
+    return result.affectedRows > 0;
+};
+
 /**
  * Obtener solicitudes de reunión por usuario
  */

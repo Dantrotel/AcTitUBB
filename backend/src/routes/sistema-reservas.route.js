@@ -414,13 +414,13 @@ router.get('/mis-solicitudes', async (req, res) => {
             resumen: {
                 total: solicitudes.length,
                 pendientes: solicitudes.filter(s => s.estado === 'pendiente').length,
-                aceptadas: solicitudes.filter(s => s.estado === 'aceptada').length,
+                aceptadas: solicitudes.filter(s => ['aceptada_profesor', 'aceptada_estudiante'].includes(s.estado)).length,
                 rechazadas: solicitudes.filter(s => s.estado === 'rechazada').length
             }
         });
-        
+
     } catch (error) {
-        
+
         res.status(500).json({
             success: false,
             message: error.message
@@ -588,7 +588,7 @@ router.get('/dashboard', async (req, res) => {
                     solicitudes: {
                         total: solicitudes.length,
                         pendientes: solicitudes.filter(s => s.estado === 'pendiente').length,
-                        aceptadas: solicitudes.filter(s => s.estado === 'aceptada').length,
+                        aceptadas: solicitudes.filter(s => ['aceptada_profesor', 'aceptada_estudiante'].includes(s.estado)).length,
                         rechazadas: solicitudes.filter(s => s.estado === 'rechazada').length,
                         lista: solicitudes
                     },

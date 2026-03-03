@@ -1,10 +1,11 @@
 import { UserModel } from '../models/user.model.js';
-import { 
+import {
   obtenerPropuestasPorProfesor,
   asignarProfesor,
   desasignarProfesor
 } from '../models/propuesta.model.js';
 import * as AdminModel from '../models/admin.model.js';
+import { logger } from '../config/logger.js';
 
 // ===== GESTIÓN DE USUARIOS =====
 export const obtenerTodosLosUsuarios = async (req, res) => {
@@ -12,46 +13,42 @@ export const obtenerTodosLosUsuarios = async (req, res) => {
     const { rol_id, carreras_administradas } = req.user || {};
     const { rol_filter } = req.query; // Permitir filtrar por rol desde el query
     
-    console.log(`📋 Obteniendo usuarios - Usuario: rol_id=${rol_id}, filtro=${rol_filter}`);
+    logger.info('Obteniendo usuarios', { rol_id, filtro: rol_filter });
     
     // Si es Admin de Carrera (rol 3), filtrar usuarios por TODAS sus carreras
     // Solo mostrar estudiantes (rol 1) y profesores (rol 2), excluir admins (rol 3) y super admins (rol 4)
     if (rol_id === 3 && carreras_administradas && carreras_administradas.length > 0) {
-      console.log(`🎓 Admin de Carrera filtrando por carreras: ${JSON.stringify(carreras_administradas)}`);
+      logger.debug('Admin de carrera filtrando por carreras', { carreras: carreras_administradas });
       let usuarios = await UserModel.obtenerUsuariosPorCarreras(carreras_administradas);
-      console.log(`👥 Usuarios encontrados: ${usuarios.length}`);
+      logger.debug('Usuarios encontrados', { total: usuarios.length });
       
       // Verificar que no haya admins o super admins en los resultados
       const adminsEncontrados = usuarios.filter(u => u.rol_id === 3 || u.rol_id === 4);
       if (adminsEncontrados.length > 0) {
-        console.warn('⚠️ Se encontraron admins en los resultados, filtrando...', adminsEncontrados.map(a => a.rut));
+        logger.warn('Se encontraron admins en resultados de carrera, filtrando', { ruts: adminsEncontrados.map(a => a.rut) });
       }
       
       // Aplicar filtro por rol si se especifica
       if (rol_filter) {
         const rolIdFilter = parseInt(rol_filter);
         usuarios = usuarios.filter(u => u.rol_id === rolIdFilter);
-        console.log(`🔍 Filtrado por rol_id=${rolIdFilter}: ${usuarios.length} usuarios`);
+        logger.debug('Filtrado por rol', { rol_id: rolIdFilter, total: usuarios.length });
       }
-      
+
       return res.json(usuarios);
     }
-    
-    // Super Admin (rol 4) ve todos los usuarios
-    console.log(`👑 Super Admin obteniendo todos los usuarios`);
+
     let usuarios = await UserModel.findpersonAll();
-    console.log(`👥 Total usuarios: ${usuarios.length}`);
     
-    // Aplicar filtro por rol si se especifica
     if (rol_filter) {
       const rolIdFilter = parseInt(rol_filter);
       usuarios = usuarios.filter(u => u.rol_id === rolIdFilter);
-      console.log(`🔍 Filtrado por rol_id=${rolIdFilter}: ${usuarios.length} usuarios`);
+      logger.debug('Filtrado por rol', { rol_id: rolIdFilter, total: usuarios.length });
     }
-    
+
     res.json(usuarios);
   } catch (error) {
-    console.error('❌ Error al obtener usuarios:', error);
+    logger.error('Error al obtener usuarios', { error: error.message });
     res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
@@ -219,10 +216,10 @@ export const resetearPasswordUsuario = async (req, res) => {
     const { rut } = req.params;
     const { nueva_password } = req.body;
     
-    console.log(`🔑 Cambio de contraseña para RUT: ${rut}, password: ${nueva_password ? '***' + nueva_password.slice(-3) : 'UNDEFINED'}`);
+    logger.info('Cambio de contraseña solicitado', { rut });
     
     if (!nueva_password) {
-      console.log('⚠️ Nueva contraseña no proporcionada');
+      logger.warn('Nueva contraseña no proporcionada', { rut });
       return res.status(400).json({ message: 'La nueva contraseña es requerida' });
     }
     
@@ -238,7 +235,7 @@ export const resetearPasswordUsuario = async (req, res) => {
     const bcrypt = await import('bcryptjs');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(nueva_password, salt);
-    console.log('🔐 Contraseña hasheada correctamente');
+    logger.debug('Contraseña hasheada correctamente', { rut });
     
     const actualizado = await UserModel.resetearPassword(rut, hashedPassword);
     
@@ -381,7 +378,7 @@ export const obtenerEstadisticas = async (req, res) => {
     
     const estadisticas = await AdminModel.obtenerEstadisticasCompletas(carreraFiltro);
     
-    console.log('📊 Estadísticas obtenidas:', estadisticas);
+    logger.debug('Estadísticas obtenidas');
     
     res.json(estadisticas);
   } catch (error) {
@@ -412,7 +409,7 @@ export const obtenerCargaAdministrativa = async (req, res) => {
     // Obtener estadísticas (filtradas si aplica)
     const estadisticas = await obtenerEstadisticasCarga(carreraFiltro);
     
-    console.log(`📊 Carga académica obtenida: ${cargaProfesores.length} profesores`);
+    logger.info('Carga académica obtenida', { total_profesores: cargaProfesores.length });
     
     res.json({
       profesores: cargaProfesores,

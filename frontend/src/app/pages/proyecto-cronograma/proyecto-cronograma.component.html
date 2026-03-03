@@ -48,27 +48,20 @@
         <i class="fas fa-tasks"></i>
         Cronograma
       </button>
-      <button 
-        class="tab-button" 
-        [class.active]="tabActiva === 'entregas'"
-        (click)="cambiarTab('entregas')">
-        <i class="fas fa-upload"></i>
-        Entregas
-      </button>
-      <button 
-        class="tab-button" 
+      <button
+        class="tab-button"
         [class.active]="tabActiva === 'revisiones'"
         (click)="cambiarTab('revisiones')"
         *ngIf="userRole === '2' || userRole === '3'">
         <i class="fas fa-clipboard-check"></i>
         Revisiones
       </button>
-      <button 
-        class="tab-button" 
+      <button
+        class="tab-button"
         [class.active]="tabActiva === 'documentos'"
         (click)="cambiarTab('documentos')">
         <i class="fas fa-file-alt"></i>
-        Documentos
+        Documentos / Entregas
       </button>
       <button 
         class="tab-button" 
@@ -76,14 +69,6 @@
         (click)="cambiarTab('colaboradores')">
         <i class="fas fa-handshake"></i>
         Colaboradores
-      </button>
-      <button 
-        class="tab-button" 
-        [class.active]="tabActiva === 'evaluaciones'"
-        (click)="cambiarTab('evaluaciones')"
-        *ngIf="userRole === '2' || userRole === '3'">
-        <i class="fas fa-star"></i>
-        Evaluaciones
       </button>
       <button 
         class="tab-button" 
@@ -106,46 +91,6 @@
         </app-cronograma-completo>
       </div>
 
-      <div *ngIf="tabActiva === 'entregas'" class="tab-pane active">
-        <div class="entregas-container">
-          <div class="entregas-header">
-            <h3>Historial de Versiones</h3>
-            <p>Gestiona las versiones de tus entregas y documentos</p>
-          </div>
-
-          <!-- Selector de avance -->
-          <div class="avances-selector" *ngIf="avances.length > 0">
-            <label>Selecciona un avance/entrega:</label>
-            <div class="avances-list">
-              <button 
-                *ngFor="let avance of avances"
-                class="avance-btn"
-                [class.active]="avanceSeleccionado?.id === avance.id"
-                (click)="seleccionarAvance(avance)">
-                <i class="fas fa-file-alt"></i>
-                {{ avance.titulo || 'Avance ' + avance.numero }}
-                <span class="avance-fecha">{{ formatearFecha(avance.fecha_limite) }}</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Componente de historial de versiones -->
-          <div class="versiones-panel" *ngIf="avanceSeleccionado">
-            <app-historial-versiones
-              [avanceId]="avanceSeleccionado.id"
-              [proyectoId]="projectId"
-              [rolUsuario]="userRole">
-            </app-historial-versiones>
-          </div>
-
-          <!-- Sin avances -->
-          <div class="sin-avances" *ngIf="avances.length === 0">
-            <i class="fas fa-inbox"></i>
-            <p>No hay avances registrados en este proyecto</p>
-          </div>
-        </div>
-      </div>
-
       <div *ngIf="tabActiva === 'revisiones'" class="tab-pane active">
         <app-revision-hitos-profesor
           [projectId]="projectId.toString()"
@@ -161,14 +106,6 @@
         <app-colaboradores-proyecto [proyectoId]="projectId"></app-colaboradores-proyecto>
       </div>
 
-      <div *ngIf="tabActiva === 'evaluaciones'" class="tab-pane active">
-        <div class="evaluaciones-panel">
-          <h3>Panel de Evaluaciones</h3>
-          <p>Gestión de evaluaciones y calificaciones</p>
-          <!-- Aquí iría un componente específico para evaluaciones -->
-        </div>
-      </div>
-
       <div *ngIf="tabActiva === 'estadisticas'" class="tab-pane active">
         <div class="estadisticas-panel">
           <h3>Estadísticas del Proyecto</h3>
@@ -181,12 +118,6 @@
 
   <!-- Acciones flotantes -->
   <div class="floating-actions" *ngIf="mostrarAccionesFlotantes()">
-    <button 
-      class="fab fab-primary"
-      *ngIf="userRole === '1'"
-      title="Subir entrega rápida">
-      <i class="fas fa-upload"></i>
-    </button>
     <button 
       class="fab fab-secondary"
       *ngIf="userRole === '2' || userRole === '3'"

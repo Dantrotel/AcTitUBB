@@ -31,7 +31,7 @@
   </div>
 
   <!-- Estadísticas principales -->
-  <div class="estadisticas-grid" *ngIf="cronograma">
+  <div class="estadisticas-grid" *ngIf="cronograma && estadisticas">
     <div class="estadistica-card">
       <div class="estadistica-valor">{{ estadisticas.total_hitos || 0 }}</div>
       <div class="estadistica-label">Hitos Totales</div>
@@ -78,7 +78,7 @@
       <ul>
         <li>📌 Hitos y fechas límite</li>
         <li>📤 Entregas de documentos</li>
-        <li>📊 Evaluaciones y seguimiento</li>
+        <li>📊 Seguimiento y revisiones</li>
         <li>🎯 Objetivos del proyecto</li>
       </ul>
       <button class="btn btn-primary btn-lg" (click)="crearCronograma()">

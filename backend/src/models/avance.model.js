@@ -172,25 +172,19 @@ export const crearHitoCronograma = async ({ cronograma_id, proyecto_id, nombre_h
 export const obtenerHitosCronograma = async (cronograma_id) => {
     const [rows] = await pool.execute(`
         SELECT h.*,
-               hp.nombre_hito as hito_predecesor_nombre,
-               uc.nombre as creado_por_nombre,
-               ua.nombre as actualizado_por_nombre,
-               CASE 
-                   WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado', 'revisado', 'aprobado') 
+               CASE
+                   WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado', 'revisado', 'aprobado')
                    THEN 'retrasado'
                    ELSE h.estado
                END as estado_real,
-               CASE 
+               CASE
                    WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado', 'revisado', 'aprobado')
                    THEN DATEDIFF(CURDATE(), h.fecha_limite)
                    ELSE 0
                END as dias_retraso_calculado
         FROM hitos_cronograma h
-        LEFT JOIN hitos_cronograma hp ON h.hito_predecesor_id = hp.id
-        LEFT JOIN usuarios uc ON h.creado_por_rut = uc.rut
-        LEFT JOIN usuarios ua ON h.actualizado_por_rut = ua.rut
         WHERE h.cronograma_id = ?
-        ORDER BY h.fecha_limite ASC, h.peso_en_proyecto DESC
+        ORDER BY h.fecha_limite ASC
     `, [cronograma_id]);
     return rows;
 };
@@ -319,13 +313,13 @@ export const marcarNotificacionLeida = async (notificacion_id) => {
 // ============= FUNCIONES PARA ALERTAS AUTOMÁTICAS =============
 
 // Configurar alertas para proyecto
-export const configurarAlertas = async ({ proyecto_id, profesor_rut, dias_alerta_entregas, dias_alerta_reuniones, dias_alerta_defensas, alertas_entregas, alertas_reuniones, alertas_retrasos, alertas_evaluaciones, enviar_email_estudiante, enviar_email_profesor }) => {
+export const configurarAlertas = async ({ proyecto_id, profesor_rut, dias_alerta_entregas, dias_alerta_reuniones, dias_alerta_defensas, alertas_entregas, alertas_reuniones, alertas_retrasos, enviar_email_estudiante, enviar_email_profesor }) => {
     const [result] = await pool.execute(
-        `INSERT INTO configuracion_alertas 
-         (proyecto_id, profesor_rut, dias_alerta_entregas, dias_alerta_reuniones, dias_alerta_defensas, 
-          alertas_entregas, alertas_reuniones, alertas_retrasos, alertas_evaluaciones, 
+        `INSERT INTO configuracion_alertas
+         (proyecto_id, profesor_rut, dias_alerta_entregas, dias_alerta_reuniones, dias_alerta_defensas,
+          alertas_entregas, alertas_reuniones, alertas_retrasos,
           enviar_email_estudiante, enviar_email_profesor)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
          dias_alerta_entregas = VALUES(dias_alerta_entregas),
          dias_alerta_reuniones = VALUES(dias_alerta_reuniones),
@@ -333,12 +327,11 @@ export const configurarAlertas = async ({ proyecto_id, profesor_rut, dias_alerta
          alertas_entregas = VALUES(alertas_entregas),
          alertas_reuniones = VALUES(alertas_reuniones),
          alertas_retrasos = VALUES(alertas_retrasos),
-         alertas_evaluaciones = VALUES(alertas_evaluaciones),
          enviar_email_estudiante = VALUES(enviar_email_estudiante),
          enviar_email_profesor = VALUES(enviar_email_profesor),
          updated_at = NOW()`,
         [proyecto_id, profesor_rut, dias_alerta_entregas || 3, dias_alerta_reuniones || 1, dias_alerta_defensas || 7,
-         alertas_entregas, alertas_reuniones, alertas_retrasos, alertas_evaluaciones,
+         alertas_entregas, alertas_reuniones, alertas_retrasos,
          enviar_email_estudiante, enviar_email_profesor]
     );
     return result.affectedRows > 0;
@@ -379,7 +372,7 @@ export const obtenerHitosProximosVencer = async (dias_anticipacion = 3) => {
 // Obtener estadísticas de cumplimiento de cronograma
 export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
     const [rows] = await pool.execute(`
-        SELECT 
+        SELECT
             COUNT(*) as total_hitos,
             SUM(CASE WHEN estado IN ('entregado', 'revisado', 'aprobado') THEN 1 ELSE 0 END) as hitos_completados,
             SUM(CASE WHEN cumplido_en_fecha = TRUE THEN 1 ELSE 0 END) as hitos_a_tiempo,
@@ -391,18 +384,189 @@ export const obtenerEstadisticasCumplimiento = async (proyecto_id) => {
         INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
         WHERE c.proyecto_id = ? AND c.activo = TRUE
     `, [proyecto_id]);
-    
+
     const estadisticas = rows[0];
     if (estadisticas.total_hitos > 0) {
         estadisticas.porcentaje_cumplimiento = (estadisticas.hitos_completados / estadisticas.total_hitos) * 100;
-        estadisticas.porcentaje_puntualidad = estadisticas.hitos_a_tiempo > 0 
-            ? (estadisticas.hitos_a_tiempo / estadisticas.total_hitos) * 100 
+        estadisticas.porcentaje_puntualidad = estadisticas.hitos_a_tiempo > 0
+            ? (estadisticas.hitos_a_tiempo / estadisticas.total_hitos) * 100
             : 0;
     } else {
         estadisticas.porcentaje_cumplimiento = 0;
         estadisticas.porcentaje_puntualidad = 0;
         estadisticas.avance_promedio = 0;
     }
-    
+
     return estadisticas;
-}; 
+};
+
+// ============= FUNCIONES DE VERIFICACIÓN DE PERMISOS =============
+
+// Verificar si un profesor es guía de un proyecto
+export const esProfesorGuia = async (proyecto_id, profesor_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM asignaciones_proyectos ap
+        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE ap.proyecto_id = ?
+          AND ap.profesor_rut = ?
+          AND ap.activo = TRUE
+          AND (rp.nombre LIKE '%guia%' OR rp.nombre LIKE '%guía%' OR rp.nombre LIKE '%Guía%' OR rp.nombre = 'profesor_guia')
+    `, [proyecto_id, profesor_rut]);
+    return rows[0].count > 0;
+};
+
+// Verificar si un estudiante pertenece al proyecto de un cronograma
+export const esEstudianteDelCronograma = async (cronograma_id, estudiante_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM cronogramas_proyecto c
+        INNER JOIN estudiantes_proyectos ep ON c.proyecto_id = ep.proyecto_id
+        WHERE c.id = ? AND ep.estudiante_rut = ?
+    `, [cronograma_id, estudiante_rut]);
+    return rows[0].count > 0;
+};
+
+// Verificar si un profesor es guía del proyecto de un cronograma
+export const esProfesorGuiaDelCronograma = async (cronograma_id, profesor_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM cronogramas_proyecto c
+        INNER JOIN asignaciones_proyectos ap ON c.proyecto_id = ap.proyecto_id
+        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE c.id = ?
+          AND ap.profesor_rut = ?
+          AND ap.activo = TRUE
+          AND (rp.nombre LIKE '%guia%' OR rp.nombre LIKE '%guía%' OR rp.nombre LIKE '%Guía%' OR rp.nombre = 'profesor_guia')
+    `, [cronograma_id, profesor_rut]);
+    return rows[0].count > 0;
+};
+
+// Verificar si un profesor (cualquier rol) está asignado al proyecto del cronograma
+export const esProfesorAsignadoAlCronograma = async (cronograma_id, profesor_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM cronogramas_proyecto c
+        INNER JOIN asignaciones_proyectos ap ON c.proyecto_id = ap.proyecto_id
+        WHERE c.id = ?
+          AND ap.profesor_rut = ?
+          AND ap.activo = TRUE
+    `, [cronograma_id, profesor_rut]);
+    return rows[0].count > 0;
+};
+
+// Verificar si un usuario puede ver un cronograma
+export const puedeVerCronograma = async (cronograma_id, usuario_rut, rol_usuario) => {
+    // Admins y super admins pueden ver todo
+    if (rol_usuario === 'admin' || rol_usuario === 'superadmin' || rol_usuario === 3 || rol_usuario === 4) {
+        return true;
+    }
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM cronogramas_proyecto c
+        LEFT JOIN estudiantes_proyectos ep ON c.proyecto_id = ep.proyecto_id AND ep.estudiante_rut = ?
+        LEFT JOIN asignaciones_proyectos ap ON c.proyecto_id = ap.proyecto_id AND ap.profesor_rut = ? AND ap.activo = TRUE
+        WHERE c.id = ?
+          AND (ep.estudiante_rut IS NOT NULL OR ap.profesor_rut IS NOT NULL)
+    `, [usuario_rut, usuario_rut, cronograma_id]);
+    return rows[0].count > 0;
+};
+
+// Verificar si un estudiante pertenece al proyecto de un hito
+export const esEstudianteDelHito = async (hito_id, estudiante_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM hitos_cronograma h
+        INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
+        INNER JOIN estudiantes_proyectos ep ON c.proyecto_id = ep.proyecto_id
+        WHERE h.id = ? AND ep.estudiante_rut = ?
+    `, [hito_id, estudiante_rut]);
+    return rows[0].count > 0;
+};
+
+// Verificar si un profesor es guía del proyecto de un hito
+export const esProfesorGuiaDelHito = async (hito_id, profesor_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM hitos_cronograma h
+        INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
+        INNER JOIN asignaciones_proyectos ap ON c.proyecto_id = ap.proyecto_id
+        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE h.id = ?
+          AND ap.profesor_rut = ?
+          AND ap.activo = TRUE
+          AND (rp.nombre LIKE '%guia%' OR rp.nombre LIKE '%guía%' OR rp.nombre LIKE '%Guía%' OR rp.nombre = 'profesor_guia')
+    `, [hito_id, profesor_rut]);
+    return rows[0].count > 0;
+};
+
+// Actualizar hito del cronograma
+export const actualizarHitoCronograma = async (cronograma_id, hito_id, data) => {
+    const allowedFields = ['nombre_hito', 'descripcion', 'tipo_hito', 'fecha_limite', 'peso_en_proyecto', 'es_critico', 'hito_predecesor_id'];
+    const fields = [];
+    const values = [];
+
+    for (const [key, value] of Object.entries(data)) {
+        if (allowedFields.includes(key) && value !== undefined) {
+            fields.push(`${key} = ?`);
+            values.push(value);
+        }
+    }
+
+    if (fields.length === 0) throw new Error('No hay campos válidos para actualizar');
+
+    let query = `UPDATE hitos_cronograma SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ?`;
+    values.push(hito_id);
+
+    if (cronograma_id) {
+        query += ` AND cronograma_id = ?`;
+        values.push(cronograma_id);
+    }
+
+    const [result] = await pool.execute(query, values);
+    return result.affectedRows > 0;
+};
+
+// Eliminar hito del cronograma
+export const eliminarHitoCronograma = async (cronograma_id, hito_id) => {
+    const [result] = await pool.execute(
+        `DELETE FROM hitos_cronograma WHERE id = ? AND cronograma_id = ?`,
+        [hito_id, cronograma_id]
+    );
+    return result.affectedRows > 0;
+};
+
+// Obtener hito por ID (incluye proyecto_id desde el cronograma)
+export const obtenerHitoPorId = async (hito_id) => {
+    const [rows] = await pool.execute(`
+        SELECT h.*, c.proyecto_id
+        FROM hitos_cronograma h
+        INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
+        WHERE h.id = ?
+    `, [hito_id]);
+    return rows[0];
+};
+
+// Limpiar entrega de un hito (restablece al estado pendiente)
+export const limpiarEntregaHito = async (hito_id) => {
+    const [result] = await pool.execute(
+        `UPDATE hitos_cronograma
+         SET estado = 'pendiente', fecha_entrega = NULL, archivo_entrega = NULL,
+             nombre_archivo_original = NULL, comentarios_estudiante = NULL,
+             cumplido_en_fecha = NULL, dias_retraso = 0, porcentaje_avance = 0,
+             updated_at = NOW()
+         WHERE id = ?`,
+        [hito_id]
+    );
+    return result.affectedRows > 0;
+};
+
+// Verificar si una notificación pertenece a un usuario
+export const notificacionPerteneceAUsuario = async (notificacion_id, usuario_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT COUNT(*) as count
+        FROM notificaciones_proyecto
+        WHERE id = ? AND destinatario_rut = ?
+    `, [notificacion_id, usuario_rut]);
+    return rows[0].count > 0;
+};

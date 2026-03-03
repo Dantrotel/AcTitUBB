@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, signal, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../services/api';
 
@@ -30,16 +30,16 @@ interface EstadisticasCarga {
   templateUrl: './carga-administrativa.html',
   styleUrls: ['./carga-administrativa.scss']
 })
-export class CargaAdministrativaComponent implements OnInit {
+export class CargaAdministrativaComponent {
   profesores = signal<ProfesorCarga[]>([]);
   estadisticas = signal<EstadisticasCarga | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
   
-  constructor(private apiService: ApiService) {}
-  
-  async ngOnInit() {
-    await this.cargarDatos();
+  constructor(private apiService: ApiService) {
+    afterNextRender(() => {
+      this.cargarDatos();
+    });
   }
   
   async cargarDatos() {

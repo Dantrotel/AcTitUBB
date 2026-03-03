@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
-import { NavbarComponent } from '../../../components/navbar/navbar.component';
-
 interface MetricasProfesor {
   // Propuestas
   totalPropuestasRevisadas: number;
@@ -67,7 +65,7 @@ interface ReunionDetalle {
 @Component({
   selector: 'app-reportes-profesor',
   standalone: true,
-  imports: [CommonModule, NavbarComponent],
+  imports: [CommonModule],
   templateUrl: './reportes-profesor.component.html',
   styleUrls: ['./reportes-profesor.component.scss']
 })

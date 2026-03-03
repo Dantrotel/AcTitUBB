@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
-import { isBlacklisted } from './blacklist.js'; // ajusta la ruta según tu proyecto
+import { isBlacklisted } from './blacklist.js';
 import { pool } from '../db/connectionDB.js';
+import { logger } from '../config/logger.js';
 
 const verifySession = async (req, res, next) => {
   
@@ -9,18 +10,16 @@ const verifySession = async (req, res, next) => {
   let token = req.headers.authorization;
 
   if (!token) {
-    console.log('⚠️ No authorization header');
+    logger.warn('No authorization header recibido');
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  console.log('🔑 Token recibido (primeros 20 chars):', token.substring(0, 20) + '...');
   token = token.split(" ")[1];
-  console.log('🔑 Token extraído:', token ? token.substring(0, 20) + '...' : 'UNDEFINED');
 
   // Verificar si el token está en la blacklist (IMPORTANTE: await porque isBlacklisted es async)
   const tokenBlacklisted = await isBlacklisted(token);
   if (tokenBlacklisted) {
-    console.log('🚫 Token en blacklist');
+    logger.warn('Token en blacklist rechazado');
     return res.status(401).json({ 
       message: "Token revoked. Please login again.",
       code: "TOKEN_REVOKED"
@@ -158,7 +157,6 @@ export const checkRole = (...rolesPermitidos) => {
     }
 
     const rolUsuario = Number(req.rol_id);
-    console.log('🔐 checkRole - Verificando rol:', rolUsuario);
     
     // Super Admin siempre tiene acceso
     if (rolUsuario === 4) {
@@ -174,7 +172,6 @@ export const checkRole = (...rolesPermitidos) => {
       return next();
     }
 
-    // Verificar permisos especiales: Admin puede acceder a rutas de profesores y estudiantes
     for (const rolPermitido of rolesExpandidos) {
       const rolRequerido = Number(rolPermitido);
       if (puedeAcceder(rolUsuario, rolRequerido)) {
@@ -182,14 +179,13 @@ export const checkRole = (...rolesPermitidos) => {
       }
     }
 
-    // Mensajes personalizados por rol esperado
     let mensaje = "Acceso denegado";
-
     if (rolesExpandidos.includes('1')) mensaje = "Acceso solo para estudiantes";
     if (rolesExpandidos.includes('2')) mensaje = "Acceso solo para profesores";
     if (rolesExpandidos.includes('3')) mensaje = "Acceso solo para administradores";
     if (rolesExpandidos.includes('4')) mensaje = "Acceso solo para super administrador";
 
+    logger.warn('Acceso denegado por rol insuficiente', { rolUsuario, rolesRequeridos: rolesExpandidos });
     return res.status(403).json({ message: mensaje });
   };
 };

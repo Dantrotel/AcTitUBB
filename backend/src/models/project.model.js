@@ -165,12 +165,13 @@ const deleteProject = async (projectId) => {
 // Obtener estadísticas de proyectos
 const getProjectStats = async () => {
     const query = `
-        SELECT 
+        SELECT
             COUNT(*) as total_proyectos,
-            SUM(CASE WHEN estado = 'en_desarrollo' THEN 1 ELSE 0 END) as en_desarrollo,
-            SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completados,
-            SUM(CASE WHEN estado = 'defendido' THEN 1 ELSE 0 END) as defendidos
-        FROM proyectos
+            SUM(CASE WHEN ep.nombre = 'en_desarrollo' THEN 1 ELSE 0 END) as en_desarrollo,
+            SUM(CASE WHEN ep.nombre = 'completado' THEN 1 ELSE 0 END) as completados,
+            SUM(CASE WHEN ep.nombre = 'defendido' THEN 1 ELSE 0 END) as defendidos
+        FROM proyectos p
+        LEFT JOIN estados_proyectos ep ON p.estado_id = ep.id
     `;
     const [rows] = await pool.execute(query);
     return rows[0];
@@ -215,7 +216,7 @@ const obtenerProfesoresAsignadosPropuesta = async (propuesta_id) => {
 // Verificar si un usuario puede ver un proyecto específico (actualizado para múltiples estudiantes)
 const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
     // Los administradores y super administradores pueden ver todos los proyectos
-    if (rol_usuario === 'admin' || rol_usuario === 3 || rol_usuario === 4) {
+    if (rol_usuario === 'admin' || rol_usuario === 'superadmin' || rol_usuario === 3 || rol_usuario === 4) {
         return true;
     }
 
@@ -304,7 +305,7 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 LEFT JOIN usuarios prof ON ap.profesor_rut = prof.rut
                 LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
                 WHERE ep_join.estudiante_rut = ?
-                GROUP BY p.id
+                GROUP BY p.id, u.nombre, u.email, prop.titulo, car.codigo, car.nombre
                 ORDER BY p.fecha_inicio DESC
             `;
             params = [usuario_rut];
@@ -433,10 +434,29 @@ const obtenerDashboardProyecto = async (proyecto_id) => {
         // Información básica del proyecto
         const proyecto = await obtenerProyectoPorIdConPermisos(proyecto_id, null, 'admin');
         if (!proyecto) return null;
-        
-        // HITOS Y EVALUACIONES REMOVIDOS - ahora se usa "Fechas Importantes"
+
+        // Calcular progreso real desde hitos del cronograma activo
+        const [hitosStats] = await pool.execute(`
+            SELECT
+                COUNT(*) as total_hitos,
+                SUM(CASE WHEN h.estado IN ('entregado', 'revisado', 'aprobado') THEN 1 ELSE 0 END) as hitos_completados
+            FROM hitos_cronograma h
+            INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
+            WHERE c.proyecto_id = ? AND c.activo = TRUE
+        `, [proyecto_id]);
+
+        const stats = hitosStats[0];
+        const total = Number(stats.total_hitos) || 0;
+        const completados = Number(stats.hitos_completados) || 0;
+        const progreso = total > 0
+            ? Math.round((completados / total) * 100)
+            : (Number(proyecto.porcentaje_avance) || 0);
+
         return {
-            proyecto
+            proyecto,
+            hitos_total: total,
+            hitos_completados: completados,
+            progreso
         };
     } catch (error) {
         console.error('Error al obtener dashboard del proyecto:', error);
@@ -526,7 +546,7 @@ const obtenerCargaProfesores = async (carrera_id = null) => {
                 u.email,
                 -- Conteo por rol específico
                 SUM(CASE WHEN rp.nombre = 'Profesor Guía' THEN 1 ELSE 0 END) as proyectos_guia,
-                SUM(CASE WHEN rp.nombre = 'Profesor de Asignatura' THEN 1 ELSE 0 END) as proyectos_informante,
+                SUM(CASE WHEN rp.nombre = 'Profesor Informante' THEN 1 ELSE 0 END) as proyectos_informante,
                 SUM(CASE WHEN rp.nombre = 'Profesor Revisor' THEN 1 ELSE 0 END) as proyectos_revisor,
                 SUM(CASE WHEN rp.nombre = 'Profesor Co-Guía' THEN 1 ELSE 0 END) as proyectos_coguia,
                 SUM(CASE WHEN rp.nombre = 'Profesor de Sala' THEN 1 ELSE 0 END) as proyectos_sala,

@@ -203,32 +203,6 @@ const colaboradoresExternosController = {
   },
 
   /**
-   * Crear evaluación de colaborador
-   */
-  async crearEvaluacion(req, res) {
-    try {
-      // Admin, Super Admin y Profesores pueden crear evaluaciones
-      if (![2, 3, 4].includes(req.user.rol_id)) {
-        return res.status(403).json({ error: 'Acceso denegado' });
-      }
-      
-      const resultado = await colaboradoresExternosModel.crearEvaluacion(req.body);
-      
-      res.status(201).json({
-        success: true,
-        mensaje: 'Evaluación creada exitosamente',
-        id: resultado.id
-      });
-    } catch (error) {
-      logger.error('Error en crearEvaluacion', { error: error.message });
-      res.status(500).json({
-        success: false,
-        error: 'Error al crear evaluación'
-      });
-    }
-  },
-
-  /**
    * Verificar colaborador
    */
   async verificarColaborador(req, res) {

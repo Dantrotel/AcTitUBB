@@ -34,7 +34,7 @@ export class CronogramaCompletoComponent implements OnInit {
   @Input() userRut!: string;
 
   cronograma: Cronograma | null = null;
-  estadisticas: any = null;
+  estadisticas: any = {};
   alertas: any[] = [];
   mostrarTimeline = false;
 
@@ -95,19 +95,32 @@ export class CronogramaCompletoComponent implements OnInit {
   }
 
   cargarEstadisticas() {
-    // Simulación de estadísticas - en producción vendría del backend
-    this.estadisticas = {
-      total_hitos: 0,
-      hitos_completados: 0,
-      hitos_pendientes: 0,
-      hitos_retrasados: 0,
-      entregas_total: 0,
-      entregas_aprobadas: 0,
-      entregas_pendientes: 0
-    };
+    if (!this.projectId) return;
 
-    // En una implementación real, esto vendría de un endpoint específico
-    // this.apiService.obtenerEstadisticasCronograma(this.cronogramaId).subscribe(...)
+    this.apiService.obtenerEstadisticasCumplimiento(this.projectId).subscribe({
+      next: (response: any) => {
+        if (response && response.success) {
+          const d = response.data;
+          this.estadisticas = {
+            total_hitos: d.total_hitos || 0,
+            hitos_completados: d.hitos_completados || 0,
+            hitos_pendientes: (d.total_hitos || 0) - (d.hitos_completados || 0),
+            hitos_retrasados: d.hitos_retrasados || 0,
+            entregas_total: d.total_hitos || 0,
+            entregas_aprobadas: d.hitos_completados || 0,
+            entregas_pendientes: (d.total_hitos || 0) - (d.hitos_completados || 0),
+            progreso: d.porcentaje_cumplimiento || 0
+          };
+        }
+      },
+      error: () => {
+        this.estadisticas = {
+          total_hitos: 0, hitos_completados: 0, hitos_pendientes: 0,
+          hitos_retrasados: 0, entregas_total: 0, entregas_aprobadas: 0,
+          entregas_pendientes: 0, progreso: 0
+        };
+      }
+    });
   }
 
   verificarAlertas() {

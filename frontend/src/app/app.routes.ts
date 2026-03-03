@@ -18,10 +18,7 @@ import { AsignarProfesorComponent } from './pages/admin/asignar-profesor/asignar
 import { GestionUsuariosComponent } from './pages/admin/gestion-usuarios/gestion-usuarios';
 import { AsignacionesComponent } from './pages/admin/asignaciones/asignaciones';
 import { GestionCalendarioComponent } from './pages/admin/gestion-calendario/gestion-calendario';
-import { ProfesorChatComponent } from './pages/profesor/chat/profesor-chat.component';
-import { EstudianteChatComponent } from './pages/estudiante/chat/estudiante-chat.component';
 import { AdminChatComponent } from './pages/admin/chat/admin-chat.component';
-import { SuperAdminChatComponent } from './pages/super-admin/chat/super-admin-chat.component';
 import { GestionComisionComponent } from './pages/admin/gestion-comision/gestion-comision';
 import { GestionExtensionesComponent } from './pages/admin/gestion-extensiones/gestion-extensiones.component';
 import { GestionPeriodoPropuestasComponent } from './pages/admin/gestion-periodo-propuestas/gestion-periodo-propuestas.component';
@@ -39,7 +36,6 @@ import { AppLayoutComponent } from './components/app-layout/app-layout.component
 import { SuperAdminHomeComponent } from './pages/super-admin/home/super-admin-home.component';
 import { GestionEstructuraComponent } from './pages/super-admin/gestion-estructura/gestion-estructura';
 import { GestionarJefesComponent } from './pages/super-admin/gestionar-jefes/gestionar-jefes';
-import { SuperAdminGestionUsuariosComponent } from './pages/super-admin/gestion-usuarios/super-admin-gestion-usuarios';
 
 // Calendario Matching Components
 import { DisponibilidadesComponent } from './components/calendario-matching/disponibilidades.component';
@@ -114,7 +110,6 @@ export const routes: Routes = [
           { path: 'home', component: SuperAdminHomeComponent, data: { requiredRoles: [4] } },
           { path: 'propuestas/revisar/:id', component: RevisarPropuestaComponent, data: { requiredRoles: [4] } },
           { path: 'gestion-estructura', component: GestionEstructuraComponent, data: { requiredRoles: [4] } },
-          { path: 'jefes', component: GestionarJefesComponent, data: { requiredRoles: [4] } },
           { path: 'gestionar-jefes', component: GestionarJefesComponent, data: { requiredRoles: [4] } },
           { 
             path: 'configuracion', 
@@ -131,11 +126,12 @@ export const routes: Routes = [
             loadComponent: () => import('./pages/super-admin/actividad-tiempo-real/actividad-tiempo-real.component').then(m => m.ActividadTiempoRealComponent),
             data: { requiredRoles: [4] } 
           },
-          { 
-            path: 'respaldos', 
+          {
+            path: 'respaldos',
             loadComponent: () => import('./pages/super-admin/gestion-respaldos/gestion-respaldos.component').then(m => m.GestionRespaldosComponent),
-            data: { requiredRoles: [4] } 
-          }
+            data: { requiredRoles: [4] }
+          },
+          { path: 'chat', component: AdminChatComponent, data: { requiredRoles: [4] } }
         ]
       },
 
@@ -161,10 +157,10 @@ export const routes: Routes = [
           { path: 'calendario', component: GestionCalendarioComponent, data: { requiredRoles: [3, 4] } },
           { path: 'comision', component: GestionComisionComponent, data: { requiredRoles: [3, 4] } },
           { path: 'extensiones', component: GestionExtensionesComponent, data: { requiredRoles: [3, 4] } },
-          { path: 'periodos', component: GestionPeriodoPropuestasComponent, data: { requiredRoles: [3, 4] } },
           { path: 'gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, data: { requiredRoles: [3, 4] } },
           { path: 'fechas-importantes', component: FechasImportantesComponent, data: { requiredRoles: [3, 4] } },
           { path: 'calendario-unificado', component: CalendarioUnificadoComponent, data: { requiredRoles: [3, 4] } },
+          { path: 'chat', component: AdminChatComponent, data: { requiredRoles: [3, 4] } },
           { 
             path: 'carga-profesores', 
             loadComponent: () => import('./pages/admin/carga-administrativa/carga-administrativa').then(m => m.CargaAdministrativaComponent),
@@ -212,7 +208,8 @@ export const routes: Routes = [
           { path: 'reuniones', component: ReunionesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'fechas-importantes', component: FechasImportantesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'reportes', component: ReportesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
-          { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent, data: { requiredRoles: [2, 3, 4] } }
+          { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent, data: { requiredRoles: [2, 3, 4] } },
+          { path: 'chat', component: AdminChatComponent, data: { requiredRoles: [2, 3, 4] } }
         ]
       },
 
@@ -232,7 +229,7 @@ export const routes: Routes = [
           { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent },
           { path: 'solicitar-extension', component: SolicitarExtensionComponent },
           { path: 'solicitar-extension/:proyectoId', component: SolicitarExtensionComponent },
-          { path: 'chat', component: EstudianteChatComponent },
+          { path: 'chat', component: AdminChatComponent },
           { path: 'perfil', component: PerfilEstudianteComponent },
           { path: 'documentos', redirectTo: 'plantillas', pathMatch: 'full' },
           { 

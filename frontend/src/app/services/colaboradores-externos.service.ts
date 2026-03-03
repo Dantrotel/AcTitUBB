@@ -57,8 +57,6 @@ export interface ColaboradorProyecto {
   fecha_fin?: string;
   horas_dedicadas?: number;
   frecuencia_interaccion?: string;
-  puede_evaluar?: boolean;
-  evaluacion_realizada?: boolean;
   comentarios_participacion?: string;
   activo?: boolean;
   motivo_desvinculacion?: string;
@@ -70,31 +68,6 @@ export interface ColaboradorProyecto {
   entidad_nombre?: string;
   cargo?: string;
   asignador_nombre?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface EvaluacionColaborador {
-  id?: number;
-  colaborador_proyecto_id: number;
-  proyecto_id: number;
-  colaborador_id: number;
-  estudiante_rut: string;
-  fecha_evaluacion: string;
-  calificacion: number;
-  asistencia_puntualidad?: number;
-  calidad_trabajo?: number;
-  proactividad?: number;
-  trabajo_equipo?: number;
-  comunicacion?: number;
-  cumplimiento_plazos?: number;
-  fortalezas?: string;
-  areas_mejora?: string;
-  comentarios_generales?: string;
-  recomendaria_estudiante?: boolean;
-  documento_evaluacion?: string;
-  aprobada_por_profesor?: boolean;
-  fecha_aprobacion?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -171,7 +144,6 @@ export class ColaboradoresExternosService {
     fecha_inicio?: string;
     horas_dedicadas?: number;
     frecuencia_interaccion?: string;
-    puede_evaluar?: boolean;
   }): Observable<{ success: boolean; mensaje: string; id: number }> {
     return this.http.post<{ success: boolean; mensaje: string; id: number }>(
       `${this.apiUrl}/proyectos/asignar`,
@@ -203,12 +175,4 @@ export class ColaboradoresExternosService {
     );
   }
 
-  // ========== EVALUACIONES ==========
-
-  crearEvaluacion(evaluacion: EvaluacionColaborador): Observable<{ success: boolean; mensaje: string; id: number }> {
-    return this.http.post<{ success: boolean; mensaje: string; id: number }>(
-      `${this.apiUrl}/evaluaciones`,
-      evaluacion
-    );
-  }
 }

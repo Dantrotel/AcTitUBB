@@ -1,13 +1,5 @@
-import { Component, Input, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, Input, OnInit, signal, inject, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NotificationService } from '../../services/notification.service';
@@ -20,241 +12,266 @@ import { SubirVersionComponent } from '../subir-version/subir-version.component'
   standalone: true,
   imports: [
     CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
-    MatBadgeModule,
-    MatMenuModule,
     MatDialogModule
   ],
   template: `
-    <mat-card class="historial-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>history</mat-icon>
+    <div class="historial-card">
+      <!-- Header -->
+      <div class="historial-header">
+        <h2 class="historial-title">
+          <i class="fas fa-history"></i>
           Historial de Versiones
-        </mat-card-title>
-        <div class="header-actions">
+        </h2>
+        @if (puedeSubirVersion()) {
+          <button class="btn btn-primary" (click)="abrirDialogoSubirVersion()">
+            <i class="fas fa-upload"></i>
+            Subir Nueva Versión
+          </button>
+        }
+      </div>
+
+      <!-- Cuerpo -->
+      @if (cargando()) {
+        <div class="loading-wrap">
+          <div class="spinner"></div>
+          <p>Cargando versiones...</p>
+        </div>
+      } @else if (versiones().length === 0) {
+        <div class="empty-state">
+          <i class="fas fa-folder-open"></i>
+          <p>No hay versiones disponibles</p>
           @if (puedeSubirVersion()) {
-            <button mat-raised-button color="primary" (click)="abrirDialogoSubirVersion()">
-              <mat-icon>upload</mat-icon>
-              Subir Nueva Versión
+            <button class="btn btn-primary" (click)="abrirDialogoSubirVersion()">
+              <i class="fas fa-upload"></i>
+              Subir Primera Versión
             </button>
           }
         </div>
-      </mat-card-header>
+      } @else {
+        <div class="timeline">
+          @for (version of versionesOrdenadas(); track version.id; let last = $last) {
+            <div class="timeline-item" [class.version-final]="version.es_version_final">
+              @if (!last) {
+                <div class="timeline-line"></div>
+              }
 
-      <mat-card-content>
-        @if (cargando()) {
-          <div class="loading-container">
-            <mat-spinner></mat-spinner>
-            <p>Cargando versiones...</p>
-          </div>
-        } @else if (versiones().length === 0) {
-          <div class="empty-state">
-            <mat-icon>folder_open</mat-icon>
-            <p>No hay versiones disponibles</p>
-            @if (puedeSubirVersion()) {
-              <button mat-raised-button color="primary" (click)="abrirDialogoSubirVersion()">
-                <mat-icon>upload</mat-icon>
-                Subir Primera Versión
-              </button>
-            }
-          </div>
-        } @else {
-          <div class="timeline">
-            @for (version of versionesOrdenadas(); track version.id) {
-              <div class="timeline-item" [class.version-final]="version.es_version_final">
-                <!-- Línea conectora -->
-                @if (!$last) {
-                  <div class="timeline-line"></div>
-                }
+              <!-- Dot -->
+              <div class="timeline-dot" [ngClass]="getDotClass(version)">
+                <i [class]="getFAIcono(version)"></i>
+              </div>
 
-                <!-- Icono de versión -->
-                <div class="timeline-icon" [class]="getClaseIcono(version)">
-                  <mat-icon>{{ getIcono(version) }}</mat-icon>
-                </div>
+              <!-- Contenido -->
+              <div class="timeline-content">
+                <div class="version-header">
+                  <div class="version-info">
+                    <h3>
+                      {{ version.numero_version }}
+                      @if (version.es_version_final) {
+                        <span class="chip chip-final">
+                          <i class="fas fa-check-circle"></i> Versión Final
+                        </span>
+                      }
+                    </h3>
+                    <span class="version-tipo">{{ getTipoVersionLabel(version.tipo_version) }}</span>
+                  </div>
 
-                <!-- Contenido de versión -->
-                <div class="timeline-content">
-                  <div class="version-header">
-                    <div class="version-info">
-                      <h3>
-                        {{ version.numero_version }}
-                        @if (version.es_version_final) {
-                          <mat-chip class="chip-final">
-                            <mat-icon>check_circle</mat-icon>
-                            Versión Final
-                          </mat-chip>
-                        }
-                      </h3>
-                      <span class="version-tipo">
-                        {{ getTipoVersionLabel(version.tipo_version) }}
-                      </span>
-                    </div>
-
-                    <div class="version-actions">
-                      <button mat-icon-button [matMenuTriggerFor]="menu">
-                        <mat-icon>more_vert</mat-icon>
-                      </button>
-                      <mat-menu #menu="matMenu">
-                        <button mat-menu-item (click)="descargarVersion(version)">
-                          <mat-icon>download</mat-icon>
-                          Descargar
+                  <!-- Menú de acciones -->
+                  <div class="version-menu" (click)="$event.stopPropagation()">
+                    <button class="btn-menu-trigger" (click)="toggleMenu(version.id)">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    @if (menuAbierto() === version.id) {
+                      <div class="dropdown-menu">
+                        <button class="dropdown-item" (click)="descargarVersion(version); closeMenu()">
+                          <i class="fas fa-download"></i> Descargar
                         </button>
-                        <button mat-menu-item (click)="verComentarios(version)">
-                          <mat-icon [matBadge]="version.total_comentarios || 0" 
-                                    [matBadgeHidden]="!version.total_comentarios">
-                            comment
-                          </mat-icon>
+                        <button class="dropdown-item" (click)="verComentarios(version); closeMenu()">
+                          <i class="fas fa-comments"></i>
                           Ver Comentarios
+                          @if (version.total_comentarios) {
+                            <span class="chip chip-sm">{{ version.total_comentarios }}</span>
+                          }
                         </button>
                         @if (puedeActualizarEstado() && !version.es_version_final) {
-                          <button mat-menu-item (click)="cambiarEstado(version)">
-                            <mat-icon>edit</mat-icon>
-                            Cambiar Estado
+                          <button class="dropdown-item" (click)="cambiarEstado(version); closeMenu()">
+                            <i class="fas fa-edit"></i> Cambiar Estado
                           </button>
                           @if (puedeMarcarFinal()) {
-                            <button mat-menu-item (click)="marcarComoFinal(version)">
-                              <mat-icon>check_circle</mat-icon>
-                              Marcar como Final
+                            <button class="dropdown-item" (click)="marcarComoFinal(version); closeMenu()">
+                              <i class="fas fa-check-circle"></i> Marcar como Final
                             </button>
                           }
                         }
-                      </mat-menu>
-                    </div>
-                  </div>
-
-                  <div class="version-details">
-                    <div class="detail-row">
-                      <mat-icon class="detail-icon">person</mat-icon>
-                      <span>{{ version.autor_nombre }} {{ version.autor_apellido }}</span>
-                      <mat-chip [class]="'chip-rol-' + version.autor_rol">
-                        {{ getRolLabel(version.autor_rol) }}
-                      </mat-chip>
-                    </div>
-
-                    <div class="detail-row">
-                      <mat-icon class="detail-icon">schedule</mat-icon>
-                      <span>{{ formatearFecha(version.fecha_subida) }}</span>
-                    </div>
-
-                    <div class="detail-row">
-                      <mat-icon class="detail-icon">insert_drive_file</mat-icon>
-                      <span>{{ version.archivo_nombre }}</span>
-                      <span class="file-size">({{ formatearTamano(version.archivo_tamano_kb) }})</span>
-                    </div>
-
-                    <div class="detail-row">
-                      <mat-chip [class]="'chip-estado-' + version.estado">
-                        {{ getEstadoLabel(version.estado) }}
-                      </mat-chip>
-                    </div>
-
-                    @if (version.descripcion_cambios) {
-                      <div class="cambios-section">
-                        <strong>Descripción de cambios:</strong>
-                        <p>{{ version.descripcion_cambios }}</p>
-                      </div>
-                    }
-
-                    @if (version.comentarios_generales) {
-                      <div class="comentarios-section">
-                        <mat-icon>comment</mat-icon>
-                        <div>
-                          <strong>Comentarios generales:</strong>
-                          <p>{{ version.comentarios_generales }}</p>
-                        </div>
                       </div>
                     }
                   </div>
                 </div>
+
+                <div class="version-details">
+                  <div class="detail-row">
+                    <i class="fas fa-user detail-icon"></i>
+                    <span>{{ version.autor_nombre }} {{ version.autor_apellido }}</span>
+                    <span [ngClass]="getChipRol(version.autor_rol)" class="chip">
+                      {{ getRolLabel(version.autor_rol) }}
+                    </span>
+                  </div>
+
+                  <div class="detail-row">
+                    <i class="fas fa-clock detail-icon"></i>
+                    <span>{{ formatearFecha(version.fecha_subida) }}</span>
+                  </div>
+
+                  <div class="detail-row">
+                    <i class="fas fa-file detail-icon"></i>
+                    <span>{{ version.archivo_nombre }}</span>
+                    <span class="file-size">({{ formatearTamano(version.archivo_tamano_kb) }})</span>
+                  </div>
+
+                  <div class="detail-row">
+                    <span [ngClass]="getChipEstado(version.estado)" class="chip">
+                      {{ getEstadoLabel(version.estado) }}
+                    </span>
+                  </div>
+
+                  @if (version.descripcion_cambios) {
+                    <div class="info-box info-box-blue">
+                      <strong>Descripción de cambios:</strong>
+                      <p>{{ version.descripcion_cambios }}</p>
+                    </div>
+                  }
+
+                  @if (version.comentarios_generales) {
+                    <div class="info-box info-box-amber">
+                      <i class="fas fa-comment-alt"></i>
+                      <div>
+                        <strong>Comentarios generales:</strong>
+                        <p>{{ version.comentarios_generales }}</p>
+                      </div>
+                    </div>
+                  }
+                </div>
               </div>
-            }
-          </div>
-        }
-      </mat-card-content>
-    </mat-card>
+            </div>
+          }
+        </div>
+      }
+    </div>
   `,
   styles: [`
     .historial-card {
-      margin: 20px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
 
-    mat-card-header {
+    .historial-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-
-      mat-card-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 24px;
-      }
+      margin-bottom: 24px;
     }
 
-    .header-actions {
+    .historial-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #004b8d;
       display: flex;
+      align-items: center;
       gap: 10px;
     }
 
-    .loading-container, .empty-state {
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #004b8d;
+      color: #fff;
+      &:hover { background: #003a6e; }
+    }
+
+    .loading-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      padding: 60px 20px;
+      color: #666;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #004b8d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 60px 20px;
       text-align: center;
+      color: #999;
 
-      mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: #999;
-        margin-bottom: 20px;
+      i {
+        font-size: 52px;
+        margin-bottom: 16px;
+        opacity: 0.4;
       }
 
       p {
-        color: #666;
-        font-size: 16px;
+        font-size: 15px;
         margin-bottom: 20px;
+        color: #666;
       }
     }
 
     .timeline {
       position: relative;
-      padding: 20px 0;
+      padding: 8px 0;
     }
 
     .timeline-item {
       position: relative;
       display: flex;
       gap: 20px;
-      padding-bottom: 40px;
+      padding-bottom: 36px;
 
-      &.version-final {
-        .timeline-icon {
-          background: linear-gradient(135deg, #4CAF50, #8BC34A);
-          box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
-        }
+      &.version-final .timeline-dot {
+        background: linear-gradient(135deg, #388e3c, #66bb6a);
+        box-shadow: 0 0 16px rgba(56,142,60,0.4);
       }
     }
 
     .timeline-line {
       position: absolute;
-      left: 24px;
+      left: 23px;
       top: 48px;
-      bottom: -40px;
+      bottom: -8px;
       width: 2px;
       background: linear-gradient(180deg, #e0e0e0, transparent);
     }
 
-    .timeline-icon {
+    .timeline-dot {
       position: relative;
       z-index: 1;
       width: 48px;
@@ -264,157 +281,204 @@ import { SubirVersionComponent } from '../subir-version/subir-version.component'
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      transition: all 0.3s ease;
+      color: #fff;
+      font-size: 18px;
 
-      mat-icon {
-        color: white;
-      }
-
-      &.icono-estudiante {
-        background: linear-gradient(135deg, #2196F3, #03A9F4);
-      }
-
-      &.icono-profesor {
-        background: linear-gradient(135deg, #FF9800, #FFC107);
-      }
-
-      &.icono-admin {
-        background: linear-gradient(135deg, #9C27B0, #E91E63);
-      }
+      &.dot-estudiante { background: linear-gradient(135deg, #004b8d, #0066cc); }
+      &.dot-profesor { background: linear-gradient(135deg, #f57c00, #ffa726); }
+      &.dot-admin { background: linear-gradient(135deg, #6a1b9a, #ab47bc); }
+      &.dot-final { background: linear-gradient(135deg, #388e3c, #66bb6a); }
     }
 
     .timeline-content {
       flex: 1;
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid #f0f0f0;
+      transition: box-shadow 0.2s, transform 0.2s;
 
       &:hover {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-1px);
       }
     }
 
     .version-header {
       display: flex;
       justify-content: space-between;
-      align-items: start;
-      margin-bottom: 15px;
+      align-items: flex-start;
+      margin-bottom: 14px;
 
       h3 {
         margin: 0;
-        font-size: 20px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a2e;
         display: flex;
         align-items: center;
         gap: 10px;
+        flex-wrap: wrap;
       }
     }
 
     .version-info {
       .version-tipo {
-        color: #666;
-        font-size: 14px;
+        font-size: 13px;
+        color: #777;
+        margin-top: 2px;
+        display: block;
       }
+    }
+
+    .version-menu {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .btn-menu-trigger {
+      background: transparent;
+      border: 1px solid #e0e0e0;
+      color: #555;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+
+      &:hover { background: #f5f5f5; border-color: #bbb; }
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 36px;
+      right: 0;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      min-width: 180px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 10px 16px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+
+      &:hover { background: #f5f7fa; }
+
+      i { color: #004b8d; width: 14px; }
     }
 
     .version-details {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .detail-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #555;
-
-      .detail-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-        color: #999;
-      }
-
-      .file-size {
-        color: #999;
-        font-size: 12px;
-      }
+      font-size: 13px;
+      color: #444;
     }
 
-    .cambios-section, .comentarios-section {
-      margin-top: 15px;
-      padding: 15px;
-      background: #f5f5f5;
+    .detail-icon {
+      color: #aaa;
+      width: 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .file-size {
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .chip-sm {
+      padding: 2px 7px;
+      font-size: 10px;
+    }
+
+    .chip-final {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+
+    .chip-rol-estudiante { background: #e3f2fd; color: #1565c0; }
+    .chip-rol-profesor_guia { background: #fff3e0; color: #e65100; }
+    .chip-rol-profesor_informante { background: #fff3e0; color: #e65100; }
+    .chip-rol-admin { background: #f3e5f5; color: #6a1b9a; }
+
+    .chip-estado-borrador { background: #eceff1; color: #455a64; }
+    .chip-estado-enviado { background: #e3f2fd; color: #1565c0; }
+    .chip-estado-en_revision { background: #fff3e0; color: #e65100; }
+    .chip-estado-revisado { background: #e0f2f1; color: #00695c; }
+    .chip-estado-aprobado { background: #e8f5e9; color: #2e7d32; }
+    .chip-estado-rechazado { background: #ffebee; color: #b71c1c; }
+
+    .info-box {
+      margin-top: 10px;
+      padding: 12px 14px;
+      background: #f8f9fa;
       border-radius: 8px;
-      border-left: 4px solid #2196F3;
 
       strong {
         display: block;
-        margin-bottom: 8px;
+        font-size: 12px;
+        margin-bottom: 4px;
         color: #333;
       }
 
       p {
         margin: 0;
+        font-size: 13px;
         color: #555;
-        line-height: 1.6;
+        line-height: 1.5;
+      }
+
+      &.info-box-blue { border-left: 3px solid #004b8d; }
+      &.info-box-amber {
+        border-left: 3px solid #f57c00;
+        display: flex;
+        gap: 10px;
+
+        i { color: #f57c00; margin-top: 2px; }
       }
     }
-
-    .comentarios-section {
-      display: flex;
-      gap: 12px;
-      border-left-color: #FF9800;
-
-      mat-icon {
-        color: #FF9800;
-      }
-    }
-
-    .chip-final {
-      background: #4CAF50 !important;
-      color: white !important;
-      
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-      }
-    }
-
-    .chip-rol-estudiante { background: #E3F2FD; color: #1976D2; }
-    .chip-rol-profesor_guia { background: #FFF3E0; color: #F57C00; }
-    .chip-rol-profesor_informante { background: #FFF3E0; color: #F57C00; }
-    .chip-rol-admin { background: #F3E5F5; color: #7B1FA2; }
-
-    .chip-estado-borrador { background: #ECEFF1; color: #546E7A; }
-    .chip-estado-enviado { background: #E3F2FD; color: #1976D2; }
-    .chip-estado-en_revision { background: #FFF3E0; color: #F57C00; }
-    .chip-estado-revisado { background: #E0F2F1; color: #00796B; }
-    .chip-estado-aprobado { background: #E8F5E9; color: #388E3C; }
-    .chip-estado-rechazado { background: #FFEBEE; color: #C62828; }
 
     @media (max-width: 768px) {
-      .timeline-item {
-        gap: 10px;
-      }
-
-      .timeline-icon {
-        width: 40px;
-        height: 40px;
-      }
-
-      .timeline-line {
-        left: 19px;
-      }
-
-      .version-header {
-        flex-direction: column;
-        gap: 10px;
-      }
+      .timeline-item { gap: 12px; }
+      .timeline-dot { width: 40px; height: 40px; font-size: 15px; }
+      .timeline-line { left: 19px; }
+      .version-header { flex-direction: column; gap: 10px; }
     }
   `]
 })
@@ -430,9 +494,10 @@ export class HistorialVersionesComponent implements OnInit {
 
   versiones = signal<VersionDocumento[]>([]);
   cargando = signal(true);
+  menuAbierto = signal<number | null>(null);
 
   versionesOrdenadas = computed(() => {
-    return [...this.versiones()].sort((a, b) => 
+    return [...this.versiones()].sort((a, b) =>
       new Date(b.fecha_subida).getTime() - new Date(a.fecha_subida).getTime()
     );
   });
@@ -449,6 +514,21 @@ export class HistorialVersionesComponent implements OnInit {
     return ['profesor_guia', 'admin'].includes(this.rolUsuario);
   });
 
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.menuAbierto() !== null) {
+      this.menuAbierto.set(null);
+    }
+  }
+
+  toggleMenu(id: number) {
+    this.menuAbierto.update(current => current === id ? null : id);
+  }
+
+  closeMenu() {
+    this.menuAbierto.set(null);
+  }
+
   ngOnInit() {
     this.cargarVersiones();
   }
@@ -460,7 +540,7 @@ export class HistorialVersionesComponent implements OnInit {
         this.versiones.set(response.versiones);
         this.cargando.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al cargar versiones', 'Cerrar', { duration: 3000 });
         this.cargando.set(false);
       }
@@ -478,9 +558,7 @@ export class HistorialVersionesComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.cargarVersiones();
-      }
+      if (result) this.cargarVersiones();
     });
   }
 
@@ -495,7 +573,7 @@ export class HistorialVersionesComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.snackBar.open('Descarga iniciada', 'Cerrar', { duration: 2000 });
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al descargar archivo', 'Cerrar', { duration: 3000 });
       }
     });
@@ -524,30 +602,39 @@ export class HistorialVersionesComponent implements OnInit {
       'Marcar',
       'Cancelar'
     );
-    
+
     if (!confirmed) return;
-    
+
     this.versionesService.marcarVersionFinal(version.id).subscribe({
       next: () => {
         this.snackBar.open('Versión marcada como final', 'Cerrar', { duration: 3000 });
         this.cargarVersiones();
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al marcar como final', 'Cerrar', { duration: 3000 });
       }
     });
   }
 
-  getIcono(version: VersionDocumento): string {
-    if (version.es_version_final) return 'check_circle';
-    if (version.tipo_version === 'estudiante') return 'school';
-    return 'person';
+  getFAIcono(version: VersionDocumento): string {
+    if (version.es_version_final) return 'fas fa-check-circle';
+    if (version.tipo_version === 'estudiante') return 'fas fa-graduation-cap';
+    return 'fas fa-user';
   }
 
-  getClaseIcono(version: VersionDocumento): string {
-    if (version.autor_rol === 'estudiante') return 'icono-estudiante';
-    if (version.autor_rol === 'admin') return 'icono-admin';
-    return 'icono-profesor';
+  getDotClass(version: VersionDocumento): string {
+    if (version.es_version_final) return 'dot-final';
+    if (version.autor_rol === 'estudiante') return 'dot-estudiante';
+    if (version.autor_rol === 'admin') return 'dot-admin';
+    return 'dot-profesor';
+  }
+
+  getChipRol(rol: string): string {
+    return 'chip-rol-' + rol;
+  }
+
+  getChipEstado(estado: string): string {
+    return 'chip-estado-' + estado;
   }
 
   getTipoVersionLabel(tipo: string): string {

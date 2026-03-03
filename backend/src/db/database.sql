@@ -498,16 +498,27 @@ CREATE TABLE IF NOT EXISTS hitos_cronograma (
     comentarios_profesor TEXT NULL,
     calificacion DECIMAL(3,1) NULL CHECK (calificacion >= 1.0 AND calificacion <= 7.0),
     
+    -- Peso y criticidad (sistema unificado)
+    peso_en_proyecto DECIMAL(5,2) DEFAULT 0.00 CHECK (peso_en_proyecto >= 0 AND peso_en_proyecto <= 100),
+    es_critico BOOLEAN DEFAULT FALSE,
+    hito_predecesor_id INT NULL,
+
+    -- Auditoría
+    creado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+    actualizado_por_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+
     -- Control de cumplimiento
     cumplido_en_fecha BOOLEAN NULL, -- NULL si no entregado, TRUE/FALSE si entregado
     dias_retraso INT DEFAULT 0,
-    
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (cronograma_id) REFERENCES cronogramas_proyecto(id) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    
+    FOREIGN KEY (hito_predecesor_id) REFERENCES hitos_cronograma(id) ON DELETE SET NULL,
+    FOREIGN KEY (creado_por_rut) REFERENCES usuarios(rut) ON DELETE SET NULL,
+
     INDEX idx_cronograma_fecha (cronograma_id, fecha_limite),
     INDEX idx_proyecto_estado (proyecto_id, estado),
     INDEX idx_fecha_limite (fecha_limite),
@@ -1408,13 +1419,9 @@ CREATE TABLE IF NOT EXISTS configuracion_sistema (
 -- Configuraciones de Alertas y Recordatorios
 INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
 ('dias_sin_actividad_alerta', '30', 'entero', 'Días sin actividad en un proyecto antes de enviar alerta de inactividad', 'alertas', TRUE),
-('dias_habiles_informante', '15', 'entero', 'Días máximos que tiene un profesor informante para evaluar (días hábiles)', 'evaluaciones', TRUE),
 ('UMBRAL_INACTIVIDAD_DIAS', '30', 'entero', '[Alias] Días sin actividad - Usado por panel de configuración', 'alertas', TRUE),
 ('DIAS_PREVIOS_ALERTA_FECHAS', '2', 'entero', 'Días de anticipación para enviar alertas de fechas límite (48h y 24h)', 'alertas', TRUE),
-('PLAZO_EVALUACION_DIAS', '15', 'entero', '[Alias] Plazo evaluación - Usado por panel de configuración', 'evaluaciones', TRUE),
-('DIAS_ALERTA_EVALUACION', '3', 'entero', 'Días antes del vencimiento del plazo para alertar sobre evaluación pendiente', 'alertas', TRUE),
-('HORA_RECORDATORIO_REUNIONES', '08:00', 'texto', 'Hora del día para enviar recordatorios de reuniones (formato HH:MM)', 'alertas', TRUE),
-('HORA_ALERTA_EVALUACIONES', '09:00', 'texto', 'Hora del día para enviar alertas de evaluaciones pendientes (formato HH:MM)', 'alertas', TRUE);
+('HORA_RECORDATORIO_REUNIONES', '08:00', 'texto', 'Hora del día para enviar recordatorios de reuniones (formato HH:MM)', 'alertas', TRUE);
 
 -- Configuraciones de Validaciones y Límites
 INSERT INTO configuracion_sistema (clave, valor, tipo, descripcion, categoria, modificable) VALUES
@@ -1565,9 +1572,7 @@ CREATE TABLE IF NOT EXISTS colaboradores_proyectos (
     horas_dedicadas DECIMAL(6,2) NULL COMMENT 'Horas estimadas/reales dedicadas al proyecto',
     frecuencia_interaccion ENUM('diaria', 'semanal', 'quincenal', 'mensual', 'por_demanda') NULL,
     
-    -- Evaluación y retroalimentación
-    puede_evaluar BOOLEAN DEFAULT FALSE COMMENT 'Si puede evaluar al estudiante',
-    evaluacion_realizada BOOLEAN DEFAULT FALSE,
+    -- Participación
     comentarios_participacion TEXT NULL,
     
     -- Estado
@@ -1589,57 +1594,6 @@ CREATE TABLE IF NOT EXISTS colaboradores_proyectos (
     
     -- Un colaborador solo puede tener un rol activo por proyecto
     UNIQUE KEY unique_colaborador_proyecto_activo (proyecto_id, colaborador_id, activo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabla de Evaluaciones de Colaboradores Externos
--- Para cuando un supervisor de empresa evalúa el desempeño del estudiante
-CREATE TABLE IF NOT EXISTS evaluaciones_colaboradores_externos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    
-    -- Referencias
-    colaborador_proyecto_id INT NOT NULL COMMENT 'Relación entre colaborador y proyecto',
-    proyecto_id INT NOT NULL,
-    colaborador_id INT NOT NULL,
-    estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-    
-    -- Evaluación
-    fecha_evaluacion DATE NOT NULL,
-    calificacion DECIMAL(3,1) NULL COMMENT 'Nota de 1.0 a 7.0 (sistema chileno)',
-    
-    -- Criterios de evaluación
-    asistencia_puntualidad INT NULL COMMENT 'Escala 1-10',
-    calidad_trabajo INT NULL COMMENT 'Escala 1-10',
-    proactividad INT NULL COMMENT 'Escala 1-10',
-    trabajo_equipo INT NULL COMMENT 'Escala 1-10',
-    comunicacion INT NULL COMMENT 'Escala 1-10',
-    cumplimiento_plazos INT NULL COMMENT 'Escala 1-10',
-    
-    -- Retroalimentación
-    fortalezas TEXT NULL,
-    areas_mejora TEXT NULL,
-    comentarios_generales TEXT NULL,
-    recomendaria_estudiante BOOLEAN NULL COMMENT '¿Recomendaría contratar al estudiante?',
-    
-    -- Archivos adjuntos
-    documento_evaluacion VARCHAR(255) NULL COMMENT 'Documento PDF de evaluación formal',
-    
-    -- Control
-    aprobada_por_profesor VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
-    fecha_aprobacion TIMESTAMP NULL,
-    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (colaborador_proyecto_id) REFERENCES colaboradores_proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
-    FOREIGN KEY (colaborador_id) REFERENCES colaboradores_externos(id),
-    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (aprobada_por_profesor) REFERENCES usuarios(rut),
-    
-    INDEX idx_proyecto (proyecto_id),
-    INDEX idx_colaborador (colaborador_id),
-    INDEX idx_estudiante (estudiante_rut),
-    INDEX idx_fecha (fecha_evaluacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -1801,11 +1755,6 @@ CREATE TABLE IF NOT EXISTS resultados_finales_proyecto (
     -- Estado final
     estado_final ENUM('aprobado', 'aprobado_con_distincion', 'aprobado_con_observaciones', 'reprobado', 'abandonado', 'anulado') NOT NULL,
     
-    -- Calificaciones (sin nota numérica, solo observaciones)
-    evaluacion_profesor_guia TEXT NULL COMMENT 'Evaluación final del profesor guía',
-    evaluacion_profesor_informante TEXT NULL COMMENT 'Evaluación del profesor informante',
-    evaluacion_comision TEXT NULL COMMENT 'Evaluación de la comisión',
-    
     -- Observaciones finales
     observaciones_finales TEXT NULL,
     recomendaciones TEXT NULL,
@@ -1860,6 +1809,95 @@ CREATE TABLE IF NOT EXISTS historial_estados_proyecto (
     
     INDEX idx_proyecto (proyecto_id),
     INDEX idx_fecha (fecha_cambio)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== TABLAS DE CHAT EN TIEMPO REAL =====
+
+-- Tabla de Conversaciones (chat privado entre dos usuarios)
+CREATE TABLE IF NOT EXISTS conversaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario1_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    usuario2_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    ultimo_mensaje_id INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario1_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (usuario2_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+
+    UNIQUE KEY uk_conversacion (usuario1_rut, usuario2_rut),
+    INDEX idx_usuario1 (usuario1_rut),
+    INDEX idx_usuario2 (usuario2_rut),
+    INDEX idx_updated (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Mensajes
+CREATE TABLE IF NOT EXISTS mensajes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversacion_id INT NOT NULL,
+    remitente_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    contenido TEXT NOT NULL,
+    leido BOOLEAN DEFAULT FALSE,
+    fecha_lectura TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (remitente_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+
+    INDEX idx_conversacion (conversacion_id),
+    INDEX idx_remitente (remitente_rut),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- FK diferida: ultimo_mensaje_id en conversaciones apunta a mensajes
+ALTER TABLE conversaciones
+    ADD CONSTRAINT fk_ultimo_mensaje
+    FOREIGN KEY (ultimo_mensaje_id) REFERENCES mensajes(id) ON DELETE SET NULL;
+
+-- Tabla de Mensajes No Leídos (contador por usuario/conversación)
+CREATE TABLE IF NOT EXISTS mensajes_no_leidos (
+    usuario_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    conversacion_id INT NOT NULL,
+    cantidad INT DEFAULT 0,
+    ultimo_mensaje_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (usuario_rut, conversacion_id),
+    FOREIGN KEY (usuario_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+
+    INDEX idx_usuario (usuario_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Documentos del Proyecto
+-- Almacena documentos subidos por estudiantes y profesores a un proyecto
+CREATE TABLE IF NOT EXISTS documentos_proyecto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    proyecto_id INT NOT NULL,
+    tipo_documento VARCHAR(100) NOT NULL COMMENT 'propuesta_final, informe_avance, borrador_final, documento_final, formulario, acta_reunion, otro',
+    nombre_archivo VARCHAR(255) NOT NULL COMMENT 'Nombre generado en el servidor',
+    nombre_original VARCHAR(255) NOT NULL COMMENT 'Nombre original del archivo subido',
+    ruta_archivo VARCHAR(500) NOT NULL COMMENT 'Ruta física del archivo',
+    tamanio_bytes BIGINT NULL,
+    mime_type VARCHAR(100) NULL,
+    subido_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    version INT NOT NULL DEFAULT 1,
+    estado ENUM('borrador', 'en_revision', 'aprobado', 'rechazado', 'archivado') DEFAULT 'borrador',
+    comentarios TEXT NULL,
+    revisado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+    fecha_revision TIMESTAMP NULL,
+    fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (subido_por) REFERENCES usuarios(rut),
+    FOREIGN KEY (revisado_por) REFERENCES usuarios(rut),
+
+    INDEX idx_proyecto (proyecto_id),
+    INDEX idx_tipo (tipo_documento),
+    INDEX idx_estado (estado),
+    INDEX idx_subidor (subido_por),
+    INDEX idx_fecha (fecha_subida)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ===== BASE DE DATOS CREADA EXITOSAMENTE =====

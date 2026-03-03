@@ -4,16 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
-import { NavbarComponent } from '../../../components/navbar/navbar.component';
-
 interface Proyecto {
   id: number;
   titulo: string;
   estudiante_nombre: string;
   total_miembros: number;
-  tiene_presidente: number;
-  tiene_secretario: number;
-  total_vocales: number;
+  tiene_profesor_guia: number;
+  tiene_profesor_informante: number;
+  tiene_tercer_integrante: number;
   comision_completa: boolean;
 }
 
@@ -37,7 +35,7 @@ interface ProfesorDisponible {
 @Component({
   selector: 'app-gestion-comision',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './gestion-comision.html',
   styleUrls: ['./gestion-comision.scss']
 })
@@ -61,10 +59,9 @@ export class GestionComisionComponent implements OnInit {
   mensaje = '';
 
   rolesDisponibles = [
-    { value: 'presidente', label: 'Presidente' },
-    { value: 'secretario', label: 'Secretario' },
-    { value: 'vocal', label: 'Vocal' },
-    { value: 'suplente', label: 'Suplente' }
+    { value: 'profesor_guia', label: 'Profesor Guía' },
+    { value: 'profesor_informante', label: 'Profesor Informante' },
+    { value: 'tercer_integrante', label: 'Tercer Integrante Académico DSI (opcional)' }
   ];
 
   constructor(
@@ -240,20 +237,18 @@ export class GestionComisionComponent implements OnInit {
 
   getRolLabel(rol: string): string {
     const labels: { [key: string]: string } = {
-      'presidente': 'Presidente',
-      'secretario': 'Secretario',
-      'vocal': 'Vocal',
-      'suplente': 'Suplente'
+      'profesor_guia': 'Profesor Guía',
+      'profesor_informante': 'Profesor Informante',
+      'tercer_integrante': 'Tercer Integrante DSI'
     };
     return labels[rol] || rol;
   }
 
   getRolClass(rol: string): string {
     const classes: { [key: string]: string } = {
-      'presidente': 'badge-presidente',
-      'secretario': 'badge-secretario',
-      'vocal': 'badge-vocal',
-      'suplente': 'badge-suplente'
+      'profesor_guia': 'badge-profesor-guia',
+      'profesor_informante': 'badge-informante',
+      'tercer_integrante': 'badge-tercer-integrante'
     };
     return classes[rol] || '';
   }

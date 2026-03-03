@@ -25,7 +25,6 @@ interface Entrega {
   comentarios_estudiante: string;
   fecha_entrega: string;
   estado: 'pendiente_revision' | 'aprobado' | 'requiere_correcciones';
-  calificacion?: number;
   comentarios_profesor?: string;
   fecha_revision?: string;
 }
@@ -47,7 +46,6 @@ export class RevisionHitosProfesorComponent implements OnInit {
   
   // Formulario de revisión
   mostrarModalRevision = false;
-  calificacion: number = 0;
   comentariosProfesor: string = '';
   estadoRevision: 'aprobado' | 'requiere_correcciones' = 'aprobado';
   
@@ -122,7 +120,6 @@ export class RevisionHitosProfesorComponent implements OnInit {
     this.entregaEnRevision = hito.entrega;
     
     // Pre-cargar datos si ya fue revisado
-    this.calificacion = hito.entrega.calificacion || 0;
     this.comentariosProfesor = hito.entrega.comentarios_profesor || '';
     this.estadoRevision = hito.entrega.estado === 'aprobado' ? 'aprobado' : 'requiere_correcciones';
     
@@ -133,7 +130,6 @@ export class RevisionHitosProfesorComponent implements OnInit {
     this.mostrarModalRevision = false;
     this.hitoSeleccionado = null;
     this.entregaEnRevision = null;
-    this.calificacion = 0;
     this.comentariosProfesor = '';
     this.estadoRevision = 'aprobado';
   }
@@ -146,16 +142,10 @@ export class RevisionHitosProfesorComponent implements OnInit {
       return;
     }
 
-    if (this.calificacion < 0 || this.calificacion > 100) {
-      alert('La calificación debe estar entre 0 y 100');
-      return;
-    }
-
     this.cargando = true;
     
     const revisionData = {
       comentarios_profesor: this.comentariosProfesor,
-      calificacion: this.calificacion,
       estado: this.estadoRevision
     };
 
@@ -225,7 +215,6 @@ export class RevisionHitosProfesorComponent implements OnInit {
       'entrega_documento': 'fa-file-alt',
       'revision_avance': 'fa-search',
       'reunion_seguimiento': 'fa-users',
-      'evaluacion': 'fa-chart-line',
       'defensa': 'fa-presentation'
     };
     return iconos[tipo] || 'fa-tasks';

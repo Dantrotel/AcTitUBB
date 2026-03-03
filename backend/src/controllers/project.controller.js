@@ -67,7 +67,7 @@ const getDetailProject = async (req, res) => {
 
         res.status(200).json(project);
     } catch (error) {
-        console.error('Error al obtener proyecto:', error);
+        logger.error('Error al obtener proyecto', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -122,12 +122,12 @@ const getMisProyectos = async (req, res) => {
 
 // Obtener proyectos asignados al profesor autenticado
 const getProyectosAsignados = async (req, res) => {
-    console.log('🎯 ===== INICIO getProyectosAsignados =====');
+    logger.debug('Inicio getProyectosAsignados');
     try {
-        console.log('🔍 Debug getProyectosAsignados:', {
-            'req.user': req.user,
-            'req.rut': req.rut,
-            'req.rol_id': req.rol_id
+        logger.debug('Debug getProyectosAsignados', {
+            user: req.user,
+            rut: req.rut,
+            rol_id: req.rol_id
         });
 
         // Fallback para extraer datos de usuario
@@ -138,13 +138,13 @@ const getProyectosAsignados = async (req, res) => {
         if (!rol_usuario && req.rol_id) {
             const roleMap = {
                 1: 'estudiante',
-                2: 'profesor', 
+                2: 'profesor',
                 3: 'admin'
             };
             rol_usuario = roleMap[req.rol_id];
         }
 
-        console.log('🔍 Variables extraídas:', {
+        logger.debug('Variables extraídas', {
             usuario_rut,
             rol_usuario,
             rol_id: req.rol_id
@@ -168,12 +168,12 @@ const getProyectosAsignados = async (req, res) => {
             });
         }
 
-        console.log('🔍 Llamando a ProjectService.obtenerProyectosPorPermisos...');
-        
+        logger.debug('Llamando a ProjectService.obtenerProyectosPorPermisos');
+
         // Usar 'profesor' como rol por defecto si llegamos aquí
         const projects = await ProjectService.obtenerProyectosPorPermisos(usuario_rut, rol_usuario || 'profesor');
-        
-        console.log('✅ Proyectos obtenidos exitosamente:', projects.length);
+
+        logger.debug('Proyectos obtenidos exitosamente', { count: projects.length });
         
         res.status(200).json({
             total: projects.length,
@@ -181,8 +181,8 @@ const getProyectosAsignados = async (req, res) => {
             mensaje: projects.length === 0 ? 'No tienes proyectos asignados actualmente' : undefined
         });
     } catch (error) {
-        console.error('❌ Error completo en getProyectosAsignados:', {
-            message: error.message,
+        logger.error('Error completo en getProyectosAsignados', {
+            error: error.message,
             stack: error.stack,
             sql: error.sql,
             code: error.code
@@ -223,7 +223,7 @@ const getProyectoCompleto = async (req, res) => {
             data: proyectoCompleto
         });
     } catch (error) {
-        console.error('Error al obtener proyecto completo:', error);
+        logger.error('Error al obtener proyecto completo', { error: error.message });
         res.status(500).json({ 
             success: false,
             message: error.message 
@@ -267,7 +267,7 @@ const crearHitoProyecto = async (req, res) => {
             hito_id: hitoId
         });
     } catch (error) {
-        console.error('Error al crear hito:', error);
+        logger.error('Error al crear hito', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -301,7 +301,7 @@ const obtenerHitosProyecto = async (req, res) => {
             estadisticas: estadisticas
         });
     } catch (error) {
-        console.error('Error al obtener hitos:', error);
+        logger.error('Error al obtener hitos', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -340,7 +340,7 @@ const actualizarHitoProyecto = async (req, res) => {
             message: 'Hito actualizado exitosamente'
         });
     } catch (error) {
-        console.error('Error al actualizar hito:', error);
+        logger.error('Error al actualizar hito', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -378,7 +378,7 @@ const completarHito = async (req, res) => {
             message: 'Hito completado exitosamente'
         });
     } catch (error) {
-        console.error('Error al completar hito:', error);
+        logger.error('Error al completar hito', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -407,7 +407,7 @@ const verificarPermisosModificacion = async (req, res) => {
             puedeModificar: puedeModificar
         });
     } catch (error) {
-        console.error('Error al verificar permisos de modificación:', error);
+        logger.error('Error al verificar permisos de modificación', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -443,7 +443,7 @@ const obtenerDashboardProyecto = async (req, res) => {
             data: dashboard
         });
     } catch (error) {
-        console.error('Error al obtener dashboard:', error);
+        logger.error('Error al obtener dashboard', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -466,10 +466,14 @@ const crearCronograma = async (req, res) => {
             });
         }
 
-        // Verificar permisos (solo profesor guía puede crear cronogramas)
-        const puedeCrear = await ProjectService.esProfesorGuia(projectId, creado_por_rut);
-        if (!puedeCrear) {
-            return res.status(403).json({ message: 'Solo el profesor guía puede crear cronogramas' });
+        // Admins y superadmins pueden crear cronogramas en cualquier proyecto;
+        // profesores solo en los proyectos que guían
+        const rol_id = req.user?.rol_id;
+        if (rol_id !== 3 && rol_id !== 4) {
+            const puedeCrear = await ProjectService.esProfesorGuia(projectId, creado_por_rut);
+            if (!puedeCrear) {
+                return res.status(403).json({ message: 'Solo el profesor guía puede crear cronogramas' });
+            }
         }
 
         const cronogramaId = await ProjectService.crearCronograma({
@@ -488,7 +492,7 @@ const crearCronograma = async (req, res) => {
             cronograma_id: cronogramaId
         });
     } catch (error) {
-        console.error('Error al crear cronograma:', error);
+        logger.error('Error al crear cronograma', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -514,7 +518,7 @@ const obtenerCronograma = async (req, res) => {
             message: cronograma ? 'Cronograma obtenido exitosamente' : 'No hay cronograma activo para este proyecto'
         });
     } catch (error) {
-        console.error('Error al obtener cronograma:', error);
+        logger.error('Error al obtener cronograma', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -542,7 +546,7 @@ const aprobarCronograma = async (req, res) => {
             res.status(400).json({ message: 'Error al aprobar cronograma' });
         }
     } catch (error) {
-        console.error('Error al aprobar cronograma:', error);
+        logger.error('Error al aprobar cronograma', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -560,10 +564,14 @@ const crearHitoCronograma = async (req, res) => {
             });
         }
 
-        // Verificar que el usuario sea profesor guía del proyecto
-        const esProfesorGuia = await ProjectService.esProfesorGuiaDelCronograma(cronogramaId, usuario_rut);
-        if (!esProfesorGuia) {
-            return res.status(403).json({ message: 'Solo el profesor guía puede crear hitos' });
+        // Admins y superadmins pueden crear hitos en cualquier proyecto;
+        // cualquier profesor asignado al proyecto puede gestionar hitos
+        const rol_id = req.user?.rol_id;
+        if (rol_id !== 3 && rol_id !== 4) {
+            const esProfesorAsignado = await ProjectService.esProfesorAsignadoAlCronograma(cronogramaId, usuario_rut);
+            if (!esProfesorAsignado) {
+                return res.status(403).json({ message: 'Solo un profesor asignado al proyecto puede crear hitos' });
+            }
         }
 
         // Obtener proyecto_id del cronograma
@@ -591,7 +599,7 @@ const crearHitoCronograma = async (req, res) => {
             hito_id: hitoId
         });
     } catch (error) {
-        console.error('Error al crear hito:', error);
+        logger.error('Error al crear hito', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -616,7 +624,7 @@ const obtenerHitosCronograma = async (req, res) => {
             hitos: hitos
         });
     } catch (error) {
-        console.error('Error al obtener hitos:', error);
+        logger.error('Error al obtener hitos', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -678,7 +686,7 @@ const entregarHito = async (req, res) => {
             dias_retraso: resultado.dias_retraso
         });
     } catch (error) {
-        console.error('Error al entregar hito:', error);
+        logger.error('Error al entregar hito', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -743,8 +751,217 @@ const revisarHito = async (req, res) => {
             res.status(400).json({ message: 'Error al revisar hito' });
         }
     } catch (error) {
-        console.error('Error al revisar hito:', error);
+        logger.error('Error al revisar hito', { error: error.message });
         res.status(500).json({ message: error.message });
+    }
+};
+
+// Actualizar hito del cronograma
+const actualizarHitoCronograma = async (req, res) => {
+    try {
+        const { cronogramaId, hitoId } = req.params;
+        const data = req.body;
+        const usuario_rut = req.user.rut;
+        const rol_id = req.user?.rol_id;
+
+        // Admins pueden actualizar cualquier hito; cualquier profesor asignado puede actualizar
+        if (rol_id !== 3 && rol_id !== 4) {
+            const esProfesorAsignado = await ProjectService.esProfesorAsignadoAlCronograma(cronogramaId, usuario_rut);
+            if (!esProfesorAsignado) {
+                return res.status(403).json({ message: 'Solo un profesor asignado al proyecto puede actualizar hitos' });
+            }
+        }
+
+        const actualizado = await ProjectService.actualizarHitoCronograma(cronogramaId, hitoId, data);
+        if (!actualizado) {
+            return res.status(404).json({ message: 'Hito no encontrado' });
+        }
+
+        res.status(200).json({ success: true, message: 'Hito actualizado exitosamente' });
+    } catch (error) {
+        logger.error('Error al actualizar hito del cronograma', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Eliminar hito del cronograma
+const eliminarHitoCronograma = async (req, res) => {
+    try {
+        const { cronogramaId, hitoId } = req.params;
+        const usuario_rut = req.user.rut;
+        const rol_id = req.user?.rol_id;
+
+        if (rol_id !== 3 && rol_id !== 4) {
+            const esProfesorAsignado = await ProjectService.esProfesorAsignadoAlCronograma(cronogramaId, usuario_rut);
+            if (!esProfesorAsignado) {
+                return res.status(403).json({ message: 'Solo un profesor asignado al proyecto puede eliminar hitos' });
+            }
+        }
+
+        const eliminado = await ProjectService.eliminarHitoCronograma(cronogramaId, hitoId);
+        if (!eliminado) {
+            return res.status(404).json({ message: 'Hito no encontrado' });
+        }
+
+        res.status(200).json({ success: true, message: 'Hito eliminado exitosamente' });
+    } catch (error) {
+        logger.error('Error al eliminar hito del cronograma', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Obtener entregas de un hito
+const obtenerEntregasHito = async (req, res) => {
+    try {
+        const { hitoId } = req.params;
+        const usuario_rut = req.user.rut;
+        const rol_usuario = req.user.rol;
+
+        const hito = await ProjectService.obtenerHitoPorId(hitoId);
+        if (!hito) {
+            return res.status(404).json({ message: 'Hito no encontrado' });
+        }
+
+        const puedeVer = await ProjectService.puedeVerProyecto(hito.proyecto_id, usuario_rut, rol_usuario);
+        if (!puedeVer) {
+            return res.status(403).json({ message: 'No tienes permisos para ver este hito' });
+        }
+
+        const entregas = hito.archivo_entrega ? [{
+            id: hito.id,
+            hito_id: hito.id,
+            archivo: hito.archivo_entrega,
+            nombre_archivo_original: hito.nombre_archivo_original,
+            comentarios_estudiante: hito.comentarios_estudiante,
+            fecha_entrega: hito.fecha_entrega,
+            cumplido_en_fecha: hito.cumplido_en_fecha,
+            dias_retraso: hito.dias_retraso
+        }] : [];
+
+        res.status(200).json({ success: true, entregas });
+    } catch (error) {
+        logger.error('Error al obtener entregas del hito', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Crear entrega de un hito (vía ruta de entregas)
+const crearEntregaHito = async (req, res) => {
+    try {
+        const { hitoId } = req.params;
+        const { comentarios_estudiante } = req.body;
+        const archivo_entrega = req.file?.filename;
+        const nombre_archivo_original = req.file?.originalname;
+        const usuario_rut = req.user.rut;
+
+        if (!archivo_entrega) {
+            return res.status(400).json({ message: 'Debe subir un archivo para la entrega' });
+        }
+
+        const esEstudiante = await ProjectService.esEstudianteDelHito(hitoId, usuario_rut);
+        if (!esEstudiante) {
+            return res.status(403).json({ message: 'Solo el estudiante del proyecto puede entregar el hito' });
+        }
+
+        const resultado = await ProjectService.entregarHito(hitoId, {
+            archivo_entrega,
+            nombre_archivo_original,
+            comentarios_estudiante
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Entrega creada exitosamente',
+            cumplido_en_fecha: resultado.cumplido_en_fecha,
+            dias_retraso: resultado.dias_retraso
+        });
+    } catch (error) {
+        logger.error('Error al crear entrega del hito', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Actualizar comentarios de una entrega
+const actualizarEntregaHito = async (req, res) => {
+    try {
+        const { hitoId } = req.params;
+        const { comentarios_estudiante } = req.body;
+        const usuario_rut = req.user.rut;
+
+        const esEstudiante = await ProjectService.esEstudianteDelHito(hitoId, usuario_rut);
+        if (!esEstudiante) {
+            return res.status(403).json({ message: 'Solo el estudiante puede actualizar la entrega' });
+        }
+
+        const actualizado = await ProjectService.actualizarHitoCronograma(null, hitoId, { comentarios_estudiante });
+        if (!actualizado) {
+            return res.status(404).json({ message: 'Hito no encontrado' });
+        }
+
+        res.status(200).json({ success: true, message: 'Entrega actualizada exitosamente' });
+    } catch (error) {
+        logger.error('Error al actualizar entrega del hito', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Eliminar entrega de un hito (limpia los campos de entrega)
+const eliminarEntregaHito = async (req, res) => {
+    try {
+        const { hitoId } = req.params;
+        const usuario_rut = req.user.rut;
+
+        const esEstudiante = await ProjectService.esEstudianteDelHito(hitoId, usuario_rut);
+        if (!esEstudiante) {
+            return res.status(403).json({ message: 'Solo el estudiante puede eliminar la entrega' });
+        }
+
+        const eliminado = await ProjectService.limpiarEntregaHito(hitoId);
+        if (!eliminado) {
+            return res.status(404).json({ message: 'Hito no encontrado' });
+        }
+
+        res.status(200).json({ success: true, message: 'Entrega eliminada exitosamente' });
+    } catch (error) {
+        logger.error('Error al eliminar entrega del hito', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Marcar fecha importante como completada
+const marcarFechaImportanteCompletada = async (req, res) => {
+    try {
+        const { projectId, fechaId } = req.params;
+        const { completada, fecha_realizada, notas } = req.body;
+        const usuario_rut = req.user?.rut;
+        const rol_usuario = req.user?.rol;
+        const rol_id = req.user?.rol_id;
+
+        if (!usuario_rut) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+
+        if (rol_id !== 3 && rol_id !== 4) {
+            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
+            if (!puedeModificar) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permisos para actualizar fechas en este proyecto'
+                });
+            }
+        }
+
+        const { marcarFechaComoCompletada } = await import('../models/fechas-importantes.model.js');
+        const resultado = await marcarFechaComoCompletada(
+            fechaId,
+            completada !== false ? (fecha_realizada || null) : null,
+            notas || null
+        );
+
+        res.json({ success: true, message: 'Fecha actualizada exitosamente', data: resultado });
+    } catch (error) {
+        logger.error('Error al marcar fecha como completada', { error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -764,7 +981,7 @@ const obtenerNotificaciones = async (req, res) => {
             notificaciones: notificaciones
         });
     } catch (error) {
-        console.error('Error al obtener notificaciones:', error);
+        logger.error('Error al obtener notificaciones', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -792,7 +1009,7 @@ const marcarNotificacionLeida = async (req, res) => {
             res.status(400).json({ message: 'Error al marcar notificación' });
         }
     } catch (error) {
-        console.error('Error al marcar notificación:', error);
+        logger.error('Error al marcar notificación', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -825,7 +1042,7 @@ const configurarAlertas = async (req, res) => {
             res.status(400).json({ message: 'Error al configurar alertas' });
         }
     } catch (error) {
-        console.error('Error al configurar alertas:', error);
+        logger.error('Error al configurar alertas', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -850,7 +1067,7 @@ const obtenerEstadisticasCumplimiento = async (req, res) => {
             data: estadisticas
         });
     } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
+        logger.error('Error al obtener estadísticas', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -881,7 +1098,7 @@ const obtenerAvancesProyecto = async (req, res) => {
             data: avances
         });
     } catch (error) {
-        console.error('Error al obtener avances:', error);
+        logger.error('Error al obtener avances', { error: error.message });
         res.status(500).json({ message: error.message });
     }
 };
@@ -935,7 +1152,7 @@ const crearFechaImportante = async (req, res) => {
             fecha_id: fechaId
         });
     } catch (error) {
-        console.error('Error al crear fecha importante:', error);
+        logger.error('Error al crear fecha importante', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -974,7 +1191,7 @@ const actualizarFechaImportante = async (req, res) => {
             message: 'Fecha importante actualizada exitosamente'
         });
     } catch (error) {
-        console.error('Error al actualizar fecha importante:', error);
+        logger.error('Error al actualizar fecha importante', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -1012,7 +1229,7 @@ const eliminarFechaImportante = async (req, res) => {
             message: 'Fecha importante eliminada exitosamente'
         });
     } catch (error) {
-        console.error('Error al eliminar fecha importante:', error);
+        logger.error('Error al eliminar fecha importante', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -1051,7 +1268,7 @@ const obtenerFechasImportantes = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error al obtener fechas importantes:', error);
+        logger.error('Error al obtener fechas importantes', { error: error.message });
         res.status(500).json({
             success: false,
             message: error.message
@@ -1086,13 +1303,20 @@ export const ProjectController = {
     aprobarCronograma,
     crearHitoCronograma,
     obtenerHitosCronograma,
+    actualizarHitoCronograma,
+    eliminarHitoCronograma,
     entregarHito,
     revisarHito,
+    obtenerEntregasHito,
+    crearEntregaHito,
+    actualizarEntregaHito,
+    eliminarEntregaHito,
     obtenerNotificaciones,
     marcarNotificacionLeida,
     configurarAlertas,
     obtenerEstadisticasCumplimiento,
     obtenerAvancesProyecto,
+    marcarFechaImportanteCompletada,
     
     // Fechas importantes
     crearFechaImportante,

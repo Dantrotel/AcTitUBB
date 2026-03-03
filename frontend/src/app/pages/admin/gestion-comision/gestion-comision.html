@@ -6,9 +6,9 @@
     <div class="header-left">
       <h1>
         <i class="fas fa-gavel"></i>
-        Gestión de Comisiones Evaluadoras
+        Gestión de Comisión de Titulación
       </h1>
-      <p class="header-subtitle">Asigna y gestiona los miembros de las comisiones evaluadoras para cada proyecto</p>
+      <p class="header-subtitle">La comisión se forma progresivamente: comienza con el Profesor Guía, se incorpora el Profesor Informante y opcionalmente un Tercer Integrante Académico DSI. Decide sobre la aprobación, readecuación o rechazo de la Actividad de Titulación</p>
     </div>
     <div class="header-right">
       <div class="total-badge">
@@ -70,7 +70,7 @@
             </span>
             
             <div class="miembros-count">
-              {{ proyecto.total_miembros }}/3 miembros
+              {{ proyecto.total_miembros }} miembro(s) &mdash; {{ (proyecto.tiene_profesor_guia > 0 ? 1 : 0) + (proyecto.tiene_profesor_informante > 0 ? 1 : 0) }}/2 requeridos
             </div>
           </div>
         </div>
@@ -86,7 +86,7 @@
     <div class="comision-panel" *ngIf="proyectoSeleccionado">
       <div class="panel-header">
         <div>
-          <h2><i class="fas fa-users-cog"></i> Comisión Evaluadora</h2>
+          <h2><i class="fas fa-users-cog"></i> Comisión de Titulación</h2>
           <p class="proyecto-titulo">{{ proyectoSeleccionado.titulo }}</p>
         </div>
         <button class="btn-primary" (click)="abrirFormulario()" [disabled]="loading">
@@ -125,7 +125,7 @@
           <div class="form-group">
             <label for="rol">
               Rol en la Comisión *
-              <span class="help-text">Asigna el rol del profesor en esta comisión</span>
+              <span class="help-text">Asigna el rol del profesor según lo establecido en el reglamento</span>
             </label>
             <select id="rol" 
                     [(ngModel)]="rolSeleccionado" 
@@ -220,20 +220,20 @@
       <div class="comision-estado-detalle">
         <h3><i class="fas fa-check-double"></i> Estado de la Comisión</h3>
         <div class="estado-grid">
-          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_presidente > 0">
-            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_presidente > 0" 
-                           [class.fa-times-circle]="proyectoSeleccionado.tiene_presidente === 0"></i>
-            <span>Presidente</span>
+          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_profesor_guia > 0">
+            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_profesor_guia > 0" 
+                           [class.fa-times-circle]="proyectoSeleccionado.tiene_profesor_guia === 0"></i>
+            <span>Profesor Guía</span>
           </div>
-          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_secretario > 0">
-            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_secretario > 0" 
-                           [class.fa-times-circle]="proyectoSeleccionado.tiene_secretario === 0"></i>
-            <span>Secretario</span>
+          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_profesor_informante > 0">
+            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_profesor_informante > 0" 
+                           [class.fa-times-circle]="proyectoSeleccionado.tiene_profesor_informante === 0"></i>
+            <span>Profesor Informante</span>
           </div>
-          <div class="estado-item" [class.completo]="proyectoSeleccionado.total_vocales >= 1">
-            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.total_vocales >= 1" 
-                           [class.fa-times-circle]="proyectoSeleccionado.total_vocales === 0"></i>
-            <span>Vocal (mín. 1)</span>
+          <div class="estado-item" [class.completo]="proyectoSeleccionado.tiene_tercer_integrante > 0" [class.opcional]="proyectoSeleccionado.tiene_tercer_integrante === 0">
+            <i class="fas" [class.fa-check-circle]="proyectoSeleccionado.tiene_tercer_integrante > 0" 
+                           [class.fa-circle]="proyectoSeleccionado.tiene_tercer_integrante === 0"></i>
+            <span>Tercer Integrante DSI <em>(opcional)</em></span>
           </div>
         </div>
 
@@ -244,7 +244,7 @@
           </span>
           <span *ngIf="!proyectoSeleccionado.comision_completa" class="badge-lg badge-warning">
             <i class="fas fa-exclamation-triangle"></i>
-            Faltan {{ 3 - proyectoSeleccionado.total_miembros }} miembros mínimos
+            Faltan {{ (proyectoSeleccionado.tiene_profesor_guia === 0 ? 1 : 0) + (proyectoSeleccionado.tiene_profesor_informante === 0 ? 1 : 0) }} integrante(s) requerido(s)
           </span>
         </div>
       </div>
@@ -258,13 +258,14 @@
         <p>Selecciona un proyecto de la lista para gestionar su comisión evaluadora</p>
         
         <div class="info-card">
-          <h3><i class="fas fa-info-circle"></i> Requisitos de la Comisión</h3>
+          <h3><i class="fas fa-info-circle"></i> Formación de la Comisión</h3>
+          <p class="info-reglamento">La comisión se forma progresivamente a lo largo del proyecto:</p>
           <ul>
-            <li><strong>Presidente:</strong> 1 requerido</li>
-            <li><strong>Secretario:</strong> 1 requerido</li>
-            <li><strong>Vocales:</strong> Mínimo 1 requerido</li>
-            <li><strong>Suplentes:</strong> Opcionales</li>
+            <li><strong>Profesor Guía:</strong> requerido &mdash; se asigna desde el inicio</li>
+            <li><strong>Profesor Informante:</strong> requerido &mdash; se asigna durante el desarrollo</li>
+            <li><strong>Tercer Integrante Académico DSI:</strong> opcional &mdash; puede incorporarse según el caso</li>
           </ul>
+          <p class="info-reglamento">La comisión decide sobre la <strong>aprobación</strong>, <strong>readecuación</strong> o <strong>rechazo</strong> de la Actividad de Titulación.</p>
         </div>
       </div>
     </div>

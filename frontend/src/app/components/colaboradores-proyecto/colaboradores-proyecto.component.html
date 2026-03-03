@@ -135,20 +135,6 @@
               class="form-control"></textarea>
           </div>
 
-          <!-- Puede Evaluar -->
-          <div class="form-group full-width checkbox-group">
-            <label class="checkbox-label">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="nuevaAsignacion.puede_evaluar" 
-                name="puede_evaluar">
-              <span class="checkbox-custom"></span>
-              <span class="checkbox-text">
-                <i class="fas fa-star"></i>
-                Este colaborador puede evaluar al estudiante
-              </span>
-            </label>
-          </div>
         </div>
 
         <div class="form-actions">
@@ -284,33 +270,6 @@
               }
             </div>
 
-            <!-- Evaluación -->
-            <div class="info-row">
-              <div class="info-label">
-                <i class="fas fa-star"></i>
-                Evaluación
-              </div>
-              <div class="info-value">
-                @if (colab.puede_evaluar) {
-                  @if (colab.evaluacion_realizada) {
-                    <span class="eval-badge evaluado">
-                      <i class="fas fa-check-circle"></i>
-                      Evaluado
-                    </span>
-                  } @else {
-                    <span class="eval-badge pendiente">
-                      <i class="fas fa-hourglass-half"></i>
-                      Pendiente
-                    </span>
-                  }
-                } @else {
-                  <span class="eval-badge no-evalua">
-                    <i class="fas fa-minus-circle"></i>
-                    No evalúa
-                  </span>
-                }
-              </div>
-            </div>
           </div>
 
           <!-- Card Footer -->

@@ -1,6 +1,7 @@
 import * as PropuestasModel from '../models/propuesta.model.js';
 import { ProjectService } from './project.service.js';
 import { pool } from '../db/connectionDB.js';
+import { logger } from '../config/logger.js';
 
 // Utilidad para validar RUT chileno simple
 const rutValido = (rut) => /^\d{7,8}-[\dkK]$/.test(rut);
@@ -170,17 +171,17 @@ export const asignarProfesor = async (id, profesor_rut, asignado_por = null) => 
     }
 
     const success = await PropuestasModel.asignarProfesor(id, profesor_rut, asignado_por);
-    
+
     if (success) {
       // Obtener datos adicionales para notificación
       const propuesta = await PropuestasModel.obtenerPropuestaPorId(id);
-      const profesor = await pool.query('SELECT nombre FROM usuarios WHERE rut = ?', [profesor_rut]);
-      
+      const [profesorRows] = await pool.execute('SELECT nombre FROM usuarios WHERE rut = ?', [profesor_rut]);
+
       return {
         success: true,
         estudiante_rut: propuesta?.estudiante_rut,
         titulo: propuesta?.titulo,
-        profesor_nombre: profesor[0]?.[0]?.nombre || 'Profesor'
+        profesor_nombre: profesorRows[0]?.nombre || 'Profesor'
       };
     }
     
@@ -219,18 +220,13 @@ export const revisarPropuesta = async (id, data) => {
       estado 
     };
     
-    console.log('🎯 Service - Datos que se enviarán al modelo:', JSON.stringify(datosActualizacion, null, 2));
-    
+    logger.debug('Service - Datos enviados al modelo para revisión', { propuesta_id: id, estado });
+
     const actualizada = await PropuestasModel.revisarPropuesta(id, datosActualizacion);
-    
-    console.log('✅ Service - Modelo retornó:', actualizada);
-    
+
     if (!actualizada) {
       throw new Error('Error al actualizar la propuesta');
     }
-
-    console.log('✅ Service - Propuesta actualizada correctamente, verificando estado...');
-    console.log('✅ Service - Estado actual:', estado);
 
     // Si el estado es "aprobada", crear automáticamente el proyecto
     if (estado === 'aprobada') {
@@ -274,19 +270,15 @@ export const revisarPropuesta = async (id, data) => {
       }
     }
 
-    console.log('✅ Service - Preparando respuesta exitosa...');
-    const respuesta = {
+    return {
       success: true,
       estudiante_rut: propuesta.estudiante_rut,
       titulo: propuesta.titulo,
       message: 'Propuesta revisada correctamente'
     };
-    console.log('✅ Service - Respuesta:', JSON.stringify(respuesta, null, 2));
-    return respuesta;
-    
+
   } catch (error) {
-    console.error('❌ Service - Error capturado:', error.message);
-    console.error('❌ Service - Stack:', error.stack);
+    logger.error('Error al revisar propuesta', { propuesta_id: id, error: error.message });
     throw error;
   }
 };
@@ -503,14 +495,14 @@ export const actualizarEstadoPropuesta = async (propuesta_id, estado) => {
     const connection = await pool.getConnection();
     
     try {
-      const [estados] = await connection.query('SELECT id FROM estados WHERE estado = ?', [estado]);
-      
+      const [estados] = await connection.query('SELECT id FROM estados_propuestas WHERE nombre = ?', [estado]);
+
       if (estados.length === 0) {
         throw new Error(`Estado '${estado}' no encontrado`);
       }
-      
+
       const estado_id = estados[0].id;
-      
+
       await connection.query('UPDATE propuestas SET estado_id = ? WHERE id = ?', [estado_id, propuesta_id]);
       
       return { success: true, estado, estado_id };

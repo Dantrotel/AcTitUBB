@@ -2,10 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../../services/api';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 
@@ -15,10 +11,6 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
   imports: [
     CommonModule,
     FormsModule,
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
     CalendarModalComponent
   ],
   templateUrl: './home-profesor.html',
@@ -27,7 +19,6 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
 export class HomeProfesor implements OnInit {
   // Referencia a Math para usar en el template
   mathHelper = Math;
-  Math = Math;
   
   profesor: any = {};
   showUserMenu = false;
@@ -40,8 +31,7 @@ export class HomeProfesor implements OnInit {
   estadisticasProyectos: any = {
     totalProyectos: 0,
     enDesarrollo: 0,
-    proximosHitos: 0,
-    evaluacionesPendientes: 0
+    proximosHitos: 0
   };
   ultimaActividad: string = '';
   showCalendarModal = false;
@@ -191,8 +181,6 @@ export class HomeProfesor implements OnInit {
           // Cargar hitos próximos
           this.cargarHitosProximos();
           
-          // Calcular evaluaciones pendientes basado en avances
-          this.calcularEvaluacionesPendientes(listaProyectos);
           this.cdr.detectChanges();
         }
       },
@@ -200,8 +188,7 @@ export class HomeProfesor implements OnInit {
         this.estadisticasProyectos = {
           totalProyectos: 0,
           enDesarrollo: 0,
-          proximosHitos: 0,
-          evaluacionesPendientes: 0
+          proximosHitos: 0
         };
         console.error('Error al cargar estadísticas de proyectos:', error);
       }
@@ -273,7 +260,7 @@ export class HomeProfesor implements OnInit {
     this.ApiService.getDashboardProyecto(proyecto.id.toString()).subscribe({
       next: (dashboard: any) => {
         if (dashboard && dashboard.success) {
-          proyecto.progreso = dashboard.data.progreso || 0;
+          proyecto.progreso = dashboard.data.progreso ?? dashboard.data.proyecto?.porcentaje_avance ?? 0;
           proyecto.tiempo_transcurrido = this.calcularTiempoTranscurrido(proyecto.fecha_creacion);
           proyecto.prioridad = this.determinarPrioridad(proyecto, dashboard.data);
         }
@@ -281,34 +268,6 @@ export class HomeProfesor implements OnInit {
       error: () => {
         // Error manejado silenciosamente
       }
-    });
-  }
-
-  calcularEvaluacionesPendientes(proyectos: any[]) {
-    let evaluacionesPendientes = 0;
-    
-    proyectos.forEach(proyecto => {
-      // Usar estadísticas del proyecto para obtener datos de cumplimiento
-      this.ApiService.obtenerEstadisticasCumplimiento(proyecto.id.toString()).subscribe({
-        next: (estadisticas: any) => {
-          if (estadisticas && estadisticas.success) {
-            // Contar evaluaciones pendientes basado en hitos no completados próximos a vencer
-            const datosCumplimiento = estadisticas.data;
-            if (datosCumplimiento.hitos_pendientes) {
-              evaluacionesPendientes += datosCumplimiento.hitos_pendientes;
-              this.estadisticasProyectos.evaluacionesPendientes = evaluacionesPendientes;
-            }
-          }
-        },
-        error: () => {
-          // Si no hay datos específicos, usar aproximación basada en estado del proyecto
-          if (proyecto.estado_proyecto === 'en_desarrollo' || 
-              proyecto.estado_proyecto === 'avance_enviado') {
-            evaluacionesPendientes += 1;
-          }
-          this.estadisticasProyectos.evaluacionesPendientes = evaluacionesPendientes;
-        }
-      });
     });
   }
 
@@ -398,8 +357,8 @@ export class HomeProfesor implements OnInit {
             // Usar el nuevo sistema de cronogramas
             this.ApiService.getCronogramaProyecto(proyecto.id.toString()).subscribe({
               next: (cronogramaResponse: any) => {
-                if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.data?.cronograma) {
-                  const cronogramaId = cronogramaResponse.data.cronograma.id;
+                if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.cronograma) {
+                  const cronogramaId = cronogramaResponse.cronograma.id;
                   
                   // Obtener hitos del cronograma
                   this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
@@ -478,20 +437,12 @@ export class HomeProfesor implements OnInit {
     return estados[estado] || estado;
   }
 
-  navegarAProyectos() {
-    this.router.navigate(['/profesor/reportes']);
-  }
-
-  navegarAProyecto(proyectoId: number) {
-    this.router.navigate(['/profesor/proyecto', proyectoId]);
-  }
-
   navegarAHitos() {
     this.router.navigate(['/profesor/cronogramas']);
   }
 
-  navegarAEvaluaciones() {
-    this.router.navigate(['/profesor/evaluaciones']);
+  navegarAReportes() {
+    this.router.navigate(['/profesor/reportes']);
   }
 
   navegarAFechasImportantes() {
@@ -684,7 +635,6 @@ export class HomeProfesor implements OnInit {
       'entrega': 'fas fa-upload',
       'presentacion': 'fas fa-presentation',
       'revision': 'fas fa-search',
-      'evaluacion': 'fas fa-clipboard-check',
       'milestone': 'fas fa-flag'
     };
     return iconos[tipoHito] || 'fas fa-circle';
@@ -744,7 +694,7 @@ export class HomeProfesor implements OnInit {
 
   // Método para navegar a un proyecto específico
   navegarAProyecto(proyectoId: number) {
-    this.router.navigate(['/proyecto', proyectoId]);
+    this.router.navigate(['/profesor/proyecto', proyectoId]);
   }
 
   // Método para cerrar sesión

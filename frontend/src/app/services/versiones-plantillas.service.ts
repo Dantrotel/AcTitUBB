@@ -79,9 +79,6 @@ export interface ResultadoFinal {
   id: number;
   proyecto_id: number;
   estado_final: 'aprobado' | 'aprobado_con_distincion' | 'aprobado_con_observaciones' | 'reprobado' | 'abandonado' | 'anulado';
-  evaluacion_profesor_guia?: number;
-  evaluacion_profesor_asignatura?: number;
-  evaluacion_comision?: number;
   observaciones_finales?: string;
   recomendaciones?: string;
   areas_destacadas?: string;

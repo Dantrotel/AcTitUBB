@@ -56,7 +56,7 @@ router.put('/:colaborador_id/verificar', colaboradoresExternosController.verific
 /**
  * POST /api/v1/colaboradores-externos/proyectos/asignar
  * Asignar colaborador a proyecto
- * Body: { proyecto_id, colaborador_id, rol_en_proyecto, puede_evaluar, ... }
+ * Body: { proyecto_id, colaborador_id, rol_en_proyecto, ... }
  * Roles permitidos: Profesor, Admin, Super Admin
  */
 router.post('/proyectos/asignar', colaboradoresExternosController.asignarColaboradorAProyecto);
@@ -84,15 +84,5 @@ router.get('/proyectos/:proyecto_id', colaboradoresExternosController.obtenerCol
  * Roles permitidos: Profesor, Admin, Super Admin
  */
 router.delete('/proyectos/:colaborador_proyecto_id', colaboradoresExternosController.desasignarColaborador);
-
-// === Rutas de Evaluaciones ===
-
-/**
- * POST /api/v1/colaboradores-externos/evaluaciones
- * Crear evaluación de colaborador externo sobre estudiante
- * Body: { colaborador_proyecto_id, proyecto_id, colaborador_id, estudiante_rut, ... }
- * Roles permitidos: Profesor, Admin, Super Admin
- */
-router.post('/evaluaciones', colaboradoresExternosController.crearEvaluacion);
 
 export default router;

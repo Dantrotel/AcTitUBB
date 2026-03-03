@@ -4,6 +4,7 @@ import {
     obtenerFechasGlobales,
     obtenerFechasPorProfesor,
     obtenerFechasParaEstudiante,
+    obtenerFechasProximasParaEstudiante,
     obtenerFechaPorId,
     actualizarFecha,
     eliminarFecha,
@@ -381,11 +382,11 @@ export const obtenerFechasProximasEstudianteController = async (req, res) => {
             });
         }
 
-        const fechas = await obtenerFechasProximas(estudiante_rut, limite);
-        
+        const fechas = await obtenerFechasProximasParaEstudiante(estudiante_rut, limite);
+
         res.json(fechas);
     } catch (error) {
-        
+
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };
@@ -413,11 +414,11 @@ export const obtenerFechasProximasController = async (req, res) => {
         }
 
         // Este endpoint es accesible por todos los roles autenticados
-        const fechas = await obtenerFechasProximas(usuario_rut, limite);
+        const fechas = await obtenerFechasProximas(limite);
         
         res.json(fechas);
     } catch (error) {
-        
+        logger.error('Error en obtenerFechasProximasController:', { error: error.message, stack: error.stack });
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 };

@@ -1,10 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { FechasLimiteProyectoComponent } from '../../../components/fechas-limite-proyecto/fechas-limite-proyecto.component';
@@ -16,10 +12,6 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
   standalone: true,
   imports: [
     CommonModule,
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
     FormsModule,
     FechasLimiteProyectoComponent,
     CalendarModalComponent
@@ -315,9 +307,15 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         // // // // // // // // // // console.log('✅ Dashboard del proyecto cargado:', response);
         
-        if (response.success && response.dashboard) {
+        if (response.success && response.data) {
           // Actualizar datos del proyecto con información del dashboard
-          this.proyectoActivo = { ...this.proyectoActivo, ...response.dashboard };
+          this.proyectoActivo = {
+            ...this.proyectoActivo,
+            ...response.data.proyecto,
+            hitos_total: response.data.hitos_total,
+            hitos_completados: response.data.hitos_completados,
+            porcentaje_avance: response.data.progreso
+          };
           this.calcularProgresoProyectoReal();
           // // // // // // // // // // console.log('🎯 Proyecto activo actualizado:', this.proyectoActivo);
         }
@@ -361,30 +359,6 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         this.fechasImportantes = [];
         this.fechasProximas = [];
         this.cdr.detectChanges();
-      }
-    });
-  }
-
-  completarFechaImportante(fechaId: string) {
-    if (!fechaId) {
-      console.error('❌ ID de fecha requerido');
-      return;
-    }
-
-    if (!this.proyectoActivo?.id) {
-      console.error('❌ No hay proyecto activo');
-      return;
-    }
-    
-    this.ApiService.marcarFechaCompletada(this.proyectoActivo.id, fechaId, true).subscribe({
-      next: (response: any) => {
-        // // // // // // // // // // console.log('✅ Fecha completada:', response);
-        // Recargar fechas importantes
-        this.cargarFechasImportantes();
-      },
-      error: (error: any) => {
-        console.error('❌ Error al completar fecha:', error);
-        this.mostrarError('No se pudo completar la fecha importante');
       }
     });
   }
@@ -566,11 +540,13 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   obtenerFaseProyecto(): string {
     // Si hay proyecto activo, usar información de hitos
     if (this.proyectoActivo) {
-      if (this.proyectoActivo.hitos_total === 0) {
+      const total = this.proyectoActivo.hitos_total ?? 0;
+      const completados = this.proyectoActivo.hitos_completados ?? 0;
+      if (total === 0) {
         return 'Proyecto sin hitos definidos';
       }
-      
-      const progreso = this.proyectoActivo.hitos_completados / this.proyectoActivo.hitos_total;
+
+      const progreso = completados / total;
       if (progreso === 0) {
         return 'Inicio del proyecto';
       } else if (progreso < 0.5) {
@@ -652,22 +628,20 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     if (!this.proyectoActivo?.id) return;
 
     this.loadingHitos = true;
-    // // // // // // // // // // console.log('🔄 Cargando hitos del proyecto:', this.proyectoActivo.id);
 
     // Usar el nuevo sistema de cronogramas
     this.ApiService.getCronogramaProyecto(this.proyectoActivo.id).subscribe({
       next: (cronogramaResponse: any) => {
-        if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.data?.cronograma) {
-          const cronogramaId = cronogramaResponse.data.cronograma.id;
-          
+        if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.cronograma) {
+          const cronogramaId = cronogramaResponse.cronograma.id;
+
           // Obtener hitos del cronograma
           this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
             next: (hitosResponse: any) => {
               this.loadingHitos = false;
-              
+
               if (hitosResponse && hitosResponse.success && hitosResponse.hitos) {
-                this.hitosProyecto = hitosResponse.hitos;
-                // // // // // // // // // // console.log('✅ Hitos cargados:', this.hitosProyecto);
+                this.hitosProyecto = hitosResponse.hitos.map((h: any) => this.normalizarHitoCompleto(h));
               } else {
                 this.hitosProyecto = [];
               }
@@ -720,15 +694,14 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     // Usar el nuevo sistema de cronogramas
     this.ApiService.getCronogramaProyecto(this.proyectoActivo.id).subscribe({
       next: (cronogramaResponse: any) => {
-        if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.data?.cronograma) {
-          const cronogramaId = cronogramaResponse.data.cronograma.id;
-          
+        if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.cronograma) {
+          const cronogramaId = cronogramaResponse.cronograma.id;
+
           // Obtener hitos del cronograma
           this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
             next: (hitosResponse: any) => {
               if (hitosResponse && hitosResponse.success && hitosResponse.hitos) {
-                this.hitosProyecto = hitosResponse.hitos;
-                // // // // // // // // // // console.log('Hitos cargados:', this.hitosProyecto);
+                this.hitosProyecto = hitosResponse.hitos.map((h: any) => this.normalizarHitoCompleto(h));
               } else {
                 this.hitosProyecto = [];
                 this.errorCargaHitos = 'No se pudieron cargar los hitos';
@@ -825,11 +798,12 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   }
 
   getEstadoHitoCompleto(hito: any): string {
-    if (hito.revisado && hito.aprobado) return 'Aprobado';
-    if (hito.revisado && !hito.aprobado) return 'Rechazado';
-    if (hito.entregado && !hito.revisado) return 'En Revisión';
-    if (hito.entregado) return 'Entregado';
-    if (this.estaVencido(hito.fecha_limite)) return 'Vencido';
+    const estado = hito.estado_real || hito.estado || 'pendiente';
+    if (estado === 'aprobado') return 'Aprobado';
+    if (estado === 'rechazado') return 'Rechazado';
+    if (estado === 'revisado') return 'En Revisión';
+    if (estado === 'entregado') return 'Entregado';
+    if (estado === 'retrasado' || this.estaVencido(hito.fecha_limite)) return 'Vencido';
     return 'Pendiente';
   }
 
@@ -874,17 +848,17 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   }
 
   puedeEntregarHito(hito: any): boolean {
-    return !hito.entregado && !this.estaVencido(hito.fecha_limite);
+    const estado = hito.estado_real || hito.estado || 'pendiente';
+    return !['entregado', 'revisado', 'aprobado', 'rechazado'].includes(estado) && !this.estaVencido(hito.fecha_limite);
   }
 
   getEstadoHito(hito: any): string {
-    if (hito.completado) {
-      return 'Completado';
-    }
-    
+    const estado = hito.estado_real || hito.estado || 'pendiente';
+    if (['entregado', 'revisado', 'aprobado'].includes(estado)) return 'Completado';
+
     const fechaLimite = new Date(hito.fecha_limite);
     const hoy = new Date();
-    
+
     if (fechaLimite < hoy) {
       return 'Retrasado';
     } else if ((fechaLimite.getTime() - hoy.getTime()) < (7 * 24 * 60 * 60 * 1000)) {
@@ -906,12 +880,34 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   // Métodos auxiliares para cálculos del template
   getHitosCompletados(): number {
-    return this.hitosProyecto.filter(h => h.completado).length;
+    return this.hitosProyecto.filter(h => {
+      const estado = h.estado_real || h.estado || 'pendiente';
+      return ['entregado', 'revisado', 'aprobado'].includes(estado);
+    }).length;
   }
 
   getHitosRetrasados(): number {
-    const hoy = new Date();
-    return this.hitosProyecto.filter(h => !h.completado && new Date(h.fecha_limite) < hoy).length;
+    return this.hitosProyecto.filter(h => {
+      const estado = h.estado_real || h.estado || 'pendiente';
+      return estado === 'retrasado' || (this.estaVencido(h.fecha_limite) && !['entregado', 'revisado', 'aprobado'].includes(estado));
+    }).length;
+  }
+
+  private normalizarHitoCompleto(hito: any): any {
+    const estado = hito.estado_real || hito.estado || 'pendiente';
+    return {
+      ...hito,
+      entregado: ['entregado', 'revisado', 'aprobado', 'rechazado'].includes(estado),
+      revisado: ['revisado', 'aprobado', 'rechazado'].includes(estado),
+      aprobado: estado === 'aprobado',
+      completado: estado === 'aprobado',
+      nombre: hito.nombre_hito || hito.nombre,
+      archivo_nombre: hito.nombre_archivo_original || hito.archivo_nombre,
+      comentarios_entrega: hito.comentarios_estudiante || hito.comentarios_entrega,
+      comentarios_revision: hito.comentarios_profesor || hito.comentarios_revision,
+      fecha_revision: hito.updated_at || hito.fecha_revision,
+      fecha_completado: estado === 'aprobado' ? hito.updated_at : null
+    };
   }
 
   fechaActual(): Date {
@@ -1030,7 +1026,6 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     const tipos: { [key: string]: string } = {
       'entrega': 'Entrega',
       'reunion': 'Reunión',
-      'evaluacion': 'Evaluación',
       'hito': 'Hito',
       'deadline': 'Fecha límite',
       'presentacion': 'Presentación'

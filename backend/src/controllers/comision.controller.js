@@ -45,10 +45,10 @@ export const agregarMiembro = async (req, res) => {
             });
         }
 
-        const rolesValidos = ['presidente', 'secretario', 'vocal', 'suplente'];
+        const rolesValidos = ['profesor_guia', 'profesor_informante', 'tercer_integrante'];
         if (!rolesValidos.includes(rol_comision)) {
             return res.status(400).json({ 
-                message: 'Rol inválido. Debe ser: presidente, secretario, vocal o suplente' 
+                message: 'Rol inválido. Debe ser: profesor_guia, profesor_informante o tercer_integrante' 
             });
         }
 
@@ -136,10 +136,10 @@ export const actualizarRol = async (req, res) => {
             return res.status(400).json({ message: 'Nuevo rol requerido' });
         }
 
-        const rolesValidos = ['presidente', 'secretario', 'vocal', 'suplente'];
+        const rolesValidos = ['profesor_guia', 'profesor_informante', 'tercer_integrante'];
         if (!rolesValidos.includes(nuevo_rol)) {
             return res.status(400).json({ 
-                message: 'Rol inválido. Debe ser: presidente, secretario, vocal o suplente' 
+                message: 'Rol inválido. Debe ser: profesor_guia, profesor_informante o tercer_integrante' 
             });
         }
 

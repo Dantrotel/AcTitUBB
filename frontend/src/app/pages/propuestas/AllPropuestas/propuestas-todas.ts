@@ -55,15 +55,35 @@ export class PropuestasTodas implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
+  private userRut = '';
+  private rolId = 0;
+
   ngOnInit(): void {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.userRut = payload.rut || '';
+        this.rolId = Number(payload.rol_id) || 0;
+      } catch { /* mantener valores por defecto */ }
+    }
     this.cargarPropuestas();
   }
 
   cargarPropuestas() {
     this.loading = true;
-    this.apiService.getPropuestas().subscribe({
+    // Estudiantes usan el endpoint propio; profesores y admins usan el general
+    const peticion = this.rolId === 1
+      ? this.apiService.getMisPropuestas()
+      : this.apiService.getPropuestas();
+
+    peticion.subscribe({
       next: (res: any) => {
-        this.propuestas = Array.isArray(res) ? res : (res.propuestas || []);
+        const todas = Array.isArray(res) ? res : (res.propuestas || res.data || []);
+        // Profesores solo ven propuestas asignadas a ellos
+        this.propuestas = this.rolId === 2
+          ? todas.filter((p: any) => p.profesor_rut === this.userRut)
+          : todas;
         this.aplicarFiltros();
         this.loading = false;
         this.cdr.detectChanges();

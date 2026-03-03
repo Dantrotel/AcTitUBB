@@ -1,567 +1,82 @@
 @use 'sass:color';
 
-// ===================================
-// VARIABLES
-// ===================================
+$primary:#004b8d; $blue:#0066cc; $green:#28a745; $orange:#fd7e14; $red:#dc3545; $info:#17a2b8;
+$gray:#6c757d; $border:#dee2e6; $bg:#f4f6f9; $white:#fff; $text:#212529; $muted:#6c757d;
+$shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
 
-$primary: #004b8d;
-$primary-dark: #003a6e;
-$secondary: #0066cc;
-$secondary-light: #2989d8;
-$accent: #E20613;
-$white: #ffffff;
-$text-dark: #1e293b;
-$text-medium: #475569;
-$text-light: #94a3b8;
-$border: #e2e8f0;
-
-$shadow-card: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
-$transition: 0.25s ease;
-
-// ===================================
-// WRAPPER
-// ===================================
-
+// ── Full-page wrapper ──────────────────────────────────────────────────────
 .adecca-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 2rem 1.5rem;
-  background: linear-gradient(135deg, $primary-dark 0%, $primary 35%, $secondary 70%, $secondary-light 100%);
-  background-size: 300% 300%;
-  animation: gradientBG 18s ease infinite;
-  font-family: 'Poppins', sans-serif;
-  position: relative;
-  overflow: hidden;
-
-  // Geometric background decoration
-  &::before {
-    content: '';
-    position: absolute;
-    top: -15%;
-    right: -10%;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -10%;
-    left: -5%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  min-height: 100vh; background: linear-gradient(160deg, $primary 0%, color.adjust($blue, $lightness: 10%) 60%, color.adjust($info, $lightness: 5%) 100%);
+  display: flex; align-items: stretch;
 }
-
-@keyframes gradientBG {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-// ===================================
-// CONTAINER
-// ===================================
 
 .adecca-container {
-  width: 100%;
-  max-width: 1100px;
-  margin: auto;
-  padding: 2rem;
-  background: rgba(255,255,255,0.97);
-  border-radius: 20px;
-  box-shadow: $shadow-card;
-  animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.5);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  width: 100%; display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto;
+  padding: 0 16px;
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-// ===================================
-// HEADER
-// ===================================
-
+// ── Header ─────────────────────────────────────────────────────────────────
 .adecca-header {
-  padding: 2rem 2.5rem 1.75rem;
-  background: linear-gradient(to right, #f8fafc, #ffffff);
-  border-bottom: 2px solid $border;
-  position: relative;
-
-  // Accent line at top
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, $primary 0%, $secondary 60%, $secondary-light 100%);
-  }
-
-  .logo-section {
-    .logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1.25rem;
-      margin-bottom: 0.875rem;
-
-      .logo-ubb {
-        width: 70px;
-        height: 70px;
-        object-fit: contain;
-        filter: drop-shadow(0 3px 8px rgba(0,0,0,0.12));
-        transition: transform $transition;
-
-        &:hover {
-          transform: scale(1.04);
-        }
-      }
-
-      .logo-content {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .logo-text {
-        font-size: 2rem;
-        font-weight: 800;
-        color: $primary;
-        letter-spacing: 0.5px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-
-        i {
-          font-size: 1.5rem;
-          color: $secondary-light;
-        }
-      }
-
-      .logo-subtitle {
-        font-size: 0.875rem;
-        color: $text-medium;
-        margin-top: 0.25rem;
-        font-weight: 400;
-      }
-    }
-
-    .welcome-title {
-      font-size: 1.375rem;
-      font-weight: 600;
-      color: $text-dark;
-      text-align: center;
-      margin: 0;
-      letter-spacing: -0.01em;
-
-      i {
-        color: $secondary;
-        margin-left: 0.4rem;
-      }
-    }
-  }
+  padding: 20px 0 14px;
+  .logo-section { display: flex; flex-direction: column; gap: 8px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-ubb { width: 44px; height: 44px; object-fit: contain; }
+  .logo-content { .logo-text { font-size: 1.1rem; font-weight: 800; color: $white; letter-spacing: .5px; } .logo-subtitle { font-size: .75rem; color: rgba($white,.75); } }
+  .welcome-title { font-size: 1.2rem; font-weight: 600; color: $white; margin: 6px 0 0; opacity: .9; }
 }
 
-// ===================================
-// MAIN CONTENT (two-column)
-// ===================================
-
+// ── Main content ───────────────────────────────────────────────────────────
 .adecca-content {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 0;
-  flex: 1;
+  flex: 1; display: flex; gap: 24px; align-items: flex-start; padding: 16px 0 24px; flex-wrap: wrap;
 }
 
-// ===================================
-// LOGIN SECTION
-// ===================================
-
+// ── Login section ─────────────────────────────────────────────────────────
 .login-section {
-  padding: 2.5rem 2rem 2.5rem 2.5rem;
-  border-right: 1px solid $border;
-  background: $white;
-
-  .login-container {
-    max-width: 380px;
-
-    .form-title {
-      color: $primary;
-      font-size: 1.375rem;
-      margin-bottom: 1.75rem;
-      font-weight: 700;
-      position: relative;
-      padding-bottom: 0.875rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      i {
-        font-size: 1.1rem;
-        color: $secondary-light;
-      }
-
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 48px;
-        height: 3px;
-        background: linear-gradient(90deg, $primary, $secondary-light);
-        border-radius: 2px;
-      }
-    }
-  }
+  flex: 0 0 340px; min-width: 280px;
+  @media (max-width: 700px) { flex: 1 1 100%; }
 }
 
-.login-form {
-  .form-group {
-    margin-bottom: 1.25rem;
-    position: relative;
-
-    .form-label {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      margin-bottom: 0.4rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: $text-medium;
-      letter-spacing: 0.01em;
-
-      i {
-        font-size: 0.875rem;
-        color: $secondary-light;
-      }
-    }
-
-    .input-wrapper {
-      position: relative;
-
-      .form-input {
-        width: 100%;
-        padding: 0.75rem 0.875rem 0.75rem 2.5rem;
-        border: 1.5px solid $border;
-        border-radius: 10px;
-        font-size: 0.9375rem;
-        font-family: 'Poppins', sans-serif;
-        color: $text-dark;
-        background: #f8fafc;
-        transition: all $transition;
-        outline: none;
-
-        &:focus {
-          border-color: $secondary-light;
-          background: $white;
-          box-shadow: 0 0 0 3px rgba(41,137,216,0.12);
-        }
-
-        &::placeholder {
-          color: #94a3b8;
-          font-size: 0.875rem;
-        }
-      }
-
-      .input-icon {
-        position: absolute;
-        left: 0.875rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.9rem;
-        color: #94a3b8;
-        pointer-events: none;
-        transition: color $transition;
-      }
-    }
-
-    &:focus-within .input-icon {
-      color: $secondary-light;
-    }
-  }
-
-  .button-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
-    margin-bottom: 1.5rem;
-    margin-top: 1.75rem;
-
-    .login-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, $primary 0%, $secondary 100%);
-      color: $white;
-      border: none;
-      padding: 0.875rem;
-      border-radius: 10px;
-      font-size: 0.9375rem;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0,74,141,0.28);
-      transition: all $transition;
-
-      i { font-size: 1rem; }
-
-      &:hover {
-        filter: brightness(1.08);
-        box-shadow: 0 6px 20px rgba(0,74,141,0.35);
-      }
-
-      &:active {
-        transform: scale(0.99);
-        box-shadow: 0 2px 8px rgba(0,74,141,0.25);
-      }
-    }
-
-    .secondary-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: transparent;
-      border: 1.5px solid $secondary-light;
-      color: $secondary;
-      padding: 0.8125rem;
-      border-radius: 10px;
-      font-size: 0.875rem;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all $transition;
-
-      i { font-size: 0.9rem; }
-
-      &:hover {
-        background: rgba(41,137,216,0.07);
-        border-color: $secondary;
-      }
-
-      &:active {
-        transform: scale(0.99);
-      }
-    }
-  }
+.login-container {
+  background: $white; border-radius: $radius + 4px; box-shadow: 0 4px 24px rgba(0,0,0,.18); padding: 28px 24px;
 }
 
-.forgot-password-link {
-  text-align: center;
+.form-title { font-size: 1rem; font-weight: 700; color: $primary; margin: 0 0 20px; }
 
-  .link-text {
-    color: $text-light;
-    text-decoration: none;
-    font-size: 0.8125rem;
-    font-weight: 400;
-    transition: color $transition;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+.login-form { display: flex; flex-direction: column; gap: 14px; }
 
-    i { font-size: 0.75rem; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { font-size: .8rem; font-weight: 600; color: $text; i { margin-right: 4px; color: $blue; } }
 
-    &:hover {
-      color: $secondary;
-    }
-  }
-}
-
-// ===================================
-// INFO SECTION
-// ===================================
-
-.info-section {
-  padding: 2.5rem 2.5rem 2.5rem 2rem;
-  background: linear-gradient(145deg, #f8fafc 0%, #f0f4f8 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1.25rem;
-
-  .info-block {
-    padding: 1.375rem 1.5rem;
-    background: $white;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(15,23,42,0.06);
-    border: 1px solid $border;
-    transition: all $transition;
-
-    &:hover {
-      box-shadow: 0 4px 14px rgba(15,23,42,0.10);
-      transform: translateY(-2px);
-    }
-
-    .info-icon {
-      font-size: 1.75rem;
-      margin-bottom: 0.75rem;
-      display: block;
-    }
-
-    p {
-      margin: 0;
-      font-size: 0.9rem;
-      color: $text-medium;
-      line-height: 1.65;
-
-      strong {
-        color: $primary;
-        font-weight: 600;
-      }
-    }
-  }
-}
-
-// ===================================
-// FOOTER
-// ===================================
-
-.adecca-footer {
-  padding: 1.5rem 2.5rem;
-  background: linear-gradient(to right, #f8fafc, #ffffff);
-  border-top: 2px solid $border;
+.input-wrapper {
   position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, $primary 0%, $secondary 60%, $secondary-light 100%);
-  }
-
-  .university-section {
-    display: flex;
-    justify-content: center;
-
-    .university-logo {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-
-      .logo-footer {
-        width: 52px;
-        height: 52px;
-        object-fit: contain;
-        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
-        transition: transform $transition;
-
-        &:hover {
-          transform: scale(1.06);
-        }
-      }
-
-      .university-info {
-        .university-name {
-          font-weight: 800;
-          color: $primary;
-          font-size: 1rem;
-          letter-spacing: 0.5px;
-          line-height: 1.2;
-        }
-
-        .university-subtitle {
-          color: $text-light;
-          font-size: 0.8125rem;
-          margin-top: 0.2rem;
-          font-style: italic;
-        }
-      }
-    }
-  }
+  .form-input { width: 100%; padding: 8px 36px 8px 10px; border: 1px solid $border; border-radius: 6px; font-size: .87rem; &:focus { outline: none; border-color: $blue; box-shadow: 0 0 0 2px rgba($blue,.15); } }
+  .input-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: $muted; font-size: .85rem; pointer-events: none; }
 }
 
-// ===================================
-// RESPONSIVE
-// ===================================
-
-@media (max-width: 860px) {
-  .adecca-container {
-    margin: 1rem;
-    padding: 0;
-  }
-
-  .adecca-content {
-    grid-template-columns: 1fr;
-  }
-
-  .login-section {
-    border-right: none;
-    border-bottom: 1px solid $border;
-    padding: 2rem 1.5rem;
-
-    .login-container {
-      max-width: none;
-    }
-  }
-
-  .info-section {
-    padding: 1.75rem 1.5rem;
-  }
-
-  .adecca-header {
-    padding: 1.75rem 1.5rem 1.5rem;
-
-    .logo-section .logo .logo-text {
-      font-size: 1.625rem;
-    }
-
-    .logo-section .welcome-title {
-      font-size: 1.125rem;
-    }
-  }
-
-  .adecca-footer {
-    padding: 1.25rem 1.5rem;
-  }
+.button-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.login-button {
+  flex: 1; background: $blue; color: $white; border: none; border-radius: 6px; padding: 9px 16px; font-size: .87rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s;
+  &:hover { background: color.adjust($blue, $lightness: -8%); }
+}
+.secondary-button {
+  flex: 1; background: transparent; color: $primary; border: 1px solid $primary; border-radius: 6px; padding: 9px 16px; font-size: .87rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s;
+  &:hover { background: color.adjust($primary, $lightness: 60%); }
 }
 
-@media (max-width: 480px) {
-  .adecca-wrapper {
-    padding: 0.75rem;
-  }
+.forgot-password-link { margin-top: 12px; text-align: center; }
+.link-text { font-size: .8rem; color: $blue; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; &:hover { text-decoration: underline; } }
 
-  .adecca-container {
-    margin: 0;
-    border-radius: 16px;
-  }
-
-  .adecca-header {
-    .logo-section .logo {
-      gap: 0.875rem;
-
-      .logo-ubb { width: 55px; height: 55px; }
-      .logo-text { font-size: 1.5rem; }
-    }
-
-    .logo-section .welcome-title {
-      font-size: 1rem;
-    }
-  }
+// ── Info section ─────────────────────────────────────────────────────────
+.info-section { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
+.info-block {
+  background: rgba($white,.12); border: 1px solid rgba($white,.2); border-radius: $radius; padding: 14px 16px;
+  .info-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  p { font-size: .83rem; color: rgba($white,.9); margin: 0; line-height: 1.5; strong { color: $white; } }
 }
+
+// ── Footer ──────────────────────────────────────────────────────────────────
+.adecca-footer { padding: 14px 0; border-top: 1px solid rgba($white,.15); }
+.university-section { display: flex; align-items: center; }
+.university-logo { display: flex; align-items: center; gap: 10px; }
+.logo-footer { width: 32px; height: 32px; object-fit: contain; }
+.university-info { .university-name { font-size: .78rem; font-weight: 700; color: $white; letter-spacing: .3px; } .university-subtitle { font-size: .7rem; color: rgba($white,.7); } }

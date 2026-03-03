@@ -1,20 +1,7 @@
-import { Component, OnInit, inject, signal, Input } from '@angular/core';
+import { Component, OnInit, inject, signal, Input, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { NotificationService } from '../../services/notification.service';
 import { ColaboradoresExternosService, ColaboradorExterno, ColaboradorProyecto } from '../../services/colaboradores-externos.service';
 
@@ -24,20 +11,7 @@ import { ColaboradoresExternosService, ColaboradorExterno, ColaboradorProyecto }
   imports: [
     CommonModule,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatTableModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatCheckboxModule,
-    MatSnackBarModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatDialogModule
+    MatSnackBarModule
   ],
   templateUrl: './colaboradores-proyecto.component.html',
   styleUrls: ['./colaboradores-proyecto.component.scss']
@@ -52,8 +26,14 @@ export class ColaboradoresProyectoComponent implements OnInit {
   colaboradoresDisponibles = signal<ColaboradorExterno[]>([]);
   cargando = signal(false);
   mostrarFormulario = signal(false);
-  
-  displayedColumns = ['colaborador', 'entidad', 'rol', 'fecha_inicio', 'puede_evaluar', 'estado', 'acciones'];
+
+  constructor() {
+    afterNextRender(() => {
+      if (this.proyectoId) {
+        this.cargarColaboradores();
+      }
+    });
+  }
 
   nuevaAsignacion = {
     colaborador_id: 0,
@@ -61,8 +41,7 @@ export class ColaboradoresProyectoComponent implements OnInit {
     descripcion_rol: '',
     fecha_inicio: new Date().toISOString().split('T')[0],
     horas_dedicadas: 4,
-    frecuencia_interaccion: 'semanal',
-    puede_evaluar: true
+    frecuencia_interaccion: 'semanal'
   };
 
   rolesDisponibles = [
@@ -83,11 +62,7 @@ export class ColaboradoresProyectoComponent implements OnInit {
     { value: 'eventual', label: 'Eventual' }
   ];
 
-  ngOnInit() {
-    if (this.proyectoId) {
-      this.cargarColaboradores();
-    }
-  }
+  ngOnInit() {}
 
   cargarColaboradores() {
     this.cargando.set(true);
@@ -193,8 +168,7 @@ export class ColaboradoresProyectoComponent implements OnInit {
       descripcion_rol: '',
       fecha_inicio: new Date().toISOString().split('T')[0],
       horas_dedicadas: 4,
-      frecuencia_interaccion: 'semanal',
-      puede_evaluar: true
+      frecuencia_interaccion: 'semanal'
     };
   }
 

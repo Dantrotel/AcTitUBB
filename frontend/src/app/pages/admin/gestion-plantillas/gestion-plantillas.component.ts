@@ -1,318 +1,259 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatMenuModule } from '@angular/material/menu';
 import { NotificationService } from '../../../services/notification.service';
 import { VersionesPlantillasService, PlantillaDocumento } from '../../../services/versiones-plantillas.service';
 
 @Component({
   selector: 'app-gestion-plantillas',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatMenuModule
-  ],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="gestion-container">
       <div class="page-header">
         <h1>
-          <mat-icon>folder_special</mat-icon>
+          <i class="fas fa-folder-open"></i>
           Gestión de Plantillas
         </h1>
-        <button mat-raised-button color="primary" (click)="mostrarFormularioNueva()">
-          <mat-icon>add</mat-icon>
+        <button class="btn btn-primary" (click)="mostrarFormularioNueva()">
+          <i class="fas fa-plus"></i>
           Nueva Plantilla
         </button>
       </div>
 
-      <!-- Formulario de nueva plantilla -->
+      <!-- Formulario -->
       @if (mostrandoFormulario()) {
-        <mat-card class="form-card">
-          <mat-card-header>
-            <mat-card-title>
+        <div class="form-card">
+          <div class="form-card-header">
+            <h3>
               @if (plantillaEditando()) {
-                <mat-icon>edit</mat-icon>
-                Editar Plantilla
+                <i class="fas fa-edit"></i> Editar Plantilla
               } @else {
-                <mat-icon>add</mat-icon>
-                Nueva Plantilla
+                <i class="fas fa-plus"></i> Nueva Plantilla
               }
-            </mat-card-title>
-          </mat-card-header>
+            </h3>
+          </div>
 
-          <mat-card-content>
+          <div class="form-card-body">
             <form [formGroup]="formularioPlantilla" class="plantilla-form">
               <div class="form-row">
-                <mat-form-field appearance="outline" class="flex-2">
-                  <mat-label>Nombre de la Plantilla</mat-label>
-                  <input matInput formControlName="nombre" required>
-                  <mat-error>El nombre es requerido</mat-error>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="flex-1">
-                  <mat-label>Tipo de Documento</mat-label>
-                  <mat-select formControlName="tipo_documento" required>
-                    <mat-option value="propuesta">Propuesta</mat-option>
-                    <mat-option value="informe_avance">Informe de Avance</mat-option>
-                    <mat-option value="informe_final">Informe Final</mat-option>
-                    <mat-option value="presentacion">Presentación</mat-option>
-                    <mat-option value="poster">Póster</mat-option>
-                    <mat-option value="acta">Acta</mat-option>
-                    <mat-option value="otro">Otro</mat-option>
-                  </mat-select>
-                  <mat-error>El tipo es requerido</mat-error>
-                </mat-form-field>
+                <div class="form-group flex-2">
+                  <label class="form-label">Nombre de la Plantilla <span class="required">*</span></label>
+                  <input class="form-input" formControlName="nombre" required />
+                </div>
+                <div class="form-group flex-1">
+                  <label class="form-label">Tipo de Documento <span class="required">*</span></label>
+                  <select class="form-input" formControlName="tipo_documento">
+                    <option value="">Seleccionar...</option>
+                    <option value="propuesta">Propuesta</option>
+                    <option value="informe_avance">Informe de Avance</option>
+                    <option value="informe_final">Informe Final</option>
+                    <option value="presentacion">Presentación</option>
+                    <option value="poster">Póster</option>
+                    <option value="acta">Acta</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
               </div>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Descripción</mat-label>
-                <textarea matInput formControlName="descripcion" rows="2"></textarea>
-              </mat-form-field>
+              <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-input" formControlName="descripcion" rows="2"></textarea>
+              </div>
 
               <!-- Archivo -->
               <div class="file-upload-section">
-                <label class="file-label">Archivo de Plantilla *</label>
+                <label class="form-label">Archivo de Plantilla *</label>
                 <div class="file-input-container">
                   @if (!archivoSeleccionado()) {
-                    <button mat-raised-button type="button" (click)="fileInput.click()">
-                      <mat-icon>upload_file</mat-icon>
+                    <button type="button" class="btn btn-outline" (click)="fileInput.click()">
+                      <i class="fas fa-upload"></i>
                       Seleccionar Archivo
                     </button>
                     <span class="file-hint">DOCX, PDF (Máx. 50MB)</span>
                   } @else {
                     <div class="file-selected">
-                      <mat-icon>insert_drive_file</mat-icon>
+                      <i class="fas fa-file-alt file-icon"></i>
                       <span>{{ archivoSeleccionado()?.name }}</span>
-                      <button mat-icon-button type="button" (click)="removerArchivo()">
-                        <mat-icon>close</mat-icon>
+                      <button type="button" class="btn-remove" (click)="removerArchivo()">
+                        <i class="fas fa-times"></i>
                       </button>
                     </div>
                   }
-                  <input #fileInput 
-                         type="file" 
-                         hidden 
-                         accept=".pdf,.doc,.docx"
-                         (change)="onFileSelected($event)">
+                  <input #fileInput type="file" hidden accept=".pdf,.doc,.docx" (change)="onFileSelected($event)" />
                 </div>
               </div>
 
               <div class="form-row">
-                <mat-form-field appearance="outline" class="flex-1">
-                  <mat-label>Versión</mat-label>
-                  <input matInput formControlName="version_plantilla" placeholder="1.0">
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="flex-1">
-                  <mat-label>Formato Requerido</mat-label>
-                  <input matInput formControlName="formato_requerido" placeholder="DOCX, PDF">
-                </mat-form-field>
+                <div class="form-group flex-1">
+                  <label class="form-label">Versión</label>
+                  <input class="form-input" formControlName="version_plantilla" placeholder="1.0" />
+                </div>
+                <div class="form-group flex-1">
+                  <label class="form-label">Formato Requerido</label>
+                  <input class="form-input" formControlName="formato_requerido" placeholder="DOCX, PDF" />
+                </div>
               </div>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Instrucciones de Uso</mat-label>
-                <textarea matInput formControlName="instrucciones" rows="3"></textarea>
-              </mat-form-field>
+              <div class="form-group">
+                <label class="form-label">Instrucciones de Uso</label>
+                <textarea class="form-input" formControlName="instrucciones" rows="3"></textarea>
+              </div>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>URL de Ejemplo (Opcional)</mat-label>
-                <input matInput formControlName="ejemplo_url" type="url">
-              </mat-form-field>
+              <div class="form-group">
+                <label class="form-label">URL de Ejemplo (Opcional)</label>
+                <input class="form-input" formControlName="ejemplo_url" type="url" />
+              </div>
 
               <!-- Alcance -->
               <div class="alcance-section">
                 <label class="section-label">Alcance de la Plantilla</label>
                 <div class="form-row">
-                  <mat-form-field appearance="outline" class="flex-1">
-                    <mat-label>Carrera (opcional)</mat-label>
-                    <mat-select formControlName="carrera_id">
-                      <mat-option [value]="null">Todas las carreras</mat-option>
-                      <!-- TODO: Cargar carreras desde el backend -->
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="flex-1">
-                    <mat-label>Departamento (opcional)</mat-label>
-                    <mat-select formControlName="departamento_id">
-                      <mat-option [value]="null">Todos los departamentos</mat-option>
-                      <!-- TODO: Cargar departamentos desde el backend -->
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="flex-1">
-                    <mat-label>Facultad (opcional)</mat-label>
-                    <mat-select formControlName="facultad_id">
-                      <mat-option [value]="null">Todas las facultades</mat-option>
-                      <!-- TODO: Cargar facultades desde el backend -->
-                    </mat-select>
-                  </mat-form-field>
+                  <div class="form-group flex-1">
+                    <label class="form-label">Carrera (opcional)</label>
+                    <select class="form-input" formControlName="carrera_id">
+                      <option [ngValue]="null">Todas las carreras</option>
+                    </select>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label class="form-label">Departamento (opcional)</label>
+                    <select class="form-input" formControlName="departamento_id">
+                      <option [ngValue]="null">Todos los departamentos</option>
+                    </select>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label class="form-label">Facultad (opcional)</label>
+                    <select class="form-input" formControlName="facultad_id">
+                      <option [ngValue]="null">Todas las facultades</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <!-- Opciones -->
-              <div class="opciones-section">
-                <mat-checkbox formControlName="obligatoria">
-                  Plantilla Obligatoria
-                </mat-checkbox>
-              </div>
+              <!-- Obligatoria -->
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="obligatoria" class="checkbox-input" />
+                <span>Plantilla Obligatoria</span>
+              </label>
 
               @if (subiendo()) {
-                <div class="progress-container">
-                  <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+                <div class="progress-box">
+                  <div class="spinner"></div>
                   <p>{{ plantillaEditando() ? 'Actualizando...' : 'Subiendo plantilla...' }}</p>
                 </div>
               }
             </form>
-          </mat-card-content>
+          </div>
 
-          <mat-card-actions align="end">
-            <button mat-button (click)="cancelarFormulario()" [disabled]="subiendo()">
-              Cancelar
-            </button>
-            <button mat-raised-button 
-                    color="primary" 
-                    (click)="guardarPlantilla()"
-                    [disabled]="!formularioPlantilla.valid || subiendo() || (!archivoSeleccionado() && !plantillaEditando())">
-              <mat-icon>save</mat-icon>
+          <div class="form-card-footer">
+            <button class="btn btn-ghost" (click)="cancelarFormulario()" [disabled]="subiendo()">Cancelar</button>
+            <button
+              class="btn btn-primary"
+              (click)="guardarPlantilla()"
+              [disabled]="!formularioPlantilla.valid || subiendo() || (!archivoSeleccionado() && !plantillaEditando())"
+            >
+              <i class="fas fa-save"></i>
               {{ plantillaEditando() ? 'Actualizar' : 'Guardar' }}
             </button>
-          </mat-card-actions>
-        </mat-card>
+          </div>
+        </div>
       }
 
       <!-- Tabla de plantillas -->
-      <mat-card class="table-card">
+      <div class="table-card">
         @if (cargando()) {
-          <div class="loading-container">
-            <mat-spinner></mat-spinner>
+          <div class="loading-wrap">
+            <div class="spinner"></div>
             <p>Cargando plantillas...</p>
           </div>
         } @else if (plantillas().length === 0) {
           <div class="empty-state">
-            <mat-icon>folder_open</mat-icon>
+            <i class="fas fa-folder-open"></i>
             <h2>No hay plantillas registradas</h2>
             <p>Crea la primera plantilla para que los estudiantes puedan descargarla</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="plantillas()" class="plantillas-table">
-            <!-- Columna Nombre -->
-            <ng-container matColumnDef="nombre">
-              <th mat-header-cell *matHeaderCellDef>Nombre</th>
-              <td mat-cell *matCellDef="let plantilla">
-                <div class="nombre-cell">
-                  <mat-icon>{{ obtenerIconoTipo(plantilla.tipo_documento) }}</mat-icon>
-                  <div>
-                    <strong>{{ plantilla.nombre }}</strong>
-                    @if (plantilla.version_plantilla) {
-                      <span class="version-badge">v{{ plantilla.version_plantilla }}</span>
-                    }
-                  </div>
-                </div>
-              </td>
-            </ng-container>
-
-            <!-- Columna Tipo -->
-            <ng-container matColumnDef="tipo">
-              <th mat-header-cell *matHeaderCellDef>Tipo</th>
-              <td mat-cell *matCellDef="let plantilla">
-                {{ getTipoLabel(plantilla.tipo_documento) }}
-              </td>
-            </ng-container>
-
-            <!-- Columna Alcance -->
-            <ng-container matColumnDef="alcance">
-              <th mat-header-cell *matHeaderCellDef>Alcance</th>
-              <td mat-cell *matCellDef="let plantilla">
-                @if (plantilla.carrera_nombre) {
-                  <mat-chip class="chip-alcance">{{ plantilla.carrera_nombre }}</mat-chip>
-                } @else if (plantilla.departamento_nombre) {
-                  <mat-chip class="chip-alcance">{{ plantilla.departamento_nombre }}</mat-chip>
-                } @else if (plantilla.facultad_nombre) {
-                  <mat-chip class="chip-alcance">{{ plantilla.facultad_nombre }}</mat-chip>
-                } @else {
-                  <mat-chip class="chip-global">Global</mat-chip>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Alcance</th>
+                  <th>Estado</th>
+                  <th>Descargas</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (plantilla of plantillas(); track plantilla.id) {
+                  <tr>
+                    <td>
+                      <div class="nombre-cell">
+                        <i [class]="getFAIconoTipo(plantilla.tipo_documento)" class="tipo-icon"></i>
+                        <div>
+                          <strong>{{ plantilla.nombre }}</strong>
+                          @if (plantilla.version_plantilla) {
+                            <span class="version-badge">v{{ plantilla.version_plantilla }}</span>
+                          }
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ getTipoLabel(plantilla.tipo_documento) }}</td>
+                    <td>
+                      @if (plantilla.carrera_nombre) {
+                        <span class="chip chip-alcance">{{ plantilla.carrera_nombre }}</span>
+                      } @else if (plantilla.departamento_nombre) {
+                        <span class="chip chip-alcance">{{ plantilla.departamento_nombre }}</span>
+                      } @else if (plantilla.facultad_nombre) {
+                        <span class="chip chip-alcance">{{ plantilla.facultad_nombre }}</span>
+                      } @else {
+                        <span class="chip chip-global">Global</span>
+                      }
+                    </td>
+                    <td>
+                      @if (plantilla.obligatoria) {
+                        <span class="chip chip-obligatoria">
+                          <i class="fas fa-star"></i> Obligatoria
+                        </span>
+                      } @else {
+                        <span class="chip chip-opcional">Opcional</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="descargas-cell">
+                        <i class="fas fa-download"></i>
+                        {{ plantilla.descargas }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="table-menu" (click)="$event.stopPropagation()">
+                        <button class="btn-menu-trigger" (click)="toggleMenu(plantilla.id)">
+                          <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        @if (menuAbierto() === plantilla.id) {
+                          <div class="dropdown-menu">
+                            <button class="dropdown-item" (click)="descargarPlantilla(plantilla); closeMenu()">
+                              <i class="fas fa-download"></i> Descargar
+                            </button>
+                            <button class="dropdown-item" (click)="editarPlantilla(plantilla); closeMenu()">
+                              <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="dropdown-item danger" (click)="desactivarPlantilla(plantilla); closeMenu()">
+                              <i class="fas fa-trash-alt"></i> Desactivar
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
                 }
-              </td>
-            </ng-container>
-
-            <!-- Columna Obligatoria -->
-            <ng-container matColumnDef="obligatoria">
-              <th mat-header-cell *matHeaderCellDef>Estado</th>
-              <td mat-cell *matCellDef="let plantilla">
-                @if (plantilla.obligatoria) {
-                  <mat-chip class="chip-obligatoria">
-                    <mat-icon>star</mat-icon>
-                    Obligatoria
-                  </mat-chip>
-                } @else {
-                  <mat-chip class="chip-opcional">Opcional</mat-chip>
-                }
-              </td>
-            </ng-container>
-
-            <!-- Columna Descargas -->
-            <ng-container matColumnDef="descargas">
-              <th mat-header-cell *matHeaderCellDef>Descargas</th>
-              <td mat-cell *matCellDef="let plantilla">
-                <div class="descargas-cell">
-                  <mat-icon>download</mat-icon>
-                  <span>{{ plantilla.descargas }}</span>
-                </div>
-              </td>
-            </ng-container>
-
-            <!-- Columna Acciones -->
-            <ng-container matColumnDef="acciones">
-              <th mat-header-cell *matHeaderCellDef>Acciones</th>
-              <td mat-cell *matCellDef="let plantilla">
-                <button mat-icon-button [matMenuTriggerFor]="menu">
-                  <mat-icon>more_vert</mat-icon>
-                </button>
-                <mat-menu #menu="matMenu">
-                  <button mat-menu-item (click)="descargarPlantilla(plantilla)">
-                    <mat-icon>download</mat-icon>
-                    Descargar
-                  </button>
-                  <button mat-menu-item (click)="editarPlantilla(plantilla)">
-                    <mat-icon>edit</mat-icon>
-                    Editar
-                  </button>
-                  <button mat-menu-item (click)="desactivarPlantilla(plantilla)">
-                    <mat-icon>delete</mat-icon>
-                    Desactivar
-                  </button>
-                </mat-menu>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="columnasTabla"></tr>
-            <tr mat-row *matRowDef="let row; columns: columnasTabla;"></tr>
-          </table>
+              </tbody>
+            </table>
+          </div>
         }
-      </mat-card>
+      </div>
     </div>
   `,
   styles: [`
@@ -326,230 +267,336 @@ import { VersionesPlantillasService, PlantillaDocumento } from '../../../service
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
 
       h1 {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
         margin: 0;
-        font-size: 32px;
-
-        mat-icon {
-          font-size: 40px;
-          width: 40px;
-          height: 40px;
-          color: #2196F3;
-        }
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a2e;
+        i { color: #004b8d; }
       }
     }
 
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
+    .btn-primary { background: #004b8d; color: #fff; &:hover:not(:disabled) { background: #003a6e; } }
+    .btn-ghost { background: transparent; color: #555; border: 1px solid #ddd; &:hover:not(:disabled) { background: #f5f5f5; } }
+    .btn-outline { background: transparent; color: #004b8d; border: 1px solid #004b8d; &:hover { background: #f0f7ff; } }
+
+    /* Form card */
     .form-card {
-      margin-bottom: 30px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
 
-      mat-card-header {
-        margin-bottom: 20px;
+    .form-card-header {
+      padding: 14px 20px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e8e8e8;
 
-        mat-card-title {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        i { color: #004b8d; }
       }
     }
+
+    .form-card-body { padding: 20px; }
 
     .plantilla-form {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .form-row {
       display: flex;
-      gap: 20px;
-
+      gap: 16px;
       .flex-1 { flex: 1; }
       .flex-2 { flex: 2; }
     }
 
-    .full-width {
-      width: 100%;
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      .required { color: #e53935; }
     }
 
-    .file-upload-section {
-      margin: 10px 0;
-
-      .file-label {
-        display: block;
-        margin-bottom: 10px;
-        font-weight: 500;
-        color: #333;
-      }
-
-      .file-input-container {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-
-        .file-hint {
-          color: #999;
-          font-size: 13px;
-        }
-      }
-
-      .file-selected {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 15px;
-        background: #f5f5f5;
-        border-radius: 6px;
-        flex: 1;
-
-        mat-icon {
-          color: #2196F3;
-        }
-
-        span {
-          flex: 1;
-          color: #333;
-        }
-      }
+    .form-input {
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      &:focus { border-color: #004b8d; }
     }
 
-    .alcance-section, .opciones-section {
-      margin: 10px 0;
+    select.form-input { cursor: pointer; }
+    textarea.form-input { resize: vertical; }
 
-      .section-label {
-        display: block;
-        margin-bottom: 15px;
-        font-weight: 500;
-        color: #333;
-      }
-    }
+    .file-upload-section { display: flex; flex-direction: column; gap: 6px; }
 
-    .progress-container {
+    .file-input-container {
       display: flex;
       align-items: center;
-      gap: 20px;
-      padding: 20px;
+      gap: 14px;
+      .file-hint { color: #aaa; font-size: 12px; }
+    }
+
+    .file-selected {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: #f0f7ff;
+      border-radius: 7px;
+      border: 1px solid #bbdefb;
+      flex: 1;
+      .file-icon { color: #004b8d; font-size: 18px; }
+      span { flex: 1; font-size: 13px; color: #333; }
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: 1px solid #ffcdd2;
+      color: #e53935;
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      &:hover { background: #ffebee; }
+    }
+
+    .section-label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 6px; }
+    .alcance-section { display: flex; flex-direction: column; }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+      .checkbox-input { width: 16px; height: 16px; accent-color: #004b8d; cursor: pointer; }
+    }
+
+    .progress-box {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px;
       background: #f5f5f5;
       border-radius: 8px;
-
-      p {
-        margin: 0;
-        color: #666;
-      }
+      color: #666;
+      font-size: 13px;
     }
 
+    .form-card-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px;
+      background: #fafafa;
+      border-top: 1px solid #eee;
+    }
+
+    /* Table card */
     .table-card {
-      overflow-x: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
     }
 
-    .loading-container, .empty-state {
+    .loading-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      padding: 60px 20px;
+      color: #666;
+      gap: 14px;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 60px 20px;
       text-align: center;
-
-      mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: #ccc;
-        margin-bottom: 20px;
-      }
-
-      h2 {
-        margin: 0 0 10px 0;
-        color: #666;
-      }
-
-      p {
-        margin: 0;
-        color: #999;
-      }
+      color: #aaa;
+      i { font-size: 52px; margin-bottom: 16px; opacity: 0.4; }
+      h2 { margin: 0 0 8px 0; color: #666; }
+      p { margin: 0; color: #999; font-size: 14px; }
     }
 
-    .plantillas-table {
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #004b8d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .table-wrap { overflow-x: auto; }
+
+    .data-table {
       width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
 
-      .nombre-cell {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        mat-icon {
-          color: #2196F3;
-        }
-
-        .version-badge {
-          display: inline-block;
-          padding: 2px 6px;
-          background: #E3F2FD;
-          color: #1976D2;
-          border-radius: 4px;
-          font-size: 11px;
-          margin-left: 8px;
-        }
+      th {
+        background: #f8f9fa;
+        padding: 11px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #555;
+        border-bottom: 2px solid #e8e8e8;
+        white-space: nowrap;
       }
 
-      .descargas-cell {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-
-        mat-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
-          color: #999;
-        }
+      td {
+        padding: 11px 16px;
+        border-bottom: 1px solid #f5f5f5;
+        color: #333;
+        vertical-align: middle;
       }
+
+      tr:hover td { background: #f9fbff; }
     }
 
-    .chip-alcance {
-      background: #E0F2F1;
-      color: #00796B;
-    }
+    .nombre-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
 
-    .chip-global {
-      background: #F3E5F5;
-      color: #7B1FA2;
-    }
+      .tipo-icon { color: #004b8d; font-size: 18px; flex-shrink: 0; }
 
-    .chip-obligatoria {
-      background: #FF9800 !important;
-      color: white !important;
+      strong { display: block; color: #1a1a2e; }
 
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
+      .version-badge {
+        display: inline-block;
+        padding: 2px 7px;
+        background: #e3f2fd;
+        color: #1565c0;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-left: 6px;
       }
     }
 
-    .chip-opcional {
-      background: #ECEFF1;
-      color: #546E7A;
+    .descargas-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #666;
+      i { color: #aaa; }
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .chip-alcance { background: #e0f2f1; color: #00695c; }
+    .chip-global { background: #f3e5f5; color: #6a1b9a; }
+    .chip-obligatoria { background: #fff3e0; color: #e65100; }
+    .chip-opcional { background: #eceff1; color: #455a64; }
+
+    /* Actions dropdown */
+    .table-menu { position: relative; display: inline-block; }
+
+    .btn-menu-trigger {
+      background: transparent;
+      border: 1px solid #e0e0e0;
+      color: #555;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      &:hover { background: #f5f5f5; border-color: #bbb; }
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 34px;
+      right: 0;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      min-width: 160px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 9px 14px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+
+      &:hover { background: #f5f7fa; }
+      i { color: #004b8d; width: 14px; }
+
+      &.danger { color: #e53935; &:hover { background: #ffebee; } i { color: #e53935; } }
     }
 
     @media (max-width: 768px) {
-      .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-
-        button {
-          width: 100%;
-        }
-      }
-
-      .form-row {
-        flex-direction: column;
-      }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .form-row { flex-direction: column; }
     }
   `]
 })
@@ -565,9 +612,22 @@ export class GestionPlantillasComponent implements OnInit {
   subiendo = signal(false);
   archivoSeleccionado = signal<File | null>(null);
   plantillaEditando = signal<PlantillaDocumento | null>(null);
+  menuAbierto = signal<number | null>(null);
 
   formularioPlantilla: FormGroup;
-  columnasTabla = ['nombre', 'tipo', 'alcance', 'obligatoria', 'descargas', 'acciones'];
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.menuAbierto() !== null) this.menuAbierto.set(null);
+  }
+
+  toggleMenu(id: number) {
+    this.menuAbierto.update(current => current === id ? null : id);
+  }
+
+  closeMenu() {
+    this.menuAbierto.set(null);
+  }
 
   constructor() {
     this.formularioPlantilla = this.fb.group({
@@ -596,7 +656,7 @@ export class GestionPlantillasComponent implements OnInit {
         this.plantillas.set(response.plantillas);
         this.cargando.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al cargar plantillas', 'Cerrar', { duration: 3000 });
         this.cargando.set(false);
       }
@@ -628,13 +688,10 @@ export class GestionPlantillasComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      
-      // Validar tamaño
       if (file.size > 50 * 1024 * 1024) {
         this.snackBar.open('El archivo no debe superar los 50MB', 'Cerrar', { duration: 3000 });
         return;
       }
-
       this.archivoSeleccionado.set(file);
     }
   }
@@ -644,9 +701,7 @@ export class GestionPlantillasComponent implements OnInit {
   }
 
   guardarPlantilla() {
-    if (!this.formularioPlantilla.valid) {
-      return;
-    }
+    if (!this.formularioPlantilla.valid) return;
 
     const editando = this.plantillaEditando();
 
@@ -677,7 +732,7 @@ export class GestionPlantillasComponent implements OnInit {
         this.cancelarFormulario();
         this.subiendo.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al guardar plantilla', 'Cerrar', { duration: 3000 });
         this.subiendo.set(false);
       }
@@ -694,7 +749,7 @@ export class GestionPlantillasComponent implements OnInit {
         link.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al descargar', 'Cerrar', { duration: 3000 });
       }
     });
@@ -707,22 +762,31 @@ export class GestionPlantillasComponent implements OnInit {
       'Desactivar',
       'Cancelar'
     );
-    
+
     if (!confirmed) return;
-    
+
     this.versionesService.desactivarPlantilla(plantilla.id).subscribe({
       next: () => {
         this.snackBar.open('Plantilla desactivada', 'Cerrar', { duration: 3000 });
         this.cargarPlantillas();
       },
-      error: (error) => {
+      error: () => {
         this.snackBar.open('Error al desactivar', 'Cerrar', { duration: 3000 });
       }
     });
   }
 
-  obtenerIconoTipo(tipo: string): string {
-    return this.versionesService.obtenerIconoTipoDocumento(tipo);
+  getFAIconoTipo(tipo: string): string {
+    const icons: Record<string, string> = {
+      propuesta: 'fas fa-lightbulb',
+      informe_avance: 'fas fa-chart-line',
+      informe_final: 'fas fa-file-check',
+      presentacion: 'fas fa-desktop',
+      poster: 'fas fa-image',
+      acta: 'fas fa-scroll',
+      otro: 'fas fa-file-alt'
+    };
+    return icons[tipo] || 'fas fa-file-alt';
   }
 
   getTipoLabel(tipo: string): string {

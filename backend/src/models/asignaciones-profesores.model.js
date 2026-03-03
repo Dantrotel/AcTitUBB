@@ -171,7 +171,7 @@ export const cambiarProfesorProyecto = async (proyecto_id, rol_profesor_id, nuev
     // Verificar que el nuevo profesor sea válido
     const verificarProfesor = `
         SELECT id FROM usuarios 
-        WHERE rut = ? AND role_id = 2
+        WHERE rut = ? AND rol_id = 2
     `;
     const [profesorExists] = await pool.execute(verificarProfesor, [nuevo_profesor_rut]);
     

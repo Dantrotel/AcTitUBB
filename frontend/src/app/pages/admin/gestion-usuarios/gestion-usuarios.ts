@@ -3,11 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
-import { NavbarComponent } from '../../../components/navbar/navbar.component';
-
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   selector: 'gestion-usuarios',
   templateUrl: './gestion-usuarios.html',
   styleUrl: './gestion-usuarios.scss'

@@ -2,17 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ColaboradoresExternosService, EntidadExterna } from '../../../services/colaboradores-externos.service';
 
 @Component({
@@ -21,17 +11,7 @@ import { ColaboradoresExternosService, EntidadExterna } from '../../../services/
   imports: [
     CommonModule,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatTableModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatChipsModule,
-    MatTooltipModule
+    MatSnackBarModule
   ],
   templateUrl: './gestion-entidades.component.html',
   styleUrls: ['./gestion-entidades.component.scss']
@@ -39,15 +19,12 @@ import { ColaboradoresExternosService, EntidadExterna } from '../../../services/
 export class GestionEntidadesComponent implements OnInit {
   private colaboradoresService = inject(ColaboradoresExternosService);
   private snackBar = inject(MatSnackBar);
-  private dialog = inject(MatDialog);
   private router = inject(Router);
 
   entidades = signal<EntidadExterna[]>([]);
   cargando = signal(false);
   mostrarFormulario = signal(false);
   
-  displayedColumns = ['nombre', 'tipo', 'email_contacto', 'telefono', 'activo', 'acciones'];
-
   nuevaEntidad: EntidadExterna = {
     nombre: '',
     razon_social: '',

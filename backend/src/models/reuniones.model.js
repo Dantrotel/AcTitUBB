@@ -45,23 +45,22 @@ export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respu
         throw new Error('No tienes asignación activa a este proyecto para responder esta solicitud');
     }
     
-    // Verificar estado actual (nuevo sistema con 3 estados)
-    if (solicitud.estado === 'aceptada') {
+    // Verificar estado actual
+    if (['aceptada_profesor', 'aceptada_estudiante'].includes(solicitud.estado)) {
         throw new Error('La reunión ya está aceptada');
     }
-    
+
     if (solicitud.estado === 'rechazada') {
         throw new Error('La solicitud ya fue rechazada');
     }
-    
+
     const esProfesor = usuario_rut === solicitud.profesor_rut;
     let nuevoEstado = solicitud.estado;
     let updateFields = [];
     let updateValues = [];
-    
+
     if (respuesta === 'aceptar') {
-        // NUEVO SISTEMA: Solo estados 'pendiente', 'aceptada', 'rechazada'
-        nuevoEstado = 'aceptada';
+        nuevoEstado = esProfesor ? 'aceptada_profesor' : 'aceptada_estudiante';
         if (esProfesor) {
             updateFields.push('fecha_respuesta_profesor = NOW()');
             if (comentarios) {
@@ -105,23 +104,23 @@ export const responderSolicitudReunion = async (solicitud_id, usuario_rut, respu
     
     await pool.execute(updateQuery, updateValues);
     
-    // Registrar en historial (adaptado al nuevo sistema)
-    const accionHistorial = respuesta === 'aceptar' ? 'aceptada' : 'rechazada';
+    // Registrar en historial
+    const accionHistorial = respuesta === 'aceptar'
+        ? (esProfesor ? 'aceptada_profesor' : 'aceptada_estudiante')
+        : 'rechazada';
     await registrarEnHistorial(solicitud, accionHistorial, usuario_rut, comentarios);
-    
-    // Si se aceptó la reunión, crear la reunión en el calendario
+
+    // Si se aceptó, crear la reunión en el calendario
     let reunion_id = null;
-    if (nuevoEstado === 'aceptada') {
+    if (['aceptada_profesor', 'aceptada_estudiante'].includes(nuevoEstado)) {
         reunion_id = await crearReunionAceptada(solicitud_id);
-        // Registrar aceptación en historial
-        await registrarEnHistorial(solicitud, 'aceptada', usuario_rut, 'Reunión aceptada');
     }
-    
+
     return {
         success: true,
         estado_anterior: solicitud.estado,
         estado_nuevo: nuevoEstado,
-        reunion_confirmada: nuevoEstado === 'aceptada',
+        reunion_confirmada: ['aceptada_profesor', 'aceptada_estudiante'].includes(nuevoEstado),
         reunion_id: reunion_id,
         message: obtenerMensajeEstado(nuevoEstado, esProfesor)
     };
@@ -138,7 +137,7 @@ export const crearReunionAceptada = async (solicitud_id) => {
         SELECT sr.*, p.titulo as proyecto_titulo
         FROM solicitudes_reunion sr
         INNER JOIN proyectos p ON sr.proyecto_id = p.id
-        WHERE sr.id = ? AND sr.estado = 'aceptada'
+        WHERE sr.id = ? AND sr.estado IN ('aceptada_profesor', 'aceptada_estudiante')
     `;
     
     const [solicitudRows] = await pool.execute(solicitudQuery, [solicitud_id]);
@@ -1066,7 +1065,7 @@ export const obtenerEstadisticasGenerales = async () => {
         SELECT
             COUNT(*) as total_solicitudes,
             SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
-            SUM(CASE WHEN estado = 'aceptada' THEN 1 ELSE 0 END) as aceptadas,
+            SUM(CASE WHEN estado IN ('aceptada_profesor', 'aceptada_estudiante') THEN 1 ELSE 0 END) as aceptadas,
             SUM(CASE WHEN estado = 'rechazada' THEN 1 ELSE 0 END) as rechazadas
         FROM solicitudes_reunion
     `);

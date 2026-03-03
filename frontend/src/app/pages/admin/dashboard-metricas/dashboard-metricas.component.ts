@@ -1,50 +1,38 @@
 // Dashboard de métricas globales - Super Admin
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTableModule } from '@angular/material/table';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-dashboard-metricas',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatTableModule
-  ],
+  imports: [CommonModule],
   template: `
     <div class="dashboard-container">
-      <div class="header">
-        <h1>
-          <mat-icon>dashboard</mat-icon>
-          Dashboard Global del Sistema
-        </h1>
-        <button mat-raised-button color="primary" (click)="recargarDatos()">
-          <mat-icon>refresh</mat-icon>
+      <div class="page-header">
+        <div>
+          <h1>
+            <i class="fas fa-chart-bar"></i>
+            Dashboard Global del Sistema
+          </h1>
+        </div>
+        <button class="btn btn-primary" (click)="recargarDatos()">
+          <i class="fas fa-sync-alt"></i>
           Actualizar
         </button>
       </div>
 
       @if (cargando()) {
         <div class="loading">
-          <mat-spinner diameter="50"></mat-spinner>
+          <div class="spinner"></div>
           <p>Cargando estadísticas...</p>
         </div>
       } @else {
         <!-- Métricas principales -->
         <div class="metricas-grid">
-          <mat-card class="metric-card usuarios">
-            <mat-icon>people</mat-icon>
+          <div class="metric-card usuarios">
+            <div class="metric-icon"><i class="fas fa-users"></i></div>
             <div class="metric-content">
               <div class="metric-value">{{ totalUsuarios() }}</div>
               <div class="metric-label">Total Usuarios</div>
@@ -54,10 +42,10 @@ import { NotificationService } from '../../../services/notification.service';
                 <span>🔧 {{ estadisticas()?.usuarios?.admins || 0 }} Admins</span>
               </div>
             </div>
-          </mat-card>
+          </div>
 
-          <mat-card class="metric-card proyectos">
-            <mat-icon>folder</mat-icon>
+          <div class="metric-card proyectos">
+            <div class="metric-icon"><i class="fas fa-folder-open"></i></div>
             <div class="metric-content">
               <div class="metric-value">{{ totalProyectos() }}</div>
               <div class="metric-label">Proyectos Activos</div>
@@ -66,10 +54,10 @@ import { NotificationService } from '../../../services/notification.service';
                 <span>✅ Completados: {{ estadisticas()?.proyectos?.cerrado || 0 }}</span>
               </div>
             </div>
-          </mat-card>
+          </div>
 
-          <mat-card class="metric-card propuestas">
-            <mat-icon>description</mat-icon>
+          <div class="metric-card propuestas">
+            <div class="metric-icon"><i class="fas fa-file-alt"></i></div>
             <div class="metric-content">
               <div class="metric-value">{{ totalPropuestas() }}</div>
               <div class="metric-label">Propuestas</div>
@@ -78,10 +66,10 @@ import { NotificationService } from '../../../services/notification.service';
                 <span>✅ Aprobadas</span>
               </div>
             </div>
-          </mat-card>
+          </div>
 
-          <mat-card class="metric-card cumplimiento">
-            <mat-icon>check_circle</mat-icon>
+          <div class="metric-card cumplimiento">
+            <div class="metric-icon"><i class="fas fa-check-circle"></i></div>
             <div class="metric-content">
               <div class="metric-value">{{ porcentajeCumplimiento() }}%</div>
               <div class="metric-label">Cumplimiento de Plazos</div>
@@ -90,137 +78,113 @@ import { NotificationService } from '../../../services/notification.service';
                 <span>Últimos 3 meses</span>
               </div>
             </div>
-          </mat-card>
+          </div>
         </div>
 
         <!-- Proyectos por carrera -->
-        <mat-card class="section-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>school</mat-icon>
-              Proyectos por Carrera
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="table-container">
-              <table mat-table [dataSource]="estadisticas()?.proyectos_por_carrera || []">
-                <ng-container matColumnDef="carrera">
-                  <th mat-header-cell *matHeaderCellDef>Carrera</th>
-                  <td mat-cell *matCellDef="let element">{{ element.carrera }}</td>
-                </ng-container>
-
-                <ng-container matColumnDef="total">
-                  <th mat-header-cell *matHeaderCellDef>Total</th>
-                  <td mat-cell *matCellDef="let element">
-                    <span class="badge badge-primary">{{ element.total_proyectos }}</span>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="completados">
-                  <th mat-header-cell *matHeaderCellDef>Completados</th>
-                  <td mat-cell *matCellDef="let element">
-                    <span class="badge badge-success">{{ element.completados }}</span>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="en_riesgo">
-                  <th mat-header-cell *matHeaderCellDef>En Riesgo</th>
-                  <td mat-cell *matCellDef="let element">
-                    <span class="badge badge-danger" *ngIf="element.en_riesgo > 0">
-                      {{ element.en_riesgo }}
-                    </span>
-                    <span *ngIf="element.en_riesgo === 0">-</span>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="columnasCarrera"></tr>
-                <tr mat-row *matRowDef="let row; columns: columnasCarrera;"></tr>
-              </table>
-            </div>
-          </mat-card-content>
-        </mat-card>
+        <div class="section-card">
+          <div class="section-header">
+            <h2><i class="fas fa-graduation-cap"></i> Proyectos por Carrera</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Carrera</th>
+                  <th>Total</th>
+                  <th>Completados</th>
+                  <th>En Riesgo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (element of estadisticas()?.proyectos_por_carrera || []; track $index) {
+                  <tr>
+                    <td>{{ element.carrera }}</td>
+                    <td><span class="badge badge-primary">{{ element.total_proyectos }}</span></td>
+                    <td><span class="badge badge-success">{{ element.completados }}</span></td>
+                    <td>
+                      @if (element.en_riesgo > 0) {
+                        <span class="badge badge-danger">{{ element.en_riesgo }}</span>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4" class="text-center text-muted">Sin datos</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         <!-- Carga de profesores -->
-        <mat-card class="section-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>person</mat-icon>
-              Carga Administrativa de Profesores (Top 10)
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="table-container">
-              <table mat-table [dataSource]="(estadisticas()?.carga_profesores || []).slice(0, 10)">
-                <ng-container matColumnDef="nombre">
-                  <th mat-header-cell *matHeaderCellDef>Profesor</th>
-                  <td mat-cell *matCellDef="let element">
-                    <div class="profesor-info">
-                      <strong>{{ element.nombre }}</strong>
-                      <small>{{ element.departamento || 'Sin departamento' }}</small>
-                    </div>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="total">
-                  <th mat-header-cell *matHeaderCellDef>Total Proyectos</th>
-                  <td mat-cell *matCellDef="let element">
-                    <span class="badge badge-primary">{{ element.total_proyectos }}</span>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="guia">
-                  <th mat-header-cell *matHeaderCellDef>Como Guía</th>
-                  <td mat-cell *matCellDef="let element">
-                    <span class="badge badge-info">
-                      <mat-icon>school</mat-icon>
-                      {{ element.como_guia }} Guía
-                    </span>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="informante">
-                  <th mat-header-cell *matHeaderCellDef>Como Informante</th>
-                  <td mat-cell *matCellDef="let element">
-                    <span class="badge badge-success">
-                      <mat-icon>people</mat-icon>
-                      {{ element.como_informante }} Informante
-                    </span>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="columnasProfesores"></tr>
-                <tr mat-row *matRowDef="let row; columns: columnasProfesores;"></tr>
-              </table>
-            </div>
-          </mat-card-content>
-        </mat-card>
+        <div class="section-card">
+          <div class="section-header">
+            <h2><i class="fas fa-chalkboard-teacher"></i> Carga Administrativa de Profesores (Top 10)</h2>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Profesor</th>
+                  <th>Total Proyectos</th>
+                  <th>Como Guía</th>
+                  <th>Como Informante</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (element of (estadisticas()?.carga_profesores || []).slice(0, 10); track $index) {
+                  <tr>
+                    <td>
+                      <div class="profesor-info">
+                        <strong>{{ element.nombre }}</strong>
+                        <small>{{ element.departamento || 'Sin departamento' }}</small>
+                      </div>
+                    </td>
+                    <td><span class="badge badge-primary">{{ element.total_proyectos }}</span></td>
+                    <td>
+                      <span class="badge badge-info">
+                        <i class="fas fa-graduation-cap"></i>
+                        {{ element.como_guia }} Guía
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge badge-success">
+                        <i class="fas fa-users"></i>
+                        {{ element.como_informante }} Informante
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4" class="text-center text-muted">Sin datos</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         <!-- Actividad reciente -->
-        <mat-card class="section-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>history</mat-icon>
-              Actividad Reciente (Últimos 7 días)
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="actividad-list">
-              @for (actividad of estadisticas()?.actividad_reciente || []; track $index) {
-                <div class="actividad-item">
-                  <mat-icon [class]="'icon-' + actividad.tipo">
-                    {{ actividad.tipo === 'propuesta' ? 'description' : 'folder' }}
-                  </mat-icon>
-                  <div class="actividad-content">
-                    <strong>{{ actividad.titulo }}</strong>
-                    <small>{{ actividad.usuario }} • {{ formatearFecha(actividad.fecha) }}</small>
-                  </div>
+        <div class="section-card">
+          <div class="section-header">
+            <h2><i class="fas fa-history"></i> Actividad Reciente (Últimos 7 días)</h2>
+          </div>
+          <div class="actividad-list">
+            @for (actividad of estadisticas()?.actividad_reciente || []; track $index) {
+              <div class="actividad-item">
+                <div class="actividad-icon" [class.icon-propuesta]="actividad.tipo === 'propuesta'" [class.icon-proyecto]="actividad.tipo !== 'propuesta'">
+                  <i [class]="actividad.tipo === 'propuesta' ? 'fas fa-file-alt' : 'fas fa-folder'"></i>
                 </div>
-              } @empty {
-                <p class="no-data">No hay actividad reciente</p>
-              }
-            </div>
-          </mat-card-content>
-        </mat-card>
+                <div class="actividad-content">
+                  <strong>{{ actividad.titulo }}</strong>
+                  <small>{{ actividad.usuario }} • {{ formatearFecha(actividad.fecha) }}</small>
+                </div>
+              </div>
+            } @empty {
+              <p class="text-center text-muted" style="padding:32px">No hay actividad reciente</p>
+            }
+          </div>
+        </div>
       }
     </div>
   `,
@@ -231,7 +195,7 @@ import { NotificationService } from '../../../services/notification.service';
       margin: 0 auto;
     }
 
-    .header {
+    .page-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -242,23 +206,26 @@ import { NotificationService } from '../../../services/notification.service';
         align-items: center;
         gap: 12px;
         margin: 0;
-        color: #333;
-        font-size: 32px;
-
-        mat-icon {
-          font-size: 36px;
-          width: 36px;
-          height: 36px;
-          color: #667eea;
-        }
-      }
-
-      button {
-        mat-icon {
-          margin-right: 8px;
-        }
+        color: #1a1a2e;
+        font-size: 28px;
+        font-weight: 700;
+        i { color: #004b8d; }
       }
     }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #004b8d; color: #fff; &:hover { background: #003a6e; } }
 
     .loading {
       display: flex;
@@ -267,222 +234,191 @@ import { NotificationService } from '../../../services/notification.service';
       justify-content: center;
       padding: 80px 20px;
       gap: 20px;
+      color: #666;
     }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #004b8d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .metricas-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 20px;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
 
     .metric-card {
+      border-radius: 14px;
       padding: 24px;
       display: flex;
       align-items: flex-start;
       gap: 16px;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s;
+      color: #fff;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 
-      &:hover {
-        transform: translateY(-4px);
-      }
+      &:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
 
-      mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
+      &.usuarios { background: linear-gradient(135deg, #004b8d 0%, #0066cc 100%); }
+      &.proyectos { background: linear-gradient(135deg, #1b5e20 0%, #388e3c 100%); }
+      &.propuestas { background: linear-gradient(135deg, #e65100 0%, #f57c00 100%); }
+      &.cumplimiento { background: linear-gradient(135deg, #006064 0%, #00acc1 100%); }
+    }
+
+    .metric-icon {
+      font-size: 40px;
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+
+    .metric-content {
+      flex: 1;
+      .metric-value { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
+      .metric-label { font-size: 14px; opacity: 0.9; margin-bottom: 10px; }
+      .metric-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
         opacity: 0.8;
-      }
-
-      &.usuarios {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-      }
-
-      &.proyectos {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-      }
-
-      &.propuestas {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-      }
-
-      &.cumplimiento {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        color: white;
-      }
-
-      .metric-content {
-        flex: 1;
-
-        .metric-value {
-          font-size: 36px;
-          font-weight: 700;
-          margin-bottom: 4px;
-        }
-
-        .metric-label {
-          font-size: 14px;
-          opacity: 0.9;
-          margin-bottom: 12px;
-        }
-
-        .metric-breakdown {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          font-size: 12px;
-          opacity: 0.8;
-        }
       }
     }
 
     .section-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
       margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #f0f0f0;
+    }
 
-      mat-card-header {
-        margin-bottom: 16px;
-
-        mat-card-title {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 20px;
-          color: #333;
-
-          mat-icon {
-            color: #667eea;
-          }
-        }
+    .section-header {
+      margin-bottom: 18px;
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        i { color: #004b8d; }
       }
     }
 
-    .table-container {
-      overflow-x: auto;
+    .table-wrap { overflow-x: auto; }
 
-      table {
-        width: 100%;
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
 
-        th {
-          font-weight: 600;
-          color: #666;
-        }
-
-        .profesor-info {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-
-          small {
-            color: #999;
-            font-size: 12px;
-          }
-        }
+      th {
+        background: #f8f9fa;
+        padding: 10px 14px;
+        text-align: left;
+        font-weight: 600;
+        color: #555;
+        border-bottom: 2px solid #e8e8e8;
+        white-space: nowrap;
       }
+
+      td {
+        padding: 10px 14px;
+        color: #333;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+      }
+
+      tr:hover td { background: #f7f9fc; }
     }
 
     .badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
       font-weight: 600;
-      display: inline-block;
 
-      &.badge-primary {
-        background: #e3f2fd;
-        color: #1976d2;
-      }
+      &.badge-primary { background: #e3f2fd; color: #1565c0; }
+      &.badge-success { background: #e8f5e9; color: #2e7d32; }
+      &.badge-danger { background: #ffebee; color: #b71c1c; }
+      &.badge-info { background: #e0f7fa; color: #006064; }
+    }
 
-      &.badge-success {
-        background: #e8f5e9;
-        color: #388e3c;
-      }
-
-      &.badge-danger {
-        background: #ffebee;
-        color: #d32f2f;
-      }
+    .profesor-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      strong { color: #222; }
+      small { color: #999; font-size: 11px; }
     }
 
     .actividad-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-
-      .actividad-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 8px;
-        background: #f5f5f5;
-
-        mat-icon {
-          font-size: 24px;
-          width: 24px;
-          height: 24px;
-
-          &.icon-propuesta {
-            color: #2196f3;
-          }
-
-          &.icon-proyecto {
-            color: #4caf50;
-          }
-        }
-
-        .actividad-content {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-
-          strong {
-            color: #333;
-            font-size: 14px;
-          }
-
-          small {
-            color: #666;
-            font-size: 12px;
-          }
-        }
-      }
-
-      .no-data {
-        text-align: center;
-        color: #999;
-        padding: 40px 20px;
-      }
+      gap: 12px;
     }
 
+    .actividad-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #f8f9fa;
+      transition: background 0.15s;
+
+      &:hover { background: #f0f4fa; }
+    }
+
+    .actividad-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+
+      &.icon-propuesta { background: #e3f2fd; color: #1565c0; }
+      &.icon-proyecto { background: #e8f5e9; color: #2e7d32; }
+    }
+
+    .actividad-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      strong { color: #222; font-size: 13px; }
+      small { color: #777; font-size: 12px; }
+    }
+
+    .text-center { text-align: center; }
+    .text-muted { color: #aaa; }
+
     @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-
-        h1 {
-          font-size: 24px;
-        }
-      }
-
-      .metricas-grid {
-        grid-template-columns: 1fr;
-      }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .page-header h1 { font-size: 22px; }
+      .metricas-grid { grid-template-columns: 1fr; }
     }
   `]
 })
 export class DashboardMetricasComponent implements OnInit {
   estadisticas = signal<any>(null);
   cargando = signal(true);
-  
-  columnasCarrera = ['carrera', 'total', 'completados', 'en_riesgo'];
-  columnasProfesores = ['nombre', 'total', 'guia', 'informante'];
 
   totalUsuarios = computed(() => {
     const est = this.estadisticas();
@@ -525,10 +461,7 @@ export class DashboardMetricasComponent implements OnInit {
         this.estadisticas.set(response.estadisticas);
       }
     } catch (error: any) {
-      this.notificationService.error(
-        'Error',
-        'No se pudieron cargar las estadísticas'
-      );
+      this.notificationService.error('Error', 'No se pudieron cargar las estadísticas');
     } finally {
       this.cargando.set(false);
     }
@@ -548,10 +481,7 @@ export class DashboardMetricasComponent implements OnInit {
     if (days === 0) return 'Hoy';
     if (days === 1) return 'Ayer';
     if (days < 7) return `Hace ${days} días`;
-    
-    return date.toLocaleDateString('es-CL', { 
-      day: 'numeric', 
-      month: 'short' 
-    });
+
+    return date.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
   }
 }

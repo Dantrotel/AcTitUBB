@@ -1,568 +1,324 @@
-// Variables de colores UBB (unificadas)
-$primary-color: #004b8d;
-$secondary-color: #0066cc;
-$secondary-color-light: #2989d8;
-$secondary-color-lighter: #7db9e8;
-$secondary-color-dark: #0c3d80;
-$danger-color: #dc3545;
-$danger-color-light: #e53935;
-$danger-color-dark: #7f0000;
-$white-color: #ffffff;
-$light-color: #f8f9fa;
-$gray-color: #e9ecef;
-$dark-color: #212529;
-$success-color: #28a745;
-$warning-color: #ffc107;
-$accent-color: #00a8ff;
-$info-color: #17a2b8;
-$light-gray: $light-color;
-$dark-gray: $dark-color;
+@use 'sass:color';
 
-:host {
-  display: block;
-}
+$primary: #004b8d; $blue: #0066cc; $green: #28a745; $orange: #fd7e14;
+$red: #dc3545; $info: #17a2b8; $gray: #6c757d;
+$border: #dee2e6; $bg: #f4f6f9; $white: #fff; $text: #212529; $muted: #6c757d;
+$shadow: 0 1px 4px rgba(0,0,0,.08); $radius: 8px;
 
-// Contenedor principal
+:host { display: block; }
+
+// ── Container ─────────────────────────────────────────────────────────────────
 .main-container {
   min-height: 100vh;
-  background: $light-color;
-  padding: 30px;
+  background: $bg;
+  padding: 1rem 1.25rem;
 }
 
-// Header compacto con todo integrado
+// ── Header ────────────────────────────────────────────────────────────────────
 .page-header-compact {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); // Gradiente púrpura para proyectos
-  padding: 20px 40px;
-  border-radius: 16px;
+  background: linear-gradient(135deg, $primary 0%, $blue 100%);
+  padding: 0.75rem 1.25rem;
+  border-radius: $radius;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 30px;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-    pointer-events: none;
-  }
+  margin-bottom: 1rem;
 
   .header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-    z-index: 1;
-
     h1 {
-      color: white;
-      font-size: 1.8rem;
-      font-weight: 700;
+      color: $white;
       margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 12px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-
-      i {
-        font-size: 1.6rem;
-        opacity: 0.95;
-      }
+      gap: 0.5rem;
+      i { font-size: 0.95rem; }
     }
-
     .header-subtitle {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 0.95rem;
-      margin: 0;
-      padding-left: 40px;
+      color: rgba(255,255,255,.82);
+      font-size: 0.73rem;
+      margin: 0.15rem 0 0;
     }
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
-    position: relative;
-    z-index: 1;
+    gap: 0.75rem;
 
     .total-badge {
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      padding: 10px 20px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-
-      .total-number {
-        color: white;
-        font-size: 1.5rem;
-        font-weight: 700;
-      }
-
-      .total-label {
-        color: rgba(255, 255, 255, 0.95);
-        font-size: 0.85rem;
-        font-weight: 500;
-      }
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 6px;
+      padding: 0.3rem 0.65rem;
+      text-align: center;
+      .total-number { color: $white; font-size: 1.1rem; font-weight: 700; display: block; line-height: 1; }
+      .total-label  { color: rgba(255,255,255,.82); font-size: 0.68rem; }
     }
 
     .btn-volver {
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      border: 2px solid white;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 10px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.55);
+      color: $white;
+      padding: 0.38rem 0.8rem;
+      border-radius: 5px;
+      font-size: 0.79rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-
-      i {
-        font-size: 1rem;
-      }
-
-      &:hover {
-        background: white;
-        color: #667eea;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-      }
+      gap: 0.35rem;
+      transition: background .15s;
+      &:hover { background: rgba(255,255,255,.32); }
     }
   }
 }
 
-// Estados de carga y error
+// ── Loading / Error ───────────────────────────────────────────────────────────
 .loading-state, .error-state {
   text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem 1.5rem;
+  background: $white;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  margin-bottom: 1rem;
 
-  .loading-spinner, .error-icon {
-    i {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
+  .loading-spinner i, .error-icon i {
+    font-size: 2.2rem;
+    margin-bottom: 0.6rem;
+    display: block;
   }
+  .loading-spinner i { color: $blue; }
+  .error-icon i      { color: $red; }
 
-  .loading-spinner i {
-    color: #667eea;
-  }
-
-  .error-icon i {
-    color: $danger-color;
-  }
-
-  h3 {
-    font-size: 1.5rem;
-    color: $dark-gray;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: $dark-gray;
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
-  }
+  h3 { font-size: 0.95rem; color: $text; margin: 0 0 0.3rem; }
+  p  { font-size: 0.82rem; color: $muted; margin: 0 0 1rem; }
 }
 
-// Sección de filtros
+// ── Filters ───────────────────────────────────────────────────────────────────
 .filters-section {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: $white;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 0.75rem 0.875rem;
+  margin-bottom: 0.875rem;
+  box-shadow: $shadow;
 
   .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.625rem;
     align-items: end;
+  }
 
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 
-      label {
-        font-weight: 600;
-        color: $dark-gray;
-        font-size: 0.9rem;
-      }
-
-      .filter-select, .filter-input {
-        padding: 0.75rem;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-
-        &:focus {
-          outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-      }
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $text;
     }
 
-    .filter-actions {
-      display: flex;
-      align-items: end;
+    .filter-select, .filter-input {
+      padding: 0.45rem 0.75rem;
+      border: 1px solid $border;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      color: $text;
+      background: $white;
+      &:focus { outline: none; border-color: $blue; box-shadow: 0 0 0 2px rgba(0,102,204,.1); }
     }
   }
+
+  .filter-actions { display: flex; align-items: flex-end; }
 }
 
-// Sección de proyectos
+// ── Section Header ────────────────────────────────────────────────────────────
 .proyectos-section {
   .section-header {
-    margin-bottom: 1.5rem;
-
-    h2 {
-      color: #667eea;
-      font-size: 1.75rem;
-      font-weight: 700;
-    }
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-
-    .empty-icon {
-      i {
-        font-size: 4rem;
-        color: $dark-gray;
-        opacity: 0.5;
-        margin-bottom: 1rem;
-      }
-    }
-
-    h3 {
-      color: $dark-gray;
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    p {
-      color: $dark-gray;
-      opacity: 0.7;
-    }
-  }
-
-  .proyectos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 1.5rem;
-
-    .proyecto-card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-      }
-
-      .card-header {
-        margin-bottom: 1rem;
-
-        .proyecto-title {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 1rem;
-
-          h3 {
-            color: #667eea;
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin: 0;
-            flex: 1;
-          }
-
-          .estado-badges {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: flex-end;
-          }
-
-          .estado-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            white-space: nowrap;
-
-            &.estado-desarrollo {
-              background: rgba($info-color, 0.1);
-              color: $info-color;
-            }
-
-            &.estado-revision {
-              background: rgba($warning-color, 0.1);
-              color: darken($warning-color, 10%);
-            }
-
-            &.estado-finalizado {
-              background: rgba($success-color, 0.1);
-              color: $success-color;
-            }
-
-            &.estado-aprobado {
-              background: rgba($success-color, 0.15);
-              color: darken($success-color, 10%);
-            }
-
-            &.estado-rechazado {
-              background: rgba($danger-color, 0.1);
-              color: $danger-color;
-            }
-
-            &.estado-pausado {
-              background: rgba(#6c757d, 0.1);
-              color: #6c757d;
-            }
-
-            &.estado-cancelado {
-              background: rgba($danger-color, 0.15);
-              color: darken($danger-color, 10%);
-            }
-          }
-
-          // Barra de progreso
-          .progreso-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-            max-width: 120px;
-
-            .progreso-bar {
-              flex: 1;
-              height: 8px;
-              background: #e9ecef;
-              border-radius: 10px;
-              overflow: hidden;
-
-              .progreso-fill {
-                height: 100%;
-                transition: all 0.3s ease;
-                border-radius: 10px;
-              }
-            }
-
-            .progreso-text {
-              font-size: 0.75rem;
-              font-weight: 700;
-              color: $dark-gray;
-              white-space: nowrap;
-            }
-          }
-        }
-      }
-
-      .card-content {
-        margin-bottom: 1.5rem;
-
-        .proyecto-info {
-          margin-bottom: 1rem;
-
-          .info-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-
-            i {
-              color: #667eea;
-              width: 16px;
-            }
-
-            span {
-              color: $dark-gray;
-            }
-          }
-        }
-
-        .proyecto-description {
-          p {
-            color: $dark-gray;
-            line-height: 1.5;
-            margin: 0;
-            font-size: 0.9rem;
-          }
-        }
-      }
-
-      .card-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-
-        button {
-          flex: 1;
-          min-width: 120px;
-          padding: 0.5rem 1rem;
-          border: none;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          font-size: 0.85rem;
-
-          i {
-            font-size: 0.9rem;
-          }
-
-          &:hover {
-            transform: translateY(-2px);
-          }
-        }
-      }
-    }
+    margin-bottom: 0.75rem;
+    h2 { font-size: 0.9rem; font-weight: 700; color: $primary; margin: 0; }
   }
 }
 
-// Botones
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-
-  &:hover {
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  }
-}
-
-.btn-secondary {
-  background: $light-gray;
-  color: #667eea;
-  border: 2px solid #667eea;
-
-  &:hover {
-    background: #667eea;
-    color: white;
-  }
-}
-
-.btn-accent {
-  background: linear-gradient(135deg, $success-color 0%, #20c997 100%);
-  color: white;
-  box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
-
-  &:hover {
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-  }
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, $danger-color 0%, #c82333 100%);
-  color: white;
-  box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
-
-  &:hover {
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  }
-}
-
-.btn-info {
-  background: linear-gradient(135deg, $info-color 0%, #138496 100%);
-  color: white;
-  box-shadow: 0 2px 10px rgba(23, 162, 184, 0.3);
-
-  &:hover {
-    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
-  }
-}
-
-// Footer
-.main-footer {
-  background: $dark-gray;
-  color: white;
+// ── Empty State ───────────────────────────────────────────────────────────────
+.empty-state {
   text-align: center;
-  padding: 1.5rem;
-  margin-top: 3rem;
-
-  .footer-content {
-    p {
-      margin: 0;
-      font-size: 0.9rem;
-      opacity: 0.8;
-    }
-  }
+  padding: 2.5rem 1.5rem;
+  background: $white;
+  border: 1px solid $border;
+  border-radius: $radius;
+  .empty-icon i { font-size: 2.5rem; color: $muted; opacity: .35; margin-bottom: 0.6rem; display: block; }
+  h3 { font-size: 0.92rem; color: $text; margin: 0 0 0.25rem; }
+  p  { font-size: 0.8rem; color: $muted; margin: 0; }
 }
 
-// Responsive
-@media (max-width: 768px) {
-  .main-container {
-    padding: 1rem;
-  }
+// ── Proyectos Grid ────────────────────────────────────────────────────────────
+.proyectos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 0.875rem;
+}
 
-  .page-header-compact {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 20px;
+.proyecto-card {
+  background: $white;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  transition: box-shadow .2s;
+  &:hover { box-shadow: 0 3px 12px rgba(0,0,0,.12); }
 
-    .header-left h1 {
-      font-size: 1.5rem;
-    }
-
-    .header-right {
-      width: 100%;
+  .card-header {
+    padding: 0.75rem 0.875rem 0;
+    .proyecto-title {
+      display: flex;
       justify-content: space-between;
-    }
-  }
-
-  .filters-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .proyectos-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .proyecto-card {
-    .card-header .proyecto-title {
-      flex-direction: column;
       align-items: flex-start;
-      gap: 0.5rem;
-    }
+      gap: 0.75rem;
 
-    .card-actions {
-      flex-direction: column;
+      h3 {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: $primary;
+        margin: 0;
+        flex: 1;
+        line-height: 1.35;
+      }
 
-      button {
-        width: 100%;
+      .estado-badges {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        flex-shrink: 0;
       }
     }
   }
+
+  .estado-badge {
+    padding: 0.18rem 0.55rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+
+    &.estado-desarrollo  { background: #cfe2ff; color: #084298; }
+    &.estado-en_desarrollo { background: #cfe2ff; color: #084298; }
+    &.estado-revision    { background: #fff3cd; color: #856404; }
+    &.estado-en_revision { background: #fff3cd; color: #856404; }
+    &.estado-finalizado  { background: #d4edda; color: #155724; }
+    &.estado-aprobado    { background: #d4edda; color: color.adjust(#155724, $lightness: -5%); }
+    &.estado-rechazado   { background: #f8d7da; color: #721c24; }
+    &.estado-pausado     { background: #e9ecef; color: #495057; }
+    &.estado-cancelado   { background: #f8d7da; color: color.adjust(#721c24, $lightness: -5%); }
+  }
+
+  .progreso-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 120px;
+
+    .progreso-bar {
+      flex: 1;
+      height: 6px;
+      background: $border;
+      border-radius: 10px;
+      overflow: hidden;
+      .progreso-fill { height: 100%; border-radius: 10px; transition: width .3s; }
+    }
+
+    .progreso-text {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: $muted;
+      white-space: nowrap;
+    }
+  }
+
+  .card-content {
+    padding: 0.625rem 0.875rem;
+
+    .proyecto-info {
+      margin-bottom: 0.5rem;
+
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        margin-bottom: 0.3rem;
+        font-size: 0.8rem;
+        color: $text;
+        i { color: $blue; font-size: 0.8rem; margin-top: 1px; flex-shrink: 0; }
+        strong { color: $text; }
+        span { color: $muted; }
+      }
+    }
+
+    .proyecto-description p {
+      font-size: 0.78rem;
+      color: $muted;
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+
+  .card-actions {
+    padding: 0.625rem 0.875rem;
+    border-top: 1px solid $border;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+
+    button {
+      flex: 1;
+      min-width: 100px;
+      padding: 0.4rem 0.6rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.77rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      transition: opacity .15s;
+      color: $white;
+
+      &:hover:not(:disabled) { opacity: .88; }
+      &:disabled { opacity: .55; cursor: not-allowed; }
+    }
+  }
 }
 
+// ── Button Colors ─────────────────────────────────────────────────────────────
+.btn-primary  { background: $primary; color: $white; border: none; padding: 0.45rem 0.875rem; border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; &:hover:not(:disabled) { background: color.adjust($primary, $lightness: -8%); } &:disabled { opacity: .6; cursor: not-allowed; } }
+.btn-secondary { background: $bg; color: $muted; border: 1px solid $border; padding: 0.45rem 0.875rem; border-radius: 5px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; &:hover { background: $border; } }
+.btn-info   { background: $info; }
+.btn-accent { background: $green; }
+.btn-danger { background: $red; }
 
+// ── Footer ────────────────────────────────────────────────────────────────────
+.main-footer {
+  background: $text;
+  color: $white;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  margin-top: 1.5rem;
+  .footer-content p { margin: 0; font-size: 0.78rem; opacity: .75; }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .main-container     { padding: 0.75rem; }
+  .proyectos-grid     { grid-template-columns: 1fr; }
+  .filters-grid       { grid-template-columns: 1fr !important; }
+  .page-header-compact { flex-direction: column; gap: 0.625rem; }
+}

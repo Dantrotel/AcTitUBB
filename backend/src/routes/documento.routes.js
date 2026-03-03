@@ -5,11 +5,24 @@ import { verifySession, checkRole } from '../middlewares/verifySession.js';
 
 const router = Router();
 
+// Wrapper para capturar errores de multer y devolver JSON 400 en vez de 500
+const uploadConManejo = (uploadMiddleware) => (req, res, next) => {
+  uploadMiddleware(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'El archivo excede el tamaño máximo de 10MB' });
+      }
+      return res.status(400).json({ success: false, message: err.message || 'Error al procesar el archivo' });
+    }
+    next();
+  });
+};
+
 // Todas las rutas requieren sesión activa
 router.use(verifySession);
 
 // ESTUDIANTE (1): Subir documentos a su proyecto
-router.post('/:proyectoId', checkRole('1', '2', '3'), uploadDocumento, documentoController.subirDocumento);
+router.post('/:proyectoId', checkRole('1', '2', '3'), uploadConManejo(uploadDocumento), documentoController.subirDocumento);
 
 // TODOS: Obtener documentos de un proyecto (filtrado por permisos en controlador)
 router.get('/proyecto/:proyectoId', checkRole('1', '2', '3'), documentoController.obtenerDocumentosProyecto);

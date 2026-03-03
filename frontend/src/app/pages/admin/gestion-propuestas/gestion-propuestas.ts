@@ -4,11 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
-import { NavbarComponent } from '../../../components/navbar/navbar.component';
-
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   selector: 'gestion-propuestas',
   templateUrl: './gestion-propuestas.html',
   styleUrls: ['./gestion-propuestas.scss']
@@ -24,24 +22,7 @@ export class GestionPropuestasComponent implements OnInit {
   viewMode: 'admin' | 'superadmin' = 'admin';
   backRoute = '/admin';
   
-  // Evaluaciones
-  mostrarModalEvaluacion = false;
   propuestaSeleccionada: any = null;
-  evaluaciones: any[] = [];
-  evaluacionForm = {
-    tipo: 'avance',
-    fecha: '',
-    nota: '',
-    comentarios: '',
-    criterios: {
-      cumplimiento_objetivos: '',
-      calidad_trabajo: '',
-      presentacion: '',
-      documentacion: ''
-    }
-  };
-  editandoEvaluacion = false;
-  evaluacionEditId: string | null = null;
 
   constructor(
     protected router: Router,
@@ -205,90 +186,4 @@ export class GestionPropuestasComponent implements OnInit {
     });
   }
 
-  // ===== GESTIÓN DE EVALUACIONES =====
-  
-  abrirModalEvaluaciones(propuesta: any) {
-    this.propuestaSeleccionada = propuesta;
-    this.mostrarModalEvaluacion = true;
-    // Las evaluaciones fueron eliminadas del sistema
-  }
-
-  cerrarModalEvaluacion() {
-    this.mostrarModalEvaluacion = false;
-    this.propuestaSeleccionada = null;
-    this.evaluaciones = [];
-    this.limpiarFormularioEvaluacion();
-  }
-
-  // Las evaluaciones fueron eliminadas del sistema
-  // cargarEvaluaciones() {
-  //   if (!this.propuestaSeleccionada?.id) return;
-  //   // Método deshabilitado
-  // }
-
-  // Las evaluaciones fueron eliminadas del sistema
-  // crearEvaluacion() {
-  //   Método deshabilitado
-  // }
-
-  editarEvaluacion(evaluacion: any) {
-    this.evaluacionForm = {
-      tipo: evaluacion.tipo,
-      fecha: new Date(evaluacion.fecha).toISOString().split('T')[0],
-      nota: evaluacion.nota.toString(),
-      comentarios: evaluacion.comentarios || '',
-      criterios: evaluacion.criterios || {
-        cumplimiento_objetivos: '',
-        calidad_trabajo: '',
-        presentacion: '',
-        documentacion: ''
-      }
-    };
-    this.editandoEvaluacion = true;
-    this.evaluacionEditId = evaluacion.id;
-  }
-
-  // Las evaluaciones fueron eliminadas del sistema
-  // eliminarEvaluacion(evaluacionId: string) {
-  //   Método deshabilitado
-  // }
-
-  limpiarFormularioEvaluacion() {
-    this.evaluacionForm = {
-      tipo: 'avance',
-      fecha: '',
-      nota: '',
-      comentarios: '',
-      criterios: {
-        cumplimiento_objetivos: '',
-        calidad_trabajo: '',
-        presentacion: '',
-        documentacion: ''
-      }
-    };
-    this.editandoEvaluacion = false;
-    this.evaluacionEditId = null;
-  }
-
-  obtenerNotaPromedio(): number {
-    if (this.evaluaciones.length === 0) return 0;
-    const suma = this.evaluaciones.reduce((acc, ev) => acc + parseFloat(ev.nota), 0);
-    return Math.round((suma / this.evaluaciones.length) * 10) / 10;
-  }
-
-  obtenerColorNota(nota: number): string {
-    if (nota >= 5.5) return '#28a745'; // Verde
-    if (nota >= 4.0) return '#ffc107'; // Amarillo
-    return '#dc3545'; // Rojo
-  }
-
-  obtenerTipoEvaluacionDisplay(tipo: string): string {
-    const tipos: { [key: string]: string } = {
-      'avance': 'Avance',
-      'final': 'Final',
-      'defensa': 'Defensa',
-      'presentacion': 'Presentación'
-    };
-    return tipos[tipo] || tipo;
-  }
-} 
+}

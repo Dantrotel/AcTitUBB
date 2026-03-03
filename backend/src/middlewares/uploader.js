@@ -41,13 +41,13 @@ const storageDocumentos = multer.diskStorage({
 
 // Filtro para tipos de archivo permitidos
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['.pdf', '.docx', '.doc'];
+  const allowedTypes = ['.pdf', '.docx', '.doc', '.ppt', '.pptx', '.zip', '.rar'];
   const ext = path.extname(file.originalname).toLowerCase();
 
   if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Solo se permiten archivos PDF y Word (.pdf, .docx, .doc)'));
+    cb(new Error('Solo se permiten archivos PDF, Word, PowerPoint o ZIP (.pdf, .docx, .doc, .ppt, .pptx, .zip, .rar)'));
   }
 };
 
@@ -55,9 +55,7 @@ const fileFilter = (req, file, cb) => {
 const storageVersiones = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = 'uploads/versiones';
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (req, file, cb) => {
@@ -71,9 +69,7 @@ const storageVersiones = multer.diskStorage({
 const storagePlantillas = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = 'uploads/plantillas';
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (req, file, cb) => {
@@ -84,9 +80,9 @@ const storagePlantillas = multer.diskStorage({
 });
 
 const uploadPropuestas = multer({ storage: storagePropuestas, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
-const uploadDocumentos = multer({ storage: storageDocumentos, fileFilter });
-const uploadVersiones = multer({ storage: storageVersiones, fileFilter });
-const uploadPlantillas = multer({ storage: storagePlantillas, fileFilter });
+const uploadDocumentos = multer({ storage: storageDocumentos, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+const uploadVersiones = multer({ storage: storageVersiones, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+const uploadPlantillas = multer({ storage: storagePlantillas, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
 
 export const uploadPropuesta = uploadPropuestas.single('archivo');
 export const uploadRevision = uploadPropuestas.single('archivo_revision'); // Para archivos de revisión
