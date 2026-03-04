@@ -27,6 +27,7 @@ import { CalendarioUnificadoComponent } from './pages/admin/calendario-unificado
 import { SolicitarExtensionComponent } from './pages/estudiante/solicitar-extension/solicitar-extension.component';
 import { MiProyectoComponent } from './pages/estudiante/mi-proyecto/mi-proyecto.component';
 import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
+import { CalendarioEstudianteComponent } from './pages/estudiante/calendario-estudiante/calendario-estudiante.component';
 import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-importantes/fechas-importantes-profesor.component';
 
 // Layout Component
@@ -223,7 +224,7 @@ export const routes: Routes = [
           { path: 'home', component: EstudianteHomeComponent },
           { path: 'mi-proyecto', component: MiProyectoComponent },
           { path: 'proyecto/:id', component: ProyectoCronogramaComponent },
-          { path: 'calendario', component: CalendarioUnificadoComponent },
+          { path: 'calendario', component: CalendarioEstudianteComponent },
           { path: 'calendario/solicitudes', component: SolicitudesReunionComponent },
           { path: 'calendario/gestion', component: GestionReunionesComponent },
           { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent },

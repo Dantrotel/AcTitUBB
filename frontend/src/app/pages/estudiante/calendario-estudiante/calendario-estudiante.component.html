@@ -1,0 +1,178 @@
+<div class="main-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-calendar-alt"></i>
+        Mi Calendario
+      </h1>
+      <p class="header-subtitle">Fechas importantes publicadas para tu proyecto</p>
+    </div>
+    <button class="btn-volver" (click)="volver()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+  </div>
+
+  <!-- Error -->
+  <div class="alert alert-error" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+    <button class="btn-retry" (click)="cargarFechas()">
+      <i class="fas fa-redo"></i> Reintentar
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando fechas...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Toolbar: filtro + vista -->
+    <div class="toolbar">
+      <div class="filtro-tipo">
+        <i class="fas fa-filter"></i>
+        <select [(ngModel)]="filtroTipo" (change)="aplicarFiltro()" class="select-filtro"
+                [ngModelOptions]="{standalone: true}">
+          <option *ngFor="let t of tiposFecha" [value]="t.value">{{ t.label }}</option>
+        </select>
+      </div>
+      <div class="vista-toggle">
+        <button
+          [class.active]="vistaActiva === 'calendario'"
+          (click)="vistaActiva = 'calendario'">
+          <i class="fas fa-calendar"></i> Calendario
+        </button>
+        <button
+          [class.active]="vistaActiva === 'lista'"
+          (click)="vistaActiva = 'lista'">
+          <i class="fas fa-list"></i> Lista
+        </button>
+      </div>
+    </div>
+
+    <!-- Sin fechas -->
+    <div class="empty-state" *ngIf="fechasFiltradas.length === 0">
+      <i class="fas fa-calendar-times"></i>
+      <p>No hay fechas publicadas disponibles.</p>
+      <small>Tu profesor guía o la coordinación publicarán fechas importantes aquí.</small>
+    </div>
+
+    <!-- ========== VISTA CALENDARIO ========== -->
+    <div class="calendar-layout" *ngIf="vistaActiva === 'calendario' && fechasFiltradas.length > 0">
+
+      <!-- Columna izquierda: calendario + detalle día -->
+      <div class="calendar-main">
+        <div class="calendar-widget">
+          <div class="calendar-nav">
+            <button class="nav-btn" (click)="previousMonth()">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <h3 class="month-label">{{ getMonthYear() | titlecase }}</h3>
+            <button class="nav-btn" (click)="nextMonth()">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="calendar-grid">
+            <div class="cal-weekday" *ngFor="let d of weekdays">{{ d }}</div>
+
+            <div
+              class="cal-day"
+              *ngFor="let day of calendarDays"
+              [class.other-month]="!day.isCurrentMonth"
+              [class.today]="day.isToday"
+              [class.has-event]="day.events.length > 0"
+              [class.selected]="selectedDate && isSameDay(day.date, selectedDate)"
+              (click)="selectDate(day)">
+              <span class="day-num">{{ day.dayNumber }}</span>
+              <span class="event-dot" *ngIf="day.events.length > 0"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalle del día seleccionado -->
+        <div class="day-detail" *ngIf="selectedDate && selectedDateEvents.length > 0">
+          <h4>
+            <i class="fas fa-calendar-day"></i>
+            {{ selectedDate | date:'EEEE d \'de\' MMMM':'':'es' }}
+          </h4>
+          <div class="event-card" *ngFor="let ev of selectedDateEvents">
+            <div class="event-card-icon" [ngClass]="'icon-' + ev.tipo_fecha">
+              <i [class]="getIconoTipo(ev.tipo_fecha)"></i>
+            </div>
+            <div class="event-card-body">
+              <span class="event-titulo">{{ ev.titulo }}</span>
+              <span class="event-desc" *ngIf="ev.descripcion">{{ ev.descripcion }}</span>
+              <span class="event-badge" [ngClass]="getClaseBadgeTipo(ev.tipo_fecha)">
+                {{ getLabelTipo(ev.tipo_fecha) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-detail day-detail--empty" *ngIf="!selectedDate">
+          <i class="fas fa-hand-pointer"></i>
+          <p>Selecciona un día para ver los eventos</p>
+        </div>
+      </div>
+
+      <!-- Columna derecha: próximas fechas -->
+      <div class="upcoming-panel">
+        <h3><i class="fas fa-clock"></i> Próximas Fechas</h3>
+
+        <div class="empty-upcoming" *ngIf="getFechasProximas().length === 0">
+          <i class="fas fa-check-circle"></i>
+          <p>Sin fechas próximas</p>
+        </div>
+
+        <div class="upcoming-item" *ngFor="let f of getFechasProximas()">
+          <div class="upcoming-icon" [ngClass]="'icon-' + f.tipo_fecha">
+            <i [class]="getIconoTipo(f.tipo_fecha)"></i>
+          </div>
+          <div class="upcoming-body">
+            <span class="upcoming-titulo">{{ f.titulo }}</span>
+            <span class="upcoming-fecha">
+              <i class="fas fa-calendar"></i>
+              {{ parseFecha(f.fecha || f.fecha_fin) | date:'dd MMM yyyy' }}
+            </span>
+            <span class="upcoming-badge" [ngClass]="getClaseBadgeTipo(f.tipo_fecha)">
+              {{ getLabelTipo(f.tipo_fecha) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== VISTA LISTA ========== -->
+    <div class="lista-fechas" *ngIf="vistaActiva === 'lista' && fechasFiltradas.length > 0">
+      <div class="fecha-row" *ngFor="let f of fechasFiltradas">
+        <div class="fecha-row-icon" [ngClass]="'icon-' + f.tipo_fecha">
+          <i [class]="getIconoTipo(f.tipo_fecha)"></i>
+        </div>
+        <div class="fecha-row-content">
+          <span class="fecha-row-titulo">{{ f.titulo }}</span>
+          <span class="fecha-row-desc" *ngIf="f.descripcion">{{ f.descripcion }}</span>
+          <div class="fecha-row-meta">
+            <span *ngIf="f.fecha_inicio" class="meta-item">
+              <i class="fas fa-calendar-plus"></i>
+              Desde: {{ parseFecha(f.fecha_inicio) | date:'dd\/MM\/yyyy' }}
+            </span>
+            <span class="meta-item">
+              <i class="fas fa-calendar-times"></i>
+              Hasta: {{ parseFecha(f.fecha || f.fecha_fin) | date:'dd\/MM\/yyyy' }}
+            </span>
+            <span class="fecha-row-badge" [ngClass]="getClaseBadgeTipo(f.tipo_fecha)">
+              {{ getLabelTipo(f.tipo_fecha) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</div>
