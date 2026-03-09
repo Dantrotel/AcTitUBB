@@ -198,11 +198,17 @@
             </div>
           </div>
 
-          <div class="miembro-actions">
+          <div class="miembro-actions" *ngIf="miembro.origen === 'comision'">
             <button class="btn-danger" (click)="removerMiembro(miembro.id)" [disabled]="loading">
               <i class="fas fa-user-minus"></i>
               Remover
             </button>
+          </div>
+          <div class="miembro-actions" *ngIf="miembro.origen === 'asignacion'">
+            <span class="badge badge-info" title="Asignado desde Gestión de Proyectos">
+              <i class="fas fa-lock"></i>
+              Gestionado en Proyectos
+            </span>
           </div>
         </div>
 

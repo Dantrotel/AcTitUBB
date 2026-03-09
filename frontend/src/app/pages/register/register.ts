@@ -25,6 +25,7 @@ export class RegisterComponent implements OnInit {
   password = '';
   carreraId = 0;
   departamentoId = 0;
+  tipoRamo: 'AP' | 'PT' | '' = '';
   mensaje = '';
   currentYear: number;
 
@@ -130,6 +131,12 @@ export class RegisterComponent implements OnInit {
     return;
   }
 
+  // Validar que estudiantes seleccionen su ramo
+  if (this.isEstudiante() && !this.tipoRamo) {
+    this.mensaje = 'Por favor selecciona el ramo que estás cursando (AP o PT)';
+    return;
+  }
+
   // Validar que profesores seleccionen un departamento
   if (this.isProfesor() && (!this.departamentoId || this.departamentoId === 0)) {
     this.mensaje = 'Por favor selecciona tu departamento';
@@ -160,6 +167,13 @@ export class RegisterComponent implements OnInit {
 
         this.apiService.asignarEstudianteCarrera(this.carreraId, estudianteData).subscribe({
           next: () => {
+            // Intentar registrar inscripción de ramo (no bloqueante)
+            if (this.tipoRamo) {
+              this.apiService.crearInscripcionRamo(this.tipoRamo as 'AP' | 'PT').subscribe({
+                next: () => {},
+                error: () => {} // No bloquear si falla (puede no haber semestre activo)
+              });
+            }
             this.mensaje = 'Registro exitoso! Has sido asignado a tu carrera.';
             this.limpiarFormulario();
             setTimeout(() => {
@@ -217,6 +231,7 @@ export class RegisterComponent implements OnInit {
     this.password = '';
     this.carreraId = 0;
     this.departamentoId = 0;
+    this.tipoRamo = '';
   }
 
   volver() {

@@ -140,6 +140,77 @@
         }
       </div>
 
+      <!-- Reuniones próximas -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fas fa-calendar-check"></i>
+            <h3>Reuniones agendadas</h3>
+          </div>
+          <div class="panel-header-actions">
+            @if (reunionesExpiradas.length > 0) {
+              <span class="count-badge badge-danger" title="Requieren acción">
+                <i class="fas fa-exclamation" style="font-size:0.6rem"></i> {{ reunionesExpiradas.length }}
+              </span>
+            }
+            <button class="btn-link" (click)="navegar('profesor/reuniones')">
+              Ver todas <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        @if (loadingReuniones) {
+          <div class="empty-row">
+            <i class="fas fa-spinner fa-spin muted-icon"></i>
+            <span>Cargando reuniones...</span>
+          </div>
+        } @else if (reunionesHome.length === 0) {
+          <div class="empty-row">
+            <i class="fas fa-calendar-times muted-icon"></i>
+            <span>No hay reuniones agendadas</span>
+          </div>
+        } @else {
+          @for (reunion of reunionesHome; track reunion.id) {
+            <div class="item-row clickable reunion-row" (click)="navegar('profesor/reuniones')"
+                 [class.reunion-expirada]="reunion.expirada">
+              <div class="reunion-date-block">
+                <span class="reunion-day">{{ reunion.fecha | date:'d' }}</span>
+                <span class="reunion-month">{{ getMesAbrev(reunion.fecha) }}</span>
+              </div>
+              <div class="item-body">
+                <span class="item-title">{{ getTipoReunionDisplay(reunion.tipo_reunion) }}
+                  @if (reunion.proyecto_titulo) {
+                    · <span style="font-weight:400;color:#6c757d">{{ reunion.proyecto_titulo }}</span>
+                  }
+                </span>
+                <span class="item-sub">
+                  <i class="fas fa-user-graduate"></i> {{ reunion.estudiante_nombre }}
+                  &nbsp;·&nbsp;
+                  <i class="fas fa-clock"></i> {{ formatHora(reunion.hora_inicio) }}–{{ formatHora(reunion.hora_fin) }}
+                  @if (reunion.modalidad) {
+                    &nbsp;·&nbsp;
+                    <i [class]="getIconoModalidad(reunion.modalidad)"></i>
+                    {{ reunion.modalidad | titlecase }}
+                  }
+                </span>
+              </div>
+              <div class="item-end">
+                @if (reunion.expirada) {
+                  <span class="tag tag-red">Vencida</span>
+                } @else {
+                  <span class="tag tag-blue">Próxima</span>
+                }
+              </div>
+            </div>
+          }
+          <div class="panel-footer">
+            <button class="btn-primary-sm" (click)="navegar('profesor/reuniones')">
+              Gestionar reuniones <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        }
+      </div>
+
     </div>
 
     <!-- ========== COLUMNA DERECHA ========== -->

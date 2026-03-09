@@ -199,8 +199,13 @@ export const getPropuestasEstudiante = async (req, res) => {
 export const asignarProfesor = async (req, res) => {
   try {
     const { id } = req.params;
-    const profesor_rut = req.rut; // El profesor que se asigna a sí mismo
-    const asignado_por = req.rut; // Quien realiza la asignación (puede ser el mismo profesor o un admin)
+    const { rol_id } = req.user || {};
+    const asignado_por = req.rut;
+
+    // Admins (rol 3 y 4) pueden asignar cualquier profesor pasando profesor_rut en el body
+    // Profesores (rol 2) se asignan a sí mismos
+    const esAdmin = rol_id === 3 || rol_id === 4 || rol_id === '3' || rol_id === '4';
+    const profesor_rut = (esAdmin && req.body?.profesor_rut) ? req.body.profesor_rut : req.rut;
 
     if (!profesor_rut) {
       return res.status(400).json({ message: 'Datos incompletos para asignar profesor.' });

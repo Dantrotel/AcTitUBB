@@ -158,38 +158,6 @@
       </div>
     </div>
 
-    <!-- Lista de profesores disponibles -->
-    <div class="profesores-card">
-      <div class="card-header">
-        <h2><i class="fas fa-users"></i> Profesores Disponibles</h2>
-      </div>
-      
-      <div class="card-content">
-        <div class="profesores-grid">
-          <div *ngFor="let profesor of profesores" class="profesor-item">
-            <div class="profesor-info">
-              <div class="profesor-avatar">
-                <i class="fas fa-user-tie"></i>
-              </div>
-              <div class="profesor-details">
-                <h4>{{ profesor.nombre }}</h4>
-                <p>{{ profesor.rut }}</p>
-                <p class="profesor-email">{{ profesor.email }}</p>
-              </div>
-            </div>
-            <div class="profesor-actions">
-              <button 
-                (click)="profesorSeleccionado = profesor.rut"
-                [disabled]="guardando"
-              >
-                <i class="fas fa-check"></i>
-                Seleccionar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Footer -->

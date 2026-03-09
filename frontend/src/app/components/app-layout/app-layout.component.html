@@ -26,8 +26,9 @@
             
             <!-- Item sin hijos -->
             @if (!item.children) {
-              <a class="menu-link" 
+              <a class="menu-link"
                  [routerLink]="item.route"
+                 [queryParams]="item.queryParams || {}"
                  [class.active]="isActiveRoute(item.route)">
                 <i class="menu-icon" [class]="item.icon"></i>
                 <span class="menu-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
@@ -51,8 +52,9 @@
               <ul class="submenu" *ngIf="item.expanded && !sidebarCollapsed()">
                 @for (child of item.children; track child.label) {
                   <li class="submenu-item">
-                    <a class="submenu-link" 
+                    <a class="submenu-link"
                        [routerLink]="child.route"
+                       [queryParams]="child.queryParams || {}"
                        [class.active]="isActiveRoute(child.route)">
                       <i class="submenu-icon" [class]="child.icon"></i>
                       <span class="submenu-label">{{ child.label }}</span>
@@ -110,6 +112,11 @@
         <i class="fas fa-bars"></i>
       </button>
 
+      <!-- Back Button -->
+      <button class="back-btn" (click)="goBack()" title="Volver atrás" aria-label="Volver atrás">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+
       <!-- Breadcrumbs -->
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <ol class="breadcrumb-list">
@@ -118,10 +125,14 @@
               <i class="fas fa-home"></i>
             </a>
           </li>
-          @for (crumb of breadcrumbs; track crumb; let last = $last) {
+          @for (crumb of breadcrumbs; track crumb.route; let last = $last) {
             <li class="breadcrumb-item" [class.active]="last">
               <i class="fas fa-chevron-right breadcrumb-separator"></i>
-              <span>{{ crumb }}</span>
+              @if (!last) {
+                <a [routerLink]="crumb.route">{{ crumb.label }}</a>
+              } @else {
+                <span>{{ crumb.label }}</span>
+              }
             </li>
           }
         </ol>

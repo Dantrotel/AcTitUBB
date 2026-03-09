@@ -19,6 +19,11 @@ export class CrearPropuestaComponent {
   archivo: File | null = null;
   isSubmitting = false;
 
+  // Tipo de proyecto
+  tipo_proyecto: 'PT' | 'AP' = 'PT';
+  continua_ap = false;
+  tieneAPCompletado = false; // se detecta al cargar el componente
+
   // Nuevos campos del modelo
   modalidad = '';
   numero_estudiantes = '';
@@ -32,12 +37,79 @@ export class CrearPropuestaComponent {
   carreraUsuario: string = '';
   opcionesDuracion: {value: string, label: string}[] = [];
 
+  // Semestre activo
+  semestreActivo: { id: number; nombre: string } | null = null;
+  cargandoSemestre = true;
+
+  // Guía pre-asignado
+  guiaAsignado: { profesor_guia_rut: string; profesor_nombre: string; profesor_email: string } | null = null;
+  cargandoGuia = true;
+
+  get esAP()         { return this.tipo_proyecto === 'AP'; }
+  get esContinuaAP() { return this.tipo_proyecto === 'PT' && this.continua_ap; }
+  /** Los campos extendidos (objetivos, metodología, etc.) solo son obligatorios en PT sin continua_ap */
+  get requiereDetalles() { return this.tipo_proyecto === 'PT' && !this.continua_ap; }
+  get tieneGuia()        { return this.guiaAsignado !== null; }
+  get haySemestreActivo() { return this.semestreActivo !== null; }
+  get puedeEnviar()    { return this.tieneGuia && this.haySemestreActivo && !this.cargandoGuia && !this.cargandoSemestre; }
+
   constructor(
-    private apiService: ApiService, 
+    private apiService: ApiService,
     private router: Router,
     private notificationService: NotificationService
   ) {
     this.obtenerCarreraUsuario();
+    this.verificarAPCompletado();
+    this.cargarGuia();
+    this.cargarSemestreActivo();
+  }
+
+  /** Carga el semestre activo con inscripciones abiertas */
+  cargarSemestreActivo() {
+    this.cargandoSemestre = true;
+    this.apiService.getSemestreActivo().subscribe({
+      next: (res: any) => {
+        this.semestreActivo = res.hayActivo ? res.data : null;
+        this.cargandoSemestre = false;
+      },
+      error: () => {
+        this.semestreActivo = null;
+        this.cargandoSemestre = false;
+      }
+    });
+  }
+
+  /** Carga el profesor guía pre-asignado al estudiante */
+  cargarGuia() {
+    this.cargandoGuia = true;
+    this.apiService.getMiGuia().subscribe({
+      next: (res: any) => {
+        this.guiaAsignado = res.tieneGuia ? res.data : null;
+        this.cargandoGuia = false;
+      },
+      error: () => {
+        this.guiaAsignado = null;
+        this.cargandoGuia = false;
+      }
+    });
+  }
+
+  /** Verifica si el estudiante tiene un AP en etapa 'final_ap' para habilitar continua_ap */
+  verificarAPCompletado() {
+    this.apiService.getMisProyectos().subscribe({
+      next: (response: any) => {
+        const proyectos: any[] = response?.projects || [];
+        this.tieneAPCompletado = proyectos.some(
+          (p: any) => p.tipo_proyecto === 'AP' && p.estado_detallado === 'final_ap'
+        );
+      },
+      error: () => { this.tieneAPCompletado = false; }
+    });
+  }
+
+  onTipoProyectoChange() {
+    // Al cambiar a AP, desactiva continua_ap (solo aplica para PT)
+    if (this.tipo_proyecto === 'AP') this.continua_ap = false;
   }
 
   obtenerCarreraUsuario() {
@@ -118,7 +190,8 @@ export class CrearPropuestaComponent {
     if (!this.modalidad) return 'Debes seleccionar una modalidad';
     if (!this.numero_estudiantes) return 'Debes especificar el número de estudiantes';
     if (!this.duracion_estimada_semestres) return 'Debes especificar la duración estimada';
-    if (!this.archivo) return 'Debes seleccionar un archivo (PDF o Word)';
+    // El archivo no es obligatorio para continua_ap (la documentación ya existe en el AP anterior)
+    if (!this.archivo && !this.esContinuaAP) return 'Debes seleccionar un archivo (PDF o Word)';
 
     // Validar estudiantes adicionales
     if (parseInt(this.numero_estudiantes) > 1) {
@@ -146,6 +219,21 @@ export class CrearPropuestaComponent {
   }
 
   crear() {
+    // Verificar semestre activo
+    if (!this.semestreActivo) {
+      this.notificationService.error('Sin semestre activo', 'No hay un semestre activo. Contacta al administrador.');
+      return;
+    }
+
+    // Verificar guía asignado
+    if (!this.tieneGuia) {
+      this.notificationService.error(
+        'Sin profesor guía',
+        'No tienes un profesor guía asignado. Contacta al administrador antes de crear una propuesta.'
+      );
+      return;
+    }
+
     // Validar formulario antes de enviar
     const errorValidacion = this.validarFormulario();
     if (errorValidacion) {
@@ -156,12 +244,16 @@ export class CrearPropuestaComponent {
     this.isSubmitting = true;
 
     const formData = new FormData();
-    
+
+    // Tipo de proyecto y continuación
+    formData.append('tipo_proyecto', this.tipo_proyecto);
+    if (this.esContinuaAP) formData.append('continua_ap', 'true');
+
     // Campos básicos
     formData.append('titulo', this.titulo);
     formData.append('descripcion', this.descripcion);
     formData.append('fecha_envio', new Date().toISOString().split('T')[0]);
-    formData.append('archivo', this.archivo!);
+    if (this.archivo) formData.append('archivo', this.archivo);
 
     // Campos de configuración
     formData.append('modalidad', this.modalidad);

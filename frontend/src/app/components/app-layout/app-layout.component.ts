@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { ApiService } from '../../services/api';
 import { filter } from 'rxjs/operators';
@@ -9,6 +9,7 @@ interface MenuItem {
   label: string;
   icon: string;
   route?: string;
+  queryParams?: { [key: string]: string };
   badge?: number;
   children?: MenuItem[];
   expanded?: boolean;
@@ -29,14 +30,15 @@ export class AppLayoutComponent implements OnInit {
   
   currentUser: any = null;
   currentRoute = '';
-  breadcrumbs: string[] = [];
+  breadcrumbs: { label: string; route: string }[] = [];
   currentYear = new Date().getFullYear();
 
   menuItems: MenuItem[] = [];
 
   constructor(
     private apiService: ApiService,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {}
 
   ngOnInit() {
@@ -85,16 +87,16 @@ export class AppLayoutComponent implements OnInit {
         this.menuItems = [
           ...commonItems,
           {
-            label: 'Mi Propuesta',
+            label: 'Propuesta',
             icon: 'fas fa-file-alt',
             children: [
-              { label: 'Ver Propuestas', icon: 'fas fa-list', route: '/propuestas/todas' },
+              { label: 'Ver Propuestas', icon: 'fas fa-list', route: '/propuestas/mis-propuestas' },
               { label: 'Crear Nueva', icon: 'fas fa-plus-circle', route: '/propuestas/crear' },
-              { label: 'Mis Borradores', icon: 'fas fa-edit', route: '/propuestas/mis-propuestas' }
+
             ]
           },
           {
-            label: 'Mi Proyecto',
+            label: 'Proyecto',
             icon: 'fas fa-rocket',
             route: '/estudiante/mi-proyecto'
           },
@@ -120,27 +122,33 @@ export class AppLayoutComponent implements OnInit {
         this.menuItems = [
           ...commonItems,
           {
-            label: 'Propuestas',
+            label: 'Propuestas Asignadas',
             icon: 'fas fa-file-alt',
-            children: [
-              { label: 'Todas las Propuestas', icon: 'fas fa-list-alt', route: '/propuestas/todas' },
-              { label: 'Asignadas a Mí', icon: 'fas fa-tasks', route: '/propuestas/asignadas' }
-            ]
+            route: '/propuestas/asignadas'
           },
           {
             label: 'Mis Proyectos',
             icon: 'fas fa-project-diagram',
-            route: '/profesor/proyectos'
+            route: '/profesor/cronogramas'
           },
           {
             label: 'Calendario',
-            icon: 'fas fa-calendar-check',
+            icon: 'fas fa-calendar-alt',
             children: [
-              { label: 'Dashboard', icon: 'fas fa-tachometer-alt', route: '/profesor/calendario/dashboard' },
               { label: 'Mis Horarios', icon: 'fas fa-clock', route: '/profesor/calendario/disponibilidades' },
-              { label: 'Solicitudes', icon: 'fas fa-inbox', route: '/profesor/calendario/solicitudes' },
-              { label: 'Mis Reuniones', icon: 'fas fa-calendar-check', route: '/profesor/calendario/gestion' }
+              { label: 'Solicitudes de Reunión', icon: 'fas fa-inbox', route: '/profesor/calendario/solicitudes' },
+              { label: 'Fechas Importantes', icon: 'fas fa-calendar-day', route: '/profesor/fechas-importantes' }
             ]
+          },
+          {
+            label: 'Mis Reuniones',
+            icon: 'fas fa-calendar-check',
+            route: '/profesor/reuniones'
+          },
+          {
+            label: 'Chat',
+            icon: 'fas fa-comments',
+            route: '/profesor/chat'
           },
           {
             label: 'Reportes',
@@ -148,9 +156,9 @@ export class AppLayoutComponent implements OnInit {
             route: '/profesor/reportes'
           },
           {
-            label: 'Fechas Importantes',
-            icon: 'fas fa-calendar-day',
-            route: '/profesor/fechas-importantes'
+            label: 'Mi Perfil',
+            icon: 'fas fa-user-circle',
+            route: '/estudiante/perfil'
           }
         ];
         break;
@@ -159,21 +167,27 @@ export class AppLayoutComponent implements OnInit {
         this.menuItems = [
           ...commonItems,
           {
-            label: 'Gestión',
-            icon: 'fas fa-cogs',
+            label: 'Gestión de Usuarios',
+            icon: 'fas fa-users',
             children: [
-              { label: 'Usuarios', icon: 'fas fa-users', route: '/admin/usuarios' },
-              { label: 'Propuestas', icon: 'fas fa-file-alt', route: '/admin/propuestas' },
-              { label: 'Proyectos', icon: 'fas fa-rocket', route: '/admin/proyectos' },
-              { label: 'Comisión Evaluadora', icon: 'fas fa-user-friends', route: '/admin/comision' },
-              { label: 'Asignaciones', icon: 'fas fa-tasks', route: '/admin/asignaciones' },
-              { label: 'Carga de Profesores', icon: 'fas fa-chart-bar', route: '/admin/carga-profesores' }
+              { label: 'Alumnos', icon: 'fas fa-user-graduate', route: '/admin/usuarios/estudiantes' },
+              { label: 'Profesores', icon: 'fas fa-chalkboard-teacher', route: '/admin/usuarios/profesores' }
             ]
           },
           {
-            label: 'Configuración',
-            icon: 'fas fa-sliders-h',
+            label: 'Asignaciones',
+            icon: 'fas fa-user-tie',
             children: [
+              { label: 'Propuestas', icon: 'fas fa-file-alt', route: '/admin/propuestas' },
+              { label: 'Proyecto', icon: 'fas fa-rocket', route: '/admin/proyectos' },
+              { label: 'Comisión', icon: 'fas fa-users-cog', route: '/admin/comision' }
+            ]
+          },
+          {
+            label: 'Plan Semestral',
+            icon: 'fas fa-calendar-alt',
+            children: [
+              { label: 'Semestres', icon: 'fas fa-layer-group', route: '/admin/semestres' },
               { label: 'Periodo Propuestas', icon: 'fas fa-calendar-alt', route: '/admin/gestion-periodo-propuestas' },
               { label: 'Gestion Horario', icon: 'fas fa-calendar-alt', route: '/profesor/calendario/disponibilidades' },
               { label: 'Extensiones', icon: 'fas fa-clock', route: '/admin/extensiones' },
@@ -196,7 +210,7 @@ export class AppLayoutComponent implements OnInit {
             label: 'Administración',
             icon: 'fas fa-users-cog',
             children: [
-              { label: 'Jefes de Curso', icon: 'fas fa-user-tie', route: '/super-admin/jefes' },
+              { label: 'Jefes de Curso', icon: 'fas fa-user-tie', route: '/super-admin/gestionar-jefes' },
               { label: 'Respaldos', icon: 'fas fa-database', route: '/super-admin/respaldos' }
             ]
           },
@@ -237,9 +251,14 @@ export class AppLayoutComponent implements OnInit {
 
   updateBreadcrumbs(url: string) {
     const paths = url.split('/').filter(p => p);
-    this.breadcrumbs = paths.map(path => 
-      path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')
-    );
+    this.breadcrumbs = paths.map((path, index) => ({
+      label: path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' '),
+      route: '/' + paths.slice(0, index + 1).join('/')
+    }));
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   toggleSidebar() {

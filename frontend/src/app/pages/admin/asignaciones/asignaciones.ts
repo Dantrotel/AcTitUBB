@@ -86,59 +86,37 @@ export class AsignacionesComponent implements OnInit {
 
   cargarRolesProfesoresPromise(): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.cargarRolesProfesores();
-      // Simplificamos para usar la función existente
-      resolve(true);
+      this.apiService.getRolesProfesores().subscribe({
+        next: (response: any) => {
+          this.rolesProfesores = response.data || response || [];
+          resolve(true);
+        },
+        error: (err) => {
+          console.error('❌ Error cargando roles de profesores:', err);
+          this.error = 'Error al cargar los roles de profesores';
+          resolve(true); // resuelve igual para no bloquear la cadena
+        }
+      });
     });
   }
 
   cargarProfesoresPromise(): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.cargarProfesores();
-      resolve(true);
-    });
-  }
-
-  cargarRolesProfesores() {
-    console.log('🔄 Iniciando carga de roles de profesores...');
-    this.apiService.getRolesProfesores().subscribe({
-      next: (response: any) => {
-        console.log('📦 Respuesta completa del servidor:', response);
-        this.rolesProfesores = response.data || response || [];
-        console.log('✅ Roles de profesores cargados:', this.rolesProfesores);
-        console.log('📊 Total de roles:', this.rolesProfesores.length);
-        
-        if (this.rolesProfesores.length === 0) {
-          console.warn('⚠️ No se encontraron roles de profesores');
+      this.apiService.getProfesores().subscribe({
+        next: (data: any) => {
+          const usuarios = Array.isArray(data) ? data : [];
+          this.profesores = usuarios.filter((u: any) => {
+            const esProfesor = u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2;
+            const esAdmin = u.rol_nombre?.toLowerCase() === 'admin' || u.rol_id === 3;
+            return esProfesor || esAdmin;
+          });
+          resolve(true);
+        },
+        error: (err) => {
+          console.error('Error cargando profesores:', err);
+          resolve(true);
         }
-      },
-      error: (err) => {
-        console.error('❌ Error cargando roles de profesores:', err);
-        console.error('📋 Detalles del error:', {
-          status: err.status,
-          message: err.message,
-          error: err.error
-        });
-        this.error = 'Error al cargar los roles de profesores';
-      }
-    });
-  }
-
-  cargarProfesores() {
-    this.apiService.getProfesores().subscribe({
-      next: (data: any) => {
-        const usuarios = Array.isArray(data) ? data : [];
-        // Filtrar profesores (rol_id = 2) Y admins (rol_id = 3) que también pueden ser profesores
-        this.profesores = usuarios.filter((u: any) => {
-          const esProfesor = u.rol_nombre?.toLowerCase() === 'profesor' || u.rol_id === 2;
-          const esAdmin = u.rol_nombre?.toLowerCase() === 'admin' || u.rol_id === 3;
-          return esProfesor || esAdmin;
-        });
-        console.log(`📋 Profesores/Admins disponibles para asignación: ${this.profesores.length}`);
-      },
-      error: (err) => {
-        console.error('Error cargando profesores:', err);
-      }
+      });
     });
   }
 
@@ -278,33 +256,11 @@ export class AsignacionesComponent implements OnInit {
     return new Date();
   }
 
-  // Filtros
-  get asignacionesFiltradas(): any[] {
-    let filtradas = this.asignaciones;
-
-    if (this.filtroProfesor) {
-      filtradas = filtradas.filter(a => 
-        a.profesor.toLowerCase().includes(this.filtroProfesor.toLowerCase())
-      );
-    }
-
-    if (this.filtroEstudiante) {
-      filtradas = filtradas.filter(a => 
-        a.estudiante.toLowerCase().includes(this.filtroEstudiante.toLowerCase())
-      );
-    }
-
-    if (this.filtroEstado) {
-      filtradas = filtradas.filter(a => a.estado === this.filtroEstado);
-    }
-
-    return filtradas;
-  }
-
   limpiarFiltros() {
     this.filtroProfesor = '';
     this.filtroEstudiante = '';
     this.filtroEstado = '';
+    this.filtroRol = '';
   }
 
   reasignarProfesor(asignacion: any) {
@@ -530,7 +486,7 @@ export class AsignacionesComponent implements OnInit {
   verAsignacionesProyecto(proyecto: any) {
     this.proyectoSeleccionado = proyecto;
     this.mostrarModalProyecto = true;
-    this.cargarAsignacionesProyecto(proyecto.id);
+    this.cargarAsignacionesProyecto(String(proyecto.id));
   }
 
   cargarAsignacionesProyecto(proyectoId: string) {
@@ -572,13 +528,14 @@ export class AsignacionesComponent implements OnInit {
 
   filtrarAsignaciones() {
     return this.asignaciones.filter((asignacion: any) => {
-      const matchProfesor = !this.filtroProfesor || 
+      const matchProfesor = !this.filtroProfesor ||
         asignacion.profesor_nombre?.toLowerCase().includes(this.filtroProfesor.toLowerCase());
-      const matchEstudiante = !this.filtroEstudiante || 
+      const matchEstudiante = !this.filtroEstudiante ||
         asignacion.proyecto_titulo?.toLowerCase().includes(this.filtroEstudiante.toLowerCase());
       const matchRol = !this.filtroRol || asignacion.rol_nombre === this.filtroRol;
-      
-      return matchProfesor && matchEstudiante && matchRol;
+      const matchEstado = !this.filtroEstado || asignacion.estado === this.filtroEstado;
+
+      return matchProfesor && matchEstudiante && matchRol && matchEstado;
     });
   }
 
@@ -641,11 +598,11 @@ export class AsignacionesComponent implements OnInit {
   }
 
   contarAsignacionesProyecto(proyectoId: number): number {
-    return this.asignaciones.filter(a => a.proyecto_id === proyectoId).length;
+    return this.asignaciones.filter(a => Number(a.proyecto_id) === Number(proyectoId)).length;
   }
 
   getAsignacionesProyecto(proyectoId: number): any[] {
-    return this.asignaciones.filter(a => a.proyecto_id === proyectoId);
+    return this.asignaciones.filter(a => Number(a.proyecto_id) === Number(proyectoId));
   }
 
   asignarProfesorAProyecto(proyecto: any) {

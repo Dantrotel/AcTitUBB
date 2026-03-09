@@ -600,6 +600,30 @@ $tablet: 1024px;
   }
 }
 
+// Back Button
+.back-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: $text-secondary;
+  flex-shrink: 0;
+  transition: background $transition-fast, color $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    background: #f1f5f9;
+    color: $secondary;
+    border-color: $secondary;
+  }
+
+  i { font-size: 0.875rem; }
+}
+
 // Breadcrumbs
 .breadcrumbs {
   flex: 1;

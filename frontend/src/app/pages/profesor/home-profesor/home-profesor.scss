@@ -994,6 +994,55 @@ $radius-sm: 5px;
 }
 
 // ===========================
+// REUNIONES WIDGET
+// ===========================
+.reunion-row {
+  align-items: flex-start;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+  &.reunion-expirada {
+    border-left: 3px solid $red;
+    padding-left: 11px; // compensa el border
+    background: rgba($red, 0.02);
+  }
+}
+
+.reunion-date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  background: $blue-light;
+  border-radius: 6px;
+  flex-shrink: 0;
+  line-height: 1;
+
+  .reunion-day {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: $blue;
+    line-height: 1.1;
+  }
+
+  .reunion-month {
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: $blue;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.reunion-expirada .reunion-date-block {
+  background: $red-light;
+  .reunion-day, .reunion-month { color: $red; }
+}
+
+// ===========================
 // RESPONSIVE
 // ===========================
 @media (max-width: 1024px) {

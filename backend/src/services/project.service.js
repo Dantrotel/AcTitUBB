@@ -29,45 +29,168 @@ const deleteProject = async (projectId) => {
  * @param {Object} propuestaData - Datos de la propuesta aprobada
  * @returns {Promise<number>} - ID del proyecto creado
  */
+/**
+ * Determina el estado_detallado inicial según el tipo de proyecto y si es continuación de AP.
+ *
+ * Reglas del flujo:
+ *   - PT continúa de AP  → 'avance_con_nota'  (salta propuesta y guía)
+ *   - PT normal          → 'inicializacion'   (flujo completo)
+ *   - AP                 → 'avance1_ap'       (inicia en la primera etapa AP)
+ */
+const estadoInicialSegunTipo = ({ tipo_proyecto, continua_ap }) => {
+    if (continua_ap)              return 'avance_con_nota';
+    if (tipo_proyecto === 'AP')   return 'avance1_ap';
+    return 'inicializacion'; // PT normal
+};
+
 const crearProyectoDesdeAprobacion = async (propuestaData) => {
     try {
-        // Validar que la propuesta tenga los datos necesarios
-        if (!propuestaData) {
-            throw new Error('No se proporcionaron datos de la propuesta');
-        }
+        if (!propuestaData) throw new Error('No se proporcionaron datos de la propuesta');
 
-        const { id, titulo, descripcion, estudiante_rut } = propuestaData;
+        const { id, titulo, descripcion, estudiante_rut, tipo_proyecto, continua_ap, ap_origen_id, semestre_id } = propuestaData;
 
         if (!id || !titulo || !descripcion || !estudiante_rut) {
             throw new Error('Faltan datos obligatorios de la propuesta para crear el proyecto');
         }
 
-        // Crear el objeto del proyecto con los datos de la propuesta
+        const tipoProyecto = tipo_proyecto ?? 'PT';
+        const esContinuacion = continua_ap === true;
+
         const proyectoData = {
-            titulo: titulo,
-            descripcion: descripcion,
+            titulo,
+            descripcion,
             propuesta_id: id,
-            estudiante_rut: estudiante_rut,
-            estado_id: 1, // 'esperando_asignacion_profesores' - Estado inicial hasta que se asignen los 3 profesores
+            estudiante_rut,
+            estado_id: esContinuacion ? 2 : 1,
             fecha_inicio: new Date(),
-            fecha_entrega_estimada: null, // Se puede establecer después
+            fecha_entrega_estimada: null,
             fecha_entrega_real: null,
-            fecha_defensa: null
+            fecha_defensa: null,
+            tipo_proyecto: tipoProyecto,
+            continua_ap: esContinuacion,
+            ap_origen_id: ap_origen_id ?? null,
+            semestre_id: semestre_id ?? null,
+            estado_detallado: estadoInicialSegunTipo({ tipo_proyecto: tipoProyecto, continua_ap: esContinuacion })
         };
 
-        // Crear el proyecto usando el modelo
         const proyectoId = await ProjectModel.crearProyectoCompleto(proyectoData);
 
-        logger.info('Proyecto creado automáticamente', { proyectoId, propuestaId: id });
+        logger.info('Proyecto creado automáticamente', { proyectoId, propuestaId: id, tipoProyecto, esContinuacion });
 
-        // Transferir TODOS los estudiantes de la propuesta al proyecto
         await transferirEstudiantesAlProyecto(id, proyectoId);
+
+        // Transferir guía pre-asignado al estudiante → asignaciones_proyectos
+        await transferirGuiaAlProyecto(estudiante_rut, proyectoId);
 
         return proyectoId;
     } catch (error) {
         logger.error('Error al crear proyecto desde aprobación', { error: error.message });
         throw error;
     }
+};
+
+/**
+ * Transfiere el guía pre-asignado del estudiante (guias_estudiantes) a asignaciones_proyectos.
+ * Si no hay guía asignado o el rol no existe, simplemente registra un warning y continúa.
+ */
+const transferirGuiaAlProyecto = async (estudiante_rut, proyecto_id) => {
+    try {
+        // Obtener guía activo del estudiante
+        const [guiaRows] = await pool.execute(
+            'SELECT profesor_guia_rut, asignado_por FROM guias_estudiantes WHERE estudiante_rut = ? AND activo = TRUE ORDER BY fecha_asignacion DESC LIMIT 1',
+            [estudiante_rut]
+        );
+        if (guiaRows.length === 0) {
+            logger.warn('No hay guía asignado al estudiante al crear proyecto', { estudiante_rut, proyecto_id });
+            return;
+        }
+        const profesor_guia_rut = guiaRows[0].profesor_guia_rut;
+        const asignado_por = guiaRows[0].asignado_por;
+
+        // Obtener el rol_profesor_id del rol 'Profesor Guía'
+        const [rolRows] = await pool.execute(
+            "SELECT id FROM roles_profesores WHERE nombre = 'Profesor Guía' LIMIT 1"
+        );
+        if (rolRows.length === 0) {
+            logger.warn('Rol profesor_guia no encontrado en roles_profesores', { proyecto_id });
+            return;
+        }
+        const rol_profesor_id = rolRows[0].id;
+
+        // Insertar en asignaciones_proyectos
+        await pool.execute(
+            `INSERT INTO asignaciones_proyectos (proyecto_id, profesor_rut, rol_profesor_id, asignado_por)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE activo = TRUE, fecha_asignacion = NOW()`,
+            [proyecto_id, profesor_guia_rut, rol_profesor_id, asignado_por]
+        );
+
+        logger.info('Guía transferido al proyecto', { proyecto_id, profesor_guia_rut, rol_profesor_id });
+    } catch (error) {
+        // No interrumpir la creación del proyecto si falla la transferencia
+        logger.error('Error al transferir guía al proyecto (no bloqueante)', { error: error.message, estudiante_rut, proyecto_id });
+    }
+};
+
+/**
+ * Avanza el estado_detallado del proyecto AP a la siguiente etapa.
+ * Secuencia AP: avance1_ap → defensa_tema_ap → avance2_ap → final_ap
+ * Después de final_ap la decisión de continuar en PT queda en manos del admin/estudiante.
+ */
+const avanzarEtapaAP = async (proyecto_id) => {
+    const FLUJO_AP = ['avance1_ap', 'defensa_tema_ap', 'avance2_ap', 'final_ap'];
+
+    const [rows] = await pool.execute(
+        'SELECT estado_detallado, tipo_proyecto FROM proyectos WHERE id = ? LIMIT 1',
+        [proyecto_id]
+    );
+    const proyecto = rows[0];
+    if (!proyecto) throw new Error('Proyecto no encontrado');
+    if (proyecto.tipo_proyecto !== 'AP') throw new Error('Solo proyectos AP pueden avanzar por este flujo');
+
+    const idx = FLUJO_AP.indexOf(proyecto.estado_detallado);
+    if (idx === -1) throw new Error(`Estado inesperado para flujo AP: ${proyecto.estado_detallado}`);
+    if (idx === FLUJO_AP.length - 1) throw new Error('El proyecto AP ya está en la etapa final');
+
+    const nuevoEstado = FLUJO_AP[idx + 1];
+    await actualizarEstadoProyecto(proyecto_id, null, nuevoEstado);
+    logger.info('Etapa AP avanzada', { proyecto_id, nuevoEstado });
+    return nuevoEstado;
+};
+
+/**
+ * Avanza el estado_detallado del proyecto PT a la siguiente etapa.
+ * Secuencia PT: inicializacion → avance_con_nota → informe_final → defensa_titulo
+ *               → tramites_finales → acta_secretaria → verificar_deudas → biblioteca_formularios
+ */
+const avanzarEtapaPT = async (proyecto_id) => {
+    const FLUJO_PT = [
+        'inicializacion',
+        'avance_con_nota',
+        'informe_final',
+        'defensa_titulo',
+        'tramites_finales',
+        'acta_secretaria',
+        'verificar_deudas',
+        'biblioteca_formularios'
+    ];
+
+    const [rows] = await pool.execute(
+        'SELECT estado_detallado, tipo_proyecto FROM proyectos WHERE id = ? LIMIT 1',
+        [proyecto_id]
+    );
+    const proyecto = rows[0];
+    if (!proyecto) throw new Error('Proyecto no encontrado');
+    if (proyecto.tipo_proyecto !== 'PT') throw new Error('Solo proyectos PT pueden avanzar por este flujo');
+
+    const idx = FLUJO_PT.indexOf(proyecto.estado_detallado);
+    if (idx === -1) throw new Error(`Estado inesperado para flujo PT: ${proyecto.estado_detallado}`);
+    if (idx === FLUJO_PT.length - 1) throw new Error('El proyecto PT ya está en la etapa final');
+
+    const nuevoEstado = FLUJO_PT[idx + 1];
+    await actualizarEstadoProyecto(proyecto_id, null, nuevoEstado);
+    logger.info('Etapa PT avanzada', { proyecto_id, nuevoEstado });
+    return nuevoEstado;
 };
 
 /**
@@ -887,5 +1010,9 @@ export const ProjectService = {
     limpiarEntregaHito,
     
     // Funciones para flujo automático propuesta → proyecto
-    verificarYActivarProyectoSiCompleto
+    verificarYActivarProyectoSiCompleto,
+
+    // Funciones de avance de etapa por tipo de proyecto
+    avanzarEtapaAP,
+    avanzarEtapaPT
 };

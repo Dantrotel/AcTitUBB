@@ -9,25 +9,38 @@ export const obtenerComisionPorProyecto = async (proyectoId) => {
     try {
         const [rows] = await pool.query(`
             SELECT 
+                ap.id,
+                ap.profesor_rut,
+                u.nombre AS profesor_nombre,
+                u.email AS profesor_email,
+                CASE ap.rol_profesor_id
+                    WHEN 2 THEN 'profesor_guia'
+                    WHEN 4 THEN 'profesor_informante'
+                END AS rol_comision,
+                ap.fecha_asignacion AS fecha_designacion,
+                NULL AS observaciones,
+                'asignacion' AS origen
+            FROM asignaciones_proyectos ap
+            INNER JOIN usuarios u ON ap.profesor_rut = u.rut
+            WHERE ap.proyecto_id = ? AND ap.rol_profesor_id IN (2, 4) AND ap.activo = TRUE
+
+            UNION ALL
+
+            SELECT 
                 ce.id,
-                ce.proyecto_id,
                 ce.profesor_rut,
                 u.nombre AS profesor_nombre,
                 u.email AS profesor_email,
                 ce.rol_comision,
                 ce.fecha_designacion,
-                ce.fecha_remocion,
-                ce.activo,
                 ce.observaciones,
-                ce.asignado_por,
-                admin.nombre AS asignado_por_nombre
+                'comision' AS origen
             FROM comision_evaluadora ce
             INNER JOIN usuarios u ON ce.profesor_rut = u.rut
-            LEFT JOIN usuarios admin ON ce.asignado_por = admin.rut
-            WHERE ce.proyecto_id = ? AND ce.activo = TRUE
-            ORDER BY 
-                FIELD(ce.rol_comision, 'profesor_guia', 'profesor_informante', 'tercer_integrante')
-        `, [proyectoId]);
+            WHERE ce.proyecto_id = ? AND ce.rol_comision = 'tercer_integrante' AND ce.activo = TRUE
+
+            ORDER BY FIELD(rol_comision, 'profesor_guia', 'profesor_informante', 'tercer_integrante')
+        `, [proyectoId, proyectoId]);
 
         return rows;
     } catch (error) {
@@ -43,20 +56,27 @@ export const obtenerComisionPorProyecto = async (proyectoId) => {
  */
 export const verificarComisionCompleta = async (proyectoId) => {
     try {
-        const [rows] = await pool.query(`
-            SELECT 
-                COUNT(*) as total_miembros,
-                SUM(CASE WHEN rol_comision = 'profesor_guia' THEN 1 ELSE 0 END) as tiene_profesor_guia,
-                SUM(CASE WHEN rol_comision = 'profesor_informante' THEN 1 ELSE 0 END) as tiene_profesor_informante,
-                SUM(CASE WHEN rol_comision = 'tercer_integrante' THEN 1 ELSE 0 END) as tiene_tercer_integrante
-            FROM comision_evaluadora
-            WHERE proyecto_id = ? AND activo = TRUE
-        `, [proyectoId]);
+        const [[guia]] = await pool.query(
+            'SELECT COUNT(*) as cnt FROM asignaciones_proyectos WHERE proyecto_id = ? AND rol_profesor_id = 2 AND activo = TRUE',
+            [proyectoId]
+        );
+        const [[informante]] = await pool.query(
+            'SELECT COUNT(*) as cnt FROM asignaciones_proyectos WHERE proyecto_id = ? AND rol_profesor_id = 4 AND activo = TRUE',
+            [proyectoId]
+        );
+        const [[tercer]] = await pool.query(
+            "SELECT COUNT(*) as cnt FROM comision_evaluadora WHERE proyecto_id = ? AND rol_comision = 'tercer_integrante' AND activo = TRUE",
+            [proyectoId]
+        );
 
-        const estado = rows[0];
-        // El tercer integrante es opcional; la comisión es operativa con Profesor Guía + Profesor Informante
-        estado.completa = estado.tiene_profesor_guia > 0 && estado.tiene_profesor_informante > 0;
-        
+        const estado = {
+            tiene_profesor_guia: guia.cnt,
+            tiene_profesor_informante: informante.cnt,
+            tiene_tercer_integrante: tercer.cnt,
+            total_miembros: Number(guia.cnt) + Number(informante.cnt) + Number(tercer.cnt),
+            completa: guia.cnt > 0 && informante.cnt > 0
+        };
+
         return estado;
     } catch (error) {
         
@@ -188,22 +208,26 @@ export const obtenerProyectosConComision = async () => {
                 p.titulo,
                 p.estudiante_rut,
                 u.nombre AS estudiante_nombre,
-                COUNT(ce.id) as total_miembros,
-                SUM(CASE WHEN ce.rol_comision = 'profesor_guia' THEN 1 ELSE 0 END) as tiene_profesor_guia,
-                SUM(CASE WHEN ce.rol_comision = 'profesor_informante' THEN 1 ELSE 0 END) as tiene_profesor_informante,
-                SUM(CASE WHEN ce.rol_comision = 'tercer_integrante' THEN 1 ELSE 0 END) as tiene_tercer_integrante,
-                CASE 
-                    WHEN SUM(CASE WHEN ce.rol_comision = 'profesor_guia' THEN 1 ELSE 0 END) > 0
-                         AND SUM(CASE WHEN ce.rol_comision = 'profesor_informante' THEN 1 ELSE 0 END) > 0
-                    -- El tercer integrante es opcional, no afecta a comision_completa
-                    THEN TRUE 
-                    ELSE FALSE 
-                END as comision_completa
+                (
+                    (SELECT COUNT(*) FROM asignaciones_proyectos ap WHERE ap.proyecto_id = p.id AND ap.rol_profesor_id IN (2, 4) AND ap.activo = TRUE)
+                    + (SELECT COUNT(*) FROM comision_evaluadora ce WHERE ce.proyecto_id = p.id AND ce.rol_comision = 'tercer_integrante' AND ce.activo = TRUE)
+                ) AS total_miembros,
+                (SELECT COUNT(*) FROM asignaciones_proyectos WHERE proyecto_id = p.id AND rol_profesor_id = 2 AND activo = TRUE) AS tiene_profesor_guia,
+                (SELECT COUNT(*) FROM asignaciones_proyectos WHERE proyecto_id = p.id AND rol_profesor_id = 4 AND activo = TRUE) AS tiene_profesor_informante,
+                (SELECT COUNT(*) FROM comision_evaluadora WHERE proyecto_id = p.id AND rol_comision = 'tercer_integrante' AND activo = TRUE) AS tiene_tercer_integrante,
+                CASE
+                    WHEN (SELECT COUNT(*) FROM asignaciones_proyectos WHERE proyecto_id = p.id AND rol_profesor_id = 2 AND activo = TRUE) > 0
+                         AND (SELECT COUNT(*) FROM asignaciones_proyectos WHERE proyecto_id = p.id AND rol_profesor_id = 4 AND activo = TRUE) > 0
+                    THEN TRUE
+                    ELSE FALSE
+                END AS comision_completa
             FROM proyectos p
             INNER JOIN usuarios u ON p.estudiante_rut = u.rut
-            LEFT JOIN comision_evaluadora ce ON p.id = ce.proyecto_id AND ce.activo = TRUE
             WHERE p.activo = TRUE
-            GROUP BY p.id, p.titulo, p.estudiante_rut, u.nombre
+            AND EXISTS (
+                SELECT 1 FROM asignaciones_proyectos ap
+                WHERE ap.proyecto_id = p.id AND ap.rol_profesor_id = 2 AND ap.activo = TRUE
+            )
             ORDER BY p.fecha_inicio DESC
         `);
 
@@ -232,12 +256,17 @@ export const obtenerProfesoresDisponibles = async (proyectoId) => {
             WHERE u.rol_id IN (2, 3) -- Profesores y administradores
             AND u.rut NOT IN (
                 SELECT profesor_rut 
+                FROM asignaciones_proyectos 
+                WHERE proyecto_id = ? AND rol_profesor_id IN (2, 4) AND activo = TRUE
+            )
+            AND u.rut NOT IN (
+                SELECT profesor_rut 
                 FROM comision_evaluadora 
-                WHERE proyecto_id = ? AND activo = TRUE
+                WHERE proyecto_id = ? AND rol_comision = 'tercer_integrante' AND activo = TRUE
             )
             GROUP BY u.rut, u.nombre, u.email
             ORDER BY total_comisiones_activas ASC, u.nombre ASC
-        `, [proyectoId]);
+        `, [proyectoId, proyectoId]);
 
         return rows;
     } catch (error) {

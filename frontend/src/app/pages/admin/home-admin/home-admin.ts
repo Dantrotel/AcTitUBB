@@ -183,6 +183,10 @@ export class HomeAdminComponent implements OnInit {
     this.router.navigate(['/admin/gestion-periodo-propuestas']);
   }
 
+  irAGestionSemestres(): void {
+    this.router.navigate(['/admin/semestres']);
+  }
+
   irAFechasImportantes(): void {
     this.router.navigate(['/admin/fechas-importantes']);
   }

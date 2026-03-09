@@ -45,10 +45,10 @@ export const agregarMiembro = async (req, res) => {
             });
         }
 
-        const rolesValidos = ['profesor_guia', 'profesor_informante', 'tercer_integrante'];
-        if (!rolesValidos.includes(rol_comision)) {
+        // Solo admite tercer_integrante; Guía e Informante se gestionan en Gestión de Proyectos
+        if (rol_comision !== 'tercer_integrante') {
             return res.status(400).json({ 
-                message: 'Rol inválido. Debe ser: profesor_guia, profesor_informante o tercer_integrante' 
+                message: 'Solo se puede agregar el Tercer Integrante desde esta vista. El Profesor Guía e Informante se asignan en Gestión de Proyectos.' 
             });
         }
 

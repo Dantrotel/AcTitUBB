@@ -53,6 +53,34 @@ CREATE TABLE IF NOT EXISTS estados_proyectos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabla de Semestres académicos
+CREATE TABLE IF NOT EXISTS semestres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL UNIQUE,        -- Ej: '2025-1', '2025-2'
+    año INT NOT NULL,
+    numero TINYINT NOT NULL,                   -- 1 o 2
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    activo BOOLEAN DEFAULT FALSE,              -- Semestre en curso
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_activo (activo),
+    CONSTRAINT chk_semestre_num CHECK (numero IN (1, 2))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Inscripciones de Ramo por Semestre
+CREATE TABLE IF NOT EXISTS inscripciones_ramo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_rut VARCHAR(10) NOT NULL,
+    semestre_id INT NOT NULL,
+    tipo_ramo ENUM('AP','PT') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_estudiante_semestre (estudiante_rut, semestre_id),
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (semestre_id) REFERENCES semestres(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tabla de Propuestas (Fase inicial)
 CREATE TABLE IF NOT EXISTS propuestas (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -68,6 +96,8 @@ CREATE TABLE IF NOT EXISTS propuestas (
     nombre_archivo_original VARCHAR(255),
     
     -- NUEVOS CAMPOS MEJORADOS
+    semestre_id INT NULL,                      -- Semestre en que se inscribió
+    tipo_proyecto ENUM('PT','AP') NOT NULL DEFAULT 'PT',
     modalidad ENUM('desarrollo_software', 'investigacion', 'practica' ) NOT NULL,
     numero_estudiantes INT NOT NULL DEFAULT 1 CHECK (numero_estudiantes in (1, 2, 3)),
     complejidad_estimada ENUM('baja', 'media', 'alta') NOT NULL DEFAULT 'media',
@@ -83,7 +113,8 @@ CREATE TABLE IF NOT EXISTS propuestas (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (estado_id) REFERENCES estados_propuestas(id)
+    FOREIGN KEY (estado_id) REFERENCES estados_propuestas(id),
+    FOREIGN KEY (semestre_id) REFERENCES semestres(id)
 );
 
 -- Tabla para vincular múltiples estudiantes a una propuesta
@@ -198,8 +229,25 @@ CREATE TABLE IF NOT EXISTS proyectos (
     -- Gestión de progreso
     porcentaje_avance DECIMAL(5,2) DEFAULT 0.00 CHECK (porcentaje_avance >= 0 AND porcentaje_avance <= 100),
     
+    -- Semestre de inscripción y resultado
+    semestre_id INT NULL,
+    resultado ENUM('en_curso','aprobado','reprobado','retirado') DEFAULT 'en_curso',
+
+    -- Tipo de proyecto y continuación
+    tipo_proyecto ENUM('PT','AP') NOT NULL DEFAULT 'PT',
+    continua_ap   BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'PT que continúa de un AP aprobado',
+    ap_origen_id  INT NULL COMMENT 'ID del proyecto AP del que proviene este PT',
+
     -- Gestión de estado detallado
-    estado_detallado ENUM('inicializacion', 'planificacion', 'desarrollo_fase1', 'desarrollo_fase2', 'testing', 'documentacion', 'revision_final', 'preparacion_defensa', 'defendido', 'cerrado') DEFAULT 'inicializacion',
+    estado_detallado ENUM(
+      'inicializacion','planificacion','desarrollo_fase1','desarrollo_fase2',
+      'testing','documentacion','revision_final','preparacion_defensa','defendido','cerrado',
+      -- etapas PT
+      'avance_con_nota','informe_final','defensa_titulo',
+      'tramites_finales','acta_secretaria','verificar_deudas','biblioteca_formularios',
+      -- etapas AP
+      'avance1_ap','defensa_tema_ap','avance2_ap','final_ap'
+    ) DEFAULT 'inicializacion',
     prioridad ENUM('baja', 'media', 'alta', 'critica') DEFAULT 'media',
     riesgo_nivel ENUM('bajo', 'medio', 'alto') DEFAULT 'medio',
     
@@ -237,7 +285,8 @@ CREATE TABLE IF NOT EXISTS proyectos (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (propuesta_id) REFERENCES propuestas(id),
     FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut),
-    FOREIGN KEY (estado_id) REFERENCES estados_proyectos(id)
+    FOREIGN KEY (estado_id) REFERENCES estados_proyectos(id),
+    FOREIGN KEY (semestre_id) REFERENCES semestres(id)
 );
 
 -- Tabla de Asignaciones de Profesores a Proyectos (UNIFICADA)
@@ -303,6 +352,26 @@ CREATE TABLE IF NOT EXISTS estudiantes_proyectos (
     UNIQUE KEY unique_estudiante_proyecto (proyecto_id, estudiante_rut),
     INDEX idx_proyecto_estudiante (proyecto_id),
     INDEX idx_estudiante_proyectos (estudiante_rut)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de Pre-asignación de Profesor Guía a Estudiante
+-- El guía se asigna al ESTUDIANTE antes de que éste pueda crear una propuesta
+CREATE TABLE IF NOT EXISTS guias_estudiantes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    profesor_guia_rut VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    asignado_por VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_desasignacion TIMESTAMP NULL,
+    observaciones TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (estudiante_rut) REFERENCES usuarios(rut) ON DELETE CASCADE,
+    FOREIGN KEY (profesor_guia_rut) REFERENCES usuarios(rut),
+    FOREIGN KEY (asignado_por) REFERENCES usuarios(rut),
+    INDEX idx_guia_estudiante (estudiante_rut, activo),
+    INDEX idx_guia_profesor (profesor_guia_rut, activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de Hitos del Proyecto

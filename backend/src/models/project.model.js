@@ -179,25 +179,41 @@ const getProjectStats = async () => {
 
 // Crear proyecto completo desde propuesta aprobada
 const crearProyectoCompleto = async (proyectoData) => {
-    const { titulo, descripcion, propuesta_id, estudiante_rut, estado_id, fecha_inicio, fecha_entrega_estimada, fecha_entrega_real, fecha_defensa } = proyectoData;
-    
-    const query = `
-        INSERT INTO proyectos (titulo, descripcion, propuesta_id, estudiante_rut, estado_id, fecha_inicio, fecha_entrega_estimada, fecha_entrega_real, fecha_defensa)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+    const {
+        titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
+        fecha_inicio, fecha_entrega_estimada, fecha_entrega_real, fecha_defensa,
+        tipo_proyecto    = 'PT',
+        continua_ap      = false,
+        ap_origen_id     = null,
+        semestre_id      = null,
+        estado_detallado = null,
+        modalidad        = 'desarrollo_software',
+        complejidad      = 'media',
+        duracion_semestres = 1
+    } = proyectoData;
 
-    const [result] = await pool.execute(query, [
-        titulo, 
-        descripcion, 
-        propuesta_id, 
-        estudiante_rut, 
-        estado_id, 
-        fecha_inicio, 
-        fecha_entrega_estimada, 
-        fecha_entrega_real, 
-        fecha_defensa
-    ]);
-    
+    // Inferir estado_detallado si no se pasó explícitamente
+    const estadoDetallado = estado_detallado ?? (
+        continua_ap            ? 'avance_con_nota' :
+        tipo_proyecto === 'AP' ? 'avance1_ap'      :
+        'inicializacion'
+    );
+
+    const [result] = await pool.execute(
+        `INSERT INTO proyectos (
+            titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
+            fecha_inicio, fecha_entrega_estimada, fecha_entrega_real, fecha_defensa,
+            tipo_proyecto, continua_ap, ap_origen_id, semestre_id,
+            estado_detallado, modalidad, complejidad, duracion_semestres
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            titulo, descripcion, propuesta_id, estudiante_rut, estado_id,
+            fecha_inicio, fecha_entrega_estimada ?? null, fecha_entrega_real ?? null, fecha_defensa ?? null,
+            tipo_proyecto, continua_ap ? 1 : 0, ap_origen_id, semestre_id,
+            estadoDetallado,
+            modalidad, complejidad, duracion_semestres
+        ]
+    );
     return result.insertId;
 };
 
@@ -245,14 +261,45 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
         let params;
 
         if (rol_usuario === 'admin' || rol_usuario === 3 || rol_usuario === 4) {
-            // Los administradores y super administradores ven todos los proyectos - consulta simplificada
+            // Los administradores y super administradores ven todos los proyectos
             query = `
-                SELECT p.*, 
+                SELECT p.*,
                        u.nombre AS nombre_estudiante,
                        u.email AS email_estudiante,
                        prop.titulo AS titulo_propuesta,
                        car.codigo AS codigo_carrera,
-                       car.nombre AS carrera_nombre
+                       car.nombre AS carrera_nombre,
+                       COALESCE(
+                           (SELECT u_guia.nombre FROM asignaciones_proyectos ap_guia
+                            INNER JOIN usuarios u_guia ON ap_guia.profesor_rut = u_guia.rut
+                            INNER JOIN roles_profesores rp_guia ON ap_guia.rol_profesor_id = rp_guia.id
+                            WHERE ap_guia.proyecto_id = p.id AND rp_guia.nombre = 'Profesor Guía' AND ap_guia.activo = TRUE
+                            LIMIT 1),
+                           (SELECT ug.nombre FROM guias_estudiantes ge
+                            INNER JOIN usuarios ug ON ge.profesor_guia_rut = ug.rut
+                            WHERE ge.estudiante_rut = p.estudiante_rut AND ge.activo = TRUE
+                            ORDER BY ge.fecha_asignacion DESC LIMIT 1)
+                       ) AS profesor_guia,
+                       COALESCE(
+                           (SELECT u_guia2.rut FROM asignaciones_proyectos ap_guia2
+                            INNER JOIN usuarios u_guia2 ON ap_guia2.profesor_rut = u_guia2.rut
+                            INNER JOIN roles_profesores rp_guia2 ON ap_guia2.rol_profesor_id = rp_guia2.id
+                            WHERE ap_guia2.proyecto_id = p.id AND rp_guia2.nombre = 'Profesor Guía' AND ap_guia2.activo = TRUE
+                            LIMIT 1),
+                           (SELECT ge2.profesor_guia_rut FROM guias_estudiantes ge2
+                            WHERE ge2.estudiante_rut = p.estudiante_rut AND ge2.activo = TRUE
+                            ORDER BY ge2.fecha_asignacion DESC LIMIT 1)
+                       ) AS profesor_guia_rut,
+                       (SELECT u_inf.nombre FROM asignaciones_proyectos ap_inf
+                        INNER JOIN usuarios u_inf ON ap_inf.profesor_rut = u_inf.rut
+                        INNER JOIN roles_profesores rp_inf ON ap_inf.rol_profesor_id = rp_inf.id
+                        WHERE ap_inf.proyecto_id = p.id AND rp_inf.nombre = 'Profesor Informante' AND ap_inf.activo = TRUE
+                        LIMIT 1) AS profesor_informante,
+                       (SELECT u_inf2.rut FROM asignaciones_proyectos ap_inf2
+                        INNER JOIN usuarios u_inf2 ON ap_inf2.profesor_rut = u_inf2.rut
+                        INNER JOIN roles_profesores rp_inf2 ON ap_inf2.rol_profesor_id = rp_inf2.id
+                        WHERE ap_inf2.proyecto_id = p.id AND rp_inf2.nombre = 'Profesor Informante' AND ap_inf2.activo = TRUE
+                        LIMIT 1) AS profesor_informante_rut
                 FROM proyectos p
                 LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
@@ -494,12 +541,20 @@ export const ProjectModel = {
  * @param {number} estado_id - ID del nuevo estado
  * @returns {Promise<boolean>} - True si se actualizó correctamente
  */
-const actualizarEstadoProyecto = async (proyecto_id, estado_id) => {
+const actualizarEstadoProyecto = async (proyecto_id, estado_id, estado_detallado = null) => {
     try {
-        const [result] = await pool.execute(
-            `UPDATE proyectos SET estado_id = ?, updated_at = NOW() WHERE id = ?`,
-            [estado_id, proyecto_id]
-        );
+        let query, params;
+        if (estado_detallado !== null && estado_id !== null) {
+            query  = `UPDATE proyectos SET estado_id = ?, estado_detallado = ?, updated_at = NOW() WHERE id = ?`;
+            params = [estado_id, estado_detallado, proyecto_id];
+        } else if (estado_detallado !== null) {
+            query  = `UPDATE proyectos SET estado_detallado = ?, updated_at = NOW() WHERE id = ?`;
+            params = [estado_detallado, proyecto_id];
+        } else {
+            query  = `UPDATE proyectos SET estado_id = ?, updated_at = NOW() WHERE id = ?`;
+            params = [estado_id, proyecto_id];
+        }
+        const [result] = await pool.execute(query, params);
         return result.affectedRows > 0;
     } catch (error) {
         console.error('Error al actualizar estado del proyecto:', error);
@@ -544,7 +599,12 @@ const obtenerCargaProfesores = async (carrera_id = null) => {
                 u.rut,
                 u.nombre,
                 u.email,
-                -- Conteo por rol específico
+                -- Conteo por rol y carrera (AP = Guía, PT = Informante)
+                SUM(CASE WHEN rp.nombre = 'Profesor Guía'      AND car.codigo = 'ICINF' THEN 1 ELSE 0 END) AS guia_icinf,
+                SUM(CASE WHEN rp.nombre = 'Profesor Guía'      AND car.codigo = 'IIE'   THEN 1 ELSE 0 END) AS guia_ieci,
+                SUM(CASE WHEN rp.nombre = 'Profesor Informante' AND car.codigo = 'ICINF' THEN 1 ELSE 0 END) AS informante_icinf,
+                SUM(CASE WHEN rp.nombre = 'Profesor Informante' AND car.codigo = 'IIE'   THEN 1 ELSE 0 END) AS informante_ieci,
+                -- Conteo total por rol específico
                 SUM(CASE WHEN rp.nombre = 'Profesor Guía' THEN 1 ELSE 0 END) as proyectos_guia,
                 SUM(CASE WHEN rp.nombre = 'Profesor Informante' THEN 1 ELSE 0 END) as proyectos_informante,
                 SUM(CASE WHEN rp.nombre = 'Profesor Revisor' THEN 1 ELSE 0 END) as proyectos_revisor,
@@ -556,6 +616,8 @@ const obtenerCargaProfesores = async (carrera_id = null) => {
             LEFT JOIN asignaciones_proyectos ap ON u.rut = ap.profesor_rut AND ap.activo = TRUE
             LEFT JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
             LEFT JOIN proyectos p ON ap.proyecto_id = p.id AND p.activo = TRUE
+            LEFT JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.es_carrera_principal = 1
+            LEFT JOIN carreras car ON ec.carrera_id = car.id
         `;
         
         const params = [];

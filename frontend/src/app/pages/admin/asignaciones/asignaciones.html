@@ -467,16 +467,16 @@
         </div>
       </div>
 
-      <div class="roles-distribution">
+      <div class="roles-distribution" *ngIf="estadisticasAsignaciones?.por_roles?.length > 0">
         <h3><i class="fas fa-chart-pie"></i> Distribución por Roles</h3>
         <div class="roles-list">
-          <div 
-            *ngFor="let rol of estadisticasAsignaciones.por_roles" 
+          <div
+            *ngFor="let rol of estadisticasAsignaciones.por_roles"
             class="rol-stat">
-            <span 
-              class="rol-badge" 
+            <span
+              class="rol-badge"
               [style.background-color]="getRolColor(rol.rol_nombre)">
-              {{rol.rol_nombre.replace('profesor_', '').replace('_', ' ') | titlecase}}
+              {{formatRolName(rol.rol_nombre || '')}}
             </span>
             <span class="rol-count">{{rol.asignaciones_por_rol}} asignaciones</span>
           </div>
@@ -507,7 +507,7 @@
               <strong>{{entrada.profesor_nombre}}</strong>
               <span class="accion-text">{{entrada.accion}}</span>
               <span>como</span>
-              <span class="rol-name">{{entrada.rol_nombre.replace('profesor_', '').replace('_', ' ') | titlecase}}</span>
+              <span class="rol-name">{{formatRolName(entrada.rol_nombre || '')}}</span>
             </div>
             <div class="historial-details">
               <span>Proyecto: {{entrada.proyecto_titulo}}</span>

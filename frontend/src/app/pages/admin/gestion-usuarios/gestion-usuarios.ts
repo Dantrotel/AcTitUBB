@@ -101,6 +101,7 @@ export class GestionUsuariosComponent implements OnInit {
       const user = JSON.parse(userData);
       this.userName = user.nombre || 'Jefe de Curso';
     }
+
     // Verificar primero si es super admin antes de cargar usuarios
     this.verificarSuperAdmin();
     this.cargarUsuarios();
