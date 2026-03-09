@@ -28,6 +28,9 @@ import actividadRouter from './routes/actividad.route.js';
 import respaldoRouter from './routes/respaldo.route.js';
 import colaboradoresExternosRouter from './routes/colaboradores-externos.route.js';
 import versionesPlantillasRouter from './routes/versiones-plantillas.route.js';
+import guiasEstudiantesRouter from './routes/guias-estudiantes.route.js';
+import semestresRouter from './routes/semestres.route.js';
+import inscripcionesRamoRouter from './routes/inscripciones-ramo.route.js';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 
@@ -165,6 +168,9 @@ app.use('/api/v1/actividad', actividadRouter);
 app.use('/api/v1/respaldo', respaldoRouter);
 app.use('/api/v1/colaboradores-externos', colaboradoresExternosRouter);
 app.use('/api/v1/versiones', versionesPlantillasRouter);
+app.use('/api/v1/guias-estudiantes', guiasEstudiantesRouter);
+app.use('/api/v1/semestres', semestresRouter);
+app.use('/api/v1/inscripciones-ramo', inscripcionesRamoRouter);
 
 // Chat
 import chatRouter from './routes/chat.route.js';

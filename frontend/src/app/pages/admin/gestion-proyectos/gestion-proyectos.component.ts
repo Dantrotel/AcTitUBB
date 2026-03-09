@@ -14,11 +14,13 @@ import { NotificationService } from '../../../services/notification.service';
 })
 export class GestionProyectosComponent implements OnInit {
   proyectos: any[] = [];
+  profesores: any[] = [];
   loading = true;
   error = '';
   filtroEstado = '';
   filtroEstudiante = '';
   filtroProfesor = '';
+  asignandoInformante: { [id: number]: boolean } = {};
 
   constructor(
     private router: Router,
@@ -29,6 +31,41 @@ export class GestionProyectosComponent implements OnInit {
 
   ngOnInit() {
     this.cargarProyectos();
+    this.cargarProfesores();
+  }
+
+  cargarProfesores(): void {
+    this.apiService.getProfesores().subscribe({
+      next: (data: any) => {
+        this.profesores = (data || []).filter((u: any) => u.rol_id === 2);
+      },
+      error: () => {}
+    });
+  }
+
+  actualizarInformante(proyecto: any, event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const nuevo_profesor_rut = select.value;
+    if (!nuevo_profesor_rut) return;
+
+    this.asignandoInformante[proyecto.id] = true;
+    // rol_profesor_id 4 = Profesor Informante
+    this.apiService.actualizarAsignacionProfesorProyecto(proyecto.id.toString(), '4', { nuevo_profesor_rut }).subscribe({
+      next: () => {
+        const prof = this.profesores.find(p => p.rut === nuevo_profesor_rut);
+        proyecto.profesor_informante_rut = nuevo_profesor_rut;
+        proyecto.profesor_informante = prof?.nombre || proyecto.profesor_informante;
+        this.asignandoInformante[proyecto.id] = false;
+        this.notificationService.success('Profesor Informante asignado correctamente');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        select.value = proyecto.profesor_informante_rut || '';
+        this.asignandoInformante[proyecto.id] = false;
+        this.notificationService.error('Error al asignar Profesor Informante');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Método público para cargar proyectos

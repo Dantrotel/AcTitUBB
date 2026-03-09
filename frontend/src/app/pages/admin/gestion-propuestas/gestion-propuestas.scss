@@ -140,7 +140,51 @@ $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
   .footer-content p { font-size:.72rem; color:$muted; text-align:center; margin:0; }
 }
 
+// TABLE
+.table-wrapper { overflow-x: auto; }
+.data-table {
+  width: 100%; border-collapse: collapse;
+  th, td { padding: .6rem .875rem; text-align: left; border-bottom: 1px solid $border; font-size: .82rem; }
+  th { background: $bg; font-weight: 600; color: $text; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba($primary,.03); }
+}
+.th-actions, .td-actions { text-align: center; }
+.td-evaluador { white-space: nowrap; }
+.select-evaluador {
+  font-size: .78rem; padding: .2rem .5rem; border: 1px solid $border;
+  border-radius: 6px; background: $white; color: $text; cursor: pointer;
+  max-width: 180px; width: 100%;
+  &:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 2px rgba($primary,.15); }
+  &:disabled { opacity: .6; cursor: not-allowed; }
+}
+.saving-indicator {
+  margin-left: .3rem; color: $primary; font-size: .75rem;
+}
+.count-chip {
+  background: $bg; border: 1px solid $border; border-radius: 4px;
+  padding: .1rem .5rem; font-size: .78rem; font-weight: 600;
+}
+.titulo-cell { max-width: 240px; }
+.titulo-text { font-size: .82rem; font-weight: 600; }
+.fecha-cell { white-space: nowrap; font-size: .78rem; color: $muted; }
+.center-cell { text-align: center; }
+.proyecto-badge-inline {
+  margin-left: .3rem; color: $primary; font-size: .7rem;
+}
+.action-buttons { display: flex; gap: .3rem; justify-content: center; flex-wrap: wrap; }
+.btn-action {
+  width: 30px; height: 30px; border: none; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: opacity .15s;
+  i { font-size: .8rem; }
+  &:hover { opacity: .8; }
+  &.btn-view   { background: $primary; color: $white; }
+  &.btn-edit   { background: $orange;  color: $white; }
+  &.btn-assign { background: $info;    color: $white; }
+  &.btn-delete { background: $red;     color: $white; }
+}
+
 @media (max-width:768px) {
-  .propuestas-grid { grid-template-columns:1fr; }
   .filters-grid { grid-template-columns:1fr 1fr; }
+  .data-table th, .data-table td { padding: .5rem .5rem; font-size: .75rem; }
 }

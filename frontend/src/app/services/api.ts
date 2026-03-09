@@ -952,6 +952,112 @@ export class ApiService {
     });
   }
 
+  // ===== SEMESTRES ACADÉMICOS =====
+
+  getSemestreActivo() {
+    return this.http.get(`${this.baseUrl}/semestres/activo`, { headers: this.getHeaders() });
+  }
+
+  getSemestres() {
+    return this.http.get(`${this.baseUrl}/semestres`, { headers: this.getHeaders() });
+  }
+
+  crearSemestre(data: any) {
+    return this.http.post(`${this.baseUrl}/semestres`, data, { headers: this.getHeaders() });
+  }
+
+  actualizarSemestre(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/semestres/${id}`, data, { headers: this.getHeaders() });
+  }
+
+  activarSemestre(id: number) {
+    return this.http.put(`${this.baseUrl}/semestres/${id}/activar`, {}, { headers: this.getHeaders() });
+  }
+
+  eliminarSemestre(id: number) {
+    return this.http.delete(`${this.baseUrl}/semestres/${id}`, { headers: this.getHeaders() });
+  }
+
+  getHistorialSemestre(id: number) {
+    return this.http.get(`${this.baseUrl}/semestres/${id}/historial`, { headers: this.getHeaders() });
+  }
+
+  getMisInscripciones() {
+    return this.http.get(`${this.baseUrl}/semestres/mis-inscripciones`, { headers: this.getHeaders() });
+  }
+
+  actualizarResultadoProyecto(semestreId: number, proyectoId: number, resultado: string) {
+    return this.http.put(`${this.baseUrl}/semestres/${semestreId}/resultado-proyecto`,
+      { proyecto_id: proyectoId, resultado }, { headers: this.getHeaders() });
+  }
+
+  // ===== INSCRIPCIONES DE RAMO =====
+
+  getInscripcionRamoActiva() {
+    return this.http.get(`${this.baseUrl}/inscripciones-ramo/activa`, { headers: this.getHeaders() });
+  }
+
+  getInscripcionesRamoEstudiante(rut: string) {
+    return this.http.get(`${this.baseUrl}/inscripciones-ramo/estudiante/${rut}`, { headers: this.getHeaders() });
+  }
+
+  getAllInscripcionesRamo() {
+    return this.http.get(`${this.baseUrl}/inscripciones-ramo`, { headers: this.getHeaders() });
+  }
+
+  crearInscripcionRamo(tipo_ramo: 'AP' | 'PT', estudiante_rut?: string) {
+    return this.http.post(`${this.baseUrl}/inscripciones-ramo`,
+      { tipo_ramo, estudiante_rut }, { headers: this.getHeaders() });
+  }
+
+  actualizarInscripcionRamo(id: number, tipo_ramo: 'AP' | 'PT') {
+    return this.http.put(`${this.baseUrl}/inscripciones-ramo/${id}`,
+      { tipo_ramo }, { headers: this.getHeaders() });
+  }
+
+  generarInscripcionesSiguienteSemestre(semestre_origen_id: number, semestre_destino_id: number) {
+    return this.http.post(
+      `${this.baseUrl}/inscripciones-ramo/semestre/${semestre_origen_id}/generar-siguiente`,
+      { semestre_destino_id }, { headers: this.getHeaders() });
+  }
+
+  // ===== GUÍAS PRE-ASIGNADOS A ESTUDIANTES =====
+
+  // Estudiante: obtener su propio guía
+  getMiGuia() {
+    return this.http.get(`${this.baseUrl}/guias-estudiantes/mis-datos`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: obtener guía de un estudiante específico
+  getGuiaEstudiante(estudianteRut: string) {
+    return this.http.get(`${this.baseUrl}/guias-estudiantes/estudiante/${estudianteRut}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: listar todas las asignaciones guía-estudiante
+  getAllGuiasEstudiantes() {
+    return this.http.get(`${this.baseUrl}/guias-estudiantes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: asignar guía a un estudiante
+  asignarGuiaEstudiante(data: { estudiante_rut: string; profesor_guia_rut: string; observaciones?: string }) {
+    return this.http.post(`${this.baseUrl}/guias-estudiantes`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // Admin: desasignar guía de un estudiante
+  desasignarGuiaEstudiante(estudianteRut: string) {
+    return this.http.delete(`${this.baseUrl}/guias-estudiantes/estudiante/${estudianteRut}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // ===== MÉTODOS ADICIONALES DEL SISTEMA =====
 
   // Obtener cronograma activo de un proyecto (alias)

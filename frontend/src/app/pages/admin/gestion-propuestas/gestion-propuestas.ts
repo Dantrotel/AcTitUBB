@@ -13,6 +13,7 @@ import { NotificationService } from '../../../services/notification.service';
 })
 export class GestionPropuestasComponent implements OnInit {
   propuestas: any[] = [];
+  profesores: any[] = [];
   loading = true;
   error = '';
   filtroEstado = '';
@@ -21,6 +22,7 @@ export class GestionPropuestasComponent implements OnInit {
   userName = '';
   viewMode: 'admin' | 'superadmin' = 'admin';
   backRoute = '/admin';
+  asignandoEvaluador: { [id: number]: boolean } = {};
   
   propuestaSeleccionada: any = null;
 
@@ -43,6 +45,45 @@ export class GestionPropuestasComponent implements OnInit {
       this.userName = user.nombre || (this.viewMode === 'superadmin' ? 'Super Administrador' : 'Jefe de Curso');
     }
     this.cargarPropuestas();
+    this.cargarProfesores();
+  }
+
+  cargarProfesores(): void {
+    this.apiService.getProfesores().subscribe({
+      next: (data: any) => {
+        // Filtrar solo profesores (rol 2) y admins con rol de profesor (rol 3)
+        this.profesores = (data || []).filter((u: any) => u.rol_id === 2 || u.rol_id === 3);
+      },
+      error: () => { /* no bloquear la vista si falla */ }
+    });
+  }
+
+  actualizarEvaluador(propuesta: any, event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const profesor_rut = select.value;
+
+    if (!profesor_rut) {
+      return; // "Sin asignar" seleccionado, no hacer nada
+    }
+
+    this.asignandoEvaluador[propuesta.id] = true;
+    this.apiService.asignarPropuesta(propuesta.id.toString(), { profesor_rut }).subscribe({
+      next: () => {
+        const prof = this.profesores.find(p => p.rut === profesor_rut);
+        propuesta.profesor_rut = profesor_rut;
+        propuesta.nombre_profesor = prof?.nombre || propuesta.nombre_profesor;
+        this.asignandoEvaluador[propuesta.id] = false;
+        this.notificationService.success('Evaluador asignado correctamente');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Revertir select al valor anterior
+        select.value = propuesta.profesor_rut || '';
+        this.asignandoEvaluador[propuesta.id] = false;
+        this.notificationService.error('Error al asignar evaluador');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   cerrarSesion(): void {

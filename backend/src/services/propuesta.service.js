@@ -8,16 +8,112 @@ const rutValido = (rut) => /^\d{7,8}-[\dkK]$/.test(rut);
 const fechaValida = (fecha) => !isNaN(new Date(fecha));
 export const estadosValidos = ['pendiente', 'en_revision', 'correcciones', 'aprobada', 'rechazada'];
 
+// ─── helpers internos ────────────────────────────────────────────────────────
+
+/**
+ * Obtiene el semestre activo con inscripción abierta.
+ */
+const obtenerSemestreActivo = async () => {
+  const [rows] = await pool.execute(
+    'SELECT * FROM semestres WHERE activo = TRUE ORDER BY año DESC, numero DESC LIMIT 1'
+  );
+  return rows[0] ?? null;
+};
+
+/**
+ * Verifica si el estudiante ya tiene una inscripción activa (propuesta/proyecto no rechazado/reprobado)
+ * en el semestre indicado.
+ */
+const tieneInscripcionActivaEnSemestre = async (estudiante_rut, semestre_id) => {
+  // Verificar propuestas activas (no rechazadas) en este semestre
+  const [rows] = await pool.execute(
+    `SELECT p.id FROM propuestas p
+     INNER JOIN estados_propuestas ep ON p.estado_id = ep.id
+     INNER JOIN estudiantes_propuestas eprop ON eprop.propuesta_id = p.id
+     WHERE eprop.estudiante_rut = ?
+       AND p.semestre_id = ?
+       AND ep.nombre NOT IN ('rechazada')
+     LIMIT 1`,
+    [estudiante_rut, semestre_id]
+  );
+  return rows.length > 0;
+};
+
+/**
+ * Verifica si un estudiante tiene al menos un proyecto AP cuyo estado_detallado
+ * es 'final_ap' (fase completada) y devuelve ese proyecto o null.
+ */
+const obtenerAPCompletadoPorEstudiante = async (estudiante_rut) => {
+  const [rows] = await pool.execute(
+    `SELECT p.id FROM proyectos p
+     JOIN estudiantes_proyectos ep ON ep.proyecto_id = p.id
+     WHERE ep.estudiante_rut = ? AND p.tipo_proyecto = 'AP' AND p.estado_detallado = 'final_ap'
+     ORDER BY p.created_at DESC LIMIT 1`,
+    [estudiante_rut]
+  );
+  return rows[0] ?? null;
+};
+
+// ─── helpers internos (continuación) ──────────────────────────────────────────
+
+/**
+ * Verifica si el estudiante tiene un profesor guía pre-asignado activo en guias_estudiantes.
+ */
+const obtenerGuiaEstudiante = async (estudiante_rut) => {
+  const [rows] = await pool.execute(
+    `SELECT ge.profesor_guia_rut, u.nombre AS profesor_nombre
+     FROM guias_estudiantes ge
+     INNER JOIN usuarios u ON ge.profesor_guia_rut = u.rut
+     WHERE ge.estudiante_rut = ? AND ge.activo = TRUE
+     ORDER BY ge.fecha_asignacion DESC LIMIT 1`,
+    [estudiante_rut]
+  );
+  return rows[0] ?? null;
+};
+
+// ─── crearPropuesta ───────────────────────────────────────────────────────────
+
 export const crearPropuesta = async (data) => {
   try {
-    // Validaciones básicas obligatorias
+    const esAP         = data.tipo_proyecto === 'AP';
+    const continuaAP   = !esAP && data.continua_ap === true;
+
+    // Validaciones básicas obligatorias (comunes a PT y AP)
     if (!data.titulo?.trim() || !data.descripcion?.trim() || !data.estudiante_rut || !data.fecha_envio) {
       throw new Error('Faltan datos obligatorios para crear la propuesta');
     }
 
-    // Validaciones nuevos campos obligatorios
-    if (!data.modalidad || !['desarrollo_software', 'investigacion'].includes(data.modalidad)) {
-      throw new Error('Modalidad debe ser "desarrollo_software" o "investigacion"');
+    // ── Verificar que el estudiante tiene guía pre-asignado ───────────────────
+    const guia = await obtenerGuiaEstudiante(data.estudiante_rut);
+    if (!guia) {
+      throw new Error('No tienes un profesor guía asignado. Contacta al administrador para que te asigne un profesor guía antes de crear una propuesta.');
+    }
+
+    // ── Semestre activo ───────────────────────────────────────────────────────
+    const semestre = await obtenerSemestreActivo();
+    if (!semestre) {
+      throw new Error('No hay un semestre activo. Contacta al administrador.');
+    }
+
+    // ── Verificar que el estudiante no esté ya inscrito en este semestre ──────
+    const yaInscrito = await tieneInscripcionActivaEnSemestre(data.estudiante_rut, semestre.id);
+    if (yaInscrito) {
+      throw new Error(`Ya tienes una propuesta activa en el semestre ${semestre.nombre}. Solo puedes inscribir un ramo por semestre.`);
+    }
+
+    // Para PT con continuación de AP: verificar que realmente tenga un AP completado
+    if (continuaAP) {
+      const apOrigen = await obtenerAPCompletadoPorEstudiante(data.estudiante_rut);
+      if (!apOrigen) {
+        throw new Error('No se encontró un Actividad Práctica completada para continuar como PT');
+      }
+      data._apOrigenId = apOrigen.id; // lo usaremos al crear el proyecto
+    }
+
+    // Modalidad
+    const modalidadesValidas = ['desarrollo_software', 'investigacion', 'practica'];
+    if (!data.modalidad || !modalidadesValidas.includes(data.modalidad)) {
+      throw new Error('Modalidad debe ser "desarrollo_software", "investigacion" o "practica"');
     }
 
     if (!data.numero_estudiantes || ![1, 2, 3].includes(data.numero_estudiantes)) {
@@ -49,6 +145,9 @@ export const crearPropuesta = async (data) => {
       }
     }
 
+    // Campos extendidos: solo obligatorios en PT normal (no AP, no continua_ap)
+    const requiereDetallesCompletos = !esAP && !continuaAP;
+
     if (!data.complejidad_estimada || !['baja', 'media', 'alta'].includes(data.complejidad_estimada)) {
       throw new Error('Complejidad estimada debe ser "baja", "media" o "alta"');
     }
@@ -57,24 +156,15 @@ export const crearPropuesta = async (data) => {
       throw new Error('Duración estimada debe ser 1 o 2 semestres');
     }
 
-    if (!data.area_tematica?.trim()) {
-      throw new Error('Área temática es obligatoria');
-    }
-
-    if (!data.objetivos_generales?.trim()) {
-      throw new Error('Objetivos generales son obligatorios');
-    }
-
-    if (!data.objetivos_especificos?.trim()) {
-      throw new Error('Objetivos específicos son obligatorios');
-    }
-
-    if (!data.metodologia_propuesta?.trim()) {
-      throw new Error('Metodología propuesta es obligatoria');
+    if (requiereDetallesCompletos) {
+      if (!data.area_tematica?.trim())        throw new Error('Área temática es obligatoria');
+      if (!data.objetivos_generales?.trim())  throw new Error('Objetivos generales son obligatorios');
+      if (!data.objetivos_especificos?.trim())throw new Error('Objetivos específicos son obligatorios');
+      if (!data.metodologia_propuesta?.trim())throw new Error('Metodología propuesta es obligatoria');
     }
 
     // Validación condicional: justificación para 2 estudiantes con complejidad baja
-    if (data.numero_estudiantes === 2 && data.complejidad_estimada === 'baja') {
+    if (data.numero_estudiantes === 2 && data.complejidad_estimada === 'baja' && requiereDetallesCompletos) {
       if (!data.justificacion_complejidad?.trim()) {
         throw new Error('Justificación de complejidad es requerida para 2 estudiantes con complejidad baja');
       }
@@ -88,8 +178,14 @@ export const crearPropuesta = async (data) => {
       throw new Error('La fecha de envío no es válida');
     }
 
-    // Crear la propuesta
-    const propuestaId = await PropuestasModel.crearPropuesta(data);
+    // Crear la propuesta (con semestre activo)
+    const propuestaId = await PropuestasModel.crearPropuesta({
+      ...data,
+      tipo_proyecto: data.tipo_proyecto ?? 'PT',
+      semestre_id: semestre.id
+    });
+    // Guardar para uso posterior (transferir al proyecto)
+    data._semestreId = semestre.id;
 
     // Agregar el estudiante creador a estudiantes_propuestas
     await pool.execute(
@@ -105,6 +201,31 @@ export const crearPropuesta = async (data) => {
           [propuestaId, data.estudiantes_adicionales[i], i + 2]
         );
       }
+    }
+
+    // ── PT que continúa de AP: auto-aprobar y crear proyecto directamente ─────
+    if (continuaAP) {
+      // Marcar propuesta como aprobada automáticamente
+      await pool.execute(
+        `UPDATE propuestas SET estado_id = (SELECT id FROM estados_propuestas WHERE nombre = 'aprobada' LIMIT 1),
+          fecha_aprobacion = CURDATE() WHERE id = ?`,
+        [propuestaId]
+      );
+
+      // Obtener el dato completo de la propuesta para crearProyecto
+      const propuesta = await PropuestasModel.obtenerPropuestaPorId(propuestaId);
+
+      const proyectoId = await ProjectService.crearProyectoDesdeAprobacion({
+        ...propuesta,
+        tipo_proyecto: 'PT',
+        continua_ap: true,
+        ap_origen_id: data._apOrigenId ?? null,
+        semestre_id: data._semestreId ?? null
+      });
+
+      await PropuestasModel.aprobarPropuesta(propuestaId, proyectoId);
+
+      return { propuestaId, proyectoId, continua_ap: true };
     }
 
     return propuestaId;

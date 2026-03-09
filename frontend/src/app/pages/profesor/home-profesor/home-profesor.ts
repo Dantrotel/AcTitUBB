@@ -43,6 +43,11 @@ export class HomeProfesor implements OnInit {
   // Dashboard analytics
   dashboard: any = null;
   loadingDashboard = false;
+
+  // Reuniones
+  reunionesHome: any[] = [];
+  reunionesExpiradas: any[] = [];
+  loadingReuniones = false;
   
   // Propiedades para gestión de hitos
   mostrarGestionHitos = false;
@@ -94,6 +99,7 @@ export class HomeProfesor implements OnInit {
     this.cargarFechasCalendario();
     this.cargarFechasImportantesProyectos();
     this.cargarDashboard();
+    this.cargarReunionesHome();
     
     // Cargar hitos próximos después de cargar proyectos
     setTimeout(() => {
@@ -113,6 +119,52 @@ export class HomeProfesor implements OnInit {
     } finally {
       this.loadingDashboard = false;
     }
+  }
+
+  cargarReunionesHome() {
+    this.loadingReuniones = true;
+    this.ApiService.getReunionesProgramadas().subscribe({
+      next: (response: any) => {
+        const todas = response.data || [];
+        this.reunionesExpiradas = todas.filter((r: any) => r.expirada && r.estado === 'programada');
+        const proximas = todas
+          .filter((r: any) => !r.expirada && r.estado === 'programada')
+          .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+        // Mostrar máx 4: primero expiradas, luego próximas
+        this.reunionesHome = [...this.reunionesExpiradas.slice(0, 2), ...proximas].slice(0, 4);
+        this.loadingReuniones = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.loadingReuniones = false; }
+    });
+  }
+
+  getTipoReunionDisplay(tipo: string): string {
+    const tipos: { [k: string]: string } = {
+      'avance': 'Avance',
+      'revision': 'Revisión',
+      'seguimiento': 'Seguimiento',
+      'defensa': 'Defensa',
+      'entrega': 'Entrega',
+      'otro': 'Reunión'
+    };
+    return tipos[tipo] || tipo || 'Reunión';
+  }
+
+  getIconoModalidad(modalidad: string): string {
+    if (modalidad === 'virtual') return 'fas fa-video';
+    if (modalidad === 'hibrida') return 'fas fa-laptop-house';
+    return 'fas fa-map-marker-alt';
+  }
+
+  formatHora(hora: string): string {
+    if (!hora) return '';
+    return hora.substring(0, 5); // HH:MM
+  }
+
+  getMesAbrev(fecha: string): string {
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return meses[new Date(fecha).getMonth()] ?? '';
   }
 
   buscarUserByRut(rut: string) {

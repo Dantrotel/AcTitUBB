@@ -1,12 +1,14 @@
 import { pool } from "../db/connectionDB.js";
 
-export const crearPropuesta = async ({ 
-  titulo, 
-  descripcion, 
-  estudiante_rut, 
-  fecha_envio, 
-  archivo, 
+export const crearPropuesta = async ({
+  titulo,
+  descripcion,
+  estudiante_rut,
+  fecha_envio,
+  archivo,
   nombre_archivo_original,
+  semestre_id,
+  tipo_proyecto,
   modalidad,
   numero_estudiantes,
   complejidad_estimada,
@@ -23,33 +25,34 @@ export const crearPropuesta = async ({
     const [result] = await pool.execute(
       `INSERT INTO propuestas (
         titulo, descripcion, estudiante_rut, fecha_envio, archivo, nombre_archivo_original,
-        modalidad, numero_estudiantes, complejidad_estimada, justificacion_complejidad,
-        duracion_estimada_semestres, area_tematica, objetivos_generales, objetivos_especificos,
-        metodologia_propuesta, recursos_necesarios, bibliografia
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        semestre_id, tipo_proyecto, modalidad, numero_estudiantes, complejidad_estimada,
+        justificacion_complejidad, duracion_estimada_semestres, area_tematica, objetivos_generales,
+        objetivos_especificos, metodologia_propuesta, recursos_necesarios, bibliografia
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        titulo, 
-        descripcion, 
-        estudiante_rut, 
-        fecha_envio, 
-        archivo ?? null, 
+        titulo,
+        descripcion,
+        estudiante_rut,
+        fecha_envio,
+        archivo ?? null,
         nombre_archivo_original ?? null,
-        modalidad, 
-        numero_estudiantes, 
-        complejidad_estimada, 
+        semestre_id ?? null,
+        tipo_proyecto ?? 'PT',
+        modalidad,
+        numero_estudiantes,
+        complejidad_estimada,
         justificacion_complejidad ?? null,
-        duracion_estimada_semestres, 
-        area_tematica, 
-        objetivos_generales, 
-        objetivos_especificos,
-        metodologia_propuesta, 
-        recursos_necesarios ?? null, 
+        duracion_estimada_semestres,
+        area_tematica ?? null,
+        objetivos_generales ?? null,
+        objetivos_especificos ?? null,
+        metodologia_propuesta ?? null,
+        recursos_necesarios ?? null,
         bibliografia ?? null
       ]
     );
     return result.insertId;
   } catch (error) {
-    
     throw error;
   }
 };
@@ -210,18 +213,27 @@ export const aprobarPropuesta = async (id, proyecto_id) => {
 export const obtenerPropuestas = async (carrera_id = null) => {
   try {
     let query = `
-      SELECT p.*, 
+      SELECT p.*,
              ep.nombre AS estado,
              u.nombre AS nombre_estudiante,
              c.nombre AS nombre_carrera,
              c.codigo AS codigo_carrera,
              GROUP_CONCAT(DISTINCT up.nombre) AS profesores_asignados,
-             (SELECT up2.nombre FROM asignaciones_propuestas ap2 
-              INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
+             (SELECT up2.nombre FROM asignaciones_propuestas ap2
+              INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut
               WHERE ap2.propuesta_id = p.id LIMIT 1) AS nombre_profesor,
-             (SELECT up2.rut FROM asignaciones_propuestas ap2 
-              INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
-              WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut
+             (SELECT up2.rut FROM asignaciones_propuestas ap2
+              INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut
+              WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_rut,
+             (SELECT COUNT(*) FROM inscripciones_ramo ir
+              WHERE ir.estudiante_rut = p.estudiante_rut) AS cantidad_semestres,
+             (SELECT ug.nombre FROM guias_estudiantes ge
+              INNER JOIN usuarios ug ON ge.profesor_guia_rut = ug.rut
+              WHERE ge.estudiante_rut = p.estudiante_rut AND ge.activo = TRUE
+              ORDER BY ge.fecha_asignacion DESC LIMIT 1) AS nombre_profesor_guia,
+             (SELECT ge2.profesor_guia_rut FROM guias_estudiantes ge2
+              WHERE ge2.estudiante_rut = p.estudiante_rut AND ge2.activo = TRUE
+              ORDER BY ge2.fecha_asignacion DESC LIMIT 1) AS profesor_guia_rut
       FROM propuestas p
       LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
       LEFT JOIN usuarios u ON p.estudiante_rut = u.rut

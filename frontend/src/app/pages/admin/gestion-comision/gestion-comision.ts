@@ -23,6 +23,7 @@ interface MiembroComision {
   rol_comision: string;
   fecha_designacion: string;
   observaciones: string | null;
+  origen: string; // 'asignacion' = Guía/Informante desde proyectos | 'comision' = Tercer Integrante
 }
 
 interface ProfesorDisponible {
@@ -59,8 +60,6 @@ export class GestionComisionComponent implements OnInit {
   mensaje = '';
 
   rolesDisponibles = [
-    { value: 'profesor_guia', label: 'Profesor Guía' },
-    { value: 'profesor_informante', label: 'Profesor Informante' },
     { value: 'tercer_integrante', label: 'Tercer Integrante Académico DSI (opcional)' }
   ];
 
@@ -97,7 +96,7 @@ export class GestionComisionComponent implements OnInit {
       this.loading = true;
       this.error = '';
       
-      const response: any = await this.apiService.get('/comision/proyectos');
+      const response: any = await this.apiService.get('/comision/proyectos').toPromise();
       this.proyectos = response.proyectos || [];
     } catch (error: any) {
       console.error('Error al cargar proyectos:', error);
@@ -121,7 +120,7 @@ export class GestionComisionComponent implements OnInit {
       this.loading = true;
       this.error = '';
       
-      const response: any = await this.apiService.get(`/comision/proyecto/${proyectoId}`);
+      const response: any = await this.apiService.get(`/comision/proyecto/${proyectoId}`).toPromise();
       this.comision = response.comision || [];
     } catch (error: any) {
       console.error('Error al cargar comisión:', error);
@@ -133,7 +132,7 @@ export class GestionComisionComponent implements OnInit {
 
   async cargarProfesoresDisponibles(proyectoId: number) {
     try {
-      const response: any = await this.apiService.get(`/comision/proyecto/${proyectoId}/profesores-disponibles`);
+      const response: any = await this.apiService.get(`/comision/proyecto/${proyectoId}/profesores-disponibles`).toPromise();
       this.profesoresDisponibles = response.profesores || [];
     } catch (error: any) {
       console.error('Error al cargar profesores:', error);
@@ -173,7 +172,7 @@ export class GestionComisionComponent implements OnInit {
         profesor_rut: this.profesorSeleccionado,
         rol_comision: this.rolSeleccionado,
         observaciones: this.observaciones || null
-      });
+      }).toPromise();
 
       this.mensaje = 'Miembro agregado exitosamente';
       
@@ -204,7 +203,7 @@ export class GestionComisionComponent implements OnInit {
       this.loading = true;
       this.error = '';
 
-      await this.apiService.delete(`/comision/miembro/${comisionId}`);
+      await this.apiService.delete(`/comision/miembro/${comisionId}`).toPromise();
       this.mensaje = 'Miembro removido exitosamente';
 
       // Recargar datos

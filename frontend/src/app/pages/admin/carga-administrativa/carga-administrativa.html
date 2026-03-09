@@ -65,115 +65,64 @@
       </div>
     }
 
-    <!-- Tabla de Profesores -->
-    <div class="card">
-      <div class="card-header">
-        <h2><i class="fas fa-table"></i> Detalle de Carga por Profesor</h2>
-        <div class="legend">
-          <span class="legend-item sin-carga">Sin carga</span>
-          <span class="legend-item carga-baja">Carga baja (1-2)</span>
-          <span class="legend-item carga-media">Carga media (3-5)</span>
-          <span class="legend-item carga-alta">Carga alta (6+)</span>
+    <!-- Gráfico de Barras por Carrera -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2><i class="fas fa-chart-bar"></i> Carga de Profesores — AP y PT por Carrera</h2>
+        <div class="chart-legend-row">
+          <span class="leg-item"><span class="leg-dot ap-icinf-c"></span> AP · ICINF</span>
+          <span class="leg-item"><span class="leg-dot ap-ieci-c"></span> AP · IECI</span>
+          <span class="leg-item"><span class="leg-dot pt-icinf-c"></span> PT · ICINF</span>
+          <span class="leg-item"><span class="leg-dot pt-ieci-c"></span> PT · IECI</span>
         </div>
       </div>
 
-      <div class="table-container">
-        <table class="carga-table">
-          <thead>
-            <tr>
-              <th>Profesor</th>
-              <th>Email</th>
-              <th class="text-center">
-                <i class="fas fa-user-tie" title="Profesor Guía"></i>
-                Guía
-              </th>
-              <th class="text-center">
-                <i class="fas fa-file-signature" title="Profesor Informante"></i>
-                Informante
-              </th>
-              <th class="text-center">
-                <i class="fas fa-search" title="Profesor Revisor"></i>
-                Revisor
-              </th>
-              <th class="text-center">
-                <i class="fas fa-users" title="Profesor Co-Guía"></i>
-                Co-Guía
-              </th>
-              <th class="text-center">
-                <i class="fas fa-chalkboard" title="Profesor de Sala"></i>
-                Sala
-              </th>
-              <th class="text-center">
-                <i class="fas fa-edit" title="Profesor Corrector"></i>
-                Corrector
-              </th>
-              <th class="text-center total-col">
-                <i class="fas fa-calculator"></i>
-                Total
-              </th>
-              <th class="text-center">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (profesor of profesores(); track profesor.rut) {
-              <tr>
-                <td class="profesor-nombre">
-                  <i class="fas fa-user-circle"></i>
-                  {{ profesor.nombre }}
-                </td>
-                <td class="profesor-email">{{ profesor.email }}</td>
-                <td class="text-center">
-                  <span class="badge" [class.badge-active]="profesor.proyectos_guia > 0">
-                    {{ profesor.proyectos_guia }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <span class="badge" [class.badge-active]="profesor.proyectos_informante > 0">
-                    {{ profesor.proyectos_informante }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <span class="badge" [class.badge-active]="profesor.proyectos_revisor > 0">
-                    {{ profesor.proyectos_revisor }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <span class="badge" [class.badge-active]="profesor.proyectos_coguia > 0">
-                    {{ profesor.proyectos_coguia }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <span class="badge" [class.badge-active]="profesor.proyectos_sala > 0">
-                    {{ profesor.proyectos_sala }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <span class="badge" [class.badge-active]="profesor.proyectos_corrector > 0">
-                    {{ profesor.proyectos_corrector }}
-                  </span>
-                </td>
-                <td class="text-center total-col">
-                  <span class="badge-total">
-                    {{ profesor.total_proyectos }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <span class="nivel-badge" [class]="obtenerNivelCarga(profesor.total_proyectos)">
-                    {{ obtenerTextoNivel(profesor.total_proyectos) }}
-                  </span>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="10" class="empty-state">
-                  <i class="fas fa-inbox"></i>
-                  <p>No hay profesores registrados</p>
-                </td>
-              </tr>
+      <div class="chart-body">
+        <!-- Y axis -->
+        <div class="y-axis" [style.height.px]="CHART_H">
+          @for (tick of yTicks(); track tick) {
+            <span class="ytick" [style.bottom.px]="tickPx(tick)">{{ tick }}</span>
+          }
+        </div>
+
+        <!-- Scrollable chart area -->
+        <div class="chart-scroll">
+          <!-- Bars -->
+          <div class="bars-section"
+               [style.height.px]="CHART_H"
+               [style.width.px]="profesores().length * 79 + 16">
+            @for (tick of yTicks(); track tick) {
+              <div class="hgrid"
+                   [style.bottom.px]="tickPx(tick)"
+                   [style.width.px]="profesores().length * 79 + 16"></div>
             }
-          </tbody>
-        </table>
+            @for (prof of profesores(); track prof.rut) {
+              <div class="bgroup" [title]="prof.nombre + ' (' + prof.email + ')'">
+                <div class="b ap-icinf-b" [style.height.px]="barPx(prof.guia_icinf || 0)"
+                     [attr.aria-label]="'AP ICINF: ' + (prof.guia_icinf || 0)"></div>
+                <div class="b ap-ieci-b"  [style.height.px]="barPx(prof.guia_ieci || 0)"
+                     [attr.aria-label]="'AP IECI: ' + (prof.guia_ieci || 0)"></div>
+                <div class="b pt-icinf-b" [style.height.px]="barPx(prof.informante_icinf || 0)"
+                     [attr.aria-label]="'PT ICINF: ' + (prof.informante_icinf || 0)"></div>
+                <div class="b pt-ieci-b"  [style.height.px]="barPx(prof.informante_ieci || 0)"
+                     [attr.aria-label]="'PT IECI: ' + (prof.informante_ieci || 0)"></div>
+              </div>
+            } @empty {
+              <p class="empty-chart">No hay datos disponibles</p>
+            }
+          </div>
+
+          <!-- X-axis labels -->
+          <div class="labels-section"
+               [style.width.px]="profesores().length * 79 + 16">
+            @for (prof of profesores(); track prof.rut) {
+              <div class="plabel" [title]="prof.nombre">{{ shortName(prof.nombre) }}</div>
+            }
+          </div>
+        </div>
       </div>
+
+      <div class="x-axis-title">Profesores</div>
     </div>
   }
 </div>

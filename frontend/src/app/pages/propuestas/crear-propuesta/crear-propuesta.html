@@ -11,17 +11,111 @@
     </div>
   </div>
 
+  <!-- Estado del Semestre -->
+  <div class="guia-status-card"
+       [ngClass]="cargandoSemestre ? 'guia-loading' : haySemestreActivo ? 'guia-ok' : 'guia-missing'">
+    <div class="guia-icon">
+      <i class="fas" [ngClass]="cargandoSemestre ? 'fa-spinner fa-spin' :
+                                haySemestreActivo ? 'fa-calendar-check' : 'fa-exclamation-triangle'"></i>
+    </div>
+    <div class="guia-info" *ngIf="!cargandoSemestre">
+      <ng-container *ngIf="haySemestreActivo">
+        <strong>Semestre {{ semestreActivo!.nombre }}</strong>
+        <span>Semestre activo — puedes enviar tu propuesta</span>
+      </ng-container>
+      <ng-container *ngIf="!haySemestreActivo">
+        <strong>Sin semestre activo</strong>
+        <span>No hay un semestre activo. Contacta al administrador.</span>
+      </ng-container>
+    </div>
+    <div class="guia-info" *ngIf="cargandoSemestre">
+      <span>Verificando semestre activo...</span>
+    </div>
+  </div>
+
+  <!-- Estado del Profesor Guía -->
+  <div class="guia-status-card" [ngClass]="cargandoGuia ? 'guia-loading' : tieneGuia ? 'guia-ok' : 'guia-missing'">
+    <div class="guia-icon">
+      <i class="fas" [ngClass]="cargandoGuia ? 'fa-spinner fa-spin' : tieneGuia ? 'fa-chalkboard-teacher' : 'fa-exclamation-triangle'"></i>
+    </div>
+    <div class="guia-info" *ngIf="!cargandoGuia">
+      <ng-container *ngIf="tieneGuia">
+        <strong>Profesor Guía Asignado</strong>
+        <span>{{ guiaAsignado?.profesor_nombre }}</span>
+      </ng-container>
+      <ng-container *ngIf="!tieneGuia">
+        <strong>Sin Profesor Guía</strong>
+        <span>Contacta al administrador para que te asigne un profesor guía antes de continuar.</span>
+      </ng-container>
+    </div>
+    <div class="guia-info" *ngIf="cargandoGuia">
+      <span>Verificando asignación de guía...</span>
+    </div>
+  </div>
+
   <!-- Formulario -->
   <div class="form-container">
     <form class="propuesta-form" (ngSubmit)="crear()">
-      
+
+      <!-- SECCIÓN: TIPO DE INSCRIPCIÓN -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-tag"></i>
+          <h3>Tipo de Inscripción</h3>
+        </div>
+
+        <div class="tipo-proyecto-toggle">
+          <label class="tipo-option" [class.selected]="tipo_proyecto === 'PT'">
+            <input type="radio" name="tipo_proyecto" value="PT"
+                   [(ngModel)]="tipo_proyecto" (change)="onTipoProyectoChange()">
+            <i class="fas fa-graduation-cap"></i>
+            <span>PT — Proyecto de Título</span>
+            <small>Trabajo de titulación con propuesta, guía y defensa</small>
+          </label>
+          <label class="tipo-option" [class.selected]="tipo_proyecto === 'AP'">
+            <input type="radio" name="tipo_proyecto" value="AP"
+                   [(ngModel)]="tipo_proyecto" (change)="onTipoProyectoChange()">
+            <i class="fas fa-briefcase"></i>
+            <span>AP — Actividad Práctica</span>
+            <small>Avances estructurados con defensa de tema y entrega final</small>
+          </label>
+        </div>
+
+        <!-- Checkbox continua_ap: solo visible para PT si el estudiante tiene un AP completado -->
+        <div class="form-group continua-ap-check" *ngIf="tipo_proyecto === 'PT' && tieneAPCompletado">
+          <label class="check-label">
+            <input type="checkbox" [(ngModel)]="continua_ap" name="continua_ap">
+            <i class="fas fa-forward"></i>
+            <strong>Continúo desde un AP aprobado</strong>
+            <small>
+              Se omite la evaluación de propuesta y asignación de guía.
+              El proyecto inicia directamente en la etapa de Avance.
+            </small>
+          </label>
+        </div>
+
+        <!-- Banner informativo cuando continua_ap está activo -->
+        <div class="info-banner info-banner--verde" *ngIf="esContinuaAP">
+          <i class="fas fa-check-circle"></i>
+          Tu inscripción PT será aprobada automáticamente y el proyecto comenzará en
+          <strong>Avance con Nota</strong> sin pasar por revisión de propuesta.
+        </div>
+
+        <!-- Banner informativo para AP -->
+        <div class="info-banner info-banner--azul" *ngIf="esAP">
+          <i class="fas fa-info-circle"></i>
+          Flujo AP: <strong>Avance 1 → Defensa de Tema → Avance 2 → Final AP</strong>.
+          Al completar el Final AP podrás continuar como PT si corresponde.
+        </div>
+      </div>
+
       <!-- SECCIÓN: INFORMACIÓN BÁSICA -->
       <div class="form-section">
         <div class="section-header">
           <i class="fas fa-info-circle"></i>
           <h3>Información de la Propuesta</h3>
         </div>
-        
+
         <div class="form-group">
           <label for="titulo">
             <i class="fas fa-heading"></i>
@@ -145,11 +239,11 @@
           <i class="fas fa-paperclip"></i>
           <h3>Documentación</h3>
         </div>
-        
+
         <div class="form-group">
           <label for="archivo">
             <i class="fas fa-upload"></i>
-            Archivo de Propuesta *
+            Archivo de Propuesta {{ esContinuaAP ? '(Opcional)' : '*' }}
           </label>
           <div class="file-upload-container">
             <input
@@ -197,11 +291,12 @@
           Cancelar
         </button>
         
-        <button 
-          type="submit" 
-          class="btn-primary" 
-          [disabled]="isSubmitting"
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isSubmitting || !puedeEnviar"
           [class.loading]="isSubmitting"
+          [title]="!puedeEnviar ? 'Verifica que tienes guía asignado y que hay un semestre activo' : ''"
         >
           <i class="fas fa-paper-plane" *ngIf="!isSubmitting"></i>
           <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>

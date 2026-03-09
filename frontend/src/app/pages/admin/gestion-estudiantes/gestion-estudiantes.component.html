@@ -1,0 +1,301 @@
+<div class="container-modern">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <div class="header-text">
+        <h1>Gestión de Estudiantes</h1>
+        <p class="subtitle">Administra el registro de alumnos de la universidad</p>
+      </div>
+      <div class="header-badge" *ngIf="!loading">
+        <span class="count-badge">{{ estudiantes.length }}</span>
+        <span class="count-label">estudiantes</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="cargarEstudiantes()" [disabled]="loading">
+        <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Card -->
+  <div class="content-card">
+
+    <!-- Filtros -->
+    <div class="filters-section">
+      <div class="filters-row">
+        <div class="filter-group search-group">
+          <i class="fas fa-search filter-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="filtroBusqueda"
+            placeholder="Buscar por nombre, RUT o email..."
+            class="filter-input"
+          />
+          <button class="clear-input-btn" *ngIf="filtroBusqueda" (click)="filtroBusqueda = ''">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <i class="fas fa-graduation-cap filter-icon"></i>
+          <select [(ngModel)]="filtroCarrera" class="filter-select">
+            <option value="">Todas las carreras</option>
+            <option *ngFor="let carrera of carreras" [value]="carrera.id">{{ carrera.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <i class="fas fa-circle filter-icon"></i>
+          <select [(ngModel)]="filtroEstado" class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </div>
+
+        <button class="btn-clear-filters" (click)="limpiarFiltros()"
+                *ngIf="filtroBusqueda || filtroCarrera || filtroEstado">
+          <i class="fas fa-filter-circle-xmark"></i>
+          Limpiar filtros
+        </button>
+      </div>
+
+      <div class="filters-summary" *ngIf="!loading">
+        Mostrando <strong>{{ estudiantesFiltrados.length }}</strong> de <strong>{{ estudiantes.length }}</strong> estudiantes
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Cargando estudiantes...</p>
+    </div>
+
+    <!-- Estado de error -->
+    <div class="error-state" *ngIf="!loading && error">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>Error al cargar</h3>
+      <p>{{ error }}</p>
+      <button class="btn-primary" (click)="cargarEstudiantes()">
+        <i class="fas fa-sync-alt"></i> Reintentar
+      </button>
+    </div>
+
+    <!-- Estado vacío -->
+    <div class="empty-state" *ngIf="!loading && !error && estudiantesFiltrados.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-user-graduate"></i>
+      </div>
+      <h3>No se encontraron estudiantes</h3>
+      <p *ngIf="filtroBusqueda || filtroCarrera || filtroEstado">
+        Intenta ajustar los filtros de búsqueda
+      </p>
+      <p *ngIf="!filtroBusqueda && !filtroCarrera && !filtroEstado">
+        Aún no hay estudiantes registrados en el sistema
+      </p>
+      <button class="btn-secondary" (click)="limpiarFiltros()"
+              *ngIf="filtroBusqueda || filtroCarrera || filtroEstado">
+        <i class="fas fa-times"></i> Limpiar filtros
+      </button>
+    </div>
+
+    <!-- Tabla de estudiantes -->
+    <div class="table-wrapper" *ngIf="!loading && !error && estudiantesFiltrados.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th><i class="fas fa-user"></i> Nombre</th>
+            <th><i class="fas fa-id-card"></i> RUT</th>
+            <th><i class="fas fa-envelope"></i> Email</th>
+            <th><i class="fas fa-graduation-cap"></i> Carrera</th>
+            <th><i class="fas fa-chalkboard-teacher"></i> Profesor Guía</th>
+            <th><i class="fas fa-book-open"></i> Ramo</th>
+            <th><i class="fas fa-circle"></i> Estado</th>
+            <th class="th-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let estudiante of estudiantesFiltrados">
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar">
+                  <i class="fas fa-user-graduate"></i>
+                </div>
+                <span class="user-name">{{ estudiante.nombre }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="rut-text">{{ estudiante.rut }}</span>
+            </td>
+            <td>
+              <a [href]="'mailto:' + estudiante.email" class="email-link">
+                {{ estudiante.email }}
+              </a>
+            </td>
+            <td>
+              <span class="carrera-text" *ngIf="estudiante.carrera_nombre">
+                {{ estudiante.carrera_nombre }}
+              </span>
+              <span class="no-data" *ngIf="!estudiante.carrera_nombre">—</span>
+            </td>
+            <td>
+              <select class="inline-select"
+                      [(ngModel)]="guiaSelects[estudiante.rut]"
+                      (ngModelChange)="cambiarGuia(estudiante, $event)">
+                <option value="">— Sin guía —</option>
+                <option *ngFor="let prof of profesores" [value]="prof.rut">{{ prof.nombre }}</option>
+              </select>
+            </td>
+            <td>
+              <select class="inline-select inline-select-ramo"
+                      [(ngModel)]="ramoSelects[estudiante.rut]"
+                      (ngModelChange)="cambiarRamo(estudiante, $event)">
+                <option value="">— Sin ramo —</option>
+                <option value="AP">AP</option>
+                <option value="PT">PT</option>
+              </select>
+            </td>
+            <td>
+              <span class="status-badge"
+                    [ngClass]="(estudiante.confirmado === true || estudiante.confirmado === 1) ? 'badge-activo' : 'badge-pendiente'">
+                <i class="fas"
+                   [ngClass]="(estudiante.confirmado === true || estudiante.confirmado === 1) ? 'fa-check-circle' : 'fa-clock'">
+                </i>
+                {{ (estudiante.confirmado === true || estudiante.confirmado === 1) ? 'Activo' : 'Pendiente' }}
+              </span>
+            </td>
+            <td class="td-actions">
+              <div class="action-buttons">
+                <button class="btn-action btn-edit" (click)="abrirEditar(estudiante)" title="Editar estudiante">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action btn-password" (click)="abrirResetPassword(estudiante)" title="Restablecer contraseña">
+                  <i class="fas fa-key"></i>
+                </button>
+                <button class="btn-action btn-delete" (click)="eliminar(estudiante)" title="Eliminar estudiante">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="page-footer">
+    <span>© {{ currentYear }} Universidad del Bío-Bío — Sistema de Titulación</span>
+  </div>
+
+</div>
+
+<!-- ===== MODAL EDITAR ESTUDIANTE ===== -->
+<div class="modal-overlay" *ngIf="mostrarModalEditar" (click)="cerrarEditar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-icon">
+        <i class="fas fa-user-edit"></i>
+      </div>
+      <div class="modal-header-text">
+        <h2>Editar Estudiante</h2>
+        <p *ngIf="estudianteEditar">{{ estudianteEditar.nombre }}</p>
+      </div>
+      <button class="modal-close" (click)="cerrarEditar()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="estudianteEditar">
+      <div class="form-group">
+        <label><i class="fas fa-user"></i> Nombre completo</label>
+        <input type="text" [(ngModel)]="estudianteEditar.nombre" class="form-input"
+               placeholder="Nombre del estudiante" />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" [(ngModel)]="estudianteEditar.email" class="form-input"
+               placeholder="correo@alumnos.ubiobio.cl" />
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-graduation-cap"></i> Carrera</label>
+        <input type="text" [(ngModel)]="estudianteEditar.carrera" class="form-input"
+               placeholder="Nombre de la carrera" />
+      </div>
+      <div class="form-info-row">
+        <div class="form-info-item">
+          <span class="info-label">RUT</span>
+          <span class="info-value">{{ estudianteEditar.rut }}</span>
+        </div>
+        <div class="form-info-item">
+          <span class="info-label">Rol</span>
+          <span class="info-value">{{ estudianteEditar.rol_nombre }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarEditar()" [disabled]="procesando">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+      <button class="btn-primary" (click)="guardarEditar()" [disabled]="procesando">
+        <i class="fas" [ngClass]="procesando ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+        {{ procesando ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== MODAL RESET PASSWORD ===== -->
+<div class="modal-overlay" *ngIf="mostrarModalPassword" (click)="cerrarResetPassword()">
+  <div class="modal-container modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header modal-header-warning">
+      <div class="modal-header-icon">
+        <i class="fas fa-key"></i>
+      </div>
+      <div class="modal-header-text">
+        <h2>Restablecer Contraseña</h2>
+        <p *ngIf="estudiantePassword">{{ estudiantePassword.nombre }}</p>
+      </div>
+      <button class="modal-close" (click)="cerrarResetPassword()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="password-warning">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>Esta acción cambiará la contraseña del estudiante de forma inmediata.</span>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Nueva contraseña</label>
+        <input type="password" [(ngModel)]="nuevaPassword" class="form-input"
+               placeholder="Mínimo 6 caracteres" minlength="6" />
+        <span class="input-hint" *ngIf="nuevaPassword && nuevaPassword.length < 6">
+          La contraseña debe tener al menos 6 caracteres
+        </span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarResetPassword()" [disabled]="procesando">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+      <button class="btn-warning" (click)="resetPassword()"
+              [disabled]="procesando || !nuevaPassword || nuevaPassword.length < 6">
+        <i class="fas" [ngClass]="procesando ? 'fa-spinner fa-spin' : 'fa-key'"></i>
+        {{ procesando ? 'Procesando...' : 'Restablecer contraseña' }}
+      </button>
+    </div>
+  </div>
+</div>

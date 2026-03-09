@@ -154,6 +154,16 @@ export const routes: Routes = [
           { path: 'proyectos', component: GestionProyectosComponent, data: { requiredRoles: [3, 4] } },
           { path: 'asignar-profesor/:id', component: AsignarProfesorComponent, data: { requiredRoles: [3, 4] } },
           { path: 'usuarios', component: GestionUsuariosComponent, data: { requiredRoles: [3, 4] } },
+          {
+            path: 'usuarios/profesores',
+            loadComponent: () => import('./pages/admin/gestion-profesores/gestion-profesores.component').then(m => m.GestionProfesoresComponent),
+            data: { requiredRoles: [3, 4] }
+          },
+          {
+            path: 'usuarios/estudiantes',
+            loadComponent: () => import('./pages/admin/gestion-estudiantes/gestion-estudiantes.component').then(m => m.GestionEstudiantesComponent),
+            data: { requiredRoles: [3, 4] }
+          },
           { path: 'asignaciones', component: AsignacionesComponent, data: { requiredRoles: [3, 4] } },
           { path: 'calendario', component: GestionCalendarioComponent, data: { requiredRoles: [3, 4] } },
           { path: 'comision', component: GestionComisionComponent, data: { requiredRoles: [3, 4] } },
@@ -180,6 +190,11 @@ export const routes: Routes = [
           {
             path: 'plantillas',
             loadComponent: () => import('./pages/admin/gestion-plantillas/gestion-plantillas.component').then(m => m.GestionPlantillasComponent),
+            data: { requiredRoles: [3, 4] }
+          },
+          {
+            path: 'semestres',
+            loadComponent: () => import('./pages/admin/gestion-semestres/gestion-semestres.component').then(m => m.GestionSemestresComponent),
             data: { requiredRoles: [3, 4] }
           }
         ]

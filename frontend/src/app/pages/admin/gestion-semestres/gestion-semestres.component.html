@@ -1,0 +1,239 @@
+<div class="container-modern">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <div class="header-text">
+        <h1>Gestión de Semestres</h1>
+        <p class="subtitle">Administra los períodos académicos e inscripciones</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="cargarSemestres()" [disabled]="loading">
+        <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+        Actualizar
+      </button>
+      <button class="btn-primary" (click)="abrirFormularioNuevo()">
+        <i class="fas fa-plus"></i> Nuevo Semestre
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando semestres...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-state" *ngIf="!loading && error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="cargarSemestres()">Reintentar</button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="content-card" *ngIf="!loading && !error">
+    <div class="empty-state" *ngIf="semestres.length === 0">
+      <i class="fas fa-calendar-alt"></i>
+      <h3>No hay semestres registrados</h3>
+      <p>Crea el primer semestre académico para comenzar.</p>
+      <button class="btn-primary" (click)="abrirFormularioNuevo()">
+        <i class="fas fa-plus"></i> Crear semestre
+      </button>
+    </div>
+
+    <div class="table-wrapper" *ngIf="semestres.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Semestre</th>
+            <th>Período</th>
+            <th>Propuestas</th>
+            <th>Proyectos</th>
+            <th>Estado</th>
+            <th class="th-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of semestres" [class.row-activo]="s.activo">
+            <td>
+              <strong>{{ s.nombre }}</strong>
+              <span class="badge-activo-row" *ngIf="s.activo">ACTUAL</span>
+            </td>
+            <td>
+              <span class="fecha-text">
+                {{ s.fecha_inicio | date:'dd/MM/yyyy' }} — {{ s.fecha_fin | date:'dd/MM/yyyy' }}
+              </span>
+            </td>
+            <td><span class="count-chip">{{ s.total_propuestas }}</span></td>
+            <td><span class="count-chip">{{ s.total_proyectos }}</span></td>
+            <td>
+              <span class="status-badge" [ngClass]="s.activo ? 'badge-activo' : 'badge-pendiente'">
+                <i class="fas" [ngClass]="s.activo ? 'fa-check-circle' : 'fa-clock'"></i>
+                {{ s.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="td-actions">
+              <div class="action-buttons">
+                <button class="btn-action btn-view" (click)="verHistorial(s)" title="Ver inscripciones">
+                  <i class="fas fa-list"></i>
+                </button>
+                <button class="btn-action btn-activate" (click)="activar(s)" title="Activar semestre"
+                        *ngIf="!s.activo">
+                  <i class="fas fa-play-circle"></i>
+                </button>
+                <button class="btn-action btn-edit" (click)="abrirFormularioEditar(s)" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action btn-delete" (click)="eliminar(s)" title="Eliminar"
+                        [disabled]="s.total_propuestas > 0">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>© {{ currentYear }} Universidad del Bío-Bío — Sistema de Titulación</span>
+  </div>
+</div>
+
+<!-- ===== MODAL FORMULARIO ===== -->
+<div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-calendar-plus"></i></div>
+      <div class="modal-header-text">
+        <h2>{{ modoEdicion ? 'Editar Semestre' : 'Nuevo Semestre' }}</h2>
+      </div>
+      <button class="modal-close" (click)="cerrarFormulario()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label><i class="fas fa-hashtag"></i> Año *</label>
+          <input type="number" [(ngModel)]="form.anio" class="form-input" min="2020" max="2040"
+                 (change)="generarNombre()" />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-sort-numeric-up"></i> Número *</label>
+          <select [(ngModel)]="form.numero" class="form-input" (change)="generarNombre()">
+            <option [value]="1">1° Semestre</option>
+            <option [value]="2">2° Semestre</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-tag"></i> Nombre *</label>
+        <input type="text" [(ngModel)]="form.nombre" class="form-input" placeholder="Ej: 2025-1" />
+        <small class="input-hint">Se genera automáticamente al seleccionar año y número</small>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label><i class="fas fa-calendar-check"></i> Fecha Inicio *</label>
+          <input type="date" [(ngModel)]="form.fecha_inicio" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-calendar-times"></i> Fecha Fin *</label>
+          <input type="date" [(ngModel)]="form.fecha_fin" class="form-input" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarFormulario()" [disabled]="procesando">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+      <button class="btn-primary" (click)="guardar()" [disabled]="procesando">
+        <i class="fas" [ngClass]="procesando ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+        {{ procesando ? 'Guardando...' : (modoEdicion ? 'Actualizar' : 'Crear Semestre') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL HISTORIAL ===== -->
+<div class="modal-overlay modal-wide" *ngIf="mostrarHistorial" (click)="cerrarHistorial()">
+  <div class="modal-container modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-list-alt"></i></div>
+      <div class="modal-header-text">
+        <h2>Inscripciones — {{ semestreHistorial?.nombre }}</h2>
+        <p>{{ historial.length }} proyecto(s) registrado(s)</p>
+      </div>
+      <button class="modal-close" (click)="cerrarHistorial()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="loading-state" *ngIf="loadingHistorial">
+        <div class="spinner"></div>
+        <p>Cargando inscripciones...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!loadingHistorial && historial.length === 0">
+        <i class="fas fa-inbox"></i>
+        <p>No hay inscripciones en este semestre aún.</p>
+      </div>
+
+      <table class="data-table" *ngIf="!loadingHistorial && historial.length > 0">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th>Tipo</th>
+            <th>Título</th>
+            <th>Etapa actual</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of historial">
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar"><i class="fas fa-user-graduate"></i></div>
+                <div>
+                  <span class="user-name">{{ h.estudiante_nombre }}</span>
+                  <span class="user-rut">{{ h.estudiante_rut }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="tipo-badge" [ngClass]="h.tipo_proyecto === 'AP' ? 'tipo-ap' : 'tipo-pt'">
+                {{ h.tipo_proyecto }}
+              </span>
+            </td>
+            <td><span class="titulo-text">{{ h.titulo }}</span></td>
+            <td><span class="etapa-text">{{ h.estado_detallado || '—' }}</span></td>
+            <td>
+              <select class="resultado-select" [ngClass]="getResultadoClass(h.resultado)"
+                      [(ngModel)]="h.resultado"
+                      (change)="cambiarResultado(semestreHistorial.id, h.proyecto_id, h.resultado)">
+                <option *ngFor="let r of resultadosValidos" [value]="r">{{ r }}</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarHistorial()">
+        <i class="fas fa-times"></i> Cerrar
+      </button>
+      <button class="btn-primary" (click)="generarInscripcionesSiguiente()"
+              [disabled]="generandoInscripciones || historial.length === 0"
+              title="Genera automáticamente las inscripciones del próximo semestre basándose en los resultados">
+        <i class="fas" [ngClass]="generandoInscripciones ? 'fa-spinner fa-spin' : 'fa-forward'"></i>
+        {{ generandoInscripciones ? 'Generando...' : 'Generar inscripciones siguiente semestre' }}
+      </button>
+    </div>
+  </div>
+</div>
