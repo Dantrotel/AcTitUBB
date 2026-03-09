@@ -52,7 +52,7 @@ export class AsignacionesComponent implements OnInit {
   filtroEstadoProyecto: string = '';
 
   // Tabs
-  tabActiva = 'asignaciones'; // 'asignaciones', 'proyectos', 'estadisticas', 'historial'
+  tabActiva = 'proyectos'; // 'proyectos', 'estadisticas', 'historial'
 
   constructor(
     private router: Router,

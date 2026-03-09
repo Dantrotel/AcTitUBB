@@ -387,77 +387,109 @@ $radius:   8px;
   }
 }
 
-// ── CARGA PROFESORES ──────────────────────────────────────────────────────────
+// ── CARGA PROFESORES CHART ────────────────────────────────────────────────────
 .carga-profesores-section { margin-top: 0.875rem; }
-.profesores-list {
+
+.subsection-title {
+  .cp-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: $muted;
+    .cp-dot {
+      width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+      &.guia-dot { background: #1a73e8; }
+      &.inf-dot  { background: #81c784; }
+    }
+    span:not(.cp-dot) { margin-right: 0.5rem; }
+  }
+}
+
+.cp-chart-wrap {
+  display: flex;
+  align-items: flex-start;
   background: $white;
   border: 1px solid $border;
   border-radius: $radius;
-  overflow: hidden;
   box-shadow: $shadow;
+  padding: 0.75rem 0.5rem 0 0.25rem;
+  overflow: hidden;
 }
-.profesor-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.875rem;
-  border-bottom: 1px solid $border;
-  transition: background .15s;
-  &:last-child { border-bottom: none; }
-  &:hover { background: $bg-light; }
-  &.top3 { background: rgba($primary, .03); }
 
-  .profesor-rank {
-    width: 28px;
-    text-align: center;
-    flex-shrink: 0;
-    i { font-size: 0.95rem; }
-    .rank-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      background: $bg-light;
-      border: 1px solid $border;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: $muted;
-    }
-  }
-
-  .profesor-info {
-    flex: 1;
-    min-width: 0;
-    h4 { font-size: 0.82rem; font-weight: 700; color: $text; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .profesor-email { font-size: 0.7rem; color: $muted; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  }
-
-  .profesor-stats {
-    display: flex;
-    gap: 0.35rem;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .stat-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    padding: 0.18rem 0.5rem;
-    background: $bg-light;
-    border: 1px solid $border;
-    border-radius: 10px;
-    font-size: 0.65rem;
-    font-weight: 600;
+.cp-yaxis {
+  width: 26px;
+  flex-shrink: 0;
+  position: relative;
+  .cp-ytick {
+    position: absolute;
+    right: 4px;
+    font-size: 0.6rem;
     color: $muted;
-    i { font-size: 0.6rem; }
-    &.total {
-      background: rgba($primary, .08);
-      border-color: rgba($primary, .2);
-      color: $primary;
-    }
+    transform: translateY(50%);
+    line-height: 1;
+  }
+}
+
+.cp-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  &::-webkit-scrollbar { height: 4px; }
+  &::-webkit-scrollbar-thumb { background: $border; border-radius: 4px; }
+}
+
+.cp-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 0 4px;
+  position: relative;
+  border-bottom: 2px solid $border;
+  .cp-hgrid {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: $border;
+    pointer-events: none;
+  }
+}
+
+.cp-bgroup {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  cursor: default;
+  &:hover .cp-b { filter: brightness(1.12); }
+}
+
+.cp-b {
+  width: 12px;
+  min-height: 1px;
+  border-radius: 3px 3px 0 0;
+  transition: height .3s cubic-bezier(.4,0,.2,1);
+  &.guia-b { background: #1a73e8; }
+  &.inf-b  { background: #81c784; }
+}
+
+.cp-labels {
+  display: flex;
+  gap: 8px;
+  padding: 4px 4px 6px;
+  .cp-plabel {
+    width: 36px;
+    font-size: 0.58rem;
+    color: $text;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 }
 

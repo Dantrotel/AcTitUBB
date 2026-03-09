@@ -37,38 +37,7 @@
   <!-- Contenido principal -->
   <div *ngIf="!loading && !error">
     <!-- Tabs de navegación -->
-    <div class="tabs-container">
-      <div class="tabs-nav">
-        <button 
-          class="tab-btn" 
-          [class.active]="tabActiva === 'asignaciones'"
-          (click)="cambiarTab('asignaciones')">
-          <i class="fas fa-users"></i>
-          Asignaciones Activas
-        </button>
-        <button 
-          class="tab-btn" 
-          [class.active]="tabActiva === 'proyectos'"
-          (click)="cambiarTab('proyectos')">
-          <i class="fas fa-project-diagram"></i>
-          Vista por Proyectos
-        </button>
-        <button 
-          class="tab-btn" 
-          [class.active]="tabActiva === 'estadisticas'"
-          (click)="cambiarTab('estadisticas')">
-          <i class="fas fa-chart-bar"></i>
-          Estadísticas
-        </button>
-        <button 
-          class="tab-btn" 
-          [class.active]="tabActiva === 'historial'"
-          (click)="cambiarTab('historial')">
-          <i class="fas fa-history"></i>
-          Historial
-        </button>
-      </div>
-    </div>
+
 
     <!-- Modal para nueva asignación -->
     <div *ngIf="mostrarFormulario" class="modal-overlay" (click)="ocultarFormularioAsignacion()">
@@ -145,98 +114,8 @@
       </div>
     </div>
 
-    <!-- TAB ASIGNACIONES -->
-    <div *ngIf="tabActiva === 'asignaciones'">
-      <!-- Filtros -->
-      <div class="filtros-section">
-        <h3><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
-        <div class="filtros-grid">
-          <div class="filtro-grupo">
-            <label for="filtroProfesor">Profesor:</label>
-            <input 
-              type="text" 
-              id="filtroProfesor" 
-              [(ngModel)]="filtroProfesor" 
-              placeholder="Buscar por nombre de profesor"
-            />
-          </div>
-          
-          <div class="filtro-grupo">
-            <label for="filtroEstudiante">Proyecto:</label>
-            <input 
-              type="text" 
-              id="filtroEstudiante" 
-              [(ngModel)]="filtroEstudiante" 
-              placeholder="Buscar por título de proyecto"
-            />
-          </div>
-          
-          <div class="filtro-grupo">
-            <label for="filtroRol">Rol:</label>
-            <select id="filtroRol" [(ngModel)]="filtroRol">
-              <option value="">Todos los roles</option>
-              <option *ngFor="let rol of rolesProfesores" [value]="rol.nombre">
-                {{rol.descripcion}}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lista de asignaciones -->
-      <div class="asignaciones-list">
-        <div *ngIf="filtrarAsignaciones().length === 0" class="no-results">
-          <i class="fas fa-search"></i>
-          <h3>No se encontraron asignaciones</h3>
-          <p>No hay asignaciones que coincidan con los filtros seleccionados</p>
-        </div>
-
-        <div *ngFor="let asignacion of filtrarAsignaciones()" class="asignacion-card">
-          <div class="asignacion-header">
-            <div class="asignacion-info">
-              <h4>{{asignacion.profesor_nombre}}</h4>
-              <span 
-                class="rol-badge" 
-                [style.background-color]="getRolColor(asignacion.rol_nombre)">
-                {{asignacion.rol_descripcion}}
-              </span>
-            </div>
-            <div class="asignacion-actions">
-              <button 
-                class="btn-danger-small" 
-                (click)="desasignarProfesor(asignacion); $event.stopPropagation()"
-                [disabled]="loadingAsignacion"
-                title="Desasignar profesor">
-                <i class="fas fa-user-minus"></i>
-              </button>
-            </div>
-          </div>
-          
-          <div class="asignacion-body">
-            <div class="asignacion-details">
-              <div class="detail-item">
-                <strong>Proyecto:</strong> {{asignacion.proyecto_titulo || 'Sin título'}}
-              </div>
-              <div class="detail-item">
-                <strong>Email:</strong> {{asignacion.profesor_email}}
-              </div>
-              <div class="detail-item">
-                <strong>Fecha de asignación:</strong> {{formatearFecha(asignacion.fecha_asignacion)}}
-              </div>
-              <div class="detail-item" *ngIf="asignacion.observaciones">
-                <strong>Observaciones:</strong> {{asignacion.observaciones}}
-              </div>
-              <div class="detail-item">
-                <strong>Asignado por:</strong> {{asignacion.asignado_por_nombre || 'N/A'}}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB PROYECTOS -->
-    <div *ngIf="tabActiva === 'proyectos'">
+    <!-- Vista por Proyectos -->
+    <div>
       <!-- Filtros para proyectos -->
       <div class="filtros-section">
         <h3><i class="fas fa-filter"></i> Filtros de Proyectos</h3>
@@ -427,95 +306,6 @@
                   Desasignar
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB ESTADÍSTICAS -->
-    <div *ngIf="tabActiva === 'estadisticas'" class="estadisticas-section">
-      <div *ngIf="estadisticasAsignaciones" class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-project-diagram"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{estadisticasAsignaciones.totales?.total_proyectos_asignados || 0}}</h3>
-            <p>Proyectos con Asignaciones</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{estadisticasAsignaciones.totales?.total_profesores_activos || 0}}</h3>
-            <p>Profesores Activos</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-user-tag"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{estadisticasAsignaciones.totales?.total_asignaciones_activas || 0}}</h3>
-            <p>Asignaciones Activas</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="roles-distribution" *ngIf="estadisticasAsignaciones?.por_roles?.length > 0">
-        <h3><i class="fas fa-chart-pie"></i> Distribución por Roles</h3>
-        <div class="roles-list">
-          <div
-            *ngFor="let rol of estadisticasAsignaciones.por_roles"
-            class="rol-stat">
-            <span
-              class="rol-badge"
-              [style.background-color]="getRolColor(rol.rol_nombre)">
-              {{formatRolName(rol.rol_nombre || '')}}
-            </span>
-            <span class="rol-count">{{rol.asignaciones_por_rol}} asignaciones</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB HISTORIAL -->
-    <div *ngIf="tabActiva === 'historial'" class="historial-section">
-      <div class="historial-list">
-        <div *ngIf="historialAsignaciones.length === 0" class="no-results">
-          <i class="fas fa-history"></i>
-          <h3>No hay historial disponible</h3>
-          <p>No se han registrado cambios en las asignaciones</p>
-        </div>
-
-        <div *ngFor="let entrada of historialAsignaciones" class="historial-item">
-          <div class="historial-icon" [class]="'accion-' + entrada.accion">
-            <i class="fas" 
-               [class.fa-plus]="entrada.accion === 'asignado'"
-               [class.fa-minus]="entrada.accion === 'desasignado'"
-               [class.fa-edit]="entrada.accion === 'modificado'">
-            </i>
-          </div>
-          
-          <div class="historial-content">
-            <div class="historial-header">
-              <strong>{{entrada.profesor_nombre}}</strong>
-              <span class="accion-text">{{entrada.accion}}</span>
-              <span>como</span>
-              <span class="rol-name">{{formatRolName(entrada.rol_nombre || '')}}</span>
-            </div>
-            <div class="historial-details">
-              <span>Proyecto: {{entrada.proyecto_titulo}}</span>
-              <span>Por: {{entrada.realizado_por_nombre}}</span>
-              <span>{{formatearFecha(entrada.fecha_accion)}}</span>
-            </div>
-            <div *ngIf="entrada.observaciones" class="historial-observaciones">
-              <em>{{entrada.observaciones}}</em>
             </div>
           </div>
         </div>
