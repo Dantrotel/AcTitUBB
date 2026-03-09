@@ -370,48 +370,47 @@
         </div>
       }
 
-      <!-- Carga de Profesores (Top 10) -->
+      <!-- Carga de Profesores — Gráfico de barras -->
       @if (dashboard.carga_profesores && dashboard.carga_profesores.length > 0) {
         <div class="carga-profesores-section">
           <div class="subsection-title">
-            <i class="fas fa-users-cog"></i>
-            <h3>Carga de Profesores (Top 10)</h3>
+            <i class="fas fa-chart-bar"></i>
+            <h3>Carga de Profesores</h3>
+            <div class="cp-legend">
+              <span class="cp-dot guia-dot"></span><span>Guía</span>
+              <span class="cp-dot inf-dot"></span><span>Informante</span>
+            </div>
           </div>
-          
-          <div class="profesores-list">
-            @for (profesor of dashboard.carga_profesores; track profesor.rut; let i = $index) {
-              <div class="profesor-item" [class.top3]="i < 3">
-                <div class="profesor-rank">
-                  @if (i === 0) {
-                    <i class="fas fa-trophy" style="color: #FFD700;"></i>
-                  } @else if (i === 1) {
-                    <i class="fas fa-trophy" style="color: #C0C0C0;"></i>
-                  } @else if (i === 2) {
-                    <i class="fas fa-trophy" style="color: #CD7F32;"></i>
-                  } @else {
-                    <span class="rank-number">{{ i + 1 }}</span>
-                  }
-                </div>
-                <div class="profesor-info">
-                  <h4>{{ profesor.nombre }}</h4>
-                  <p class="profesor-email">{{ profesor.correo }}</p>
-                </div>
-                <div class="profesor-stats">
-                  <div class="stat-pill">
-                    <i class="fas fa-graduation-cap"></i>
-                    {{ profesor.proyectos_guia }} Guía
+
+          <div class="cp-chart-wrap">
+            <!-- Y axis -->
+            <div class="cp-yaxis" [style.height.px]="CHART_H">
+              @for (tick of chartYTicks(); track tick) {
+                <span class="cp-ytick" [style.bottom.px]="tickPxHome(tick)">{{ tick }}</span>
+              }
+            </div>
+            <!-- Scrollable bars -->
+            <div class="cp-scroll">
+              <div class="cp-bars"
+                   [style.height.px]="CHART_H"
+                   [style.min-width.px]="dashboard.carga_profesores.length * 56 + 8">
+                @for (tick of chartYTicks(); track tick) {
+                  <div class="cp-hgrid" [style.bottom.px]="tickPxHome(tick)"></div>
+                }
+                @for (prof of dashboard.carga_profesores; track prof.rut) {
+                  <div class="cp-bgroup" [title]="prof.nombre + ' — Guía: ' + (prof.proyectos_guia||0) + ', Informante: ' + (prof.proyectos_informante||0)">
+                    <div class="cp-b guia-b" [style.height.px]="barPxHome(prof.proyectos_guia || 0)"></div>
+                    <div class="cp-b inf-b"  [style.height.px]="barPxHome(prof.proyectos_informante || 0)"></div>
                   </div>
-                  <div class="stat-pill">
-                    <i class="fas fa-user-check"></i>
-                    {{ profesor.proyectos_informante }} Informante
-                  </div>
-                  <div class="stat-pill total">
-                    <i class="fas fa-folder"></i>
-                    {{ profesor.total_proyectos }} Total
-                  </div>
-                </div>
+                }
               </div>
-            }
+              <div class="cp-labels"
+                   [style.min-width.px]="dashboard.carga_profesores.length * 56 + 8">
+                @for (prof of dashboard.carga_profesores; track prof.rut) {
+                  <div class="cp-plabel" [title]="prof.nombre">{{ shortNameHome(prof.nombre) }}</div>
+                }
+              </div>
+            </div>
           </div>
         </div>
       }

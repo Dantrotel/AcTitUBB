@@ -231,6 +231,42 @@ export class HomeAdminComponent implements OnInit {
     return new Date();
   }
 
+  // ===== BAR CHART: CARGA PROFESORES =====
+  readonly CHART_H = 180;
+
+  chartMax(): number {
+    const data: any[] = this.dashboard?.carga_profesores || [];
+    if (!data.length) return 1;
+    return Math.max(1, ...data.map((p: any) => +(p.total_proyectos || 0)));
+  }
+
+  chartYTicks(): number[] {
+    const max = this.chartMax();
+    const steps = Math.min(max, 5);
+    const step = Math.ceil(max / steps) || 1;
+    const ticks: number[] = [];
+    for (let v = 0; v <= max; v += step) ticks.push(v);
+    if (ticks[ticks.length - 1] < max) ticks.push(max);
+    return [...new Set(ticks)].reverse();
+  }
+
+  barPxHome(value: number): number {
+    const max = this.chartMax();
+    if (!max || !value) return 0;
+    return Math.round((value / max) * this.CHART_H);
+  }
+
+  tickPxHome(tick: number): number {
+    const max = this.chartMax();
+    if (!max) return 0;
+    return Math.round((tick / max) * this.CHART_H);
+  }
+
+  shortNameHome(nombre: string): string {
+    const parts = (nombre || '').trim().split(/\s+/);
+    return parts.length <= 2 ? nombre : `${parts[0]} ${parts[1]}`;
+  }
+
   // ===== SISTEMA DE NOTIFICACIONES =====
   
   cargarNotificaciones(): void {
