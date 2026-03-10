@@ -5,6 +5,23 @@ import { ApiService } from '../../services/api';
 import { ActivatedRoute } from '@angular/router';
 import { NotificationService } from '../../services/notification.service';
 
+interface DocumentoHito {
+  hito_id: number;
+  nombre_hito: string;
+  tipo_hito: string;
+  hito_estado: string;
+  fecha_entrega: string | null;
+  archivo_entrega: string | null;
+  nombre_archivo_original: string | null;
+  comentarios_estudiante: string | null;
+  archivo_retroalimentacion: string | null;
+  nombre_archivo_retroalimentacion: string | null;
+  comentarios_profesor: string | null;
+  estudiante_nombre: string;
+  estudiante_rut: string;
+  profesor_nombre: string | null;
+}
+
 interface Documento {
   id: number;
   proyecto_id: number;
@@ -38,28 +55,35 @@ export class DocumentosProyectoComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   proyectoId: number = 0;
-  documentos: Documento[] = [];
-  filtroTipo: string = '';
-  filtroEstado: string = '';
-  archivoSeleccionado: File | null = null;
-  tipoDocumento: string = '';
-  estadoDocumento: string = 'borrador';
-  comentarios: string = '';
-  cargando: boolean = false;
-  mostrarFormulario: boolean = false;
 
-  // Corrección por documento
+  // Hito documents
+  documentosHitos: DocumentoHito[] = [];
+  cargandoHitos = false;
+  filtroHitoEstado = '';
+
+  // Other documents
+  documentos: Documento[] = [];
+  filtroTipo = '';
+  filtroEstado = '';
+  archivoSeleccionado: File | null = null;
+  tipoDocumento = '';
+  estadoDocumento = 'borrador';
+  comentarios = '';
+  cargando = false;
+  mostrarFormulario = false;
+
   correccionDocumentoId: number | null = null;
   archivoCorreccion: File | null = null;
-  comentariosCorreccion: string = '';
-  subiendoCorreccion: boolean = false;
-  
-  // Información del usuario actual
+  comentariosCorreccion = '';
+  subiendoCorreccion = false;
+
   userData: any;
-  rolId: string = '';
-  esEstudiante: boolean = false;
-  esProfesor: boolean = false;
-  esAdmin: boolean = false;
+  rolId = '';
+  esEstudiante = false;
+  esProfesor = false;
+  esAdmin = false;
+
+  tab: 'hitos' | 'otros' = 'hitos';
 
   tiposDocumento = [
     { value: 'propuesta_final', label: 'Propuesta Final' },
@@ -80,30 +104,73 @@ export class DocumentosProyectoComponent implements OnInit {
     { value: 'archivado', label: 'Archivado', color: 'badge-dark' }
   ];
 
+  tipoHitoIconos: Record<string, string> = {
+    entrega_documento: 'fa-file-alt',
+    revision_avance: 'fa-search',
+    reunion_seguimiento: 'fa-users',
+    defensa: 'fa-microphone',
+    entrega_final: 'fa-flag-checkered'
+  };
+
   ngOnInit(): void {
     this.proyectoId = Number(this.route.snapshot.paramMap.get('id'));
-    
-    // Obtener información del usuario
+
     const userDataString = localStorage.getItem('userData');
     if (userDataString) {
       this.userData = JSON.parse(userDataString);
-      this.rolId = this.userData.rol_id;
+      this.rolId = String(this.userData.rol_id);
       this.esEstudiante = this.rolId === '1';
       this.esProfesor = this.rolId === '2';
-      this.esAdmin = this.rolId === '3';
+      this.esAdmin = this.rolId === '3' || this.rolId === '4';
     }
-    
+
+    this.cargarDocumentosHitos();
     this.cargarDocumentos();
   }
+
+  cargarDocumentosHitos(): void {
+    this.cargandoHitos = true;
+    this.apiService.getDocumentosHitos(this.proyectoId).subscribe({
+      next: (res: any) => {
+        this.documentosHitos = res?.data || [];
+        this.cargandoHitos = false;
+      },
+      error: () => { this.cargandoHitos = false; }
+    });
+  }
+
+  get documentosHitosFiltrados(): DocumentoHito[] {
+    if (!this.filtroHitoEstado) return this.documentosHitos;
+    return this.documentosHitos.filter(d => d.hito_estado === this.filtroHitoEstado);
+  }
+
+  descargarArchivoHito(nombreArchivo: string, nombreOriginal: string): void {
+    const nombre = nombreArchivo.split('/').pop() || nombreArchivo;
+    this.apiService.descargarArchivo(nombre).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreOriginal || nombre;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.notificationService.error('Error al descargar el archivo')
+    });
+  }
+
+  iconoTipo(tipo: string): string {
+    return this.tipoHitoIconos[tipo] || 'fa-flag';
+  }
+
+  // ── Otros documentos ────────────────────────────────────
 
   cargarDocumentos(): void {
     this.cargando = true;
     let url = `/documentos/proyecto/${this.proyectoId}`;
     const params: string[] = [];
-
     if (this.filtroTipo) params.push(`tipo_documento=${this.filtroTipo}`);
     if (this.filtroEstado) params.push(`estado=${this.filtroEstado}`);
-    
     if (params.length > 0) url += `?${params.join('&')}`;
 
     this.apiService.get(url).subscribe({
@@ -111,17 +178,13 @@ export class DocumentosProyectoComponent implements OnInit {
         this.documentos = response as Documento[];
         this.cargando = false;
       },
-      error: (error) => {
-        this.cargando = false;
-      }
+      error: () => { this.cargando = false; }
     });
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.archivoSeleccionado = input.files[0];
-    }
+    if (input.files?.length) this.archivoSeleccionado = input.files[0];
   }
 
   subirDocumento(): void {
@@ -129,22 +192,21 @@ export class DocumentosProyectoComponent implements OnInit {
       this.notificationService.warning('Selecciona un archivo y tipo de documento');
       return;
     }
-
     this.cargando = true;
-    const formData = new FormData();
-    formData.append('archivo', this.archivoSeleccionado);
-    formData.append('tipo_documento', this.tipoDocumento);
-    formData.append('estado', this.estadoDocumento);
-    if (this.comentarios) formData.append('comentarios', this.comentarios);
+    const fd = new FormData();
+    fd.append('archivo', this.archivoSeleccionado);
+    fd.append('tipo_documento', this.tipoDocumento);
+    fd.append('estado', this.estadoDocumento);
+    if (this.comentarios) fd.append('comentarios', this.comentarios);
 
-    this.apiService.post(`/documentos/${this.proyectoId}`, formData).subscribe({
+    this.apiService.post(`/documentos/${this.proyectoId}`, fd).subscribe({
       next: () => {
         this.cargarDocumentos();
         this.resetearFormulario();
         this.mostrarFormulario = false;
         this.cargando = false;
       },
-      error: (error) => {
+      error: () => {
         this.notificationService.error('Error al subir el documento');
         this.cargando = false;
       }
@@ -162,53 +224,31 @@ export class DocumentosProyectoComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => {
-        this.notificationService.error('Error al descargar el documento');
-      }
+      error: () => this.notificationService.error('Error al descargar el documento')
     });
   }
 
   async actualizarEstado(documentoId: number, nuevoEstado: string): Promise<void> {
     const comentario = await this.notificationService.prompt(
-      'Comentarios (opcional):',
-      'Actualizar estado',
-      '',
-      'Guardar',
-      'Cancelar'
+      'Comentarios (opcional):', 'Actualizar estado', '', 'Guardar', 'Cancelar'
     );
-    
     if (comentario === null) return;
-    
     this.apiService.put(`/documentos/${documentoId}/estado`, {
-      estado: nuevoEstado,
-      comentarios: comentario || ''
+      estado: nuevoEstado, comentarios: comentario || ''
     }).subscribe({
-      next: () => {
-        this.cargarDocumentos();
-      },
-      error: (error) => {
-        this.notificationService.error('Error al actualizar el estado');
-      }
+      next: () => this.cargarDocumentos(),
+      error: () => this.notificationService.error('Error al actualizar el estado')
     });
   }
 
   async eliminarDocumento(documentoId: number): Promise<void> {
     const confirmed = await this.notificationService.confirm(
-      '¿Estás seguro de eliminar este documento?',
-      'Confirmar eliminación',
-      'Sí, eliminar',
-      'Cancelar'
+      '¿Estás seguro de eliminar este documento?', 'Confirmar eliminación', 'Sí, eliminar', 'Cancelar'
     );
-    
     if (!confirmed) return;
-
     this.apiService.delete(`/documentos/${documentoId}`).subscribe({
-      next: () => {
-        this.cargarDocumentos();
-      },
-      error: (error) => {
-        this.notificationService.error('Error al eliminar el documento');
-      }
+      next: () => this.cargarDocumentos(),
+      error: () => this.notificationService.error('Error al eliminar el documento')
     });
   }
 
@@ -221,22 +261,18 @@ export class DocumentosProyectoComponent implements OnInit {
 
   toggleFormulario(): void {
     this.mostrarFormulario = !this.mostrarFormulario;
-    if (!this.mostrarFormulario) {
-      this.resetearFormulario();
-    }
+    if (!this.mostrarFormulario) this.resetearFormulario();
   }
 
   abrirFormCorreccion(documentoId: number): void {
-    this.correccionDocumentoId = (this.correccionDocumentoId === documentoId) ? null : documentoId;
+    this.correccionDocumentoId = this.correccionDocumentoId === documentoId ? null : documentoId;
     this.archivoCorreccion = null;
     this.comentariosCorreccion = '';
   }
 
   onArchivoCorreccionSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.archivoCorreccion = input.files[0];
-    }
+    if (input.files?.length) this.archivoCorreccion = input.files[0];
   }
 
   subirCorreccion(docOriginal: Documento): void {
@@ -244,18 +280,16 @@ export class DocumentosProyectoComponent implements OnInit {
       this.notificationService.warning('Selecciona un archivo de corrección');
       return;
     }
-
     this.subiendoCorreccion = true;
-    const formData = new FormData();
-    formData.append('archivo', this.archivoCorreccion);
-    formData.append('tipo_documento', 'correccion');
-    formData.append('estado', 'en_revision');
-    formData.append('comentarios',
+    const fd = new FormData();
+    fd.append('archivo', this.archivoCorreccion);
+    fd.append('tipo_documento', 'correccion');
+    fd.append('estado', 'en_revision');
+    fd.append('comentarios',
       `Corrección del documento "${docOriginal.nombre_original}"` +
       (this.comentariosCorreccion ? `: ${this.comentariosCorreccion}` : '')
     );
-
-    this.apiService.post(`/documentos/${this.proyectoId}`, formData).subscribe({
+    this.apiService.post(`/documentos/${this.proyectoId}`, fd).subscribe({
       next: () => {
         this.notificationService.success('Corrección subida exitosamente');
         this.correccionDocumentoId = null;
@@ -271,68 +305,33 @@ export class DocumentosProyectoComponent implements OnInit {
     });
   }
 
-  aplicarFiltros(): void {
-    this.cargarDocumentos();
-  }
-
-  limpiarFiltros(): void {
-    this.filtroTipo = '';
-    this.filtroEstado = '';
-    this.cargarDocumentos();
-  }
+  aplicarFiltros(): void { this.cargarDocumentos(); }
+  limpiarFiltros(): void { this.filtroTipo = ''; this.filtroEstado = ''; this.cargarDocumentos(); }
 
   getEstadoBadgeClass(estado: string): string {
-    const estadoObj = this.estadosDocumento.find(e => e.value === estado);
-    return estadoObj ? estadoObj.color : 'badge-secondary';
+    return this.estadosDocumento.find(e => e.value === estado)?.color || 'badge-secondary';
   }
-
   getEstadoLabel(estado: string): string {
-    const estadoObj = this.estadosDocumento.find(e => e.value === estado);
-    return estadoObj ? estadoObj.label : estado;
+    return this.estadosDocumento.find(e => e.value === estado)?.label || estado;
   }
-
   getTipoLabel(tipo: string): string {
-    const tipoObj = this.tiposDocumento.find(t => t.value === tipo);
-    return tipoObj ? tipoObj.label : tipo;
+    return this.tiposDocumento.find(t => t.value === tipo)?.label || tipo;
   }
-
   formatearTamanio(bytes: number): string {
     if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
-
   formatearFecha(fecha: string): string {
+    if (!fecha) return '—';
     return new Date(fecha).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   }
-
-  // Métodos de permisos
   puedeEliminarDocumento(documento: Documento): boolean {
-    // Admin puede eliminar cualquier documento
     if (this.esAdmin) return true;
-    
-    // Estudiante solo puede eliminar sus propios documentos en borrador
-    if (this.esEstudiante) {
-      return documento.subido_por === this.userData.rut && documento.estado === 'borrador';
-    }
-    
-    // Profesor no puede eliminar documentos
+    if (this.esEstudiante) return documento.subido_por === this.userData?.rut && documento.estado === 'borrador';
     return false;
-  }
-
-  puedeCambiarEstado(): boolean {
-    // Solo profesor y admin pueden cambiar estados
-    return this.esProfesor || this.esAdmin;
-  }
-
-  mostrarBotonesEstado(documento: Documento): boolean {
-    // Mostrar botones de cambio de estado solo si tiene permiso
-    return this.puedeCambiarEstado();
   }
 }

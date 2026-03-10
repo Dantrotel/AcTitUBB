@@ -104,6 +104,10 @@ routerProject.delete('/:projectId/cronogramas/:cronogramaId/hitos/:hitoId/entreg
 routerProject.post('/hitos/:hitoId/entregar', verifySession, checkRole('1'), uploadConManejo(uploadPropuesta), ProjectController.entregarHito);
 routerProject.patch('/hitos/:hitoId/revisar', verifySession, checkRole('2'), uploadConManejo(uploadRevision), ProjectController.revisarHito);
 
+// ===== REVISIONES INFORMANTE =====
+routerProject.get('/informante/revisiones', verifySession, checkRole('2'), ProjectController.obtenerRevisionesInformante);
+routerProject.patch('/informante/revisiones/:revisionId', verifySession, checkRole('2'), uploadConManejo(uploadRevision), ProjectController.revisarHitoComoInformante);
+
 // Configuración de alertas
 routerProject.post('/:projectId/alertas', verifySession, checkRole('2'), ProjectController.configurarAlertas);
 
@@ -112,5 +116,8 @@ routerProject.get('/:projectId/estadisticas', verifySession, ProjectController.o
 
 // Obtener avances de un proyecto
 routerProject.get('/:projectId/avances', verifySession, ProjectController.obtenerAvancesProyecto);
+
+// Documentos de hitos (entregas y retroalimentaciones)
+routerProject.get('/:projectId/documentos-hitos', verifySession, ProjectController.obtenerDocumentosHitos);
 
 export default routerProject;

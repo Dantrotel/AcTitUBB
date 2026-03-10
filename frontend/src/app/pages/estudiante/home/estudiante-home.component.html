@@ -120,30 +120,30 @@
         </div>
       }
 
-      <!-- Avances Pendientes -->
-      @if (dashboard.avances_pendientes && dashboard.avances_pendientes.length > 0) {
+      <!-- Hitos Pendientes de Revisión -->
+      @if (dashboard.hitos_pendientes && dashboard.hitos_pendientes.length > 0) {
         <div class="avances-section">
           <h3 class="subsection-title">
             <i class="fas fa-tasks"></i>
-            Avances Pendientes
+            Hitos Entregados
           </h3>
           <div class="avances-list">
-            @for (avance of dashboard.avances_pendientes; track avance.id) {
-              <div class="avance-item" [class.con-comentarios]="avance.estado_revision === 'con_comentarios'">
+            @for (hito of dashboard.hitos_pendientes; track hito.id) {
+              <div class="avance-item" [class.con-comentarios]="hito.estado_revision === 'con_comentarios'">
                 <div class="avance-icon">
-                  @if (avance.estado_revision === 'con_comentarios') {
+                  @if (hito.estado_revision === 'con_comentarios') {
                     <i class="fas fa-comment-dots text-info"></i>
                   } @else {
                     <i class="fas fa-hourglass-half text-warning"></i>
                   }
                 </div>
                 <div class="avance-content">
-                  <h4>{{ avance.titulo }}</h4>
-                  <p class="avance-proyecto">{{ avance.proyecto_titulo }}</p>
-                  <span class="avance-fecha">Enviado: {{ avance.fecha_envio | date:'dd MMM yyyy' }}</span>
+                  <h4>{{ hito.titulo }}</h4>
+                  <p class="avance-proyecto">{{ hito.proyecto_titulo }}</p>
+                  <span class="avance-fecha">Entregado: {{ hito.fecha_envio | date:'dd MMM yyyy' }}</span>
                 </div>
-                @if (avance.estado_revision === 'con_comentarios') {
-                  <span class="badge badge-info">Con comentarios</span>
+                @if (hito.estado_revision === 'con_comentarios') {
+                  <span class="badge badge-info">Con retroalimentación</span>
                 } @else {
                   <span class="badge badge-secondary">En revisión</span>
                 }

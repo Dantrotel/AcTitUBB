@@ -170,11 +170,11 @@ export const obtenerProyectosProfesor = async (profesor_rut, rol_profesor_id = n
 export const cambiarProfesorProyecto = async (proyecto_id, rol_profesor_id, nuevo_profesor_rut, asignado_por) => {
     // Verificar que el nuevo profesor sea válido
     const verificarProfesor = `
-        SELECT id FROM usuarios 
-        WHERE rut = ? AND rol_id = 2
+        SELECT rut FROM usuarios
+        WHERE rut = ? AND rol_id IN (2, 3)
     `;
     const [profesorExists] = await pool.execute(verificarProfesor, [nuevo_profesor_rut]);
-    
+
     if (profesorExists.length === 0) {
         throw new Error('El nuevo usuario no es un profesor válido');
     }

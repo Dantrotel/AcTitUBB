@@ -2,6 +2,7 @@ import { ProjectModel, actualizarEstadoProyecto, obtenerProfesoresProyecto } fro
 import * as fechasImportantesModel from '../models/fechas-importantes.model.js';
 import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
 import * as AvanceModel from '../models/avance.model.js';
+import { crearRevisionesInformante } from '../models/avance.model.js';
 import { pool } from '../db/connectionDB.js';
 import { logger } from '../config/logger.js';
 
@@ -778,7 +779,37 @@ const crearHitoCronograma = async (hitoData) => {
         }
     }
 
-    return await AvanceModel.crearHitoCronograma(hitoData);
+    const hito = await AvanceModel.crearHitoCronograma(hitoData);
+
+    // Sincronizar con fechas importantes automáticamente
+    try {
+        const tipoMap = {
+            entrega_documento: 'entrega',
+            revision_avance:   'revision',
+            reunion_seguimiento: 'reunion',
+            defensa:           'defensa',
+            entrega_final:     'entrega'
+        };
+        await pool.execute(
+            `INSERT INTO fechas (proyecto_id, tipo_fecha, titulo, descripcion, fecha,
+                creado_por_rut, habilitada, permite_extension, requiere_entrega,
+                es_global, activa, hito_cronograma_id)
+             VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE, TRUE, FALSE, TRUE, ?)`,
+            [
+                hitoData.proyecto_id,
+                tipoMap[hitoData.tipo_hito] || 'otro',
+                hitoData.nombre_hito,
+                hitoData.descripcion ?? null,
+                hitoData.fecha_limite,
+                hitoData.creado_por_rut ?? null,
+                hito.id ?? hito
+            ]
+        );
+    } catch (e) {
+        logger.warn('No se pudo sincronizar hito con fechas importantes', { error: e.message });
+    }
+
+    return hito;
 };
 
 /**
@@ -806,10 +837,56 @@ const revisarHito = async (hito_id, revisionData, profesor_rut) => {
         }
     }
 
-    return await AvanceModel.revisarHito(hito_id, {
+    const result = await AvanceModel.revisarHito(hito_id, {
         ...revisionData,
         actualizado_por_rut: profesor_rut
     });
+
+    // Marcar la fecha importante como completada si el hito fue aprobado
+    if (revisionData.estado === 'aprobado') {
+        try {
+            await pool.execute(
+                `UPDATE fechas SET completada = TRUE, fecha_realizada = CURDATE()
+                 WHERE hito_cronograma_id = ? AND activa = TRUE`,
+                [hito_id]
+            );
+        } catch (e) {
+            logger.warn('No se pudo marcar fecha importante como completada', { error: e.message });
+        }
+
+        // Si es entrega_documento, disparar revisión del informante
+        try {
+            const [[hito]] = await pool.execute(
+                `SELECT h.tipo_hito, cp.proyecto_id
+                 FROM hitos_cronograma h
+                 INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+                 WHERE h.id = ?`,
+                [hito_id]
+            );
+            if (hito && hito.tipo_hito === 'entrega_final') {
+                await crearRevisionesInformante(hito_id, hito.proyecto_id);
+            }
+        } catch (e) {
+            logger.warn('No se pudo crear revisión de informante', { error: e.message });
+        }
+    }
+
+    return result;
+};
+
+/**
+ * Revisiones del Profesor Informante
+ */
+const obtenerRevisionesInformante = async (informante_rut) => {
+    return await AvanceModel.obtenerRevisionesInformanteByProfesor(informante_rut);
+};
+
+const revisarHitoComoInformante = async (revision_id, informante_rut, revisionData) => {
+    return await AvanceModel.actualizarRevisionInformante(revision_id, informante_rut, revisionData);
+};
+
+const obtenerDocumentosHitos = async (proyecto_id) => {
+    return await AvanceModel.obtenerDocumentosHitos(proyecto_id);
 };
 
 /**
@@ -931,10 +1008,40 @@ const notificacionPerteneceAUsuario = async (notificacion_id, usuario_rut) => {
 };
 
 const actualizarHitoCronograma = async (cronograma_id, hito_id, data) => {
-    return await AvanceModel.actualizarHitoCronograma(cronograma_id, hito_id, data);
+    const result = await AvanceModel.actualizarHitoCronograma(cronograma_id, hito_id, data);
+
+    // Sincronizar cambios con la fecha importante enlazada
+    try {
+        const updates = [];
+        const values = [];
+        if (data.nombre_hito)  { updates.push('titulo = ?');      values.push(data.nombre_hito); }
+        if (data.descripcion !== undefined) { updates.push('descripcion = ?'); values.push(data.descripcion ?? null); }
+        if (data.fecha_limite) { updates.push('fecha = ?');       values.push(data.fecha_limite); }
+        if (updates.length) {
+            values.push(hito_id);
+            await pool.execute(
+                `UPDATE fechas SET ${updates.join(', ')} WHERE hito_cronograma_id = ? AND activa = TRUE`,
+                values
+            );
+        }
+    } catch (e) {
+        logger.warn('No se pudo sincronizar actualización de hito con fechas importantes', { error: e.message });
+    }
+
+    return result;
 };
 
 const eliminarHitoCronograma = async (cronograma_id, hito_id) => {
+    // Soft-delete la fecha importante enlazada antes de eliminar el hito
+    try {
+        await pool.execute(
+            `UPDATE fechas SET activa = FALSE WHERE hito_cronograma_id = ?`,
+            [hito_id]
+        );
+    } catch (e) {
+        logger.warn('No se pudo desactivar fecha importante al eliminar hito', { error: e.message });
+    }
+
     return await AvanceModel.eliminarHitoCronograma(cronograma_id, hito_id);
 };
 
@@ -988,6 +1095,9 @@ export const ProjectService = {
     obtenerHitosCronograma,
     entregarHito,
     revisarHito,
+    obtenerRevisionesInformante,
+    revisarHitoComoInformante,
+    obtenerDocumentosHitos,
     obtenerInfoHito,
     obtenerNotificacionesUsuario,
     marcarNotificacionLeida,

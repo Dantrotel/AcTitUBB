@@ -86,7 +86,10 @@ export class GestionEstudiantesComponent implements OnInit {
     this.apiService.getProfesores().subscribe({
       next: (data: any) => {
         const todos = Array.isArray(data) ? data : [];
-        this.profesores = todos.filter((u: any) => u.rol_id === 2 || u.rol_nombre?.toLowerCase() === 'profesor');
+        this.profesores = todos.filter((u: any) =>
+          u.rol_id === 2 || String(u.rol_id) === '2' || u.rol_nombre?.toLowerCase() === 'profesor' ||
+          u.rol_id === 3 || String(u.rol_id) === '3' || u.rol_nombre?.toLowerCase() === 'admin'
+        );
         this.cdr.detectChanges();
       },
       error: () => { this.profesores = []; }

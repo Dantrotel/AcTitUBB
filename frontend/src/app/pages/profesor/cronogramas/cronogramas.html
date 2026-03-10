@@ -4,38 +4,27 @@
   <div class="page-header-compact">
     <div class="header-left">
       <h1><i class="fas fa-calendar-alt"></i> Gestión de Cronogramas</h1>
-      <p class="header-subtitle">Administra fechas importantes de entrega para tus proyectos asignados</p>
+      <p class="header-subtitle">Gestiona los hitos y entregas de tus proyectos asignados</p>
     </div>
     <div class="header-right">
-      <button class="btn-header-action" [class.active]="vistaGlobal" (click)="toggleVistaGlobal()" title="Ver todos los proyectos">
-        <i class="fas fa-globe"></i>
-        Vista Global
-      </button>
-      <button class="btn-header-action btn-export-header" (click)="exportarCronograma()" title="Imprimir / Exportar">
-        <i class="fas fa-print"></i>
-        Exportar
+      <button class="btn-header-action" (click)="volver()">
+        <i class="fas fa-arrow-left"></i>
+        Volver
       </button>
     </div>
   </div>
 
-  <!-- ===== ALERTAS ===== -->
+  <!-- ===== ALERTA ===== -->
   @if (error) {
     <div class="alert alert-error">
       <i class="fas fa-exclamation-triangle"></i>
       <span>{{ error }}</span>
-      <button class="btn-close" (click)="limpiarMensajes()">×</button>
-    </div>
-  }
-  @if (success) {
-    <div class="alert alert-success">
-      <i class="fas fa-check-circle"></i>
-      <span>{{ success }}</span>
-      <button class="btn-close" (click)="limpiarMensajes()">×</button>
+      <button class="btn-close" (click)="error = ''">×</button>
     </div>
   }
 
   <!-- ===== LOADING INICIAL ===== -->
-  @if (loading && proyectosAsignados.length === 0) {
+  @if (loading) {
     <div class="loading-state">
       <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
       <p>Cargando proyectos...</p>
@@ -43,7 +32,7 @@
   }
 
   <!-- ===== CONTENIDO PRINCIPAL ===== -->
-  @if (!loading || proyectosAsignados.length > 0) {
+  @if (!loading) {
     <div class="content-grid">
 
       <!-- ===== PANEL IZQUIERDO: PROYECTOS ===== -->
@@ -61,20 +50,10 @@
         }
 
         <div class="projects-list">
-          <!-- Opción Vista Global -->
-          <div class="project-card global-card" [class.selected]="vistaGlobal" (click)="toggleVistaGlobal()">
-            <div class="global-icon"><i class="fas fa-globe"></i></div>
-            <div class="project-info">
-              <h3>Todos los proyectos</h3>
-              <p class="project-sub">Vista unificada de fechas</p>
-            </div>
-          </div>
-
-          <!-- Lista de proyectos -->
           @for (proyecto of proyectosAsignados; track proyecto.id) {
             <div
               class="project-card"
-              [class.selected]="!vistaGlobal && proyectoSeleccionado?.id === proyecto.id"
+              [class.selected]="proyectoSeleccionado?.id === proyecto.id"
               (click)="seleccionarProyecto(proyecto)"
             >
               <div class="project-info">
@@ -92,353 +71,58 @@
         </div>
       </div>
 
-      <!-- ===== PANEL DERECHO: CRONOGRAMA ===== -->
+      <!-- ===== PANEL DERECHO: HITOS ===== -->
       <div class="chronogram-panel">
 
-        <!-- Estado vacío: ningún proyecto seleccionado -->
-        @if (!proyectoSeleccionado && !vistaGlobal) {
+        <!-- Sin proyecto seleccionado -->
+        @if (!proyectoSeleccionado) {
+          <div class="no-selection">
+            <div class="no-selection-icon">
+              <i class="fas fa-flag-checkered"></i>
+            </div>
+            <h3>Selecciona un proyecto</h3>
+            <p>Elige un proyecto de la lista para gestionar sus hitos y entregas.</p>
+          </div>
+        }
+
+        <!-- Cargando cronograma -->
+        @if (proyectoSeleccionado && loadingCronograma) {
+          <div class="loading-state">
+            <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
+            <p>Cargando cronograma...</p>
+          </div>
+        }
+
+        <!-- Sin cronograma -->
+        @if (proyectoSeleccionado && !loadingCronograma && !cronogramaId && !error) {
           <div class="no-selection">
             <div class="no-selection-icon">
               <i class="fas fa-calendar-plus"></i>
             </div>
-            <h3>Selecciona un proyecto</h3>
-            <p>Elige un proyecto de la lista para gestionar su cronograma de fechas importantes, o activa la vista global para ver todos tus proyectos.</p>
-            <button class="btn-secondary" (click)="toggleVistaGlobal()">
-              <i class="fas fa-globe"></i> Ver todos los proyectos
+            <h3>Sin cronograma</h3>
+            <p>Este proyecto no tiene un cronograma creado todavía.</p>
+            <button class="btn-primary" (click)="crearCronograma()">
+              <i class="fas fa-plus"></i> Crear Cronograma
             </button>
           </div>
         }
 
-        <!-- Contenido cuando hay proyecto o vista global -->
-        @if (proyectoSeleccionado || vistaGlobal) {
+        <!-- Gestión de hitos -->
+        @if (proyectoSeleccionado && !loadingCronograma && cronogramaId) {
           <div class="project-details">
-
-            <!-- Header del panel -->
             <div class="project-header">
               <div class="project-title-area">
-                @if (vistaGlobal) {
-                  <h2><i class="fas fa-globe"></i> Todos los proyectos</h2>
-                  <p>Vista unificada de todas las fechas importantes</p>
-                } @else {
-                  <h2>{{ proyectoSeleccionado.titulo }}</h2>
-                  <p>{{ proyectoSeleccionado.estudiante_nombre }}</p>
-                }
-              </div>
-
-              <div class="panel-controls">
-                <!-- Toggle vista lista / timeline -->
-                <div class="view-toggle">
-                  <button
-                    [class.active]="vistaActual === 'lista'"
-                    (click)="setVista('lista')"
-                    title="Vista lista"
-                  >
-                    <i class="fas fa-th-list"></i>
-                  </button>
-                  <button
-                    [class.active]="vistaActual === 'timeline'"
-                    (click)="setVista('timeline')"
-                    title="Vista línea de tiempo"
-                  >
-                    <i class="fas fa-stream"></i>
-                  </button>
-                </div>
-
-                @if (!vistaGlobal) {
-                  <button class="btn-add-fecha" (click)="abrirModalFecha()">
-                    <i class="fas fa-plus"></i> Agregar Fecha
-                  </button>
-                }
-
-                <button class="btn-icon-action" (click)="exportarCronograma()" title="Imprimir / Exportar">
-                  <i class="fas fa-print"></i>
-                </button>
+                <h2>{{ proyectoSeleccionado.titulo }}</h2>
+                <p>{{ proyectoSeleccionado.estudiante_nombre }}</p>
               </div>
             </div>
 
-            <!-- Barra de progreso (solo para proyecto individual) -->
-            @if (!vistaGlobal && fechasImportantes.length > 0) {
-              <div class="progress-section">
-                <div class="progress-info">
-                  <span class="progress-label">
-                    <i class="fas fa-tasks"></i>
-                    Progreso del cronograma
-                  </span>
-                  <span class="progress-stats">
-                    {{ progreso.completadas }} de {{ progreso.total }} completadas
-                    <strong>{{ progreso.porcentaje }}%</strong>
-                  </span>
-                </div>
-                <div class="progress-bar-container">
-                  <div class="progress-bar-fill" [style.width.%]="progreso.porcentaje"
-                    [class.completo]="progreso.porcentaje === 100">
-                  </div>
-                </div>
-              </div>
-            }
-
-            <!-- Barra de filtros -->
-            <div class="filters-bar">
-              <div class="filters-group">
-                <select [(ngModel)]="filtroTipo" class="filter-select">
-                  <option value="">Todos los tipos</option>
-                  @for (tipo of tiposFecha; track tipo.value) {
-                    <option [value]="tipo.value">{{ tipo.label }}</option>
-                  }
-                </select>
-
-                <select [(ngModel)]="filtroPrioridad" class="filter-select">
-                  <option value="">Todas las prioridades</option>
-                  @for (p of prioridades; track p.value) {
-                    <option [value]="p.value">{{ p.label }}</option>
-                  }
-                </select>
-
-                <select [(ngModel)]="filtroOrden" class="filter-select">
-                  <option value="fecha_asc">Próximas primero</option>
-                  <option value="fecha_desc">Últimas primero</option>
-                  <option value="prioridad">Por prioridad</option>
-                  <option value="tipo">Por tipo</option>
-                </select>
-
-                @if (hayFiltrosActivos) {
-                  <button class="btn-clear-filters" (click)="limpiarFiltros()">
-                    <i class="fas fa-times"></i> Limpiar
-                  </button>
-                }
-              </div>
-
-              <span class="fechas-counter">
-                <i class="fas fa-calendar-check"></i>
-                {{ fechasFiltradas.length }} fecha{{ fechasFiltradas.length !== 1 ? 's' : '' }}
-              </span>
-            </div>
-
-            <!-- Loading fechas -->
-            @if (loadingFechas) {
-              <div class="loading-fechas">
-                <i class="fas fa-spinner fa-spin"></i>
-                <span>Cargando fechas...</span>
-              </div>
-            }
-
-            <!-- Área de contenido -->
-            @if (!loadingFechas) {
-              <div class="fechas-area">
-
-                <!-- Estado vacío -->
-                @if (fechasFiltradas.length === 0) {
-                  <div class="empty-fechas">
-                    @if (!vistaGlobal && fechasImportantes.length === 0) {
-                      <!-- Sin fechas en absoluto -->
-                      <div class="empty-icon primary">
-                        <i class="fas fa-calendar-plus"></i>
-                      </div>
-                      <h3>Sin fechas programadas</h3>
-                      <p>Agrega fechas importantes para definir el cronograma de entrega de este proyecto.</p>
-                      <button class="btn-primary" (click)="abrirModalFecha()">
-                        <i class="fas fa-plus"></i> Agregar primera fecha
-                      </button>
-                    } @else {
-                      <!-- Filtros activos sin resultados -->
-                      <div class="empty-icon muted">
-                        <i class="fas fa-filter"></i>
-                      </div>
-                      <h3>Sin resultados</h3>
-                      <p>No hay fechas que coincidan con los filtros seleccionados.</p>
-                      <button class="btn-secondary" (click)="limpiarFiltros()">
-                        <i class="fas fa-times"></i> Limpiar filtros
-                      </button>
-                    }
-                  </div>
-                }
-
-                <!-- ===== VISTA LISTA (agrupada por mes) ===== -->
-                @if (fechasFiltradas.length > 0 && vistaActual === 'lista') {
-                  <div class="fechas-lista-container">
-                    @for (grupo of fechasAgrupadasPorMes; track grupo.mes) {
-                      <div class="mes-grupo">
-                        <!-- Cabecera de mes -->
-                        <div class="mes-header">
-                          <div class="mes-dot"></div>
-                          <span class="mes-label">{{ grupo.mes }}</span>
-                          <span class="mes-count">{{ grupo.fechas.length }}</span>
-                        </div>
-
-                        <!-- Cards del mes -->
-                        <div class="fechas-list">
-                          @for (fecha of grupo.fechas; track fecha.id) {
-                            <div
-                              class="fecha-card"
-                              [class.completada]="fecha.completada"
-                              [class.prioridad-borde-baja]="fecha.prioridad === 'baja'"
-                              [class.prioridad-borde-media]="!fecha.prioridad || fecha.prioridad === 'media'"
-                              [class.prioridad-borde-alta]="fecha.prioridad === 'alta'"
-                              [class.prioridad-borde-critica]="fecha.prioridad === 'critica'"
-                            >
-                              <!-- Header de la card -->
-                              <div class="fecha-card-header tipo-bg-{{ fecha.tipo_fecha }}">
-                                <div class="fecha-icon-wrap">
-                                  <i [class]="getIconoTipoFecha(fecha.tipo_fecha)"></i>
-                                </div>
-                                <div class="fecha-badges-wrap">
-                                  <span class="tipo-badge">{{ getTipoFechaLabel(fecha.tipo_fecha) }}</span>
-                                  @if (fecha.prioridad && fecha.prioridad !== 'media') {
-                                    <span class="prioridad-badge prioridad-{{ fecha.prioridad }}">
-                                      <i class="fas fa-flag"></i>
-                                      {{ getPrioridadLabel(fecha.prioridad) }}
-                                    </span>
-                                  }
-                                </div>
-                                @if (fecha.completada) {
-                                  <div class="completada-checkmark">
-                                    <i class="fas fa-check-circle"></i>
-                                  </div>
-                                }
-                              </div>
-
-                              <!-- Cuerpo de la card -->
-                              <div class="fecha-card-body">
-                                <h4 class="fecha-titulo" [class.tachado]="fecha.completada">
-                                  {{ fecha.titulo }}
-                                </h4>
-
-                                @if (fecha.descripcion) {
-                                  <p class="fecha-descripcion">{{ fecha.descripcion }}</p>
-                                }
-
-                                @if (vistaGlobal && fecha.proyecto_titulo) {
-                                  <div class="proyecto-tag">
-                                    <i class="fas fa-project-diagram"></i>
-                                    {{ fecha.proyecto_titulo }}
-                                  </div>
-                                }
-
-                                <div class="fecha-meta-row">
-                                  <div class="meta-fecha">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    {{ formatearFecha(fecha.fecha || fecha.fecha_limite) }}
-                                  </div>
-                                  <span
-                                    class="conteo-badge"
-                                    [class]="getConteoRegresivo(fecha).clase"
-                                  >
-                                    <i class="fas fa-clock"></i>
-                                    {{ getConteoRegresivo(fecha).texto }}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <!-- Acciones (solo en vista de proyecto) -->
-                              @if (!vistaGlobal) {
-                                <div class="fecha-card-actions">
-                                  <button
-                                    class="btn-completar"
-                                    [class.activo]="fecha.completada"
-                                    (click)="toggleCompletada(fecha)"
-                                    [title]="fecha.completada ? 'Desmarcar como completada' : 'Marcar como completada'"
-                                  >
-                                    <i class="fas" [class.fa-check-circle]="fecha.completada" [class.fa-circle]="!fecha.completada"></i>
-                                    {{ fecha.completada ? 'Completada' : 'Completar' }}
-                                  </button>
-                                  <div class="actions-right">
-                                    <button class="btn-icon btn-edit" (click)="abrirModalEditarFecha(fecha)" title="Editar fecha">
-                                      <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-icon btn-delete" (click)="eliminarFecha(fecha)" title="Eliminar fecha">
-                                      <i class="fas fa-trash"></i>
-                                    </button>
-                                  </div>
-                                </div>
-                              }
-                            </div>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-
-                <!-- ===== VISTA TIMELINE ===== -->
-                @if (fechasFiltradas.length > 0 && vistaActual === 'timeline') {
-                  <div class="timeline-container">
-                    @for (fecha of fechasFiltradas; track fecha.id; let isLast = $last) {
-                      <div class="timeline-item" [class.completada]="fecha.completada">
-
-                        <!-- Eje vertical -->
-                        <div class="timeline-axis">
-                          <div class="timeline-dot tipo-dot-{{ fecha.tipo_fecha }}" [class.completada]="fecha.completada">
-                            <i [class]="fecha.completada ? 'fas fa-check' : getIconoTipoFecha(fecha.tipo_fecha)"></i>
-                          </div>
-                          @if (!isLast) {
-                            <div class="timeline-line"></div>
-                          }
-                        </div>
-
-                        <!-- Contenido -->
-                        <div class="timeline-card prioridad-borde-{{ fecha.prioridad || 'media' }}" [class.completada]="fecha.completada">
-                          <div class="timeline-fecha-label">
-                            <i class="fas fa-calendar-alt"></i>
-                            {{ formatearFecha(fecha.fecha || fecha.fecha_limite) }}
-                          </div>
-
-                          <div class="timeline-card-header">
-                            <h4 [class.tachado]="fecha.completada">{{ fecha.titulo }}</h4>
-                            <div class="timeline-badges">
-                              <span class="tipo-badge small">{{ getTipoFechaLabel(fecha.tipo_fecha) }}</span>
-                              @if (fecha.prioridad && fecha.prioridad !== 'media') {
-                                <span class="prioridad-badge prioridad-{{ fecha.prioridad }}">
-                                  {{ getPrioridadLabel(fecha.prioridad) }}
-                                </span>
-                              }
-                            </div>
-                          </div>
-
-                          @if (fecha.descripcion) {
-                            <p class="timeline-descripcion">{{ fecha.descripcion }}</p>
-                          }
-
-                          @if (vistaGlobal && fecha.proyecto_titulo) {
-                            <div class="proyecto-tag">
-                              <i class="fas fa-project-diagram"></i>
-                              {{ fecha.proyecto_titulo }}
-                            </div>
-                          }
-
-                          <div class="timeline-footer">
-                            <span class="conteo-badge" [class]="getConteoRegresivo(fecha).clase">
-                              <i class="fas fa-clock"></i>
-                              {{ getConteoRegresivo(fecha).texto }}
-                            </span>
-
-                            @if (!vistaGlobal) {
-                              <div class="timeline-actions">
-                                <button
-                                  class="btn-completar-sm"
-                                  [class.activo]="fecha.completada"
-                                  (click)="toggleCompletada(fecha)"
-                                  [title]="fecha.completada ? 'Desmarcar' : 'Marcar como completada'"
-                                >
-                                  <i class="fas" [class.fa-check-circle]="fecha.completada" [class.fa-circle]="!fecha.completada"></i>
-                                </button>
-                                <button class="btn-icon btn-edit sm" (click)="abrirModalEditarFecha(fecha)" title="Editar">
-                                  <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-icon btn-delete sm" (click)="eliminarFecha(fecha)" title="Eliminar">
-                                  <i class="fas fa-trash"></i>
-                                </button>
-                              </div>
-                            }
-                          </div>
-                        </div>
-
-                      </div>
-                    }
-                  </div>
-                }
-
-              </div>
-            }
+            <app-gestion-hitos
+              [projectId]="proyectoSeleccionado.id.toString()"
+              [cronogramaId]="cronogramaId"
+              [userRole]="profesor.rol_id?.toString() || '2'"
+              [userRut]="profesor.rut">
+            </app-gestion-hitos>
           </div>
         }
 
@@ -446,173 +130,3 @@
     </div>
   }
 </div>
-
-<!-- ===== MODAL: CREAR FECHA IMPORTANTE ===== -->
-@if (mostrarModalFecha) {
-  <div class="modal-overlay" (click)="cerrarModalFecha()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3><i class="fas fa-calendar-plus"></i> Nueva Fecha Importante</h3>
-        <button class="btn-close" (click)="cerrarModalFecha()">×</button>
-      </div>
-
-      <form (ngSubmit)="crearFechaImportante()" class="modal-form">
-
-        @if (error) {
-          <div class="form-alert error">
-            <i class="fas fa-exclamation-circle"></i> {{ error }}
-          </div>
-        }
-
-        <div class="form-group">
-          <label for="tituloFecha">Título <span class="required">*</span></label>
-          <input
-            type="text"
-            id="tituloFecha"
-            [(ngModel)]="nuevaFecha.titulo"
-            name="tituloFecha"
-            placeholder="Ej: Entrega del primer avance"
-            required
-          >
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="tipoFecha">Tipo <span class="required">*</span></label>
-            <select id="tipoFecha" [(ngModel)]="nuevaFecha.tipo_fecha" name="tipoFecha" required>
-              @for (tipo of tiposFecha; track tipo.value) {
-                <option [value]="tipo.value">{{ tipo.label }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="prioridadFecha">Prioridad <span class="required">*</span></label>
-            <select id="prioridadFecha" [(ngModel)]="nuevaFecha.prioridad" name="prioridadFecha" required>
-              @for (p of prioridades; track p.value) {
-                <option [value]="p.value">{{ p.label }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="fechaLimiteFecha">Fecha límite <span class="required">*</span></label>
-          <input
-            type="date"
-            id="fechaLimiteFecha"
-            [(ngModel)]="nuevaFecha.fecha_limite"
-            name="fechaLimiteFecha"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label for="descripcionFecha">Descripción</label>
-          <textarea
-            id="descripcionFecha"
-            [(ngModel)]="nuevaFecha.descripcion"
-            name="descripcionFecha"
-            rows="3"
-            placeholder="Describe los detalles de esta fecha importante..."
-          ></textarea>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="cerrarModalFecha()">
-            Cancelar
-          </button>
-          <button type="submit" class="btn-primary" [disabled]="loading">
-            @if (loading) { <i class="fas fa-spinner fa-spin"></i> Guardando... }
-            @else { <i class="fas fa-plus"></i> Crear Fecha }
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- ===== MODAL: EDITAR FECHA IMPORTANTE ===== -->
-@if (mostrarModalEditarFecha && fechaEditando) {
-  <div class="modal-overlay" (click)="cerrarModalEditarFecha()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3><i class="fas fa-edit"></i> Editar Fecha Importante</h3>
-        <button class="btn-close" (click)="cerrarModalEditarFecha()">×</button>
-      </div>
-
-      <form (ngSubmit)="guardarEdicionFecha()" class="modal-form">
-
-        @if (error) {
-          <div class="form-alert error">
-            <i class="fas fa-exclamation-circle"></i> {{ error }}
-          </div>
-        }
-
-        <div class="form-group">
-          <label for="tituloEdit">Título <span class="required">*</span></label>
-          <input
-            type="text"
-            id="tituloEdit"
-            [(ngModel)]="fechaEditando.titulo"
-            name="tituloEdit"
-            placeholder="Título de la fecha importante"
-            required
-          >
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="tipoEdit">Tipo <span class="required">*</span></label>
-            <select id="tipoEdit" [(ngModel)]="fechaEditando.tipo_fecha" name="tipoEdit" required>
-              @for (tipo of tiposFecha; track tipo.value) {
-                <option [value]="tipo.value">{{ tipo.label }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="prioridadEdit">Prioridad <span class="required">*</span></label>
-            <select id="prioridadEdit" [(ngModel)]="fechaEditando.prioridad" name="prioridadEdit" required>
-              @for (p of prioridades; track p.value) {
-                <option [value]="p.value">{{ p.label }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="fechaEdit">Fecha límite <span class="required">*</span></label>
-          <input
-            type="date"
-            id="fechaEdit"
-            [(ngModel)]="fechaEditando.fecha_limite"
-            name="fechaEdit"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label for="descripcionEdit">Descripción</label>
-          <textarea
-            id="descripcionEdit"
-            [(ngModel)]="fechaEditando.descripcion"
-            name="descripcionEdit"
-            rows="3"
-            placeholder="Describe los detalles..."
-          ></textarea>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="cerrarModalEditarFecha()">
-            Cancelar
-          </button>
-          <button type="submit" class="btn-primary" [disabled]="loading">
-            @if (loading) { <i class="fas fa-spinner fa-spin"></i> Guardando... }
-            @else { <i class="fas fa-save"></i> Guardar Cambios }
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-}

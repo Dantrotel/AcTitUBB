@@ -54,7 +54,7 @@ export class GestionProfesoresComponent implements OnInit {
     this.apiService.getUsuarios().subscribe({
       next: (data: any) => {
         const todos = Array.isArray(data) ? data : [];
-        this.profesores = todos.filter((u: any) => parseInt(u.rol_id) === 2);
+        this.profesores = todos.filter((u: any) => parseInt(u.rol_id) === 2 || parseInt(u.rol_id) === 3);
         this.loading = false;
         this.cdr.detectChanges();
       },

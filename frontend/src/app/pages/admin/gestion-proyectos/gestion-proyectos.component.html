@@ -132,7 +132,7 @@
             <td class="td-informante">
               <select
                 class="select-informante"
-                [value]="proyecto.profesor_informante_rut || ''"
+                [ngModel]="proyecto.profesor_informante_rut || ''"
                 (change)="actualizarInformante(proyecto, $event)"
                 [disabled]="asignandoInformante[proyecto.id]"
                 title="Asignar informante"

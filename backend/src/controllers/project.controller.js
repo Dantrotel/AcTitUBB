@@ -1280,6 +1280,56 @@ const obtenerFechasImportantes = async (req, res) => {
     }
 };
 
+// ===== REVISIONES INFORMANTE =====
+
+const obtenerRevisionesInformante = async (req, res) => {
+    try {
+        const informante_rut = req.user.rut;
+        const revisiones = await ProjectService.obtenerRevisionesInformante(informante_rut);
+        res.json({ success: true, data: revisiones });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const revisarHitoComoInformante = async (req, res) => {
+    try {
+        const { revisionId } = req.params;
+        const informante_rut = req.user.rut;
+        const { comentarios, estado } = req.body;
+        const archivo_retroalimentacion = req.file?.filename ?? null;
+        const nombre_archivo_retroalimentacion = req.file?.originalname ?? null;
+
+        if (!comentarios || !estado) {
+            return res.status(400).json({ message: 'Faltan campos requeridos: comentarios, estado' });
+        }
+        if (!['aprobado', 'rechazado'].includes(estado)) {
+            return res.status(400).json({ message: 'Estado debe ser "aprobado" o "rechazado"' });
+        }
+
+        const success = await ProjectService.revisarHitoComoInformante(revisionId, informante_rut, {
+            comentarios, estado, archivo_retroalimentacion, nombre_archivo_retroalimentacion
+        });
+
+        if (!success) {
+            return res.status(404).json({ message: 'Revisión no encontrada o no autorizada' });
+        }
+        res.json({ success: true, message: 'Revisión enviada exitosamente' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const obtenerDocumentosHitos = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const docs = await ProjectService.obtenerDocumentosHitos(projectId);
+        res.json({ success: true, data: docs });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export const ProjectController = {
     createProject,
     getProjects,
@@ -1311,6 +1361,9 @@ export const ProjectController = {
     eliminarHitoCronograma,
     entregarHito,
     revisarHito,
+    obtenerRevisionesInformante,
+    revisarHitoComoInformante,
+    obtenerDocumentosHitos,
     obtenerEntregasHito,
     crearEntregaHito,
     actualizarEntregaHito,

@@ -37,7 +37,7 @@ export class GestionProyectosComponent implements OnInit {
   cargarProfesores(): void {
     this.apiService.getProfesores().subscribe({
       next: (data: any) => {
-        this.profesores = (data || []).filter((u: any) => u.rol_id === 2);
+        this.profesores = (data || []).filter((u: any) => u.rol_id === 2 || u.rol_id === 3 || String(u.rol_id) === '2' || String(u.rol_id) === '3');
       },
       error: () => {}
     });

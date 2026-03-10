@@ -1,0 +1,129 @@
+<div class="informante-container">
+
+  <div class="informante-header">
+    <h2><i class="fas fa-user-check"></i> Revisiones como Profesor Informante</h2>
+    <p class="subtitle">Documentos aprobados por el profesor guía que requieren tu evaluación</p>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="cargando">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Cargando revisiones...</span>
+  </div>
+
+  <!-- Error -->
+  <div class="error-banner" *ngIf="mensajeError">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ mensajeError }}
+  </div>
+
+  <!-- Sin revisiones pendientes -->
+  <div class="empty-state" *ngIf="!cargando && pendientes.length === 0 && completadas.length === 0">
+    <i class="fas fa-check-circle"></i>
+    <p>No tienes revisiones pendientes como informante</p>
+  </div>
+
+  <!-- ===== PENDIENTES ===== -->
+  <div class="seccion" *ngIf="pendientes.length > 0">
+    <h3 class="seccion-title">
+      <span class="badge badge-warning">{{ pendientes.length }}</span>
+      Pendientes de revisión
+    </h3>
+
+    <div class="revision-card pendiente" *ngFor="let r of pendientes">
+      <div class="card-header">
+        <div class="card-info">
+          <h4>{{ r.nombre_hito }}</h4>
+          <span class="proyecto-tag">
+            <i class="fas fa-project-diagram"></i> {{ r.proyecto_titulo }}
+          </span>
+          <span class="estudiante-tag">
+            <i class="fas fa-user-graduate"></i> {{ r.estudiante_nombre }}
+          </span>
+        </div>
+        <div class="card-meta">
+          <span class="fecha-limite">
+            <i class="fas fa-calendar"></i>
+            Límite: {{ formatearFecha(r.fecha_limite) }}
+          </span>
+          <span class="dias-tag" *ngIf="r.dias_desde_entrega !== null">
+            {{ r.dias_desde_entrega }} días desde entrega
+          </span>
+          <button class="btn-ver-doc" (click)="descargarDocumento(r)" *ngIf="r.archivo_entrega">
+            <i class="fas fa-file-download"></i> Descargar documento
+          </button>
+          <button class="btn-revisar" (click)="toggleRevision(r)">
+            <i class="fas" [class.fa-chevron-up]="revisionAbiertaId === r.id" [class.fa-pencil-alt]="revisionAbiertaId !== r.id"></i>
+            {{ revisionAbiertaId === r.id ? 'Cerrar' : 'Evaluar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Descripción del hito -->
+      <p class="hito-desc" *ngIf="r.hito_descripcion">{{ r.hito_descripcion }}</p>
+      <p class="comentarios-estudiante" *ngIf="r.comentarios_estudiante">
+        <strong>Comentarios del estudiante:</strong> {{ r.comentarios_estudiante }}
+      </p>
+
+      <!-- Panel de revisión inline -->
+      <div class="revision-panel" *ngIf="revisionAbiertaId === r.id">
+        <div class="revision-form">
+          <div class="form-group">
+            <label>Comentarios de evaluación <span class="req">*</span></label>
+            <textarea [(ngModel)]="comentarios" rows="4"
+              placeholder="Escribe tu evaluación detallada del informe..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Documento de retroalimentación (opcional)</label>
+            <input type="file" (change)="onArchivoChange($event)" accept=".pdf,.doc,.docx">
+            <small *ngIf="archivoRevisionNombre">{{ archivoRevisionNombre }}</small>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-aprobar" (click)="enviarRevision('aprobado')" [disabled]="enviando">
+              <i class="fas fa-check"></i>
+              {{ enviando ? 'Enviando...' : 'Aprobar' }}
+            </button>
+            <button class="btn-rechazar" (click)="enviarRevision('rechazado')" [disabled]="enviando">
+              <i class="fas fa-times"></i>
+              {{ enviando ? 'Enviando...' : 'Solicitar correcciones' }}
+            </button>
+            <button class="btn-cancelar" (click)="cerrarRevision()" [disabled]="enviando">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COMPLETADAS ===== -->
+  <div class="seccion" *ngIf="completadas.length > 0">
+    <h3 class="seccion-title">Historial de revisiones</h3>
+
+    <div class="revision-card" [class.aprobado]="r.estado === 'aprobado'" [class.rechazado]="r.estado === 'rechazado'"
+         *ngFor="let r of completadas">
+      <div class="card-header">
+        <div class="card-info">
+          <h4>{{ r.nombre_hito }}</h4>
+          <span class="proyecto-tag"><i class="fas fa-project-diagram"></i> {{ r.proyecto_titulo }}</span>
+          <span class="estudiante-tag"><i class="fas fa-user-graduate"></i> {{ r.estudiante_nombre }}</span>
+        </div>
+        <div class="card-meta">
+          <span class="estado-badge" [class.badge-success]="r.estado === 'aprobado'" [class.badge-danger]="r.estado === 'rechazado'">
+            <i class="fas" [class.fa-check]="r.estado === 'aprobado'" [class.fa-times]="r.estado === 'rechazado'"></i>
+            {{ r.estado === 'aprobado' ? 'Aprobado' : 'Correcciones solicitadas' }}
+          </span>
+          <span class="fecha-revision" *ngIf="r.fecha_revision">
+            Revisado: {{ formatearFecha(r.fecha_revision) }}
+          </span>
+        </div>
+      </div>
+      <p class="comentarios-revision" *ngIf="r.comentarios">
+        <strong>Tu evaluación:</strong> {{ r.comentarios }}
+      </p>
+    </div>
+  </div>
+
+</div>

@@ -18,16 +18,22 @@
           {{ estadisticasProyectos.enDesarrollo }} en desarrollo
         </div>
       }
-      @if (dashboard?.avances_pendientes?.length > 0) {
+      @if (dashboard?.hitos_pendientes?.length > 0) {
         <div class="chip chip-orange">
           <i class="fas fa-exclamation-circle"></i>
-          {{ dashboard.avances_pendientes.length }} por revisar
+          {{ dashboard.hitos_pendientes.length }} por revisar
         </div>
       }
       @if (estadisticas.pendientes > 0) {
         <div class="chip chip-red">
           <i class="fas fa-clock"></i>
           {{ estadisticas.pendientes }} pendientes
+        </div>
+      }
+      @if (revisionesInformantePendientes > 0) {
+        <div class="chip chip-purple">
+          <i class="fas fa-user-check"></i>
+          {{ revisionesInformantePendientes }} informante
         </div>
       }
     </div>
@@ -50,28 +56,28 @@
     <!-- ========== COLUMNA IZQUIERDA ========== -->
     <div class="left-col">
 
-      <!-- Avances pendientes de revisión (LO MÁS URGENTE) -->
+      <!-- Hitos pendientes de revisión (LO MÁS URGENTE) -->
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">
             <i class="fas fa-clipboard-check"></i>
-            <h3>Avances pendientes de revisión</h3>
+            <h3>Hitos pendientes de revisión</h3>
           </div>
-          <span class="count-badge" [class.badge-danger]="(dashboard?.avances_pendientes?.length || 0) > 0">
-            {{ dashboard?.avances_pendientes?.length || 0 }}
+          <span class="count-badge" [class.badge-danger]="(dashboard?.hitos_pendientes?.length || 0) > 0">
+            {{ dashboard?.hitos_pendientes?.length || 0 }}
           </span>
         </div>
 
-        @if (dashboard?.avances_pendientes?.length > 0) {
-          @for (avance of dashboard.avances_pendientes.slice(0, 5); track avance.id) {
-            <div class="item-row clickable" (click)="navegarAProyecto(avance.proyecto_id)">
+        @if (dashboard?.hitos_pendientes?.length > 0) {
+          @for (hito of dashboard.hitos_pendientes.slice(0, 5); track hito.id) {
+            <div class="item-row clickable" (click)="navegarAProyecto(hito.proyecto_id)">
               <div class="item-icon icon-blue"><i class="fas fa-file-upload"></i></div>
               <div class="item-body">
-                <span class="item-title">{{ avance.titulo }}</span>
+                <span class="item-title">{{ hito.titulo }}</span>
                 <span class="item-sub">
-                  <i class="fas fa-folder"></i> {{ avance.proyecto_titulo }}
+                  <i class="fas fa-folder"></i> {{ hito.proyecto_titulo }}
                   &nbsp;·&nbsp;
-                  <i class="fas fa-user-graduate"></i> {{ avance.estudiante_nombre }}
+                  <i class="fas fa-user-graduate"></i> {{ hito.estudiante_nombre }}
                 </span>
               </div>
               <div class="item-end">
@@ -80,18 +86,57 @@
               </div>
             </div>
           }
-          @if (dashboard.avances_pendientes.length > 5) {
+          @if (dashboard.hitos_pendientes.length > 5) {
             <div class="panel-footer">
-              <span class="footer-note">+{{ dashboard.avances_pendientes.length - 5 }} avance(s) más</span>
+              <span class="footer-note">+{{ dashboard.hitos_pendientes.length - 5 }} hito(s) más</span>
             </div>
           }
         } @else {
           <div class="empty-row">
             <i class="fas fa-check-double success-icon"></i>
-            <span>No hay avances pendientes de revisión</span>
+            <span>No hay hitos pendientes de revisión</span>
           </div>
         }
       </div>
+
+      <!-- Revisiones como Informante -->
+      @if ((revisionesInformante?.length ?? 0) > 0) {
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i class="fas fa-user-check"></i>
+              <h3>Revisiones como Informante</h3>
+            </div>
+            <span class="count-badge" [class.badge-danger]="revisionesInformantePendientes > 0">
+              {{ revisionesInformantePendientes }}
+            </span>
+          </div>
+          @for (r of revisionesInformante.slice(0, 4); track r.id) {
+            @if (r.estado === 'pendiente') {
+              <div class="item-row clickable" (click)="abrirRevisionesInformante()">
+                <div class="item-icon icon-purple"><i class="fas fa-file-signature"></i></div>
+                <div class="item-body">
+                  <span class="item-title">{{ r.nombre_hito }}</span>
+                  <span class="item-sub">
+                    <i class="fas fa-folder"></i> {{ r.proyecto_titulo }}
+                    &nbsp;·&nbsp;
+                    <i class="fas fa-user-graduate"></i> {{ r.estudiante_nombre }}
+                  </span>
+                </div>
+                <div class="item-end">
+                  <span class="tag tag-purple">Informante</span>
+                  <i class="fas fa-chevron-right arrow"></i>
+                </div>
+              </div>
+            }
+          }
+          <div class="panel-footer">
+            <button class="btn-primary-sm" (click)="abrirRevisionesInformante()">
+              Ver todas <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- Proyectos asignados -->
       <div class="panel">
@@ -322,6 +367,19 @@
         </div>
       }
 
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL REVISIONES INFORMANTE ===== -->
+<div class="modal-overlay" *ngIf="mostrarRevisionesInformante" (click)="cerrarRevisionesInformante()">
+  <div class="modal-informante" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-check"></i> Mis Revisiones como Informante</h2>
+      <button class="btn-close" (click)="cerrarRevisionesInformante()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <app-revision-hitos-informante></app-revision-hitos-informante>
     </div>
   </div>
 </div>

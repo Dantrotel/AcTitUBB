@@ -178,8 +178,8 @@ export class AppLayoutComponent implements OnInit {
             label: 'Asignaciones',
             icon: 'fas fa-user-tie',
             children: [
-              { label: 'Propuestas', icon: 'fas fa-file-alt', route: '/admin/propuestas' },
-              { label: 'Proyecto', icon: 'fas fa-rocket', route: '/admin/proyectos' },
+              { label: 'Revisor', icon: 'fas fa-file-alt', route: '/admin/propuestas' },
+              { label: 'Informante', icon: 'fas fa-rocket', route: '/admin/proyectos' },
               { label: 'Comisión', icon: 'fas fa-users-cog', route: '/admin/comision' }
             ]
           },

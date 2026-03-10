@@ -44,24 +44,25 @@ export const obtenerDashboardEstudiante = async (estudiante_rut) => {
             LIMIT 5
         `, [estudiante_rut]);
 
-        // 3. Avances pendientes o con comentarios
-        const [avancesPendientes] = await pool.execute(`
-            SELECT 
-                a.id,
-                a.titulo,
-                a.fecha_envio,
-                a.estado_id,
+        // 3. Hitos entregados pendientes de revisión o con retroalimentación
+        const [hitosPendientes] = await pool.execute(`
+            SELECT
+                h.id,
+                h.nombre_hito as titulo,
+                h.fecha_entrega as fecha_envio,
+                h.estado,
                 p.titulo as proyecto_titulo,
-                CASE 
-                    WHEN a.comentarios_profesor IS NOT NULL THEN 'con_comentarios'
+                CASE
+                    WHEN h.comentarios_profesor IS NOT NULL THEN 'con_comentarios'
                     ELSE 'pendiente'
                 END as estado_revision
-            FROM avances a
-            INNER JOIN proyectos p ON a.proyecto_id = p.id
+            FROM hitos_cronograma h
+            INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+            INNER JOIN proyectos p ON cp.proyecto_id = p.id
             INNER JOIN estudiantes_proyectos est_p ON p.id = est_p.proyecto_id
-            WHERE est_p.estudiante_rut = ? 
-                AND a.estado_id IN (1, 2, 3)
-            ORDER BY a.fecha_envio DESC
+            WHERE est_p.estudiante_rut = ?
+                AND h.estado IN ('entregado', 'revisado', 'rechazado')
+            ORDER BY h.fecha_entrega DESC
             LIMIT 5
         `, [estudiante_rut]);
 
@@ -83,7 +84,7 @@ export const obtenerDashboardEstudiante = async (estudiante_rut) => {
         return {
             proyectos,
             proximos_hitos: proximosHitos,
-            avances_pendientes: avancesPendientes,
+            hitos_pendientes: hitosPendientes,
             propuestas
         };
     } catch (error) {
@@ -120,41 +121,43 @@ export const obtenerDashboardProfesor = async (profesor_rut) => {
             GROUP BY rp.nombre
         `, [profesor_rut]);
 
-        // 3. Avances pendientes de revisar
-        const [avancesPendientes] = await pool.execute(`
-            SELECT 
-                a.id,
-                a.titulo,
-                a.fecha_envio,
+        // 3. Hitos entregados pendientes de revisar
+        const [hitosPendientes] = await pool.execute(`
+            SELECT
+                h.id,
+                h.nombre_hito as titulo,
+                h.fecha_entrega as fecha_envio,
                 p.id as proyecto_id,
                 p.titulo as proyecto_titulo,
                 u.nombre as estudiante_nombre,
-                DATEDIFF(CURDATE(), a.fecha_envio) as dias_sin_revisar
-            FROM avances a
-            INNER JOIN proyectos p ON a.proyecto_id = p.id
+                DATEDIFF(CURDATE(), h.fecha_entrega) as dias_sin_revisar
+            FROM hitos_cronograma h
+            INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+            INNER JOIN proyectos p ON cp.proyecto_id = p.id
             INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
             LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
-            WHERE ap.profesor_rut = ? 
+            WHERE ap.profesor_rut = ?
                 AND ap.activo = TRUE
-                AND a.estado_id = 2
-                AND a.comentarios_profesor IS NULL
-            ORDER BY a.fecha_envio ASC
+                AND h.estado = 'entregado'
+            ORDER BY h.fecha_entrega ASC
             LIMIT 10
         `, [profesor_rut]);
 
-        // 4. Estadísticas de tiempos de revisión
+        // 4. Estadísticas de tiempos de revisión (usa updated_at como fecha de revisión)
         const [estadisticasTiempos] = await pool.execute(`
-            SELECT 
-                AVG(DATEDIFF(a.fecha_revision, a.fecha_envio)) as promedio_dias_revision,
-                MIN(DATEDIFF(a.fecha_revision, a.fecha_envio)) as minimo_dias_revision,
-                MAX(DATEDIFF(a.fecha_revision, a.fecha_envio)) as maximo_dias_revision,
+            SELECT
+                AVG(DATEDIFF(h.updated_at, h.fecha_entrega)) as promedio_dias_revision,
+                MIN(DATEDIFF(h.updated_at, h.fecha_entrega)) as minimo_dias_revision,
+                MAX(DATEDIFF(h.updated_at, h.fecha_entrega)) as maximo_dias_revision,
                 COUNT(*) as total_revisados
-            FROM avances a
-            INNER JOIN proyectos p ON a.proyecto_id = p.id
+            FROM hitos_cronograma h
+            INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+            INNER JOIN proyectos p ON cp.proyecto_id = p.id
             INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id
-            WHERE ap.profesor_rut = ? 
-                AND a.fecha_revision IS NOT NULL
-                AND a.fecha_revision >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+            WHERE ap.profesor_rut = ?
+                AND h.estado IN ('revisado', 'aprobado', 'rechazado')
+                AND h.fecha_entrega IS NOT NULL
+                AND h.updated_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
         `, [profesor_rut]);
 
         // 5. Propuestas pendientes de revisar
@@ -177,7 +180,7 @@ export const obtenerDashboardProfesor = async (profesor_rut) => {
         return {
             propuestas_por_estado: propuestasPorEstado,
             proyectos_por_rol: proyectosPorRol,
-            avances_pendientes: avancesPendientes,
+            hitos_pendientes: hitosPendientes,
             propuestas_pendientes: propuestasPendientes,
             estadisticas_tiempos: estadisticasTiempos[0] || {
                 promedio_dias_revision: 0,

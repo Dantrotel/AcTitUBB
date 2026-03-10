@@ -40,13 +40,13 @@ export const crearPropuesta = async ({
         tipo_proyecto ?? 'PT',
         modalidad,
         numero_estudiantes,
-        complejidad_estimada,
+        complejidad_estimada ?? 'media',
         justificacion_complejidad ?? null,
         duracion_estimada_semestres,
-        area_tematica ?? null,
-        objetivos_generales ?? null,
-        objetivos_especificos ?? null,
-        metodologia_propuesta ?? null,
+        area_tematica ?? '',
+        objetivos_generales ?? '',
+        objetivos_especificos ?? '',
+        metodologia_propuesta ?? '',
         recursos_necesarios ?? null,
         bibliografia ?? null
       ]
@@ -87,13 +87,13 @@ export const actualizarPropuesta = async (id, {
     fecha_envio,
     modalidad, 
     numero_estudiantes, 
-    complejidad_estimada, 
+    complejidad_estimada ?? 'media',
     justificacion_complejidad ?? null,
-    duracion_estimada_semestres, 
-    area_tematica, 
-    objetivos_generales, 
-    objetivos_especificos,
-    metodologia_propuesta, 
+    duracion_estimada_semestres,
+    area_tematica ?? '',
+    objetivos_generales ?? '',
+    objetivos_especificos ?? '',
+    metodologia_propuesta ?? '',
     recursos_necesarios ?? null, 
     bibliografia ?? null
   ];
@@ -283,9 +283,13 @@ export const obtenerPropuestaPorId = async (id) => {
       (SELECT up2.nombre FROM asignaciones_propuestas ap2 
        INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
        WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_nombre,
-      (SELECT up2.email FROM asignaciones_propuestas ap2 
-       INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut 
-       WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_email
+      (SELECT up2.email FROM asignaciones_propuestas ap2
+       INNER JOIN usuarios up2 ON ap2.profesor_rut = up2.rut
+       WHERE ap2.propuesta_id = p.id LIMIT 1) AS profesor_email,
+      (SELECT ug.nombre FROM guias_estudiantes ge
+       INNER JOIN usuarios ug ON ge.profesor_guia_rut = ug.rut
+       WHERE ge.estudiante_rut = p.estudiante_rut AND ge.activo = TRUE
+       ORDER BY ge.fecha_asignacion DESC LIMIT 1) AS nombre_profesor_guia
     FROM propuestas p
     LEFT JOIN estados_propuestas ep ON p.estado_id = ep.id
     LEFT JOIN usuarios ue ON p.estudiante_rut = ue.rut
