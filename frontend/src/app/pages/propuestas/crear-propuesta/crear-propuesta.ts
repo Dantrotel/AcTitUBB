@@ -24,6 +24,11 @@ export class CrearPropuestaComponent {
   continua_ap = false;
   tieneAPCompletado = false; // se detecta al cargar el componente
 
+  // Inscripción de ramo activa
+  inscripcionActiva: { tipo_ramo: 'AP' | 'PT' } | null = null;
+  cargandoInscripcion = true;
+  tieneInscripcion = false;
+
   // Nuevos campos del modelo
   modalidad = '';
   numero_estudiantes = '';
@@ -51,7 +56,7 @@ export class CrearPropuestaComponent {
   get requiereDetalles() { return this.tipo_proyecto === 'PT' && !this.continua_ap; }
   get tieneGuia()        { return this.guiaAsignado !== null; }
   get haySemestreActivo() { return this.semestreActivo !== null; }
-  get puedeEnviar()    { return this.tieneGuia && this.haySemestreActivo && !this.cargandoGuia && !this.cargandoSemestre; }
+  get puedeEnviar()    { return this.tieneGuia && this.haySemestreActivo && !this.cargandoGuia && !this.cargandoSemestre && !this.cargandoInscripcion; }
 
   constructor(
     private apiService: ApiService,
@@ -62,6 +67,7 @@ export class CrearPropuestaComponent {
     this.verificarAPCompletado();
     this.cargarGuia();
     this.cargarSemestreActivo();
+    this.cargarInscripcionActiva();
   }
 
   /** Carga el semestre activo con inscripciones abiertas */
@@ -107,6 +113,27 @@ export class CrearPropuestaComponent {
     });
   }
 
+  /** Carga la inscripción de ramo activa y ajusta tipo y duración automáticamente */
+  cargarInscripcionActiva() {
+    this.cargandoInscripcion = true;
+    this.apiService.getInscripcionRamoActiva().subscribe({
+      next: (res: any) => {
+        this.tieneInscripcion = res.tieneInscripcion;
+        this.inscripcionActiva = res.tieneInscripcion ? res.data : null;
+        if (this.inscripcionActiva) {
+          this.tipo_proyecto = this.inscripcionActiva.tipo_ramo;
+          this.configurarOpcionesDuracion();
+        }
+        this.cargandoInscripcion = false;
+      },
+      error: () => {
+        this.inscripcionActiva = null;
+        this.tieneInscripcion = false;
+        this.cargandoInscripcion = false;
+      }
+    });
+  }
+
   onTipoProyectoChange() {
     // Al cambiar a AP, desactiva continua_ap (solo aplica para PT)
     if (this.tipo_proyecto === 'AP') this.continua_ap = false;
@@ -128,16 +155,24 @@ export class CrearPropuestaComponent {
 
   configurarOpcionesDuracion() {
     // IECI (Ingeniería en Computación e Informática) = solo 1 semestre
-    // ICINF (Ingeniería Civil en Informática) = 1 o 2 semestres
-    if (this.carreraUsuario.toLowerCase().includes('computación') && 
-        !this.carreraUsuario.toLowerCase().includes('civil')) {
-      // IECI - Solo 1 semestre
-      this.opcionesDuracion = [
-        { value: '1', label: '1 Semestre' }
-      ];
-      this.duracion_estimada_semestres = '1'; // Pre-seleccionar única opción
+    // ICINF (Ingeniería Civil en Informática) = sigue la regla de inscripción (AP=2, PT=1)
+    const esIECI = this.carreraUsuario.toLowerCase().includes('computación') &&
+                   !this.carreraUsuario.toLowerCase().includes('civil');
+
+    if (esIECI) {
+      // IECI - Solo 1 semestre sin importar el tipo
+      this.opcionesDuracion = [{ value: '1', label: '1 Semestre' }];
+      this.duracion_estimada_semestres = '1';
+    } else if (this.inscripcionActiva?.tipo_ramo === 'AP') {
+      // AP - 2 semestres automático
+      this.opcionesDuracion = [{ value: '2', label: '2 Semestres' }];
+      this.duracion_estimada_semestres = '2';
+    } else if (this.inscripcionActiva?.tipo_ramo === 'PT') {
+      // PT - 1 semestre automático
+      this.opcionesDuracion = [{ value: '1', label: '1 Semestre' }];
+      this.duracion_estimada_semestres = '1';
     } else {
-      // ICINF y otras carreras - 1 o 2 semestres
+      // Sin inscripción conocida - permitir selección libre
       this.opcionesDuracion = [
         { value: '1', label: '1 Semestre' },
         { value: '2', label: '2 Semestres' }
@@ -174,6 +209,10 @@ export class CrearPropuestaComponent {
       this.mostrarEstudiantesAdicionales = false;
       this.estudiantes_adicionales = [];
     }
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 
   private validarRUT(rut: string): boolean {

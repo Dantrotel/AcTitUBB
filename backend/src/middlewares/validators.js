@@ -127,33 +127,37 @@ export const crearPropuestaSchema = Joi.object({
   area_tematica: Joi.string()
     .min(3)
     .max(100)
-    .required()
+    .optional()
+    .allow('', null)
     .messages({
-      'string.min': 'Área temática debe tener al menos 3 caracteres',
-      'any.required': 'area_tematica es requerida'
+      'string.min': 'Área temática debe tener al menos 3 caracteres'
     }),
   objetivos_generales: Joi.string()
     .min(50)
     .max(2000)
-    .required()
+    .optional()
+    .allow('', null)
     .messages({
       'string.min': 'Objetivos generales deben tener al menos 50 caracteres'
     }),
   objetivos_especificos: Joi.string()
     .min(50)
     .max(2000)
-    .required(),
+    .optional()
+    .allow('', null),
   metodologia_propuesta: Joi.string()
     .min(50)
     .max(3000)
-    .required(),
+    .optional()
+    .allow('', null),
   resultados_esperados: Joi.string()
     .max(2000)
     .optional()
     .allow('', null),
   complejidad_estimada: Joi.string()
     .valid('baja', 'media', 'alta')
-    .required(),
+    .optional()
+    .allow('', null),
   numero_estudiantes: Joi.number()
     .integer()
     .min(1)
@@ -172,19 +176,8 @@ export const crearPropuestaSchema = Joi.object({
       'string.pattern.base': 'Cada RUT debe tener formato válido (ej: 12345678-9)'
     }),
   justificacion_complejidad: Joi.string()
-    .when('numero_estudiantes', {
-      is: 2,
-      then: Joi.when('complejidad_estimada', {
-        is: 'baja',
-        then: Joi.string().min(100).required()
-          .messages({
-            'any.required': 'Justificación es requerida para 2 estudiantes con complejidad baja',
-            'string.min': 'Justificación debe tener al menos 100 caracteres'
-          }),
-        otherwise: Joi.optional().allow('', null)
-      }),
-      otherwise: Joi.optional().allow('', null)
-    }),
+    .optional()
+    .allow('', null),
   duracion_estimada_semestres: Joi.number()
     .integer()
     .min(1)
@@ -242,29 +235,33 @@ export const actualizarPropuestaSchema = Joi.object({
   area_tematica: Joi.string()
     .min(3)
     .max(100)
-    .required()
+    .optional()
+    .allow('', null)
     .messages({
-      'string.min': 'Área temática debe tener al menos 3 caracteres',
-      'any.required': 'area_tematica es requerida'
+      'string.min': 'Área temática debe tener al menos 3 caracteres'
     }),
   objetivos_generales: Joi.string()
     .min(50)
     .max(2000)
-    .required()
+    .optional()
+    .allow('', null)
     .messages({
       'string.min': 'Objetivos generales deben tener al menos 50 caracteres'
     }),
   objetivos_especificos: Joi.string()
     .min(50)
     .max(2000)
-    .required(),
+    .optional()
+    .allow('', null),
   metodologia_propuesta: Joi.string()
     .min(50)
     .max(3000)
-    .required(),
+    .optional()
+    .allow('', null),
   complejidad_estimada: Joi.string()
     .valid('baja', 'media', 'alta')
-    .required(),
+    .optional()
+    .allow('', null),
   numero_estudiantes: Joi.number()
     .integer()
     .min(1)
@@ -283,19 +280,8 @@ export const actualizarPropuestaSchema = Joi.object({
       'string.pattern.base': 'Cada RUT debe tener formato válido (ej: 12345678-9)'
     }),
   justificacion_complejidad: Joi.string()
-    .when('numero_estudiantes', {
-      is: 2,
-      then: Joi.when('complejidad_estimada', {
-        is: 'baja',
-        then: Joi.string().min(100).required()
-          .messages({
-            'any.required': 'Justificación es requerida para 2 estudiantes con complejidad baja',
-            'string.min': 'Justificación debe tener al menos 100 caracteres'
-          }),
-        otherwise: Joi.optional().allow('', null)
-      }),
-      otherwise: Joi.optional().allow('', null)
-    }),
+    .optional()
+    .allow('', null),
   duracion_estimada_semestres: Joi.number()
     .integer()
     .min(1)

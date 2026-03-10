@@ -261,7 +261,7 @@ export const revisarHito = async (hito_id, { comentarios_profesor, calificacion,
         'actualizado_por_rut = ?',
         'updated_at = NOW()'
     ];
-    const values = [comentarios_profesor, calificacion, estado, actualizado_por_rut];
+    const values = [comentarios_profesor, calificacion ?? null, estado, actualizado_por_rut ?? null];
 
     if (archivo_retroalimentacion !== undefined) {
         setClauses.push('archivo_retroalimentacion = ?');
@@ -279,6 +279,107 @@ export const revisarHito = async (hito_id, { comentarios_profesor, calificacion,
         values
     );
     return result.affectedRows > 0;
+};
+
+// ============= REVISIONES INFORMANTE =============
+
+export const crearRevisionesInformante = async (hito_id, proyecto_id) => {
+    // Buscar profesores informantes asignados al proyecto
+    const [informantes] = await pool.execute(`
+        SELECT ap.profesor_rut
+        FROM asignaciones_proyectos ap
+        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+        WHERE ap.proyecto_id = ? AND ap.activo = TRUE
+          AND rp.nombre = 'Profesor Informante'
+    `, [proyecto_id]);
+
+    if (informantes.length === 0) return 0;
+
+    for (const inf of informantes) {
+        await pool.execute(
+            `INSERT IGNORE INTO revisiones_informante (hito_id, proyecto_id, informante_rut)
+             VALUES (?, ?, ?)`,
+            [hito_id, proyecto_id, inf.profesor_rut]
+        );
+    }
+    return informantes.length;
+};
+
+export const obtenerRevisionesInformanteByProfesor = async (informante_rut) => {
+    const [rows] = await pool.execute(`
+        SELECT
+            ri.id,
+            ri.hito_id,
+            ri.proyecto_id,
+            ri.estado,
+            ri.comentarios,
+            ri.calificacion,
+            ri.fecha_revision,
+            h.nombre_hito,
+            h.descripcion as hito_descripcion,
+            h.tipo_hito,
+            h.fecha_limite,
+            h.archivo_entrega,
+            h.nombre_archivo_original,
+            h.comentarios_estudiante,
+            p.titulo as proyecto_titulo,
+            u.nombre as estudiante_nombre,
+            DATEDIFF(CURDATE(), h.fecha_entrega) as dias_desde_entrega
+        FROM revisiones_informante ri
+        INNER JOIN hitos_cronograma h ON ri.hito_id = h.id
+        INNER JOIN proyectos p ON ri.proyecto_id = p.id
+        LEFT JOIN estudiantes_proyectos ep ON p.id = ep.proyecto_id
+        LEFT JOIN usuarios u ON ep.estudiante_rut = u.rut
+        WHERE ri.informante_rut = ?
+        ORDER BY ri.estado ASC, h.fecha_limite ASC
+    `, [informante_rut]);
+    return rows;
+};
+
+export const actualizarRevisionInformante = async (revision_id, informante_rut, { comentarios, estado, archivo_retroalimentacion, nombre_archivo_retroalimentacion }) => {
+    const [result] = await pool.execute(`
+        UPDATE revisiones_informante
+        SET estado = ?,
+            comentarios = ?,
+            archivo_retroalimentacion = ?,
+            nombre_archivo_retroalimentacion = ?,
+            fecha_revision = NOW(),
+            updated_at = NOW()
+        WHERE id = ? AND informante_rut = ?
+    `, [estado, comentarios, archivo_retroalimentacion ?? null, nombre_archivo_retroalimentacion ?? null, revision_id, informante_rut]);
+    return result.affectedRows > 0;
+};
+
+export const obtenerDocumentosHitos = async (proyecto_id) => {
+    const [rows] = await pool.execute(`
+        SELECT
+            h.id           AS hito_id,
+            h.nombre_hito,
+            h.tipo_hito,
+            h.estado       AS hito_estado,
+            h.fecha_entrega,
+            h.archivo_entrega,
+            h.nombre_archivo_original,
+            h.comentarios_estudiante,
+            h.archivo_retroalimentacion,
+            h.nombre_archivo_retroalimentacion,
+            h.comentarios_profesor,
+            u_est.nombre   AS estudiante_nombre,
+            u_est.rut      AS estudiante_rut,
+            u_prof.nombre  AS profesor_nombre
+        FROM hitos_cronograma h
+        INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+        INNER JOIN proyectos p            ON cp.proyecto_id = p.id
+        LEFT JOIN usuarios u_est          ON p.estudiante_rut = u_est.rut
+        LEFT JOIN asignaciones_proyectos ap ON ap.proyecto_id = p.id
+            AND ap.activo = TRUE
+            AND ap.rol_profesor_id = (SELECT id FROM roles_profesores WHERE nombre = 'Profesor Guía' LIMIT 1)
+        LEFT JOIN usuarios u_prof         ON ap.profesor_rut = u_prof.rut
+        WHERE cp.proyecto_id = ?
+          AND (h.archivo_entrega IS NOT NULL OR h.archivo_retroalimentacion IS NOT NULL)
+        ORDER BY h.fecha_entrega DESC
+    `, [proyecto_id]);
+    return rows;
 };
 
 // ============= FUNCIONES PARA NOTIFICACIONES =============

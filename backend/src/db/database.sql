@@ -312,10 +312,8 @@ CREATE TABLE IF NOT EXISTS asignaciones_proyectos (
     INDEX idx_rol_activo (rol_profesor_id, activo)
 );
 
--- Índice único parcial: solo permite una asignación activa por proyecto y rol
--- Esto previene duplicados cuando activo=TRUE, pero permite múltiples registros inactivos (historial)
-CREATE UNIQUE INDEX unique_asignacion_activa ON asignaciones_proyectos (proyecto_id, rol_profesor_id) 
-WHERE activo = TRUE;
+-- Nota: MySQL no soporta índices parciales (WHERE activo=TRUE).
+-- La unicidad de asignaciones activas se garantiza a nivel de aplicación en asignarProfesorAProyecto.
 
 -- Tabla de Historial de Asignaciones (para auditoría)
 CREATE TABLE IF NOT EXISTS historial_asignaciones (
@@ -566,6 +564,8 @@ CREATE TABLE IF NOT EXISTS hitos_cronograma (
     comentarios_estudiante TEXT NULL,
     comentarios_profesor TEXT NULL,
     calificacion DECIMAL(3,1) NULL CHECK (calificacion >= 1.0 AND calificacion <= 7.0),
+    archivo_retroalimentacion VARCHAR(255) NULL,
+    nombre_archivo_retroalimentacion VARCHAR(255) NULL,
     
     -- Peso y criticidad (sistema unificado)
     peso_en_proyecto DECIMAL(5,2) DEFAULT 0.00 CHECK (peso_en_proyecto >= 0 AND peso_en_proyecto <= 100),

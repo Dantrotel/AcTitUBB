@@ -65,11 +65,12 @@ import {
           <!-- Card header -->
           <div class="hito-card-header">
             <div [class]="'hito-icon-wrap hito-icon-' + hito.tipo_hito">
-              <i class="fas fa-file-alt"    *ngIf="hito.tipo_hito === 'entrega_documento'"></i>
-              <i class="fas fa-search"      *ngIf="hito.tipo_hito === 'revision_avance'"></i>
-              <i class="fas fa-users"       *ngIf="hito.tipo_hito === 'reunion_seguimiento'"></i>
-              <i class="fas fa-microphone"  *ngIf="hito.tipo_hito === 'defensa'"></i>
-              <i class="fas fa-flag"        *ngIf="!['entrega_documento','revision_avance','reunion_seguimiento','defensa'].includes(hito.tipo_hito)"></i>
+              <i class="fas fa-file-alt"       *ngIf="hito.tipo_hito === 'entrega_documento'"></i>
+              <i class="fas fa-search"         *ngIf="hito.tipo_hito === 'revision_avance'"></i>
+              <i class="fas fa-users"          *ngIf="hito.tipo_hito === 'reunion_seguimiento'"></i>
+              <i class="fas fa-microphone"     *ngIf="hito.tipo_hito === 'defensa'"></i>
+              <i class="fas fa-flag-checkered" *ngIf="hito.tipo_hito === 'entrega_final'"></i>
+              <i class="fas fa-flag"           *ngIf="!['entrega_documento','revision_avance','reunion_seguimiento','defensa','entrega_final'].includes(hito.tipo_hito)"></i>
             </div>
 
             <div class="hito-card-body">
@@ -185,6 +186,7 @@ import {
                     <option value="revision_avance">🔍 Revisión de Avance</option>
                     <option value="reunion_seguimiento">👥 Reunión de Seguimiento</option>
                     <option value="defensa">🎤 Defensa/Presentación</option>
+                    <option value="entrega_final">🏁 Entrega Final (activa revisión de informante)</option>
                   </select>
                 </div>
               </div>
@@ -302,8 +304,8 @@ export class GestionHitosComponent implements OnInit, OnChanges {
   @Input() userRut!: string;
   @Output() hitosActualizados = new EventEmitter<void>();
 
-  hitos: Hito[] = [];
-  hitosFiltrados: Hito[] = [];
+  hitos: any[] = [];
+  hitosFiltrados: any[] = [];
   entregas: { [hitoId: string]: Entrega[] } = {};
   
   filtroEstado = '';
@@ -311,8 +313,8 @@ export class GestionHitosComponent implements OnInit, OnChanges {
   
   mostrarModalHito = false;
   mostrarModalEntrega = false;
-  hitoEditando: Hito | null = null;
-  hitoSeleccionado: Hito | null = null;
+  hitoEditando: any | null = null;
+  hitoSeleccionado: any | null = null;
   
   formHito: FormGroup;
   erroresValidacion: string[] = [];
@@ -616,7 +618,21 @@ export class GestionHitosComponent implements OnInit, OnChanges {
   }
 
   descargarEntrega(entrega: Entrega) {
-    window.open(entrega.archivo_url, '_blank');
+    const nombre = entrega.archivo_url?.split('/').pop() || entrega.archivo_url;
+    if (!nombre) return;
+    this.apiService.descargarArchivo(nombre).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = entrega.archivo_nombre || nombre;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.notificationService.error('Error', 'No se pudo descargar el archivo')
+    });
   }
 
   async eliminarEntrega(entrega: Entrega): Promise<void> {

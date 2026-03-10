@@ -148,19 +148,8 @@ export const crearPropuesta = async (data) => {
     // Campos extendidos: solo obligatorios en PT normal (no AP, no continua_ap)
     const requiereDetallesCompletos = !esAP && !continuaAP;
 
-    if (!data.complejidad_estimada || !['baja', 'media', 'alta'].includes(data.complejidad_estimada)) {
-      throw new Error('Complejidad estimada debe ser "baja", "media" o "alta"');
-    }
-
     if (!data.duracion_estimada_semestres || ![1, 2].includes(data.duracion_estimada_semestres)) {
       throw new Error('Duración estimada debe ser 1 o 2 semestres');
-    }
-
-    if (requiereDetallesCompletos) {
-      if (!data.area_tematica?.trim())        throw new Error('Área temática es obligatoria');
-      if (!data.objetivos_generales?.trim())  throw new Error('Objetivos generales son obligatorios');
-      if (!data.objetivos_especificos?.trim())throw new Error('Objetivos específicos son obligatorios');
-      if (!data.metodologia_propuesta?.trim())throw new Error('Metodología propuesta es obligatoria');
     }
 
     // Validación condicional: justificación para 2 estudiantes con complejidad baja

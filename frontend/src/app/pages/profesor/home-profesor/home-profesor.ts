@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
+import { RevisionHitosInformanteComponent } from '../../../components/revision-hitos-informante/revision-hitos-informante.component';
 
 @Component({
   selector: 'app-home-profesor',
@@ -11,7 +12,8 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
   imports: [
     CommonModule,
     FormsModule,
-    CalendarModalComponent
+    CalendarModalComponent,
+    RevisionHitosInformanteComponent
   ],
   templateUrl: './home-profesor.html',
   styleUrls: ['./home-profesor.scss']
@@ -43,6 +45,11 @@ export class HomeProfesor implements OnInit {
   // Dashboard analytics
   dashboard: any = null;
   loadingDashboard = false;
+
+  // Revisiones informante
+  revisionesInformante: any[] = [];
+  revisionesInformantePendientes = 0;
+  mostrarRevisionesInformante = false;
 
   // Reuniones
   reunionesHome: any[] = [];
@@ -100,6 +107,7 @@ export class HomeProfesor implements OnInit {
     this.cargarFechasImportantesProyectos();
     this.cargarDashboard();
     this.cargarReunionesHome();
+    this.cargarRevisionesInformante();
     
     // Cargar hitos próximos después de cargar proyectos
     setTimeout(() => {
@@ -120,6 +128,20 @@ export class HomeProfesor implements OnInit {
       this.loadingDashboard = false;
     }
   }
+
+  cargarRevisionesInformante() {
+    this.ApiService.getRevisionesInformante().subscribe({
+      next: (res: any) => {
+        this.revisionesInformante = res?.data || [];
+        this.revisionesInformantePendientes = this.revisionesInformante.filter((r: any) => r.estado === 'pendiente').length;
+        this.cdr.detectChanges();
+      },
+      error: () => { /* silencioso: puede no ser informante */ }
+    });
+  }
+
+  abrirRevisionesInformante() { this.mostrarRevisionesInformante = true; }
+  cerrarRevisionesInformante() { this.mostrarRevisionesInformante = false; this.cargarRevisionesInformante(); }
 
   cargarReunionesHome() {
     this.loadingReuniones = true;

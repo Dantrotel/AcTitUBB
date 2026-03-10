@@ -104,7 +104,8 @@ $text:#212529; $muted:#6c757d; $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
   span { font-weight:600; font-size:.9rem; }
   small { font-size:.75rem; color:$muted; }
   &.selected { border-color:$primary; background:color.adjust($primary,$lightness:50%); i { color:$primary; } }
-  &:hover:not(.selected) { border-color:color.adjust($border,$lightness:-15%); }
+  &:hover:not(.selected):not(.blocked) { border-color:color.adjust($border,$lightness:-15%); }
+  &.blocked { opacity:.45; cursor:not-allowed; pointer-events:none; }
 }
 .continua-ap-check {
   margin-top:.5rem;

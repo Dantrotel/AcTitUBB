@@ -118,12 +118,21 @@
           
           <div class="info-item">
             <div class="info-label">
+              <i class="fas fa-user-tie"></i>
+              <span>Profesor Guía</span>
+            </div>
+            <div class="info-value">
+              {{ propuesta.nombre_profesor_guia || 'Sin asignar' }}
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-label">
               <i class="fas fa-chalkboard-teacher"></i>
               <span>Profesor Asignado</span>
             </div>
             <div class="info-value">
-              {{ propuesta.nombre_profesor || 'Sin asignar' }}
-              <span class="rut-info" *ngIf="propuesta.profesor_rut">({{ propuesta.profesor_rut }})</span>
+              {{ propuesta.profesor_nombre || 'Sin asignar' }}
             </div>
           </div>
           

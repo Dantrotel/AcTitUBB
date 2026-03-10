@@ -9,7 +9,7 @@ export interface Hito {
   proyecto_id: number;
   nombre_hito: string;
   descripcion: string;
-  tipo_hito: 'entrega_documento' | 'revision_avance' | 'reunion_seguimiento' | 'defensa';
+  tipo_hito: 'entrega_documento' | 'revision_avance' | 'reunion_seguimiento' | 'defensa' | 'entrega_final';
   fecha_limite: string;
   fecha_entrega: string | null;
   estado: 'pendiente' | 'en_progreso' | 'entregado' | 'revisado' | 'aprobado' | 'rechazado' | 'retrasado';
@@ -72,7 +72,7 @@ export interface Entrega {
 export interface CreateHitoRequest {
   nombre_hito: string;
   descripcion: string;
-  tipo_hito: 'entrega_documento' | 'revision_avance' | 'reunion_seguimiento' | 'defensa';
+  tipo_hito: 'entrega_documento' | 'revision_avance' | 'reunion_seguimiento' | 'defensa' | 'entrega_final';
   fecha_limite: string;
   peso_en_proyecto?: number;        // Opcional, default 0
   es_critico?: boolean;              // Opcional, default false
@@ -90,7 +90,7 @@ export interface UpdateHitoRequest {
   descripcion?: string;
   fecha_limite?: string;
   peso_en_proyecto?: number;
-  tipo_hito?: 'entrega_documento' | 'revision_avance' | 'reunion_seguimiento' | 'defensa';
+  tipo_hito?: 'entrega_documento' | 'revision_avance' | 'reunion_seguimiento' | 'defensa' | 'entrega_final';
   estado?: 'pendiente' | 'en_progreso' | 'entregado' | 'revisado' | 'aprobado' | 'rechazado' | 'retrasado';
   es_critico?: boolean;
   hito_predecesor_id?: number | null;
@@ -117,7 +117,7 @@ export const HITO_CONSTRAINTS = {
   PESO_MAX: 100,
   MAX_ENTREGAS_MIN: 1,
   MAX_ENTREGAS_MAX: 10,
-  TIPOS_PERMITIDOS: ['entrega_documento', 'revision_avance', 'reunion_seguimiento', 'defensa'] as const,
+  TIPOS_PERMITIDOS: ['entrega_documento', 'revision_avance', 'reunion_seguimiento', 'defensa', 'entrega_final'] as const,
   // Tipos legacy (se mapean automáticamente)
   TIPOS_LEGACY: {
     'entregable': 'entrega_documento',

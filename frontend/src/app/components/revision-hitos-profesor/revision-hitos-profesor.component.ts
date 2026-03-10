@@ -97,8 +97,8 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
     const tieneEntrega = estadosConEntrega.includes(h.estado) || !!h.archivo_entrega;
 
     let estadoEntrega: 'pendiente_revision' | 'aprobado' | 'requiere_correcciones' = 'pendiente_revision';
-    if (h.estado === 'aprobado' || h.estado === 'revisado') estadoEntrega = 'aprobado';
-    else if (h.estado === 'rechazado') estadoEntrega = 'requiere_correcciones';
+    if (h.estado === 'aprobado') estadoEntrega = 'aprobado';
+    else if (h.estado === 'revisado' || h.estado === 'rechazado') estadoEntrega = 'requiere_correcciones';
 
     return {
       ...h,
@@ -268,7 +268,8 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
   obtenerIconoTipo(tipo: string): string {
     const m: Record<string, string> = {
       entrega_documento: 'fa-file-alt', revision_avance: 'fa-search',
-      reunion_seguimiento: 'fa-users', defensa: 'fa-award'
+      reunion_seguimiento: 'fa-users', defensa: 'fa-award',
+      entrega_final: 'fa-flag-checkered'
     };
     return m[tipo] || 'fa-tasks';
   }

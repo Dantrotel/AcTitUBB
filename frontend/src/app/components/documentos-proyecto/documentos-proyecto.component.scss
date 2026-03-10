@@ -64,3 +64,112 @@ textarea.form-control { min-height: 64px; resize: vertical; }
 
 .no-documentos { text-align: center; padding: 30px; color: $muted; p { font-size: .85rem; margin: 4px 0; } }
 .loading { text-align: center; padding: 24px; color: $muted; font-size: .85rem; }
+
+// ── New styles ────────────────────────────────────────────
+
+.doc-header {
+  margin-bottom: 16px;
+  h2 { font-size: 1.05rem; font-weight: 700; color: $primary; margin: 0; display: flex; align-items: center; gap: 8px; }
+}
+
+.doc-tabs {
+  display: flex; gap: 4px; border-bottom: 2px solid $border; margin-bottom: 18px;
+}
+.doc-tab {
+  background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px;
+  padding: 8px 16px; font-size: .85rem; font-weight: 600; color: $muted; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; transition: color .15s, border-color .15s;
+  &.active { color: $blue; border-bottom-color: $blue; }
+  &:hover:not(.active) { color: $text; }
+}
+.tab-count {
+  background: $border; color: $text; border-radius: 10px; padding: 1px 7px; font-size: .73rem; font-weight: 700;
+}
+
+.doc-filtros {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.filtro-select {
+  padding: 6px 10px; border: 1px solid $border; border-radius: 6px; font-size: .82rem;
+  background: $white; color: $text; cursor: pointer;
+  &:focus { outline: none; border-color: $blue; }
+}
+.btn-link { background: none; border: none; color: $blue; font-size: .82rem; cursor: pointer; padding: 6px 4px; text-decoration: underline; }
+
+.doc-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.btn-subir { @include btn($blue); }
+.btn-cancelar { @include btn($gray); }
+
+.loading-state { text-align: center; padding: 28px; color: $muted; font-size: .85rem; display: flex; flex-direction: column; align-items: center; gap: 8px; i { font-size: 1.3rem; } }
+.empty-state { text-align: center; padding: 36px; color: $muted; i { font-size: 2rem; display: block; margin-bottom: 8px; } p { font-size: .88rem; margin: 0; } }
+
+// ── Hito document cards ───────────────────────────────────
+.hito-doc-list { display: flex; flex-direction: column; gap: 12px; }
+
+.hito-doc-card {
+  background: $white; border: 1px solid $border; border-radius: $radius; box-shadow: $shadow; overflow: hidden;
+}
+
+.hito-doc-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 11px 14px; background: color.adjust($bg, $lightness: 1%); border-bottom: 1px solid $border;
+  .hito-doc-title {
+    display: flex; align-items: center; gap: 8px;
+    i { color: $blue; font-size: .9rem; }
+    strong { font-size: .9rem; font-weight: 700; color: $text; }
+  }
+}
+.hito-tipo-badge {
+  background: color.adjust($info, $lightness: 38%); color: $info;
+  border-radius: 10px; padding: 1px 8px; font-size: .72rem; font-weight: 600;
+}
+.estado-chip {
+  border-radius: 12px; padding: 2px 10px; font-size: .73rem; font-weight: 700;
+  &.chip-entregado { background: color.adjust($orange, $lightness: 36%); color: $orange; }
+  &.chip-revisado  { background: color.adjust($info, $lightness: 36%); color: $info; }
+  &.chip-aprobado  { background: color.adjust($green, $lightness: 40%); color: $green; }
+  &.chip-rechazado { background: color.adjust($red, $lightness: 40%); color: $red; }
+}
+
+.doc-entry {
+  padding: 10px 14px;
+  &+.doc-entry { border-top: 1px dashed $border; }
+
+  &.doc-entry-feedback {
+    background: color.adjust($green, $lightness: 54%);
+    .doc-entry-meta i { color: $green; }
+    .doc-label { color: $green; }
+    .uploader { color: color.adjust($green, $lightness: -10%); }
+  }
+}
+.doc-entry-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 7px;
+  i { font-size: .85rem; color: $blue; }
+  .uploader { font-weight: 700; font-size: .82rem; color: $text; }
+  .doc-label { font-size: .75rem; color: $muted; background: $border; border-radius: 8px; padding: 1px 7px; }
+  .doc-date { font-size: .75rem; color: $muted; display: flex; align-items: center; gap: 4px; margin-left: auto; }
+}
+.doc-entry-file {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  i { color: $red; font-size: .9rem; }
+  .doc-filename { font-size: .82rem; color: $text; font-weight: 500; flex: 1; }
+}
+.btn-download {
+  @include btn($blue);
+  font-size: .78rem; padding: 4px 10px;
+  &.btn-download-feedback { @include btn($green); }
+}
+.doc-comment {
+  margin: 6px 0 0; font-size: .78rem; color: $muted; display: flex; gap: 5px; align-items: flex-start;
+  i { margin-top: 2px; font-size: .8rem; }
+}
+
+// ── Otros docs card overrides ─────────────────────────────
+.doc-meta-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  span { font-size: .78rem; color: $muted; display: flex; align-items: center; gap: 4px; i { color: $blue; } }
+}
+.doc-comentario { font-size: .78rem; color: $text; margin: 6px 0 0; }
+.doc-revisor { font-size: .75rem; color: $green; margin: 4px 0 0; }
+.label-estado { font-size: .78rem; color: $muted; font-weight: 600; }
+.btn-danger { border-color: color.adjust($red, $lightness: 25%) !important; color: $red; &:hover { background: color.adjust($red, $lightness: 45%) !important; } }

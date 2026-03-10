@@ -659,6 +659,24 @@ export class ApiService {
     });
   }
 
+  getRevisionesInformante() {
+    return this.http.get(`${this.baseUrl}/projects/informante/revisiones`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  revisarHitoInformante(revisionId: string, datos: { comentarios: string; estado: string } | FormData) {
+    const token = localStorage.getItem('token');
+    if (datos instanceof FormData) {
+      return this.http.patch(`${this.baseUrl}/projects/informante/revisiones/${revisionId}`, datos, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    }
+    return this.http.patch(`${this.baseUrl}/projects/informante/revisiones/${revisionId}`, datos, {
+      headers: this.getHeaders()
+    });
+  }
+
   revisarHitoCompleto(hitoId: string, datos: { comentarios_profesor: string; estado: string } | FormData) {
     const token = localStorage.getItem('token');
     if (datos instanceof FormData) {
@@ -1140,6 +1158,12 @@ export class ApiService {
     return this.http.get(`${this.baseUrl}/descargar/${nombreArchivo}`, {
       headers: this.getHeaders(),
       responseType: 'blob'
+    });
+  }
+
+  getDocumentosHitos(projectId: string | number) {
+    return this.http.get(`${this.baseUrl}/projects/${projectId}/documentos-hitos`, {
+      headers: this.getHeaders()
     });
   }
 

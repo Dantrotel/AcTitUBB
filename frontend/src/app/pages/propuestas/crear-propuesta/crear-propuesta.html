@@ -33,6 +33,28 @@
     </div>
   </div>
 
+  <!-- Estado de Inscripción de Ramo -->
+  <div class="guia-status-card"
+       [ngClass]="cargandoInscripcion ? 'guia-loading' : tieneInscripcion ? 'guia-ok' : 'guia-missing'">
+    <div class="guia-icon">
+      <i class="fas" [ngClass]="cargandoInscripcion ? 'fa-spinner fa-spin' :
+                                tieneInscripcion ? 'fa-id-card' : 'fa-exclamation-triangle'"></i>
+    </div>
+    <div class="guia-info" *ngIf="!cargandoInscripcion">
+      <ng-container *ngIf="tieneInscripcion">
+        <strong>Inscripción de Ramo: {{ inscripcionActiva?.tipo_ramo }}</strong>
+        <span>Tipo de proyecto asignado automáticamente según tu inscripción</span>
+      </ng-container>
+      <ng-container *ngIf="!tieneInscripcion">
+        <strong>Sin inscripción de ramo activa</strong>
+        <span>No tienes una inscripción activa en el semestre actual. Contacta al administrador.</span>
+      </ng-container>
+    </div>
+    <div class="guia-info" *ngIf="cargandoInscripcion">
+      <span>Verificando inscripción de ramo...</span>
+    </div>
+  </div>
+
   <!-- Estado del Profesor Guía -->
   <div class="guia-status-card" [ngClass]="cargandoGuia ? 'guia-loading' : tieneGuia ? 'guia-ok' : 'guia-missing'">
     <div class="guia-icon">
@@ -65,20 +87,33 @@
         </div>
 
         <div class="tipo-proyecto-toggle">
-          <label class="tipo-option" [class.selected]="tipo_proyecto === 'PT'">
+          <label class="tipo-option"
+                 [class.selected]="tipo_proyecto === 'PT'"
+                 [class.blocked]="tieneInscripcion && inscripcionActiva?.tipo_ramo !== 'PT'">
             <input type="radio" name="tipo_proyecto" value="PT"
-                   [(ngModel)]="tipo_proyecto" (change)="onTipoProyectoChange()">
+                   [(ngModel)]="tipo_proyecto" (change)="onTipoProyectoChange()"
+                   [disabled]="tieneInscripcion && inscripcionActiva?.tipo_ramo !== 'PT'">
             <i class="fas fa-graduation-cap"></i>
             <span>PT — Proyecto de Título</span>
             <small>Trabajo de titulación con propuesta, guía y defensa</small>
           </label>
-          <label class="tipo-option" [class.selected]="tipo_proyecto === 'AP'">
+          <label class="tipo-option"
+                 [class.selected]="tipo_proyecto === 'AP'"
+                 [class.blocked]="tieneInscripcion && inscripcionActiva?.tipo_ramo !== 'AP'">
             <input type="radio" name="tipo_proyecto" value="AP"
-                   [(ngModel)]="tipo_proyecto" (change)="onTipoProyectoChange()">
+                   [(ngModel)]="tipo_proyecto" (change)="onTipoProyectoChange()"
+                   [disabled]="tieneInscripcion && inscripcionActiva?.tipo_ramo !== 'AP'">
             <i class="fas fa-briefcase"></i>
             <span>AP — Actividad Práctica</span>
             <small>Avances estructurados con defensa de tema y entrega final</small>
           </label>
+        </div>
+
+        <!-- Indicador de bloqueo por inscripción -->
+        <div class="info-banner info-banner--azul" *ngIf="tieneInscripcion">
+          <i class="fas fa-lock"></i>
+          El tipo de inscripción está fijado según tu inscripción de ramo activa
+          (<strong>{{ inscripcionActiva?.tipo_ramo }}</strong>).
         </div>
 
         <!-- Checkbox continua_ap: solo visible para PT si el estudiante tiene un AP completado -->
@@ -188,7 +223,7 @@
 
         <!-- Campos de Estudiantes Adicionales -->
         <div class="estudiantes-adicionales-container" *ngIf="mostrarEstudiantesAdicionales">
-          <div class="form-group" *ngFor="let estudiante of estudiantes_adicionales; let i = index">
+          <div class="form-group" *ngFor="let estudiante of estudiantes_adicionales; let i = index; trackBy: trackByIndex">
             <label [for]="'estudiante_' + (i + 2)">
               <i class="fas fa-user-plus"></i>
               RUT del Estudiante {{ i + 2 }} *

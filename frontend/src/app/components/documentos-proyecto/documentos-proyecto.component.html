@@ -1,217 +1,238 @@
 <div class="documentos-container">
-  <div class="header">
-    <h2>Gestión de Documentos del Proyecto</h2>
-    <button class="btn btn-primary" (click)="toggleFormulario()">
-      {{ mostrarFormulario ? 'Cancelar' : '+ Subir Documento' }}
+
+  <div class="doc-header">
+    <h2><i class="fas fa-folder-open"></i> Documentos y Entregas</h2>
+  </div>
+
+  <!-- Tabs -->
+  <div class="doc-tabs">
+    <button class="doc-tab" [class.active]="tab === 'hitos'" (click)="tab = 'hitos'">
+      <i class="fas fa-flag-checkered"></i> Entregas en Hitos
+      <span class="tab-count">{{ documentosHitos.length }}</span>
+    </button>
+    <button class="doc-tab" [class.active]="tab === 'otros'" (click)="tab = 'otros'">
+      <i class="fas fa-file-alt"></i> Otros Documentos
+      <span class="tab-count">{{ documentos.length }}</span>
     </button>
   </div>
 
-  <!-- Formulario de subida -->
-  <div class="upload-form" *ngIf="mostrarFormulario">
-    <h3>Subir Nuevo Documento</h3>
-    <form (ngSubmit)="subirDocumento()">
-      <div class="form-group">
-        <label for="tipoDocumento">Tipo de Documento *</label>
-        <select 
-          id="tipoDocumento" 
-          [(ngModel)]="tipoDocumento" 
-          name="tipoDocumento" 
-          required
-          class="form-control">
-          <option value="">Selecciona un tipo</option>
-          <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
-            {{ tipo.label }}
-          </option>
-        </select>
-      </div>
+  <!-- ══════════════ TAB: ENTREGAS EN HITOS ══════════════ -->
+  <div *ngIf="tab === 'hitos'">
 
-      <div class="form-group">
-        <label for="archivo">Archivo (PDF, Word) *</label>
-        <input 
-          type="file" 
-          id="archivo" 
-          (change)="onFileSelected($event)" 
-          accept=".pdf,.docx,.doc"
-          required
-          class="form-control">
-        <small *ngIf="archivoSeleccionado">
-          Archivo seleccionado: {{ archivoSeleccionado.name }} 
-          ({{ formatearTamanio(archivoSeleccionado.size) }})
-        </small>
-      </div>
-
-      <div class="form-group">
-        <label for="estadoDocumento">Estado Inicial</label>
-        <select 
-          id="estadoDocumento" 
-          [(ngModel)]="estadoDocumento" 
-          name="estadoDocumento"
-          class="form-control">
-          <option *ngFor="let estado of estadosDocumento" [value]="estado.value">
-            {{ estado.label }}
-          </option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="comentarios">Comentarios</label>
-        <textarea 
-          id="comentarios" 
-          [(ngModel)]="comentarios" 
-          name="comentarios" 
-          rows="3"
-          class="form-control"
-          placeholder="Agrega comentarios sobre este documento..."></textarea>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn btn-success" [disabled]="cargando || !archivoSeleccionado || !tipoDocumento">
-          {{ cargando ? 'Subiendo...' : 'Subir Documento' }}
-        </button>
-        <button type="button" class="btn btn-secondary" (click)="toggleFormulario()">
-          Cancelar
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Filtros -->
-  <div class="filters">
-    <div class="filter-group">
-      <label for="filtroTipo">Filtrar por Tipo:</label>
-      <select id="filtroTipo" [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="form-control">
-        <option value="">Todos</option>
-        <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
-          {{ tipo.label }}
-        </option>
+    <div class="doc-filtros">
+      <select [(ngModel)]="filtroHitoEstado" class="filtro-select">
+        <option value="">Todos los estados</option>
+        <option value="entregado">Entregado</option>
+        <option value="revisado">Revisado</option>
+        <option value="aprobado">Aprobado</option>
+        <option value="rechazado">Rechazado</option>
       </select>
     </div>
 
-    <div class="filter-group">
-      <label for="filtroEstado">Filtrar por Estado:</label>
-      <select id="filtroEstado" [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" class="form-control">
-        <option value="">Todos</option>
-        <option *ngFor="let estado of estadosDocumento" [value]="estado.value">
-          {{ estado.label }}
-        </option>
-      </select>
+    <div *ngIf="cargandoHitos" class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i> Cargando documentos...
     </div>
 
-    <button class="btn btn-link" (click)="limpiarFiltros()">Limpiar filtros</button>
-  </div>
+    <div *ngIf="!cargandoHitos && documentosHitosFiltrados.length === 0" class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <p>No hay documentos entregados en hitos aún</p>
+    </div>
 
-  <!-- Lista de documentos -->
-  <div class="documentos-list" *ngIf="!cargando">
-    <div class="documento-card" *ngFor="let doc of documentos">
-      <div class="documento-header">
-        <div class="documento-info">
-          <h4>{{ getTipoLabel(doc.tipo_documento) }}</h4>
-          <span class="badge" [ngClass]="getEstadoBadgeClass(doc.estado)">
-            {{ getEstadoLabel(doc.estado) }}
+    <div class="hito-doc-list" *ngIf="!cargandoHitos">
+      <div class="hito-doc-card" *ngFor="let d of documentosHitosFiltrados">
+
+        <!-- Hito header -->
+        <div class="hito-doc-header">
+          <div class="hito-doc-title">
+            <i class="fas" [class]="iconoTipo(d.tipo_hito)"></i>
+            <strong>{{ d.nombre_hito }}</strong>
+            <span class="hito-tipo-badge">{{ d.tipo_hito | titlecase }}</span>
+          </div>
+          <span class="estado-chip"
+            [class.chip-entregado]="d.hito_estado === 'entregado'"
+            [class.chip-revisado]="d.hito_estado === 'revisado'"
+            [class.chip-aprobado]="d.hito_estado === 'aprobado'"
+            [class.chip-rechazado]="d.hito_estado === 'rechazado'">
+            {{ d.hito_estado }}
           </span>
         </div>
-        <div class="documento-actions">
-          <button class="btn-icon" (click)="descargarDocumento(doc.id)" title="Descargar">
-            📥
-          </button>
-          <button
-            *ngIf="esProfesor || esAdmin"
-            class="btn-icon btn-correccion"
-            [class.active]="correccionDocumentoId === doc.id"
-            (click)="abrirFormCorreccion(doc.id)"
-            title="Subir corrección">
-            ✏️
-          </button>
-          <button 
-            *ngIf="puedeEliminarDocumento(doc)"
-            class="btn-icon" 
-            (click)="eliminarDocumento(doc.id)" 
-            title="Eliminar">
-            🗑️
-          </button>
-        </div>
-      </div>
 
-      <div class="documento-body">
-        <div class="documento-detail">
-          <strong>Archivo:</strong> {{ doc.nombre_original }}
+        <!-- Entrega del estudiante -->
+        <div class="doc-entry" *ngIf="d.archivo_entrega">
+          <div class="doc-entry-meta">
+            <i class="fas fa-user-graduate"></i>
+            <span class="uploader">{{ d.estudiante_nombre }}</span>
+            <span class="doc-label">Entrega del estudiante</span>
+            <span class="doc-date" *ngIf="d.fecha_entrega">
+              <i class="fas fa-calendar-alt"></i> {{ formatearFecha(d.fecha_entrega) }}
+            </span>
+          </div>
+          <div class="doc-entry-file">
+            <i class="fas fa-file-pdf"></i>
+            <span class="doc-filename">{{ d.nombre_archivo_original }}</span>
+            <button class="btn-download" (click)="descargarArchivoHito(d.archivo_entrega!, d.nombre_archivo_original!)">
+              <i class="fas fa-download"></i> Descargar
+            </button>
+          </div>
+          <p class="doc-comment" *ngIf="d.comentarios_estudiante">
+            <i class="fas fa-comment"></i> {{ d.comentarios_estudiante }}
+          </p>
         </div>
-        <div class="documento-detail">
-          <strong>Tamaño:</strong> {{ formatearTamanio(doc.tamanio_bytes) }}
-        </div>
-        <div class="documento-detail">
-          <strong>Versión:</strong> {{ doc.version }}
-        </div>
-        <div class="documento-detail">
-          <strong>Subido por:</strong> {{ doc.nombre_subidor }}
-        </div>
-        <div class="documento-detail">
-          <strong>Fecha:</strong> {{ formatearFecha(doc.fecha_subida) }}
-        </div>
-        <div class="documento-detail" *ngIf="doc.comentarios">
-          <strong>Comentarios:</strong> {{ doc.comentarios }}
-        </div>
-        <div class="documento-detail" *ngIf="doc.nombre_revisor">
-          <strong>Revisado por:</strong> {{ doc.nombre_revisor }} 
-          <span *ngIf="doc.fecha_revision">({{ formatearFecha(doc.fecha_revision) }})</span>
-        </div>
-      </div>
 
-      <div class="documento-footer" *ngIf="mostrarBotonesEstado(doc)">
-        <span class="label">Cambiar estado:</span>
-        <button 
-          *ngFor="let estado of estadosDocumento" 
-          class="btn-estado" 
-          [class.active]="doc.estado === estado.value"
-          (click)="actualizarEstado(doc.id, estado.value)">
-          {{ estado.label }}
-        </button>
-      </div>
+        <!-- Retroalimentación del profesor -->
+        <div class="doc-entry doc-entry-feedback" *ngIf="d.archivo_retroalimentacion">
+          <div class="doc-entry-meta">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span class="uploader">{{ d.profesor_nombre || 'Profesor Guía' }}</span>
+            <span class="doc-label">Retroalimentación</span>
+          </div>
+          <div class="doc-entry-file">
+            <i class="fas fa-file-pdf"></i>
+            <span class="doc-filename">{{ d.nombre_archivo_retroalimentacion }}</span>
+            <button class="btn-download btn-download-feedback"
+              (click)="descargarArchivoHito(d.archivo_retroalimentacion!, d.nombre_archivo_retroalimentacion!)">
+              <i class="fas fa-download"></i> Descargar
+            </button>
+          </div>
+          <p class="doc-comment" *ngIf="d.comentarios_profesor">
+            <i class="fas fa-comment"></i> {{ d.comentarios_profesor }}
+          </p>
+        </div>
 
-      <!-- Formulario de corrección (solo visible cuando está abierto para este doc) -->
-      <div class="correccion-form" *ngIf="correccionDocumentoId === doc.id">
-        <h4>✏️ Subir Corrección para: <em>{{ doc.nombre_original }}</em></h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB: OTROS DOCUMENTOS ══════════════ -->
+  <div *ngIf="tab === 'otros'">
+
+    <div class="doc-toolbar">
+      <div class="doc-filtros">
+        <select [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="filtro-select">
+          <option value="">Todos los tipos</option>
+          <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</option>
+        </select>
+        <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" class="filtro-select">
+          <option value="">Todos los estados</option>
+          <option *ngFor="let e of estadosDocumento" [value]="e.value">{{ e.label }}</option>
+        </select>
+        <button class="btn-link" (click)="limpiarFiltros()">Limpiar</button>
+      </div>
+      <button class="btn-subir" (click)="toggleFormulario()">
+        <i class="fas" [class.fa-plus]="!mostrarFormulario" [class.fa-times]="mostrarFormulario"></i>
+        {{ mostrarFormulario ? 'Cancelar' : 'Subir documento' }}
+      </button>
+    </div>
+
+    <!-- Formulario subida -->
+    <div class="upload-form" *ngIf="mostrarFormulario">
+      <h3>Subir Nuevo Documento</h3>
+      <form (ngSubmit)="subirDocumento()">
         <div class="form-group">
-          <label>Archivo corregido (PDF, Word) *</label>
-          <input
-            type="file"
-            (change)="onArchivoCorreccionSelected($event)"
-            accept=".pdf,.docx,.doc"
-            class="form-control">
-          <small *ngIf="archivoCorreccion">
-            {{ archivoCorreccion.name }} ({{ formatearTamanio(archivoCorreccion.size) }})
-          </small>
+          <label>Tipo de Documento *</label>
+          <select [(ngModel)]="tipoDocumento" name="tipoDocumento" required class="form-control">
+            <option value="">Selecciona un tipo</option>
+            <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Comentarios sobre la corrección</label>
-          <textarea
-            [(ngModel)]="comentariosCorreccion"
-            name="comentariosCorreccion"
-            rows="3"
-            class="form-control"
-            placeholder="Describe los cambios solicitados o realizados..."></textarea>
+          <label>Archivo (PDF, Word) *</label>
+          <input type="file" (change)="onFileSelected($event)" accept=".pdf,.docx,.doc" class="form-control">
+          <small *ngIf="archivoSeleccionado">{{ archivoSeleccionado.name }} ({{ formatearTamanio(archivoSeleccionado.size) }})</small>
+        </div>
+        <div class="form-group">
+          <label>Comentarios</label>
+          <textarea [(ngModel)]="comentarios" name="comentarios" rows="3" class="form-control"
+            placeholder="Agrega comentarios..."></textarea>
         </div>
         <div class="form-actions">
-          <button
-            class="btn btn-success"
-            (click)="subirCorreccion(doc)"
-            [disabled]="subiendoCorreccion || !archivoCorreccion">
-            {{ subiendoCorreccion ? 'Subiendo...' : '📤 Subir Corrección' }}
+          <button type="submit" class="btn-subir" [disabled]="cargando || !archivoSeleccionado || !tipoDocumento">
+            {{ cargando ? 'Subiendo...' : 'Subir Documento' }}
           </button>
-          <button class="btn btn-secondary" (click)="abrirFormCorreccion(doc.id)">
-            Cancelar
+          <button type="button" class="btn-cancelar" (click)="toggleFormulario()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="cargando" class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i> Cargando documentos...
+    </div>
+
+    <!-- Lista -->
+    <div *ngIf="!cargando && documentos.length === 0" class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <p>No hay documentos para mostrar</p>
+    </div>
+
+    <div class="documentos-list" *ngIf="!cargando">
+      <div class="documento-card" *ngFor="let doc of documentos">
+        <div class="documento-header">
+          <div class="documento-info">
+            <h4>{{ getTipoLabel(doc.tipo_documento) }}</h4>
+            <span class="badge" [ngClass]="getEstadoBadgeClass(doc.estado)">{{ getEstadoLabel(doc.estado) }}</span>
+          </div>
+          <div class="documento-actions">
+            <button class="btn-icon" (click)="descargarDocumento(doc.id)" title="Descargar">
+              <i class="fas fa-download"></i>
+            </button>
+            <button *ngIf="esProfesor || esAdmin" class="btn-icon"
+              [class.active]="correccionDocumentoId === doc.id"
+              (click)="abrirFormCorreccion(doc.id)" title="Subir corrección">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button *ngIf="puedeEliminarDocumento(doc)" class="btn-icon btn-danger"
+              (click)="eliminarDocumento(doc.id)" title="Eliminar">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="documento-body">
+          <div class="doc-meta-row">
+            <span><i class="fas fa-file"></i> {{ doc.nombre_original }}</span>
+            <span><i class="fas fa-weight-hanging"></i> {{ formatearTamanio(doc.tamanio_bytes) }}</span>
+            <span><i class="fas fa-user"></i> {{ doc.nombre_subidor }}</span>
+            <span><i class="fas fa-calendar"></i> {{ formatearFecha(doc.fecha_subida) }}</span>
+          </div>
+          <p class="doc-comentario" *ngIf="doc.comentarios">{{ doc.comentarios }}</p>
+          <p class="doc-revisor" *ngIf="doc.nombre_revisor">
+            Revisado por {{ doc.nombre_revisor }}
+            <span *ngIf="doc.fecha_revision">({{ formatearFecha(doc.fecha_revision) }})</span>
+          </p>
+        </div>
+
+        <div class="documento-footer" *ngIf="esProfesor || esAdmin">
+          <span class="label-estado">Estado:</span>
+          <button *ngFor="let e of estadosDocumento" class="btn-estado"
+            [class.active]="doc.estado === e.value"
+            (click)="actualizarEstado(doc.id, e.value)">
+            {{ e.label }}
           </button>
+        </div>
+
+        <!-- Corrección inline -->
+        <div class="correccion-form" *ngIf="correccionDocumentoId === doc.id">
+          <h4><i class="fas fa-pen"></i> Subir corrección para: <em>{{ doc.nombre_original }}</em></h4>
+          <div class="form-group">
+            <label>Archivo corregido *</label>
+            <input type="file" (change)="onArchivoCorreccionSelected($event)" accept=".pdf,.docx,.doc" class="form-control">
+            <small *ngIf="archivoCorreccion">{{ archivoCorreccion.name }} ({{ formatearTamanio(archivoCorreccion.size) }})</small>
+          </div>
+          <div class="form-group">
+            <label>Comentarios sobre la corrección</label>
+            <textarea [(ngModel)]="comentariosCorreccion" name="comentariosCorreccion"
+              rows="2" class="form-control" placeholder="Describe los cambios..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn-subir" (click)="subirCorreccion(doc)" [disabled]="subiendoCorreccion || !archivoCorreccion">
+              {{ subiendoCorreccion ? 'Subiendo...' : 'Subir Corrección' }}
+            </button>
+            <button class="btn-cancelar" (click)="abrirFormCorreccion(doc.id)">Cancelar</button>
+          </div>
         </div>
       </div>
     </div>
-
-    <div class="no-documentos" *ngIf="documentos.length === 0">
-      <p>No hay documentos para mostrar</p>
-      <p *ngIf="filtroTipo || filtroEstado">Intenta ajustar los filtros</p>
-    </div>
   </div>
 
-  <div class="loading" *ngIf="cargando">
-    <p>Cargando documentos...</p>
-  </div>
 </div>
