@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { ApiService } from '../../services/api';
@@ -23,8 +23,9 @@ interface MenuItem {
   templateUrl: './app-layout.component.html',
   styleUrls: ['./app-layout.component.scss']
 })
-export class AppLayoutComponent implements OnInit {
+export class AppLayoutComponent implements OnInit, OnDestroy {
   sidebarCollapsed = signal(false);
+  private chatPollInterval: any;
   userMenuOpen = signal(false);
   mobileMenuOpen = signal(false);
   
@@ -45,6 +46,29 @@ export class AppLayoutComponent implements OnInit {
     this.loadUserData();
     this.buildMenuForRole();
     this.setupRouteTracking();
+    this.startChatBadgePolling();
+  }
+
+  ngOnDestroy() {
+    if (this.chatPollInterval) clearInterval(this.chatPollInterval);
+  }
+
+  private startChatBadgePolling() {
+    const role = this.currentUser?.rol;
+    if (role !== 'estudiante' && role !== 'profesor') return;
+    this.checkUnreadMessages();
+    this.chatPollInterval = setInterval(() => this.checkUnreadMessages(), 30000);
+  }
+
+  private checkUnreadMessages() {
+    this.apiService.getChatNoLeidos().subscribe({
+      next: (res: any) => {
+        const count = res?.total_no_leidos || 0;
+        const chatItem = this.menuItems.find(i => i.label === 'Chat');
+        if (chatItem) chatItem.badge = count > 0 ? count : undefined;
+      },
+      error: () => {}
+    });
   }
 
   loadUserData() {
@@ -111,6 +135,11 @@ export class AppLayoutComponent implements OnInit {
             route: '/estudiante/calendario'
           },
           {
+            label: 'Chat',
+            icon: 'fas fa-comments',
+            route: '/estudiante/chat'
+          },
+          {
             label: 'Mi Perfil',
             icon: 'fas fa-user',
             route: '/estudiante/perfil'
@@ -136,8 +165,7 @@ export class AppLayoutComponent implements OnInit {
             icon: 'fas fa-calendar-alt',
             children: [
               { label: 'Mis Horarios', icon: 'fas fa-clock', route: '/profesor/calendario/disponibilidades' },
-              { label: 'Solicitudes de Reunión', icon: 'fas fa-inbox', route: '/profesor/calendario/solicitudes' },
-              { label: 'Fechas Importantes', icon: 'fas fa-calendar-day', route: '/profesor/fechas-importantes' }
+              { label: 'Solicitudes de Reunión', icon: 'fas fa-inbox', route: '/profesor/calendario/solicitudes' }
             ]
           },
           {
@@ -191,7 +219,6 @@ export class AppLayoutComponent implements OnInit {
               { label: 'Periodo Propuestas', icon: 'fas fa-calendar-alt', route: '/admin/gestion-periodo-propuestas' },
               { label: 'Gestion Horario', icon: 'fas fa-calendar-alt', route: '/profesor/calendario/disponibilidades' },
               { label: 'Extensiones', icon: 'fas fa-clock', route: '/admin/extensiones' },
-              { label: 'Fechas Importantes', icon: 'fas fa-calendar-day', route: '/admin/fechas-importantes' },
               { label: 'Calendario General', icon: 'fas fa-calendar', route: '/admin/calendario' },
             ]
           },

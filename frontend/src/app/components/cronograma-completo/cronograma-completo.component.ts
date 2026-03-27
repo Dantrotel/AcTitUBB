@@ -2,6 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { GestionHitosComponent } from '../gestion-hitos/gestion-hitos.component';
 import { ApiService } from '../../services/api';
+import { NotificationService } from '../../services/notification.service';
 
 interface Cronograma {
   id: string;
@@ -38,7 +39,7 @@ export class CronogramaCompletoComponent implements OnInit {
   alertas: any[] = [];
   mostrarTimeline = false;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private notificationService: NotificationService) {}
 
   ngOnInit() {
     this.cargarCronograma();
@@ -83,13 +84,13 @@ export class CronogramaCompletoComponent implements OnInit {
     this.apiService.crearCronograma(this.projectId, cronogramaData).subscribe({
       next: (response: any) => {
         console.log('âœ… Cronograma creado exitosamente:', response);
-        alert('âœ… Cronograma creado exitosamente. Ahora puedes agregar hitos y entregas.');
+        this.notificationService.success('Cronograma creado', 'El cronograma ha sido creado exitosamente. Ya puede agregar hitos y entregas.');
         this.cargarCronograma(); // Recargar el cronograma
       },
       error: (error: any) => {
-        console.error('âŒ Error al crear cronograma:', error);
+        console.error('Error al crear cronograma:', error);
         const mensaje = error.error?.message || 'Error al crear el cronograma';
-        alert('âŒ ' + mensaje);
+        this.notificationService.error('Error al crear cronograma', mensaje);
       }
     });
   }

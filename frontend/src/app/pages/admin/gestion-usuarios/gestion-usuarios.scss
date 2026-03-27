@@ -129,7 +129,9 @@ $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
   }
 }
 
-.usuario-nombre { display:flex; align-items:center; gap:.4rem; i { color:$muted; font-size:.75rem; } }
+.usuario-nombre { display:flex; align-items:center; gap:.4rem; max-width:200px; overflow:hidden; i { color:$muted; font-size:.75rem; flex-shrink:0; }
+  span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+}
 
 // ROLE BADGE
 .rol-badge {

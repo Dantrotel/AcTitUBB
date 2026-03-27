@@ -604,6 +604,71 @@ const crearHitoCronograma = async (req, res) => {
     }
 };
 
+// Verificar si el informante puede crear hitos (aprobó el hito final del guía)
+const verificarPermisoInformante = async (req, res) => {
+    try {
+        const { proyectoId } = req.params;
+        const informante_rut = req.user.rut;
+        const puede = await ProjectService.puedeInformanteCrearHitos(proyectoId, informante_rut);
+        res.json({ success: true, puede_crear: puede });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Obtener hitos creados por el informante
+const obtenerHitosInformante = async (req, res) => {
+    try {
+        const { cronogramaId } = req.params;
+        const hitos = await ProjectService.obtenerHitosInformante(cronogramaId);
+        res.json({ success: true, hitos });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Crear hito como informante (requiere haber aprobado el hito final del guía)
+const crearHitoInformante = async (req, res) => {
+    try {
+        const { cronogramaId } = req.params;
+        const { nombre_hito, descripcion, tipo_hito, fecha_limite, peso_en_proyecto, es_critico } = req.body;
+        const informante_rut = req.user.rut;
+
+        if (!nombre_hito || !tipo_hito || !fecha_limite) {
+            return res.status(400).json({ message: 'Faltan campos requeridos: nombre_hito, tipo_hito, fecha_limite' });
+        }
+
+        const cronograma = await ProjectService.obtenerCronogramaPorId(cronogramaId);
+        if (!cronograma) return res.status(404).json({ message: 'Cronograma no encontrado' });
+
+        const puede = await ProjectService.puedeInformanteCrearHitos(cronograma.proyecto_id, informante_rut);
+        if (!puede) {
+            return res.status(403).json({
+                message: 'No puedes crear hitos aún. Primero debes aprobar el hito final del profesor guía.'
+            });
+        }
+
+        const hitoId = await ProjectService.crearHitoCronograma({
+            cronograma_id: cronogramaId,
+            proyecto_id: cronograma.proyecto_id,
+            nombre_hito,
+            descripcion,
+            tipo_hito,
+            fecha_limite,
+            peso_en_proyecto: peso_en_proyecto || 0,
+            es_critico: es_critico || false,
+            hito_predecesor_id: null,
+            creado_por_rut: informante_rut,
+            creado_por_rol: 'informante'
+        });
+
+        res.status(201).json({ success: true, message: 'Hito de informante creado exitosamente', hito_id: hitoId });
+    } catch (error) {
+        logger.error('Error al crear hito informante', { error: error.message });
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Obtener hitos del cronograma
 const obtenerHitosCronograma = async (req, res) => {
     try {
@@ -932,43 +997,6 @@ const eliminarEntregaHito = async (req, res) => {
     }
 };
 
-// Marcar fecha importante como completada
-const marcarFechaImportanteCompletada = async (req, res) => {
-    try {
-        const { projectId, fechaId } = req.params;
-        const { completada, fecha_realizada, notas } = req.body;
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol;
-        const rol_id = req.user?.rol_id;
-
-        if (!usuario_rut) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
-        }
-
-        if (rol_id !== 3 && rol_id !== 4) {
-            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
-            if (!puedeModificar) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permisos para actualizar fechas en este proyecto'
-                });
-            }
-        }
-
-        const { marcarFechaComoCompletada } = await import('../models/fechas-importantes.model.js');
-        const resultado = await marcarFechaComoCompletada(
-            fechaId,
-            completada !== false ? (fecha_realizada || null) : null,
-            notas || null
-        );
-
-        res.json({ success: true, message: 'Fecha actualizada exitosamente', data: resultado });
-    } catch (error) {
-        logger.error('Error al marcar fecha como completada', { error: error.message });
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
 // Obtener notificaciones del usuario
 const obtenerNotificaciones = async (req, res) => {
     try {
@@ -1107,185 +1135,22 @@ const obtenerAvancesProyecto = async (req, res) => {
     }
 };
 
-// ============= CONTROLADORES DE FECHAS IMPORTANTES =============
-
-// Crear fecha importante para un proyecto
-const crearFechaImportante = async (req, res) => {
-    try {
-        const { projectId } = req.params;
-        const { tipo_fecha, titulo, descripcion, fecha_limite } = req.body;
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol; // Usar rol como string, no rol_id
-        const rol_id = req.user?.rol_id;
-        
-        if (!usuario_rut || !rol_usuario) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
-        }
-
-        // Validar datos requeridos
-        if (!tipo_fecha || !titulo || !fecha_limite) {
-            return res.status(400).json({
-                success: false,
-                message: 'Faltan campos obligatorios: tipo_fecha, titulo, fecha_limite'
-            });
-        }
-        
-        // Verificar permisos (solo admin y profesores guía pueden crear fechas)
-        if (rol_id !== 3 && rol_id !== 4) { // No es admin ni superadmin
-            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
-            if (!puedeModificar) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permisos para crear fechas en este proyecto'
-                });
-            }
-        }
-        
-        const fechaId = await ProjectService.crearFechaImportante({
-            proyecto_id: projectId,
-            tipo_fecha,
-            titulo,
-            descripcion,
-            fecha_limite,
-            creado_por: usuario_rut
-        });
-        
-        res.status(201).json({
-            success: true,
-            message: 'Fecha importante creada exitosamente',
-            fecha_id: fechaId
-        });
-    } catch (error) {
-        logger.error('Error al crear fecha importante', { error: error.message });
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-// Actualizar fecha importante de un proyecto
-const actualizarFechaImportante = async (req, res) => {
-    try {
-        const { projectId, fechaId } = req.params;
-        const updateData = req.body;
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol;
-        const rol_id = req.user?.rol_id;
-        
-        if (!usuario_rut || !rol_usuario) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
-        }
-        
-        // Verificar permisos (solo admin y profesores guía pueden actualizar fechas)
-        if (rol_id !== 3 && rol_id !== 4) { // No es admin ni superadmin
-            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
-            if (!puedeModificar) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permisos para actualizar fechas en este proyecto'
-                });
-            }
-        }
-        
-        await ProjectService.actualizarFechaImportante(fechaId, updateData);
-        
-        res.json({
-            success: true,
-            message: 'Fecha importante actualizada exitosamente'
-        });
-    } catch (error) {
-        logger.error('Error al actualizar fecha importante', { error: error.message });
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-// Eliminar fecha importante de un proyecto
-const eliminarFechaImportante = async (req, res) => {
-    try {
-        const { projectId, fechaId } = req.params;
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol;
-        const rol_id = req.user?.rol_id;
-        
-        if (!usuario_rut || !rol_usuario) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
-        }
-        
-        // Verificar permisos (solo admin y profesores guía pueden eliminar fechas)
-        if (rol_id !== 3 && rol_id !== 4) { // No es admin ni superadmin
-            const puedeModificar = await ProjectService.puedeModificarProyecto(projectId, usuario_rut, rol_usuario);
-            if (!puedeModificar) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permisos para eliminar fechas en este proyecto'
-                });
-            }
-        }
-        
-        await ProjectService.eliminarFechaImportante(fechaId);
-        
-        res.json({
-            success: true,
-            message: 'Fecha importante eliminada exitosamente'
-        });
-    } catch (error) {
-        logger.error('Error al eliminar fecha importante', { error: error.message });
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-// Obtener fechas importantes de un proyecto
-const obtenerFechasImportantes = async (req, res) => {
-    try {
-        const { projectId } = req.params;
-        const usuario_rut = req.user?.rut;
-        const rol_usuario = req.user?.rol; // Usar rol como string
-        
-        if (!usuario_rut || !rol_usuario) {
-            return res.status(401).json({ message: 'Usuario no autenticado' });
-        }
-        
-        // Verificar permisos para ver el proyecto
-        const puedeVer = await ProjectService.puedeVerProyecto(projectId, usuario_rut, rol_usuario);
-        if (!puedeVer) {
-            return res.status(403).json({
-                success: false,
-                message: 'No tienes permisos para ver las fechas de este proyecto'
-            });
-        }
-        
-        const fechasInfo = await ProjectService.obtenerFechasConNotificaciones(parseInt(projectId));
-        
-        res.json({
-            success: true,
-            data: {
-                fechas_importantes: fechasInfo.fechas,
-                fechas_proximas: fechasInfo.fechasProximas,
-                estadisticas: fechasInfo.estadisticas
-            }
-        });
-    } catch (error) {
-        logger.error('Error al obtener fechas importantes', { error: error.message });
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
 // ===== REVISIONES INFORMANTE =====
 
 const obtenerRevisionesInformante = async (req, res) => {
     try {
         const informante_rut = req.user.rut;
         const revisiones = await ProjectService.obtenerRevisionesInformante(informante_rut);
+        res.json({ success: true, data: revisiones });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const obtenerRevisionesInformanteProyecto = async (req, res) => {
+    try {
+        const { proyectoId } = req.params;
+        const revisiones = await ProjectService.obtenerRevisionesInformanteProyecto(proyectoId);
         res.json({ success: true, data: revisiones });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -1362,7 +1227,11 @@ export const ProjectController = {
     entregarHito,
     revisarHito,
     obtenerRevisionesInformante,
+    obtenerRevisionesInformanteProyecto,
     revisarHitoComoInformante,
+    verificarPermisoInformante,
+    obtenerHitosInformante,
+    crearHitoInformante,
     obtenerDocumentosHitos,
     obtenerEntregasHito,
     crearEntregaHito,
@@ -1372,12 +1241,5 @@ export const ProjectController = {
     marcarNotificacionLeida,
     configurarAlertas,
     obtenerEstadisticasCumplimiento,
-    obtenerAvancesProyecto,
-    marcarFechaImportanteCompletada,
-    
-    // Fechas importantes
-    crearFechaImportante,
-    actualizarFechaImportante,
-    eliminarFechaImportante,
-    obtenerFechasImportantes
+    obtenerAvancesProyecto
 };

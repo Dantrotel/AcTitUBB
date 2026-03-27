@@ -388,6 +388,11 @@ $muted:      #6c757d;
 .carrera-text {
   font-size: 0.82rem;
   color: $text;
+  max-width: 200px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .no-data {

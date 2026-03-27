@@ -1,6 +1,6 @@
 // Archivo de configuración del entorno para desarrollo
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000/api/v1',
-  wsUrl: 'http://localhost:3000'
+  apiUrl: 'https://18.117.106.2/api/v1',
+  wsUrl: 'https://18.117.106.2'
 };

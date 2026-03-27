@@ -195,7 +195,7 @@
           <div class="panel-header-actions">
             @if (reunionesExpiradas.length > 0) {
               <span class="count-badge badge-danger" title="Requieren acción">
-                <i class="fas fa-exclamation" style="font-size:0.6rem"></i> {{ reunionesExpiradas.length }}
+                <i class="fas fa-exclamation icon-xs"></i> {{ reunionesExpiradas.length }}
               </span>
             }
             <button class="btn-link" (click)="navegar('profesor/reuniones')">
@@ -225,7 +225,7 @@
               <div class="item-body">
                 <span class="item-title">{{ getTipoReunionDisplay(reunion.tipo_reunion) }}
                   @if (reunion.proyecto_titulo) {
-                    · <span style="font-weight:400;color:#6c757d">{{ reunion.proyecto_titulo }}</span>
+                    · <span class="text-muted-light">{{ reunion.proyecto_titulo }}</span>
                   }
                 </span>
                 <span class="item-sub">

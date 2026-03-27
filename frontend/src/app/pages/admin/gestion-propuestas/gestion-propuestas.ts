@@ -73,14 +73,14 @@ export class GestionPropuestasComponent implements OnInit {
         propuesta.profesor_rut = profesor_rut;
         propuesta.nombre_profesor = prof?.nombre || propuesta.nombre_profesor;
         this.asignandoEvaluador[propuesta.id] = false;
-        this.notificationService.success('Evaluador asignado correctamente');
+        this.notificationService.success('Evaluador asignado', 'El evaluador ha sido asignado a la propuesta correctamente.');
         this.cdr.detectChanges();
       },
       error: () => {
         // Revertir select al valor anterior
         select.value = propuesta.profesor_rut || '';
         this.asignandoEvaluador[propuesta.id] = false;
-        this.notificationService.error('Error al asignar evaluador');
+        this.notificationService.error('Error al asignar evaluador', 'No fue posible asignar el evaluador a la propuesta. Intente nuevamente.');
         this.cdr.detectChanges();
       }
     });

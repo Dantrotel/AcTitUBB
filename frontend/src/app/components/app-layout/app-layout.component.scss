@@ -374,6 +374,9 @@ $tablet: 1024px;
 .submenu-label {
   flex: 1;
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 // Footer del Sidebar (Usuario)
@@ -666,6 +669,10 @@ $tablet: 1024px;
   &.active {
     color: $text-primary;
     font-weight: 600;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .breadcrumb-separator {

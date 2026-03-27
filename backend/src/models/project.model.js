@@ -357,9 +357,11 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
             `;
             params = [usuario_rut];
         } else if (rol_usuario === 'profesor' || rol_usuario === 2) {
-            // Los profesores ven proyectos donde están asignados - consulta simplificada
+            // Los profesores ven proyectos donde están asignados (asignaciones_proyectos)
+            // o donde son profesor guía del estudiante (guias_estudiantes)
             query = `
-                SELECT DISTINCT p.*, 
+                SELECT DISTINCT p.*,
+                       u.nombre AS estudiante_nombre,
                        u.nombre AS nombre_estudiante,
                        u.email AS email_estudiante,
                        prop.titulo AS titulo_propuesta,
@@ -370,11 +372,20 @@ const obtenerProyectosPorPermisos = async (usuario_rut, rol_usuario) => {
                 LEFT JOIN propuestas prop ON p.propuesta_id = prop.id
                 LEFT JOIN estudiantes_carreras ec ON p.estudiante_rut = ec.estudiante_rut AND ec.es_carrera_principal = 1
                 LEFT JOIN carreras car ON ec.carrera_id = car.id
-                INNER JOIN asignaciones_proyectos ap ON p.id = ap.proyecto_id 
-                WHERE ap.profesor_rut = ? AND ap.activo = TRUE
+                WHERE (
+                    EXISTS (
+                        SELECT 1 FROM asignaciones_proyectos ap
+                        WHERE ap.proyecto_id = p.id AND ap.profesor_rut = ? AND ap.activo = TRUE
+                    )
+                    OR
+                    EXISTS (
+                        SELECT 1 FROM guias_estudiantes ge
+                        WHERE ge.estudiante_rut = p.estudiante_rut AND ge.profesor_guia_rut = ? AND ge.activo = TRUE
+                    )
+                )
                 ORDER BY p.fecha_inicio DESC
             `;
-            params = [usuario_rut];
+            params = [usuario_rut, usuario_rut];
         } else {
             // Rol no reconocido, sin acceso
             return [];

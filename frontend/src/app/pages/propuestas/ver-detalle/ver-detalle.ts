@@ -138,14 +138,14 @@ export class VerPropuestaComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
-        this.notificationService.error('Error al descargar el archivo');
+        this.notificationService.error('Error al descargar archivo', 'No fue posible descargar el archivo adjunto de la propuesta. Intente nuevamente.');
       }
     });
   }
 
   asignarme() {
     if (!this.propuesta || !this.esProfesor) {
-      this.notificationService.warning('No tienes permisos para realizar esta acción');
+      this.notificationService.warning('Acción no permitida', 'No cuenta con los permisos necesarios para realizar esta acción.');
       return;
     }
 
@@ -162,7 +162,7 @@ export class VerPropuestaComponent implements OnInit {
     }
 
     if (!profesorRut) {
-      this.notificationService.error('No se encontró el RUT del profesor');
+      this.notificationService.error('Sesión inválida', 'No se pudo identificar al profesor. Intente cerrar sesión e ingresar nuevamente.');
       return;
     }
 
@@ -299,7 +299,7 @@ export class VerPropuestaComponent implements OnInit {
           this.volver();
         },
         error: (err) => {
-          this.notificationService.error('Error al eliminar la propuesta');
+          this.notificationService.error('Error al eliminar propuesta', 'No fue posible eliminar la propuesta. Intente nuevamente.');
         }
       });
     }
@@ -317,14 +317,14 @@ export class VerPropuestaComponent implements OnInit {
       if (file) {
         // Validar tamaño (10MB)
         if (file.size > 10 * 1024 * 1024) {
-          this.notificationService.error('El archivo no debe superar los 10MB');
+          this.notificationService.error('Archivo demasiado grande', 'El archivo de corrección no debe superar los 10 MB.');
           return;
         }
 
         // Validar tipo
         const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         if (!validTypes.includes(file.type)) {
-          this.notificationService.error('Solo se permiten archivos PDF, DOC o DOCX');
+          this.notificationService.error('Formato no permitido', 'El archivo de corrección debe estar en formato PDF, DOC o DOCX.');
           return;
         }
 
@@ -360,7 +360,7 @@ export class VerPropuestaComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: () => {
-        this.notificationService.error('Error al descargar el archivo');
+        this.notificationService.error('Error al descargar archivo', 'No fue posible descargar la versión del archivo seleccionada. Intente nuevamente.');
       }
     });
   }

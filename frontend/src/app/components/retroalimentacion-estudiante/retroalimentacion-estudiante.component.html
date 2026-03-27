@@ -1,0 +1,129 @@
+<div class="retro-container">
+
+  <div class="retro-header">
+    <h2><i class="fas fa-comment-dots"></i> Retroalimentación de Profesores</h2>
+    <p class="subtitle">Revisiones y correcciones de tu profesor guía e informante</p>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="cargando">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Cargando retroalimentación...</span>
+  </div>
+
+  <!-- Sin datos -->
+  <div class="empty-state" *ngIf="!cargando && hitos.length === 0 && revisionesInformante.length === 0">
+    <i class="fas fa-inbox"></i>
+    <p>Aún no hay retroalimentación de tus profesores</p>
+    <small>Cuando entregues un hito y sea revisado, verás aquí los comentarios y correcciones.</small>
+  </div>
+
+  <!-- ===== ALERTA: CORRECCIONES INFORMANTE ===== -->
+  <div class="alerta-correcciones" *ngIf="!cargando && tieneCorreccionesInformante()">
+    <i class="fas fa-exclamation-triangle"></i>
+    <div>
+      <strong>El profesor informante solicitó correcciones</strong>
+      <p>Ve a la pestaña <strong>Cronograma</strong> para ver el hito correspondiente y subir tu nueva entrega.</p>
+    </div>
+  </div>
+
+  <!-- ===== SECCIÓN: PROFESOR GUÍA ===== -->
+  <div class="seccion" *ngIf="!cargando && hitos.length > 0">
+    <h3 class="seccion-title">
+      <i class="fas fa-chalkboard-teacher"></i>
+      Retroalimentación del Profesor Guía
+    </h3>
+
+    <div class="retro-card" *ngFor="let hito of hitos">
+      <div class="card-top">
+        <div class="card-info">
+          <h4>{{ hito.nombre_hito }}</h4>
+          <span class="tipo-tag">{{ hito.tipo_hito }}</span>
+        </div>
+        <span class="estado-chip"
+          [class.chip-aprobado]="hito.estado === 'aprobado'"
+          [class.chip-correcciones]="hito.estado === 'revisado' || hito.estado === 'rechazado'"
+          [class.chip-pendiente]="hito.estado === 'entregado' || hito.estado === 'pendiente_revision'">
+          <i class="fas"
+            [class.fa-check-circle]="hito.estado === 'aprobado'"
+            [class.fa-exclamation-circle]="hito.estado === 'revisado' || hito.estado === 'rechazado'"
+            [class.fa-clock]="hito.estado === 'entregado' || hito.estado === 'pendiente_revision'">
+          </i>
+          {{ getEstadoLabel(hito.estado) }}
+        </span>
+      </div>
+
+      <div class="retroalimentacion-bloque" *ngIf="hito.comentarios_profesor">
+        <label><i class="fas fa-comment-alt"></i> Comentarios del profesor guía</label>
+        <p>{{ hito.comentarios_profesor }}</p>
+        <div class="meta-row" *ngIf="hito.fecha_revision">
+          <i class="fas fa-calendar-check"></i>
+          Revisado el {{ formatearFecha(hito.fecha_revision) }}
+        </div>
+      </div>
+
+      <div class="sin-revision" *ngIf="!hito.comentarios_profesor">
+        <i class="fas fa-hourglass-half"></i>
+        <span>El profesor guía aún no ha enviado retroalimentación para este hito</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECCIÓN: PROFESOR INFORMANTE ===== -->
+  <div class="seccion" *ngIf="!cargando && revisionesInformante.length > 0">
+    <h3 class="seccion-title">
+      <i class="fas fa-user-check"></i>
+      Revisión del Profesor Informante
+    </h3>
+
+    <div class="retro-card" *ngFor="let r of revisionesInformante">
+      <div class="card-top">
+        <div class="card-info">
+          <h4>{{ r.nombre_hito }}</h4>
+          <span class="tipo-tag">{{ r.tipo_hito }}</span>
+          <span class="informante-tag" *ngIf="r.informante_nombre">
+            <i class="fas fa-user-tie"></i> {{ r.informante_nombre }}
+          </span>
+        </div>
+        <span class="estado-chip"
+          [class.chip-aprobado]="r.estado === 'aprobado'"
+          [class.chip-correcciones]="r.estado === 'rechazado'"
+          [class.chip-pendiente]="r.estado === 'pendiente'">
+          <i class="fas"
+            [class.fa-check-circle]="r.estado === 'aprobado'"
+            [class.fa-exclamation-circle]="r.estado === 'rechazado'"
+            [class.fa-clock]="r.estado === 'pendiente'">
+          </i>
+          {{ getEstadoLabel(r.estado) }}
+        </span>
+      </div>
+
+      <div class="retroalimentacion-bloque" *ngIf="r.comentarios">
+        <label><i class="fas fa-comment-alt"></i> Comentarios del informante</label>
+        <p>{{ r.comentarios }}</p>
+        <div class="meta-row" *ngIf="r.fecha_revision">
+          <i class="fas fa-calendar-check"></i>
+          Revisado el {{ formatearFecha(r.fecha_revision) }}
+        </div>
+      </div>
+
+      <div class="sin-revision" *ngIf="!r.comentarios && r.estado === 'pendiente'">
+        <i class="fas fa-hourglass-half"></i>
+        <span>El profesor informante aún no ha evaluado este hito</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sin revisiones informante todavía -->
+  <div class="seccion" *ngIf="!cargando && hitos.length > 0 && revisionesInformante.length === 0">
+    <h3 class="seccion-title">
+      <i class="fas fa-user-check"></i>
+      Revisión del Profesor Informante
+    </h3>
+    <div class="empty-state-inline">
+      <i class="fas fa-hourglass-half"></i>
+      <p>El profesor informante aún no tiene hitos asignados para revisar</p>
+    </div>
+  </div>
+
+</div>

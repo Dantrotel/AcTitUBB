@@ -1,0 +1,14 @@
+{
+  "fecha": "2026-03-10T02:00:09.345Z",
+  "tipo": "completo",
+  "database": {
+    "host": "127.0.0.1",
+    "nombre": "actitubb",
+    "archivo": "database.sql"
+  },
+  "archivos": {
+    "directorio": "/home/ubuntu/AcTitUBB/backend/uploads",
+    "archivo": "uploads.zip"
+  },
+  "duracion_segundos": 8.94
+}

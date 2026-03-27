@@ -3,7 +3,6 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
-import { FechasLimiteProyectoComponent } from '../../../components/fechas-limite-proyecto/fechas-limite-proyecto.component';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 
 
@@ -13,7 +12,6 @@ import { CalendarModalComponent } from '../../../components/calendar-modal/calen
   imports: [
     CommonModule,
     FormsModule,
-    FechasLimiteProyectoComponent,
     CalendarModalComponent
   ],
   templateUrl: './estudiante-home.component.html',
@@ -328,39 +326,9 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
   }
 
   cargarFechasImportantes() {
-    if (!this.proyectoActivo?.id) {
-      // // // // // // // // // // console.log('⚠️ No hay proyecto activo para cargar fechas importantes');
-      return;
-    }
-
-    this.loadingFechas = true;
-    // // // // // // // // // // console.log('🔄 Cargando fechas importantes del proyecto:', this.proyectoActivo.id);
-    
-    this.ApiService.getFechasImportantesProyecto(this.proyectoActivo.id).subscribe({
-      next: (response: any) => {
-        // // // // // // // // // // console.log('✅ Fechas importantes cargadas:', response);
-        this.loadingFechas = false;
-        
-        if (response && response.success && response.data) {
-          this.fechasImportantes = response.data.fechas_importantes || [];
-          this.fechasProximas = response.data.fechas_proximas || [];
-          
-          // // // // // // // // // // console.log('📅 Fechas importantes:', this.fechasImportantes.length);
-          // // // // // // // // // // console.log('⏰ Fechas próximas:', this.fechasProximas.length);
-        } else {
-          this.fechasImportantes = [];
-          this.fechasProximas = [];
-        }
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('❌ Error al cargar fechas importantes:', error);
-        this.loadingFechas = false;
-        this.fechasImportantes = [];
-        this.fechasProximas = [];
-        this.cdr.detectChanges();
-      }
-    });
+    this.fechasImportantes = [];
+    this.fechasProximas = [];
+    this.loadingFechas = false;
   }
 
   calcularProgresoProyectoReal() {

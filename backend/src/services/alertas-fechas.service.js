@@ -1,5 +1,4 @@
 import { pool } from '../db/connectionDB.js';
-import * as fechasImportantesModel from '../models/fechas-importantes.model.js';
 import * as avanceModel from '../models/avance.model.js';
 
 // ===== SERVICIO DE ALERTAS AUTOMÁTICAS DE FECHAS REGLAMENTARIAS =====

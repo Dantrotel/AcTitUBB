@@ -105,22 +105,8 @@ export class GestionCalendarioComponent implements OnInit {
   }
 
   cargarFechasImportantes() {
-    this.loadingFechasImportantes = true;
-    
-    this.apiService.getFechasImportantesTodosProyectos().subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
-          this.fechasImportantes = response.data;
-        } else {
-          this.fechasImportantes = [];
-        }
-        this.loadingFechasImportantes = false;
-      },
-      error: (error) => {
-        this.fechasImportantes = [];
-        this.loadingFechasImportantes = false;
-      }
-    });
+    this.fechasImportantes = [];
+    this.loadingFechasImportantes = false;
   }
 
   toggleFechasImportantes() {

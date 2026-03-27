@@ -338,8 +338,8 @@ $shadow: 0 1px 4px rgba(0,0,0,.08); $radius: 8px;
   background: $bg; border: 1px solid $border; border-radius: 4px;
   padding: .1rem .5rem; font-size: .78rem; font-weight: 600;
 }
-.titulo-cell { max-width: 240px; }
-.titulo-text { font-size: .82rem; font-weight: 600; }
+.titulo-cell { max-width: 240px; overflow: hidden; }
+.titulo-text { font-size: .82rem; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fecha-cell { white-space: nowrap; font-size: .78rem; color: $muted; }
 .center-cell { text-align: center; }
 .action-buttons { display: flex; gap: .3rem; justify-content: center; flex-wrap: wrap; }

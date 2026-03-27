@@ -9,7 +9,6 @@ import routerProp from './routes/propuesta.routes.js';
 import downloadRouter from './routes/download.route.js';
 import adminRouter from './routes/admin.route.js';
 import calendarioRouter from './routes/calendario.route.js';
-import fechasImportantesRouter from './routes/fechas-importantes.route.js';
 import profesorRouter from './routes/profesor.route.js';
 import asignacionesProfesoresRouter from './routes/asignaciones-profesores.route.js';
 import calendarioMatchingRouter from './routes/calendario-matching.route.js';
@@ -18,7 +17,6 @@ import documentoRouter from './routes/documento.routes.js';
 import comisionRouter from './routes/comision.route.js';
 import extensionRouter from './routes/extension.route.js';
 import reunionesRouter from './routes/reuniones.route.js';
-import fechasLimiteRouter from './routes/fechas-limite.route.js';
 import periodoPropuestasRouter from './routes/periodo-propuestas.route.js';
 import dashboardRouter from './routes/dashboard.route.js';
 import estructuraRouter from './routes/estructura-academica.route.js';
@@ -29,6 +27,7 @@ import respaldoRouter from './routes/respaldo.route.js';
 import colaboradoresExternosRouter from './routes/colaboradores-externos.route.js';
 import versionesPlantillasRouter from './routes/versiones-plantillas.route.js';
 import guiasEstudiantesRouter from './routes/guias-estudiantes.route.js';
+import coGuiasEstudiantesRouter from './routes/co-guias-estudiantes.route.js';
 import semestresRouter from './routes/semestres.route.js';
 import inscripcionesRamoRouter from './routes/inscripciones-ramo.route.js';
 import cors from 'cors';
@@ -98,7 +97,7 @@ const generalLimiter = rateLimit({
 // Rate limiting específico para login (más restrictivo)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // máximo 5 intentos de login por IP cada 15 minutos
+    max: 1000, // máximo 1000 intentos de login por IP cada 15 minutos
     message: {
         error: 'Demasiados intentos de login fallidos. Intenta de nuevo en 15 minutos.',
         retryAfter: '15 minutos'
@@ -111,7 +110,7 @@ const loginLimiter = rateLimit({
 // Rate limiting para registro (moderado)
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hora
-    max: 3, // máximo 3 registros por IP cada hora
+    max: 20, // máximo 20 registros por IP cada hora
     message: {
         error: 'Demasiados intentos de registro. Intenta de nuevo en 1 hora.',
         retryAfter: '1 hora'
@@ -150,7 +149,6 @@ app.use('/api/v1/calendario', calendarioRouter);
 import { obtenerCargaAdministrativa } from './controllers/admin.controller.js';
 app.get('/api/v1/carga-profesores', verifySession, obtenerCargaAdministrativa);
 app.use('/api/v1/profesor', profesorRouter);
-app.use('/api/v1/fechas-importantes', fechasImportantesRouter);
 app.use('/api/v1/asignaciones-profesores', asignacionesProfesoresRouter);
 app.use('/api/v1/calendario-matching', calendarioMatchingRouter);
 app.use('/api/v1/sistema-reservas', sistemaReservasRouter);
@@ -158,7 +156,6 @@ app.use('/api/v1/documentos', documentoRouter);
 app.use('/api/v1/comision', comisionRouter);
 app.use('/api/v1/extensiones', extensionRouter);
 app.use('/api/v1/reuniones', reunionesRouter);
-app.use('/api/v1/fechas-limite', fechasLimiteRouter);
 app.use('/api/v1/periodo-propuestas', periodoPropuestasRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/estructura', estructuraRouter);
@@ -169,6 +166,7 @@ app.use('/api/v1/respaldo', respaldoRouter);
 app.use('/api/v1/colaboradores-externos', colaboradoresExternosRouter);
 app.use('/api/v1/versiones', versionesPlantillasRouter);
 app.use('/api/v1/guias-estudiantes', guiasEstudiantesRouter);
+app.use('/api/v1/co-guias-estudiantes', coGuiasEstudiantesRouter);
 app.use('/api/v1/semestres', semestresRouter);
 app.use('/api/v1/inscripciones-ramo', inscripcionesRamoRouter);
 

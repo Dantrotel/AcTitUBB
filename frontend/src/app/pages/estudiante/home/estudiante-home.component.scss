@@ -192,9 +192,14 @@ $text:#212529; $muted:#6c757d; $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
   .card-content { padding:.875rem 1rem; }
 }
 .proyecto-info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; margin-bottom:.875rem; }
-.info-item { display:flex; align-items:flex-start; gap:.5rem;
+.info-item { display:flex; align-items:flex-start; gap:.5rem; min-width:0; overflow:hidden;
   .info-icon { width:32px; height:32px; border-radius:6px; background:rgba($primary,.1); color:$primary; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:.85rem; }
-  .info-details { h4 { font-size:.78rem; font-weight:600; color:$muted; margin:0 0 .15rem; } p { font-size:.82rem; color:$text; margin:0; } }
+  .info-details { min-width:0; flex:1;
+    h4 { font-size:.78rem; font-weight:600; color:$muted; margin:0 0 .15rem; }
+    p { font-size:.82rem; color:$text; margin:0;
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    }
+  }
 }
 .progreso-detallado { display:flex; flex-direction:column; gap:.3rem; }
 .progreso-bar-extended { height:8px; background:$border; border-radius:4px;

@@ -60,7 +60,8 @@ import {
              [class.hito-card--pendiente]="hito.estado === 'pendiente'"
              [class.hito-card--en-progreso]="hito.estado === 'en_progreso'"
              [class.hito-card--aprobado]="hito.estado === 'aprobado'"
-             [class.hito-card--retrasado]="esHitoRetrasado(hito)">
+             [class.hito-card--retrasado]="esHitoRetrasado(hito)"
+             [class.hito-card--informante]="hito.creado_por_rol === 'informante'">
 
           <!-- Card header -->
           <div class="hito-card-header">
@@ -82,6 +83,9 @@ import {
                   <span [ngClass]="['hito-badge', 'hito-badge-prioridad-' + hito.prioridad]" *ngIf="hito.prioridad">{{ hito.prioridad }}</span>
                   <span class="hito-badge hito-badge-critico" *ngIf="hito.obligatorio">
                     <i class="fas fa-exclamation-triangle"></i> Crítico
+                  </span>
+                  <span class="hito-badge hito-badge-informante" *ngIf="hito.creado_por_rol === 'informante'">
+                    <i class="fas fa-user-check"></i> Informante
                   </span>
                 </div>
               </div>
@@ -182,11 +186,11 @@ import {
                   <select formControlName="tipo_hito" class="gh-input"
                           [class.gh-input--invalid]="formHito.get('tipo_hito')?.invalid && formHito.get('tipo_hito')?.touched">
                     <option value="">Seleccionar tipo</option>
-                    <option value="entrega_documento">📄 Entrega de Documento</option>
-                    <option value="revision_avance">🔍 Revisión de Avance</option>
-                    <option value="reunion_seguimiento">👥 Reunión de Seguimiento</option>
-                    <option value="defensa">🎤 Defensa/Presentación</option>
-                    <option value="entrega_final">🏁 Entrega Final (activa revisión de informante)</option>
+                    <option value="entrega_documento">Entrega de Documento</option>
+                    <option value="revision_avance">Revisión de Avance</option>
+                    <option value="reunion_seguimiento">Reunión de Seguimiento</option>
+                    <option value="defensa">Defensa / Presentación</option>
+                    <option value="entrega_final">Entrega Final (activa revisión de informante)</option>
                   </select>
                 </div>
               </div>
@@ -379,8 +383,7 @@ export class GestionHitosComponent implements OnInit, OnChanges {
   }
 
   mostrarError(mensaje: string) {
-    // Implementación simple - podrías usar un servicio de toast/notificaciones
-    alert(mensaje);
+    this.notificationService.error('Error', mensaje);
   }
 
   cargarEntregasParaTodosLosHitos() {
@@ -562,7 +565,7 @@ export class GestionHitosComponent implements OnInit, OnChanges {
         this.hitosActualizados.emit();
       },
       error: (error) => {
-        alert('Error al eliminar el hito');
+        this.notificationService.error('Error al eliminar hito', 'No fue posible eliminar el hito seleccionado. Intente nuevamente.');
       }
     });
   }
@@ -631,7 +634,7 @@ export class GestionHitosComponent implements OnInit, OnChanges {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.notificationService.error('Error', 'No se pudo descargar el archivo')
+      error: () => this.notificationService.error('Error al descargar archivo', 'No fue posible descargar el archivo de entrega. Intente nuevamente.')
     });
   }
 
@@ -645,8 +648,7 @@ export class GestionHitosComponent implements OnInit, OnChanges {
     
     if (!confirmed) return;
 
-    // El backend no soporta eliminación de entregas individuales.
-    alert('La eliminación de entregas no está disponible en el sistema actual.');
+    this.notificationService.warning('Acción no disponible', 'La eliminación de entregas individuales no está habilitada en el sistema.');
   }
 
 }

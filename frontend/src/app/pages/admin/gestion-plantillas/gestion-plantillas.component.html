@@ -1,0 +1,245 @@
+<div class="gestion-container">
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-folder-open"></i>
+      Gestión de Plantillas
+    </h1>
+    <button class="btn btn-primary" (click)="mostrarFormularioNueva()">
+      <i class="fas fa-plus"></i>
+      Nueva Plantilla
+    </button>
+  </div>
+
+  <!-- Formulario -->
+  @if (mostrandoFormulario()) {
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3>
+          @if (plantillaEditando()) {
+            <i class="fas fa-edit"></i> Editar Plantilla
+          } @else {
+            <i class="fas fa-plus"></i> Nueva Plantilla
+          }
+        </h3>
+      </div>
+
+      <div class="form-card-body">
+        <form [formGroup]="formularioPlantilla" class="plantilla-form">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label class="form-label">Nombre de la Plantilla <span class="required">*</span></label>
+              <input class="form-input" formControlName="nombre" required />
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">Tipo de Documento <span class="required">*</span></label>
+              <select class="form-input" formControlName="tipo_documento">
+                <option value="">Seleccionar...</option>
+                <option value="propuesta">Propuesta</option>
+                <option value="informe_avance">Informe de Avance</option>
+                <option value="informe_final">Informe Final</option>
+                <option value="presentacion">Presentación</option>
+                <option value="poster">Póster</option>
+                <option value="acta">Acta</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-input" formControlName="descripcion" rows="2"></textarea>
+          </div>
+
+          <!-- Archivo -->
+          <div class="file-upload-section">
+            <label class="form-label">Archivo de Plantilla *</label>
+            <div class="file-input-container">
+              @if (!archivoSeleccionado()) {
+                <button type="button" class="btn btn-outline" (click)="fileInput.click()">
+                  <i class="fas fa-upload"></i>
+                  Seleccionar Archivo
+                </button>
+                <span class="file-hint">DOCX, PDF (Máx. 50MB)</span>
+              } @else {
+                <div class="file-selected">
+                  <i class="fas fa-file-alt file-icon"></i>
+                  <span>{{ archivoSeleccionado()?.name }}</span>
+                  <button type="button" class="btn-remove" (click)="removerArchivo()">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+              <input #fileInput type="file" hidden accept=".pdf,.doc,.docx" (change)="onFileSelected($event)" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">Versión</label>
+              <input class="form-input" formControlName="version_plantilla" placeholder="1.0" />
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">Formato Requerido</label>
+              <input class="form-input" formControlName="formato_requerido" placeholder="DOCX, PDF" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Instrucciones de Uso</label>
+            <textarea class="form-input" formControlName="instrucciones" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">URL de Ejemplo (Opcional)</label>
+            <input class="form-input" formControlName="ejemplo_url" type="url" />
+          </div>
+
+          <!-- Alcance -->
+          <div class="alcance-section">
+            <label class="section-label">Alcance de la Plantilla</label>
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">Carrera (opcional)</label>
+                <select class="form-input" formControlName="carrera_id">
+                  <option [ngValue]="null">Todas las carreras</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Departamento (opcional)</label>
+                <select class="form-input" formControlName="departamento_id">
+                  <option [ngValue]="null">Todos los departamentos</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Facultad (opcional)</label>
+                <select class="form-input" formControlName="facultad_id">
+                  <option [ngValue]="null">Todas las facultades</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Obligatoria -->
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="obligatoria" class="checkbox-input" />
+            <span>Plantilla Obligatoria</span>
+          </label>
+
+          @if (subiendo()) {
+            <div class="progress-box">
+              <div class="spinner"></div>
+              <p>{{ plantillaEditando() ? 'Actualizando...' : 'Subiendo plantilla...' }}</p>
+            </div>
+          }
+        </form>
+      </div>
+
+      <div class="form-card-footer">
+        <button class="btn btn-ghost" (click)="cancelarFormulario()" [disabled]="subiendo()">Cancelar</button>
+        <button
+          class="btn btn-primary"
+          (click)="guardarPlantilla()"
+          [disabled]="!formularioPlantilla.valid || subiendo() || (!archivoSeleccionado() && !plantillaEditando())"
+        >
+          <i class="fas fa-save"></i>
+          {{ plantillaEditando() ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Tabla de plantillas -->
+  <div class="table-card">
+    @if (cargando()) {
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <p>Cargando plantillas...</p>
+      </div>
+    } @else if (plantillas().length === 0) {
+      <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <h2>No hay plantillas registradas</h2>
+        <p>Crea la primera plantilla para que los estudiantes puedan descargarla</p>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Alcance</th>
+              <th>Estado</th>
+              <th>Descargas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plantilla of plantillas(); track plantilla.id) {
+              <tr>
+                <td>
+                  <div class="nombre-cell">
+                    <i [class]="getFAIconoTipo(plantilla.tipo_documento)" class="tipo-icon"></i>
+                    <div>
+                      <strong>{{ plantilla.nombre }}</strong>
+                      @if (plantilla.version_plantilla) {
+                        <span class="version-badge">v{{ plantilla.version_plantilla }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>{{ getTipoLabel(plantilla.tipo_documento) }}</td>
+                <td>
+                  @if (plantilla.carrera_nombre) {
+                    <span class="chip chip-alcance">{{ plantilla.carrera_nombre }}</span>
+                  } @else if (plantilla.departamento_nombre) {
+                    <span class="chip chip-alcance">{{ plantilla.departamento_nombre }}</span>
+                  } @else if (plantilla.facultad_nombre) {
+                    <span class="chip chip-alcance">{{ plantilla.facultad_nombre }}</span>
+                  } @else {
+                    <span class="chip chip-global">Global</span>
+                  }
+                </td>
+                <td>
+                  @if (plantilla.obligatoria) {
+                    <span class="chip chip-obligatoria">
+                      <i class="fas fa-star"></i> Obligatoria
+                    </span>
+                  } @else {
+                    <span class="chip chip-opcional">Opcional</span>
+                  }
+                </td>
+                <td>
+                  <div class="descargas-cell">
+                    <i class="fas fa-download"></i>
+                    {{ plantilla.descargas }}
+                  </div>
+                </td>
+                <td>
+                  <div class="table-menu" (click)="$event.stopPropagation()">
+                    <button class="btn-menu-trigger" (click)="toggleMenu(plantilla.id)">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    @if (menuAbierto() === plantilla.id) {
+                      <div class="dropdown-menu">
+                        <button class="dropdown-item" (click)="descargarPlantilla(plantilla); closeMenu()">
+                          <i class="fas fa-download"></i> Descargar
+                        </button>
+                        <button class="dropdown-item" (click)="editarPlantilla(plantilla); closeMenu()">
+                          <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="dropdown-item danger" (click)="desactivarPlantilla(plantilla); closeMenu()">
+                          <i class="fas fa-trash-alt"></i> Desactivar
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

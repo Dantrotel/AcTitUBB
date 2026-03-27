@@ -604,6 +604,18 @@ $radius-sm: 5px;
   overflow: hidden;
 }
 
+.modal-informante {
+  background: $white;
+  border-radius: $radius;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 860px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -1064,3 +1076,6 @@ $radius-sm: 5px;
   .form-row   { grid-template-columns: 1fr; }
   .nav-grid   { grid-template-columns: 1fr; }
 }
+
+.icon-xs { font-size: 0.6rem; }
+.text-muted-light { font-weight: 400; color: #6c757d; }

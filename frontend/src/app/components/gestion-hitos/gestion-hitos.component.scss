@@ -80,6 +80,7 @@ $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
   &--en-progreso{ border-left-color:$blue; }
   &--aprobado   { border-left-color:$green; }
   &--retrasado  { border-left-color:$red; }
+  &--informante { border-left-color:#6366f1; }
 }
 
 .hito-card-header {
@@ -146,6 +147,9 @@ $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
 
   // Crítico
   &-critico { background:rgba($red,.12); color:$red; i { margin-right:2px; } }
+
+  // Informante
+  &-informante { background:rgba(99,102,241,.12); color:#4f46e5; i { margin-right:2px; } }
 }
 
 .hito-descripcion {

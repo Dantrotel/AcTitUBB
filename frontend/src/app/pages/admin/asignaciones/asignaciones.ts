@@ -293,7 +293,7 @@ export class AsignacionesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al eliminar asignación:', err);
-        this.notificationService.error('Error al eliminar la asignación');
+        this.notificationService.error('Error al eliminar asignación', 'No fue posible eliminar la asignación seleccionada. Intente nuevamente.');
       }
     });
   }
@@ -377,7 +377,7 @@ export class AsignacionesComponent implements OnInit {
     // Validar después de la conversión
     if (!proyecto_id || !this.nuevaAsignacion.profesor_rut || !rol_profesor_id) {
       console.log('❌ Validación falló:', { proyecto_id, profesor_rut: this.nuevaAsignacion.profesor_rut, rol_profesor_id });
-      this.notificationService.warning('Por favor complete todos los campos obligatorios');
+      this.notificationService.warning('Campos incompletos', 'Debe seleccionar el proyecto, el profesor y el rol antes de continuar.');
       return;
     }
     
@@ -405,7 +405,7 @@ export class AsignacionesComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('❌ Error al crear asignación profesor-proyecto:', err);
-        this.notificationService.error('Error al asignar profesor', err.error?.message || err.message || 'Error desconocido');
+        this.notificationService.error('Error al asignar profesor', err.error?.message || err.message || 'No fue posible asignar el profesor al proyecto. Intente nuevamente.');
         this.loadingAsignacion = false;
         this.cdr.detectChanges();
       }
@@ -469,7 +469,7 @@ export class AsignacionesComponent implements OnInit {
           error: (err: any) => {
             console.error('❌ Error al desasignar profesor del proyecto:', err);
             this.ngZone.run(() => {
-              this.notificationService.error('Error al desasignar profesor', err.error?.message || err.message || 'Error desconocido');
+              this.notificationService.error('Error al desasignar profesor', err.error?.message || err.message || 'No fue posible desasignar al profesor del proyecto. Intente nuevamente.');
               this.loadingAsignacion = false;
               this.cdr.detectChanges();
             });

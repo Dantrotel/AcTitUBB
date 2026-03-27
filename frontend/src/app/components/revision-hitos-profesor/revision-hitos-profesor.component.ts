@@ -2,6 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
+import { NotificationService } from '../../services/notification.service';
 
 interface Hito {
   id: number;
@@ -61,7 +62,7 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
   enviando = false;
   mensajeError = '';
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private notificationService: NotificationService) {}
 
   ngOnInit() {
     if (this.cronogramaId) this.cargarHitos();
@@ -81,7 +82,10 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
     this.apiService.getHitosCronograma(this.cronogramaId).subscribe({
       next: (response: any) => {
         const raw: any[] = response.hitos || response.data || [];
-        this.hitos = raw.map(h => this.mapearHito(h));
+        // Solo hitos creados por el guía (no por el informante)
+        this.hitos = raw
+          .filter((h: any) => h.creado_por_rol !== 'informante')
+          .map(h => this.mapearHito(h));
         this.cargando = false;
       },
       error: (error) => {
@@ -162,12 +166,12 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
     if (!file) return;
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (!['pdf', 'doc', 'docx'].includes(ext || '')) {
-      alert('Solo se permiten archivos PDF o Word (.pdf, .doc, .docx)');
+      this.notificationService.warning('Formato no permitido', 'El archivo de retroalimentación debe estar en formato PDF, DOC o DOCX.');
       input.value = '';
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert('El archivo no puede superar los 10 MB');
+      this.notificationService.warning('Archivo demasiado grande', 'El tamaño máximo permitido para el archivo es 10 MB.');
       input.value = '';
       return;
     }
@@ -191,7 +195,7 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
   enviarRevision(estado: 'aprobado' | 'revisado' | 'rechazado') {
     if (!this.hitoEnRevisionId) return;
     if (!this.comentariosProfesor.trim()) {
-      alert('Por favor, ingresa retroalimentación para el estudiante');
+      this.notificationService.warning('Campo requerido', 'Debe ingresar la retroalimentación dirigida al estudiante antes de guardar.');
       return;
     }
     this.enviando = true;
@@ -215,7 +219,7 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
       },
       error: (err) => {
         console.error('Error al enviar revisión:', err);
-        alert('Error al guardar: ' + (err.error?.message || 'Error desconocido'));
+        this.notificationService.error('Error al guardar revisión', err.error?.message || 'No fue posible guardar la revisión. Intente nuevamente.');
         this.enviando = false;
       }
     });
@@ -223,7 +227,7 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
 
   descargarRetroalimentacion(hito: Hito) {
     const archivo = hito.entrega?.archivo_retroalimentacion;
-    if (!archivo) { alert('No hay documento de retroalimentación disponible'); return; }
+    if (!archivo) { this.notificationService.warning('Sin retroalimentación adjunta', 'Este hito no tiene documento de retroalimentación disponible para descargar.'); return; }
     const nombre = archivo.split('/').pop() || archivo;
     this.apiService.descargarArchivo(nombre).subscribe({
       next: (blob: Blob) => {
@@ -233,13 +237,13 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
         document.body.appendChild(a); a.click();
         document.body.removeChild(a); window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el documento de retroalimentación')
+      error: () => this.notificationService.error('Error al descargar retroalimentación', 'No fue posible descargar el documento de retroalimentación.')
     });
   }
 
   descargarEntrega(hito: Hito) {
     const archivo = hito.entrega?.archivo_url;
-    if (!archivo) { alert('No hay archivo disponible'); return; }
+    if (!archivo) { this.notificationService.warning('Sin archivo de entrega', 'Este hito no tiene un archivo de entrega disponible para descargar.'); return; }
     const nombre = archivo.split('/').pop() || archivo;
     this.apiService.descargarArchivo(nombre).subscribe({
       next: (blob: Blob) => {
@@ -249,7 +253,7 @@ export class RevisionHitosProfesorComponent implements OnInit, OnChanges {
         document.body.appendChild(a); a.click();
         document.body.removeChild(a); window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el archivo')
+      error: () => this.notificationService.error('Error al descargar archivo', 'No fue posible descargar el archivo de entrega.')
     });
   }
 

@@ -157,23 +157,6 @@ export class ApiService {
     });
   }
 
-  // ===== MÉTODOS PARA FECHAS IMPORTANTES =====
-
-  // Obtener fechas importantes de un proyecto (funciona para profesor y estudiante)
-  getFechasImportantesProyecto(proyectoId: string) {
-    // Usar la ruta general de proyectos que funciona con verificación de permisos
-    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/fechas-importantes`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Profesor: obtener fechas importantes de proyectos asignados
-  getFechasImportantesTodosProyectos() {
-    return this.http.get(`${this.baseUrl}/calendario/profesor/mis-fechas`, {
-      headers: this.getHeaders()
-    });
-  }
-
   login(data: any) {
     return this.http.post(`${this.baseUrl}/users/login`, data);
   }
@@ -665,6 +648,30 @@ export class ApiService {
     });
   }
 
+  getRevisionesInformanteProyecto(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/revisiones-informante`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  verificarPermisoInformante(proyectoId: string) {
+    return this.http.get(`${this.baseUrl}/projects/${proyectoId}/informante/puede-crear`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getHitosInformante(cronogramaId: string) {
+    return this.http.get(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/informante`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  crearHitoInformante(cronogramaId: string, data: any) {
+    return this.http.post(`${this.baseUrl}/projects/cronogramas/${cronogramaId}/hitos/informante`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
   revisarHitoInformante(revisionId: string, datos: { comentarios: string; estado: string } | FormData) {
     const token = localStorage.getItem('token');
     if (datos instanceof FormData) {
@@ -692,6 +699,12 @@ export class ApiService {
   // Estadísticas de Cumplimiento
   getEstadisticasCumplimiento(proyectoId: string) {
     return this.http.get(`${this.baseUrl}/projects/${proyectoId}/estadisticas`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getChatNoLeidos() {
+    return this.http.get<any>(`${this.baseUrl}/chat/no-leidos`, {
       headers: this.getHeaders()
     });
   }
@@ -806,32 +819,6 @@ export class ApiService {
   // Obtener proyectos asignados al profesor (como guía o co-guía)
   getProyectosProfesor() {
     return this.http.get(`${this.baseUrl}/profesor/proyectos`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  // Gestión de fechas importantes para profesores
-  crearFechaImportante(proyectoId: string, fechaData: any) {
-    return this.http.post(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes`, fechaData, {
-      headers: this.getHeaders()
-    });
-  }
-
-  actualizarFechaImportante(proyectoId: string, fechaId: string, fechaData: any) {
-    return this.http.put(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes/${fechaId}`, fechaData, {
-      headers: this.getHeaders()
-    });
-  }
-
-  eliminarFechaImportante(proyectoId: string, fechaId: string) {
-    return this.http.delete(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes/${fechaId}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  marcarFechaCompletada(proyectoId: string, fechaId: string, completada: boolean) {
-    return this.http.patch(`${this.baseUrl}/profesor/proyectos/${proyectoId}/fechas-importantes/${fechaId}/completar`, 
-      { completada }, {
       headers: this.getHeaders()
     });
   }
@@ -1072,6 +1059,26 @@ export class ApiService {
   // Admin: desasignar guía de un estudiante
   desasignarGuiaEstudiante(estudianteRut: string) {
     return this.http.delete(`${this.baseUrl}/guias-estudiantes/estudiante/${estudianteRut}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  // ===== CO-GUÍAS ESTUDIANTES =====
+
+  getAllCoGuiasEstudiantes() {
+    return this.http.get(`${this.baseUrl}/co-guias-estudiantes`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  asignarCoGuiaEstudiante(data: { estudiante_rut: string; profesor_co_guia_rut: string; observaciones?: string }) {
+    return this.http.post(`${this.baseUrl}/co-guias-estudiantes`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  desasignarCoGuiaEstudiante(estudianteRut: string) {
+    return this.http.delete(`${this.baseUrl}/co-guias-estudiantes/estudiante/${estudianteRut}`, {
       headers: this.getHeaders()
     });
   }

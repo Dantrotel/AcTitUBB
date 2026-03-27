@@ -379,47 +379,7 @@ export class HomeProfesor implements OnInit {
   }
 
   cargarFechasImportantesProyectos() {
-    this.ApiService.getProyectosAsignados().subscribe({
-      next: (response: any) => {
-        // ✅ FIX: Backend devuelve { total, projects }, no { success, data }
-        if (response && response.projects) {
-          const promesasFechas = response.projects.map((proyecto: any) => 
-            this.ApiService.getFechasImportantesProyecto(proyecto.id).toPromise()
-              .then((fechasResponse: any) => {
-                if (fechasResponse && fechasResponse.success) {
-                  return fechasResponse.data.fechas_importantes
-                    .filter((fecha: any) => new Date(fecha.fecha_limite) >= new Date())
-                    .map((fecha: any) => ({
-                      ...fecha,
-                      proyecto_titulo: proyecto.titulo,
-                      proyecto_id: proyecto.id
-                    }));
-                }
-                return [];
-              })
-              .catch(() => [])
-          );
-          
-          Promise.all(promesasFechas).then((fechasCombinadas: any[]) => {
-            const fechasImportantes = fechasCombinadas.flat().map(fecha => ({
-              id: fecha.id,
-              titulo: `${fecha.titulo} - ${fecha.proyecto_titulo}`,
-              fecha: new Date(fecha.fecha_limite),
-              tipo: fecha.tipo_fecha,
-              es_fecha_importante: true,
-              proyecto_id: fecha.proyecto_id
-            }));
-            
-            this.proximasFechas = [...this.proximasFechas, ...fechasImportantes]
-              .sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
-              .slice(0, 8);
-          });
-        }
-      },
-      error: (error: any) => {
-        console.error('Error al cargar fechas importantes:', error);
-      }
-    });
+    // Fechas importantes eliminadas, los hitos del cronograma reemplazan esta función
   }
 
   cargarHitosProximos() {

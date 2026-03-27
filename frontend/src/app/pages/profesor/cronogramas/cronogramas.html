@@ -62,9 +62,15 @@
                   <i class="fas fa-user-graduate"></i>
                   {{ proyecto.estudiante_nombre }}
                 </p>
-                <span class="estado-badge estado-{{ proyecto.estado }}">
-                  {{ proyecto.estado }}
-                </span>
+                <div class="project-card-footer">
+                  <span class="estado-badge estado-{{ proyecto.estado }}">
+                    {{ proyecto.estado }}
+                  </span>
+                  <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto); $event.stopPropagation()" title="Ver detalle del proyecto">
+                    <i class="fas fa-external-link-alt"></i>
+                    Ver detalle
+                  </button>
+                </div>
               </div>
             </div>
           }
@@ -94,14 +100,14 @@
         }
 
         <!-- Sin cronograma -->
-        @if (proyectoSeleccionado && !loadingCronograma && !cronogramaId && !error) {
+        @if (proyectoSeleccionado && !loadingCronograma && !cronogramaId) {
           <div class="no-selection">
             <div class="no-selection-icon">
               <i class="fas fa-calendar-plus"></i>
             </div>
             <h3>Sin cronograma</h3>
             <p>Este proyecto no tiene un cronograma creado todavía.</p>
-            <button class="btn-primary" (click)="crearCronograma()">
+            <button class="btn-primary" (click)="crearCronograma()" [disabled]="loadingCronograma">
               <i class="fas fa-plus"></i> Crear Cronograma
             </button>
           </div>
@@ -115,6 +121,10 @@
                 <h2>{{ proyectoSeleccionado.titulo }}</h2>
                 <p>{{ proyectoSeleccionado.estudiante_nombre }}</p>
               </div>
+              <button class="btn-add-fecha" (click)="verDetalleProyecto(proyectoSeleccionado)">
+                <i class="fas fa-external-link-alt"></i>
+                Ver Detalle
+              </button>
             </div>
 
             <app-gestion-hitos

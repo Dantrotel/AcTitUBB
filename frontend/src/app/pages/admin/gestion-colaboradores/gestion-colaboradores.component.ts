@@ -198,7 +198,11 @@ Total de proyectos: ${response.proyectos.length}
 
 ${proyectosTexto}`;
 
-        alert(detalles);
+        this.snackBar.open(
+          `${colaborador.nombre_completo} participa en ${response.proyectos.length} proyecto(s).`,
+          'Cerrar',
+          { duration: 5000 }
+        );
       },
       error: (error) => {
         this.cargando.set(false);
@@ -241,8 +245,11 @@ ${proyectosTexto}`;
       ${colaborador.activo ? '🟢 Activo' : '🔴 Inactivo'}
     `;
 
-    alert(detalles);
-    console.log('Detalles completos del colaborador:', colaborador);
+    this.snackBar.open(
+      `${colaborador.nombre_completo} — ${colaborador.entidad_nombre || 'Sin entidad asignada'} | ${this.getTipoLabel(colaborador.tipo_colaborador)}`,
+      'Cerrar',
+      { duration: 5000 }
+    );
   }
 
   editarColaborador(colaborador: ColaboradorExterno): void {

@@ -118,3 +118,4 @@ $text:#212529; $muted:#6c757d; $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
 .btn-danger         { @extend %btn-base; background:$red; color:$white; &:hover { background:color.adjust($red,$lightness:-8%); } }
 .btn-warning        { @extend %btn-base; background:$orange; color:$white; &:hover { background:color.adjust($orange,$lightness:-8%); } }
 .btn-download-archivo { @extend %btn-base; background:rgba($primary,.08); color:$primary; border:1px solid rgba($primary,.2); &:hover { background:rgba($primary,.15); } }
+.estudiante-item { margin-bottom: 5px; }

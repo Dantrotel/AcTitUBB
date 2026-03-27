@@ -155,7 +155,7 @@ export class DocumentosProyectoComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => this.notificationService.error('Error al descargar el archivo')
+      error: () => this.notificationService.error('Error al descargar archivo', 'No fue posible descargar el archivo del hito. Intente nuevamente.')
     });
   }
 
@@ -189,7 +189,7 @@ export class DocumentosProyectoComponent implements OnInit {
 
   subirDocumento(): void {
     if (!this.archivoSeleccionado || !this.tipoDocumento) {
-      this.notificationService.warning('Selecciona un archivo y tipo de documento');
+      this.notificationService.warning('Campos requeridos', 'Debe seleccionar un archivo y especificar el tipo de documento antes de continuar.');
       return;
     }
     this.cargando = true;
@@ -207,7 +207,7 @@ export class DocumentosProyectoComponent implements OnInit {
         this.cargando = false;
       },
       error: () => {
-        this.notificationService.error('Error al subir el documento');
+        this.notificationService.error('Error al subir documento', 'No fue posible cargar el documento al servidor. Verifique el archivo e intente nuevamente.');
         this.cargando = false;
       }
     });
@@ -224,7 +224,7 @@ export class DocumentosProyectoComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => this.notificationService.error('Error al descargar el documento')
+      error: () => this.notificationService.error('Error al descargar documento', 'No fue posible descargar el documento seleccionado. Intente nuevamente.')
     });
   }
 
@@ -237,7 +237,7 @@ export class DocumentosProyectoComponent implements OnInit {
       estado: nuevoEstado, comentarios: comentario || ''
     }).subscribe({
       next: () => this.cargarDocumentos(),
-      error: () => this.notificationService.error('Error al actualizar el estado')
+      error: () => this.notificationService.error('Error al actualizar estado', 'No fue posible actualizar el estado del documento. Intente nuevamente.')
     });
   }
 
@@ -248,7 +248,7 @@ export class DocumentosProyectoComponent implements OnInit {
     if (!confirmed) return;
     this.apiService.delete(`/documentos/${documentoId}`).subscribe({
       next: () => this.cargarDocumentos(),
-      error: () => this.notificationService.error('Error al eliminar el documento')
+      error: () => this.notificationService.error('Error al eliminar documento', 'No fue posible eliminar el documento seleccionado. Intente nuevamente.')
     });
   }
 

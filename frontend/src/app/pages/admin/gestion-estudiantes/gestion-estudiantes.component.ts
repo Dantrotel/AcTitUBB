@@ -34,9 +34,11 @@ export class GestionEstudiantesComponent implements OnInit {
   procesando = false;
 
   guiasMap: Record<string, any> = {};
+  coGuiasMap: Record<string, any> = {};
   inscripcionesMap: Record<string, any> = {};
   // Modelos para los selects inline (ngModel necesita una variable mutable)
   guiaSelects: Record<string, string> = {};
+  coGuiaSelects: Record<string, string> = {};
   ramoSelects: Record<string, string> = {};
 
   constructor(
@@ -51,6 +53,7 @@ export class GestionEstudiantesComponent implements OnInit {
     this.cargarCarreras();
     this.cargarProfesores();
     this.cargarGuiasEstudiantes();
+    this.cargarCoGuiasEstudiantes();
     this.cargarInscripcionesRamo();
   }
 
@@ -112,6 +115,22 @@ export class GestionEstudiantesComponent implements OnInit {
     });
   }
 
+  cargarCoGuiasEstudiantes(): void {
+    this.apiService.getAllCoGuiasEstudiantes().subscribe({
+      next: (res: any) => {
+        const list: any[] = res.data || [];
+        this.coGuiasMap = {};
+        this.coGuiaSelects = {};
+        list.forEach(g => {
+          this.coGuiasMap[g.estudiante_rut] = g;
+          this.coGuiaSelects[g.estudiante_rut] = g.profesor_co_guia_rut;
+        });
+        this.cdr.detectChanges();
+      },
+      error: () => { this.coGuiasMap = {}; this.coGuiaSelects = {}; }
+    });
+  }
+
   cargarInscripcionesRamo(): void {
     this.apiService.getAllInscripcionesRamo().subscribe({
       next: (res: any) => {
@@ -138,13 +157,31 @@ export class GestionEstudiantesComponent implements OnInit {
       profesor_guia_rut: profesorRut
     }).subscribe({
       next: () => {
-        this.notificationService.success('Profesor guía actualizado');
+        this.notificationService.success('Profesor guía actualizado', 'El profesor guía del estudiante ha sido asignado correctamente.');
         this.cargarGuiasEstudiantes();
       },
       error: (err: any) => {
         // Revertir el select al valor anterior
         this.guiaSelects[estudiante.rut] = this.guiasMap[estudiante.rut]?.profesor_guia_rut || '';
-        this.notificationService.error('Error al asignar guía', err.error?.message || '');
+        this.notificationService.error('Error al asignar guía', err.error?.message || 'No fue posible actualizar el profesor guía. Intente nuevamente.');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  cambiarCoGuia(estudiante: any, profesorRut: string): void {
+    if (!profesorRut) return;
+    this.apiService.asignarCoGuiaEstudiante({
+      estudiante_rut: estudiante.rut,
+      profesor_co_guia_rut: profesorRut
+    }).subscribe({
+      next: () => {
+        this.notificationService.success('Profesor co-guía actualizado', 'El profesor co-guía del estudiante ha sido asignado correctamente.');
+        this.cargarCoGuiasEstudiantes();
+      },
+      error: (err: any) => {
+        this.coGuiaSelects[estudiante.rut] = this.coGuiasMap[estudiante.rut]?.profesor_co_guia_rut || '';
+        this.notificationService.error('Error al asignar co-guía', err.error?.message || 'No fue posible actualizar el profesor co-guía. Intente nuevamente.');
         this.cdr.detectChanges();
       }
     });
@@ -158,31 +195,37 @@ export class GestionEstudiantesComponent implements OnInit {
       : this.apiService.crearInscripcionRamo(tipo as 'AP' | 'PT', estudiante.rut);
     obs.subscribe({
       next: () => {
-        this.notificationService.success('Ramo actualizado');
+        this.notificationService.success('Ramo actualizado', 'El ramo del estudiante ha sido actualizado correctamente.');
         this.cargarInscripcionesRamo();
       },
       error: (err: any) => {
         // Revertir el select al valor anterior
         this.ramoSelects[estudiante.rut] = this.inscripcionesMap[estudiante.rut]?.tipo_ramo || '';
-        this.notificationService.error('Error al actualizar ramo', err.error?.message || '');
+        this.notificationService.error('Error al actualizar ramo', err.error?.message || 'No fue posible actualizar el ramo. Intente nuevamente.');
         this.cdr.detectChanges();
       }
     });
   }
 
   get estudiantesFiltrados(): any[] {
-    return this.estudiantes.filter(e => {
-      const matchBusqueda = !this.filtroBusqueda ||
-        e.nombre?.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) ||
-        e.rut?.includes(this.filtroBusqueda) ||
-        e.email?.toLowerCase().includes(this.filtroBusqueda.toLowerCase());
-      const matchCarrera = !this.filtroCarrera ||
-        e.carrera_id?.toString() === this.filtroCarrera;
-      const matchEstado = !this.filtroEstado ||
-        (this.filtroEstado === 'activo' && (e.confirmado === true || e.confirmado === 1)) ||
-        (this.filtroEstado === 'pendiente' && (e.confirmado === false || e.confirmado === 0));
-      return matchBusqueda && matchCarrera && matchEstado;
-    });
+    return this.estudiantes
+      .filter(e => {
+        const matchBusqueda = !this.filtroBusqueda ||
+          e.nombre?.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) ||
+          e.rut?.includes(this.filtroBusqueda) ||
+          e.email?.toLowerCase().includes(this.filtroBusqueda.toLowerCase());
+        const matchCarrera = !this.filtroCarrera ||
+          e.carrera_id?.toString() === this.filtroCarrera;
+        const matchEstado = !this.filtroEstado ||
+          (this.filtroEstado === 'activo' && (e.confirmado === true || e.confirmado === 1)) ||
+          (this.filtroEstado === 'pendiente' && (e.confirmado === false || e.confirmado === 0));
+        return matchBusqueda && matchCarrera && matchEstado;
+      })
+      .sort((a, b) => {
+        const apellidoA = a.nombre?.trim().split(' ').slice(-1)[0]?.toLowerCase() ?? '';
+        const apellidoB = b.nombre?.trim().split(' ').slice(-1)[0]?.toLowerCase() ?? '';
+        return apellidoA.localeCompare(apellidoB, 'es');
+      });
   }
 
   abrirEditar(estudiante: any): void {
@@ -210,7 +253,7 @@ export class GestionEstudiantesComponent implements OnInit {
         this.cargarEstudiantes();
       },
       error: () => {
-        this.notificationService.error('Error al actualizar el estudiante');
+        this.notificationService.error('Error al actualizar estudiante', 'No fue posible guardar los cambios del estudiante. Intente nuevamente.');
         this.procesando = false;
       }
     });
@@ -230,7 +273,7 @@ export class GestionEstudiantesComponent implements OnInit {
 
   resetPassword(): void {
     if (!this.nuevaPassword || this.nuevaPassword.length < 6) {
-      this.notificationService.error('La contraseña debe tener al menos 6 caracteres');
+      this.notificationService.error('Contraseña inválida', 'La nueva contraseña debe tener al menos 6 caracteres.');
       return;
     }
     this.procesando = true;
@@ -241,7 +284,7 @@ export class GestionEstudiantesComponent implements OnInit {
         this.cerrarResetPassword();
       },
       error: () => {
-        this.notificationService.error('Error al restablecer la contraseña');
+        this.notificationService.error('Error al restablecer contraseña', 'No fue posible restablecer la contraseña. Intente nuevamente.');
         this.procesando = false;
       }
     });
@@ -258,7 +301,7 @@ export class GestionEstudiantesComponent implements OnInit {
         this.notificationService.success('Estudiante eliminado correctamente');
         this.cargarEstudiantes();
       },
-      error: () => this.notificationService.error('Error al eliminar el estudiante')
+      error: () => this.notificationService.error('Error al eliminar estudiante', 'No fue posible eliminar al estudiante. Intente nuevamente.')
     });
   }
 

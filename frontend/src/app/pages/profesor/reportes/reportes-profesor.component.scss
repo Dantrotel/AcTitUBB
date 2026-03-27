@@ -5,7 +5,7 @@ $info:#17a2b8; $gray:#6c757d; $border:#dee2e6; $bg:#f4f6f9; $white:#fff;
 $text:#212529; $muted:#6c757d; $shadow:0 1px 4px rgba(0,0,0,.08); $radius:8px;
 
 // ── Actions bar ───────────────────────────────────────
-.page-actions-bar { background:$white; border-bottom:1px solid $border; }
+.page-actions-bar { background:$white; border-bottom:1px solid $border; display:flex; justify-content:flex-end; gap:8px; padding:12px 20px 0; }
 .btn-icon {
   display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px;
   border-radius:6px; border:1px solid $border; background:$white; color:$muted; cursor:pointer; font-size:.9rem;

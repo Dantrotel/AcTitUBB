@@ -374,12 +374,6 @@
     </div>
   </div>
 
-  <!-- Fechas importantes con límites de entrega (componente integrado) -->
-  <app-fechas-limite-proyecto 
-    *ngIf="proyectoActivo" 
-    [proyectoId]="proyectoActivo.id">
-  </app-fechas-limite-proyecto>
-
   <!-- Botón para solicitar extensión de plazo -->
   <div class="extension-section" *ngIf="proyectoActivo">
     <button class="btn-extension" (click)="solicitarExtension()">

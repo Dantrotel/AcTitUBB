@@ -2,8 +2,233 @@
 
   <div class="informante-header">
     <h2><i class="fas fa-user-check"></i> Revisiones como Profesor Informante</h2>
-    <p class="subtitle">Documentos aprobados por el profesor guía que requieren tu evaluación</p>
+    <p class="subtitle">Gestiona tus hitos propios y evalúa documentos del profesor guía</p>
   </div>
+
+  <!-- ===== MIS HITOS (INFORMANTE) — al tope ===== -->
+  <div class="seccion hitos-informante-seccion" *ngIf="cronogramaId">
+    <div class="seccion-header">
+      <h3 class="seccion-title">
+        <i class="fas fa-list-check"></i> Mis Hitos (como Informante)
+      </h3>
+      <button
+        class="btn-nuevo-hito"
+        *ngIf="puedeCrearHitos && !mostrarFormHito"
+        (click)="abrirFormHito()">
+        <i class="fas fa-plus"></i> Nuevo Hito
+      </button>
+    </div>
+
+    <!-- Cargando permiso -->
+    <div class="loading-state" *ngIf="cargandoPermiso">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Verificando permisos...</span>
+    </div>
+
+    <!-- Sin permiso aún -->
+    <div class="locked-state" *ngIf="!cargandoPermiso && !puedeCrearHitos">
+      <i class="fas fa-lock"></i>
+      <div>
+        <strong>Acceso bloqueado</strong>
+        <p>Podrás crear hitos propios una vez que el profesor guía apruebe el hito de entrega final.</p>
+      </div>
+    </div>
+
+    <!-- Formulario nuevo hito -->
+    <div class="hito-form-panel" *ngIf="puedeCrearHitos && mostrarFormHito">
+      <h4><i class="fas fa-plus-circle"></i> Crear nuevo hito</h4>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre del hito <span class="req">*</span></label>
+          <input type="text" [(ngModel)]="nuevoHito.nombre_hito" placeholder="Ej: Revisión de avance final">
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select [(ngModel)]="nuevoHito.tipo_hito">
+            <option value="entrega_documento">Entrega de Documento</option>
+            <option value="presentacion">Presentacion</option>
+            <option value="revision">Revision</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fecha límite <span class="req">*</span></label>
+          <input type="date" [(ngModel)]="nuevoHito.fecha_limite">
+        </div>
+        <div class="form-group">
+          <label>Peso en proyecto (%)</label>
+          <input type="number" [(ngModel)]="nuevoHito.peso_en_proyecto" min="0" max="100">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea [(ngModel)]="nuevoHito.descripcion" rows="3" placeholder="Descripción detallada del hito..."></textarea>
+      </div>
+
+      <div class="form-check">
+        <input type="checkbox" id="esCritico" [(ngModel)]="nuevoHito.es_critico">
+        <label for="esCritico">Marcar como hito crítico</label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-guardar" (click)="guardarHitoInformante()" [disabled]="guardandoHito">
+          <i class="fas fa-save"></i> {{ guardandoHito ? 'Guardando...' : 'Guardar Hito' }}
+        </button>
+        <button class="btn-cancelar" (click)="cancelarFormHito()" [disabled]="guardandoHito">
+          Cancelar
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de hitos del informante -->
+    <div *ngIf="puedeCrearHitos && !cargandoHitos">
+      <div class="empty-state small" *ngIf="hitosInformante.length === 0 && !mostrarFormHito">
+        <i class="fas fa-clipboard"></i>
+        <p>Aún no has creado hitos. Usa el botón "Nuevo Hito" para comenzar.</p>
+      </div>
+
+      <!-- Hitos pendientes de entrega (sin actividad del estudiante) -->
+      <div class="hito-informante-card" *ngFor="let h of hitosSinEntrega">
+        <div class="hito-card-header">
+          <div class="hito-card-info">
+            <h4>{{ h.nombre_hito }}</h4>
+            <p class="hito-desc" *ngIf="h.descripcion">{{ h.descripcion }}</p>
+          </div>
+          <div class="hito-card-meta">
+            <span class="badge badge-warning">Pendiente de entrega</span>
+            <span class="fecha-tag" *ngIf="h.fecha_limite">
+              <i class="fas fa-calendar"></i> {{ formatearFecha(h.fecha_limite) }}
+            </span>
+            <span class="peso-tag" *ngIf="h.peso_en_proyecto">
+              <i class="fas fa-weight-hanging"></i> {{ h.peso_en_proyecto }}%
+            </span>
+            <span class="critico-tag" *ngIf="h.es_critico">
+              <i class="fas fa-exclamation-triangle"></i> Crítico
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hitos entregados por el estudiante — el informante debe revisar -->
+      <div *ngIf="hitosConEntrega.length > 0" class="sub-seccion">
+        <h4 class="sub-seccion-title">
+          <i class="fas fa-inbox"></i> Entregas del estudiante para revisar
+        </h4>
+
+        <div class="hito-informante-card entregado" *ngFor="let h of hitosConEntrega">
+          <div class="hito-card-header">
+            <div class="hito-card-info">
+              <h4>{{ h.nombre_hito }}</h4>
+              <p class="hito-desc" *ngIf="h.descripcion">{{ h.descripcion }}</p>
+              <div class="entrega-meta" *ngIf="h.nombre_archivo_original || h.archivo_entrega">
+                <i class="fas fa-file-alt"></i>
+                <span>{{ h.nombre_archivo_original || h.archivo_entrega }}</span>
+              </div>
+              <p class="comentarios-est" *ngIf="h.comentarios_estudiante">
+                <strong>Comentarios del estudiante:</strong> {{ h.comentarios_estudiante }}
+              </p>
+            </div>
+            <div class="hito-card-meta">
+              <span class="badge" [class]="getEstadoClass(h.estado)">
+                {{ h.estado === 'entregado' ? 'Por revisar' : h.estado }}
+              </span>
+              <span class="fecha-tag" *ngIf="h.fecha_entrega">
+                <i class="fas fa-upload"></i> {{ formatearFecha(h.fecha_entrega) }}
+              </span>
+              <button class="btn-revisar-hito"
+                *ngIf="h.estado === 'entregado'"
+                (click)="toggleRevisionHito(h)">
+                <i class="fas" [class.fa-pencil-alt]="hitoEnRevisionId !== h.id" [class.fa-times]="hitoEnRevisionId === h.id"></i>
+                {{ hitoEnRevisionId === h.id ? 'Cerrar' : 'Revisar' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Retroalimentación ya enviada -->
+          <div class="retro-previa" *ngIf="h.comentarios_profesor && hitoEnRevisionId !== h.id">
+            <i class="fas fa-comment-alt"></i>
+            <p>{{ h.comentarios_profesor }}</p>
+          </div>
+
+          <!-- Panel de revisión inline -->
+          <div class="revision-panel" *ngIf="hitoEnRevisionId === h.id">
+            <div class="revision-form">
+              <div class="form-group">
+                <label>Retroalimentación al estudiante <span class="req">*</span></label>
+                <textarea [(ngModel)]="comentariosRevision" rows="4"
+                  placeholder="Escribe tu retroalimentación detallada..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Documento adjunto (opcional)</label>
+                <input type="file" (change)="onArchivoRevisionHitoChange($event)" accept=".pdf,.doc,.docx">
+                <small *ngIf="archivoRevisionHitoNombre">{{ archivoRevisionHitoNombre }}</small>
+              </div>
+              <div class="form-actions">
+                <button class="btn-aprobar" (click)="enviarRevisionHitoInformante('aprobado')" [disabled]="enviandoRevisionHito">
+                  <i class="fas fa-check"></i> {{ enviandoRevisionHito ? 'Enviando...' : 'Aprobar' }}
+                </button>
+                <button class="btn-rechazar" (click)="enviarRevisionHitoInformante('revisado')" [disabled]="enviandoRevisionHito">
+                  <i class="fas fa-redo-alt"></i> Solicitar correcciones
+                </button>
+                <button class="btn-cancelar" (click)="cerrarRevisionHito()" [disabled]="enviandoRevisionHito">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historial de hitos propios revisados -->
+      <div *ngIf="historialHitosInformante.length > 0" class="sub-seccion">
+        <h4 class="sub-seccion-title">
+          <i class="fas fa-history"></i> Historial de revisiones
+        </h4>
+        <div class="historial-table-wrap">
+          <table class="historial-table">
+            <thead>
+              <tr>
+                <th>Hito</th>
+                <th>Estado</th>
+                <th>Retroalimentación</th>
+                <th>Fecha revisión</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let h of historialHitosInformante">
+                <td>
+                  <span class="hist-nombre">{{ h.nombre_hito }}</span>
+                  <span class="hist-tipo">{{ h.tipo_hito }}</span>
+                </td>
+                <td>
+                  <span class="badge" [class]="getEstadoClass(h.estado)">
+                    {{ h.estado === 'revisado' ? 'Correcciones solicitadas' : h.estado === 'aprobado' ? 'Aprobado' : 'Rechazado' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="hist-comentario">{{ h.comentarios_profesor || '—' }}</span>
+                </td>
+                <td class="hist-fecha">{{ formatearFecha(h.fecha_revision || h.updated_at || '') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="cargandoHitos">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Cargando hitos...</span>
+    </div>
+  </div>
+
+  <!-- ===== DIVISOR ===== -->
+  <div class="seccion-divider" *ngIf="cronogramaId && (pendientes.length > 0 || completadas.length > 0)"></div>
 
   <!-- Loading -->
   <div class="loading-state" *ngIf="cargando">
@@ -18,16 +243,16 @@
   </div>
 
   <!-- Sin revisiones pendientes -->
-  <div class="empty-state" *ngIf="!cargando && pendientes.length === 0 && completadas.length === 0">
+  <div class="empty-state" *ngIf="!cargando && pendientes.length === 0 && completadas.length === 0 && !cronogramaId">
     <i class="fas fa-check-circle"></i>
     <p>No tienes revisiones pendientes como informante</p>
   </div>
 
-  <!-- ===== PENDIENTES ===== -->
+  <!-- ===== PENDIENTES (revisiones del guía) ===== -->
   <div class="seccion" *ngIf="pendientes.length > 0">
     <h3 class="seccion-title">
       <span class="badge badge-warning">{{ pendientes.length }}</span>
-      Pendientes de revisión
+      Pendientes de revisión (documentos del guía)
     </h3>
 
     <div class="revision-card pendiente" *ngFor="let r of pendientes">
@@ -98,9 +323,9 @@
     </div>
   </div>
 
-  <!-- ===== COMPLETADAS ===== -->
+  <!-- ===== COMPLETADAS (revisiones del guía) ===== -->
   <div class="seccion" *ngIf="completadas.length > 0">
-    <h3 class="seccion-title">Historial de revisiones</h3>
+    <h3 class="seccion-title">Historial de revisiones (documentos del guía)</h3>
 
     <div class="revision-card" [class.aprobado]="r.estado === 'aprobado'" [class.rechazado]="r.estado === 'rechazado'"
          *ngFor="let r of completadas">

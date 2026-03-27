@@ -35,10 +35,6 @@ routerProject.get('/:projectId', verifySession, cacheMiddleware('proyectos'), Pr
 // Obtener proyecto específico con información completa (fechas importantes y profesores)
 routerProject.get('/:projectId/completo', verifySession, cacheMiddleware('proyectos'), ProjectController.getProyectoCompleto);
 
-// Gestión de fechas importantes del proyecto (accesible para todos con permisos)
-routerProject.get('/:projectId/fechas-importantes', verifySession, ProjectController.obtenerFechasImportantes);
-routerProject.post('/:projectId/fechas-importantes', verifySession, ProjectController.crearFechaImportante);
-
 // Crear nuevo proyecto (solo estudiantes)
 routerProject.post('/', verifySession, checkRole('1'), validate(crearProyectoSchema), invalidateOnMutation('proyectos'), ProjectController.createProject);
 
@@ -106,7 +102,13 @@ routerProject.patch('/hitos/:hitoId/revisar', verifySession, checkRole('2'), upl
 
 // ===== REVISIONES INFORMANTE =====
 routerProject.get('/informante/revisiones', verifySession, checkRole('2'), ProjectController.obtenerRevisionesInformante);
+routerProject.get('/:proyectoId/revisiones-informante', verifySession, ProjectController.obtenerRevisionesInformanteProyecto);
 routerProject.patch('/informante/revisiones/:revisionId', verifySession, checkRole('2'), uploadConManejo(uploadRevision), ProjectController.revisarHitoComoInformante);
+
+// ===== HITOS DEL INFORMANTE =====
+routerProject.get('/:proyectoId/informante/puede-crear', verifySession, checkRole('2'), ProjectController.verificarPermisoInformante);
+routerProject.get('/cronogramas/:cronogramaId/hitos/informante', verifySession, checkRole('2'), ProjectController.obtenerHitosInformante);
+routerProject.post('/cronogramas/:cronogramaId/hitos/informante', verifySession, checkRole('2'), ProjectController.crearHitoInformante);
 
 // Configuración de alertas
 routerProject.post('/:projectId/alertas', verifySession, checkRole('2'), ProjectController.configurarAlertas);

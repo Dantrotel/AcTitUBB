@@ -87,7 +87,7 @@ export class GestionSemestresComponent implements OnInit {
 
   guardar(): void {
     if (!this.form.nombre || !this.form.fecha_inicio || !this.form.fecha_fin) {
-      this.notificationService.error('Completa todos los campos obligatorios');
+      this.notificationService.error('Campos incompletos', 'Los campos Nombre, Fecha de inicio y Fecha de fin son obligatorios.');
       return;
     }
     this.procesando = true;
@@ -104,7 +104,7 @@ export class GestionSemestresComponent implements OnInit {
         this.cargarSemestres();
       },
       error: (err: any) => {
-        this.notificationService.error('Error', err.error?.message || 'No se pudo guardar el semestre');
+        this.notificationService.error('Error al guardar semestre', err.error?.message || 'No fue posible guardar el semestre. Intente nuevamente.');
         this.procesando = false;
       }
     });
@@ -116,7 +116,7 @@ export class GestionSemestresComponent implements OnInit {
         this.notificationService.success(`Semestre ${s.nombre} activado`);
         this.cargarSemestres();
       },
-      error: () => this.notificationService.error('Error al activar el semestre')
+      error: () => this.notificationService.error('Error al activar semestre', 'No fue posible activar el semestre seleccionado. Intente nuevamente.')
     });
   }
 
@@ -131,7 +131,7 @@ export class GestionSemestresComponent implements OnInit {
         this.notificationService.success('Semestre eliminado');
         this.cargarSemestres();
       },
-      error: (err: any) => this.notificationService.error('Error', err.error?.message || 'No se pudo eliminar')
+      error: (err: any) => this.notificationService.error('Error al eliminar semestre', err.error?.message || 'No fue posible eliminar el semestre. Verifique que no tenga propuestas asociadas.')
     });
   }
 
@@ -161,7 +161,7 @@ export class GestionSemestresComponent implements OnInit {
 
   async generarInscripcionesSiguiente(): Promise<void> {
     if (this.semestres.length < 2) {
-      this.notificationService.error('Crea primero el semestre destino antes de generar inscripciones');
+      this.notificationService.error('Semestre destino no encontrado', 'Debe crear el semestre de destino antes de generar las inscripciones.');
       return;
     }
     // Los semestres vienen ordenados DESC, el segundo es el siguiente cronológicamente al historial
@@ -169,7 +169,7 @@ export class GestionSemestresComponent implements OnInit {
     // Buscar el siguiente semestre (orden ascendente respecto al origen)
     const siguientes = this.semestres.filter((s: any) => s.id !== semestreOrigen.id);
     if (siguientes.length === 0) {
-      this.notificationService.error('No hay otro semestre disponible como destino');
+      this.notificationService.error('Sin semestre destino disponible', 'No existe otro semestre disponible para recibir las inscripciones generadas.');
       return;
     }
     // Usar el primer semestre de la lista como destino (el más reciente distinto al origen)
@@ -188,7 +188,7 @@ export class GestionSemestresComponent implements OnInit {
         this.generandoInscripciones = false;
       },
       error: (err: any) => {
-        this.notificationService.error('Error', err.error?.message || 'No se pudo generar inscripciones');
+        this.notificationService.error('Error al generar inscripciones', err.error?.message || 'No fue posible generar las inscripciones. Intente nuevamente.');
         this.generandoInscripciones = false;
       }
     });
@@ -196,8 +196,8 @@ export class GestionSemestresComponent implements OnInit {
 
   cambiarResultado(semestreId: number, proyectoId: number, resultado: string): void {
     this.apiService.actualizarResultadoProyecto(semestreId, proyectoId, resultado).subscribe({
-      next: () => this.notificationService.success('Resultado actualizado'),
-      error: () => this.notificationService.error('Error al actualizar resultado')
+      next: () => this.notificationService.success('Resultado actualizado', 'El resultado del proyecto ha sido registrado correctamente.'),
+      error: () => this.notificationService.error('Error al actualizar resultado', 'No fue posible actualizar el resultado del proyecto. Intente nuevamente.')
     });
   }
 

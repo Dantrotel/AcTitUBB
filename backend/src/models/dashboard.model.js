@@ -62,6 +62,7 @@ export const obtenerDashboardEstudiante = async (estudiante_rut) => {
             INNER JOIN estudiantes_proyectos est_p ON p.id = est_p.proyecto_id
             WHERE est_p.estudiante_rut = ?
                 AND h.estado IN ('entregado', 'revisado', 'rechazado')
+                AND (h.creado_por_rol IS NULL OR h.creado_por_rol != 'informante')
             ORDER BY h.fecha_entrega DESC
             LIMIT 5
         `, [estudiante_rut]);

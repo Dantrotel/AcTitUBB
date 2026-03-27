@@ -87,37 +87,8 @@ export class SolicitarExtensionComponent implements OnInit {
   }
 
   cargarFechasProyecto() {
-    this.loadingFechas = true;
-    this.error = '';
-    
-    // Usar el método correcto del ApiService
-    this.api.getFechasImportantesProyecto(this.proyectoId.toString()).subscribe({
-      next: (response: any) => {
-        // Manejar respuesta: { success: true, data: { fechas_importantes: [...] } }
-        let fechas = [];
-        if (response && response.success && response.data && response.data.fechas_importantes) {
-          fechas = response.data.fechas_importantes;
-        } else if (response && Array.isArray(response)) {
-          fechas = response;
-        }
-        
-        this.fechasDisponibles = fechas.filter((f: FechaImportante) => {
-          // Solo mostrar fechas futuras o próximas que permitan extensión
-          const fechaLimite = new Date(f.fecha_limite);
-          const hoy = new Date();
-          return fechaLimite >= hoy && f.permite_extension;
-        });
-        
-        this.loadingFechas = false;
-        this.cdr.detectChanges();
-      },
-      error: (error: any) => {
-        console.error('Error cargando fechas:', error);
-        this.error = 'Error al cargar las fechas del proyecto';
-        this.loadingFechas = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.fechasDisponibles = [];
+    this.loadingFechas = false;
   }
 
   onFechaSeleccionada() {

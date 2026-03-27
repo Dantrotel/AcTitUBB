@@ -182,8 +182,9 @@ export const cacheMiddleware = (categoria, getTTL = null) => {
       return next();
     }
     
-    // Generar key basada en URL y query params
-    const key = `${req.path}:${JSON.stringify(req.query)}`;
+    // Generar key basada en URL, query params y usuario (para aislar caché por usuario)
+    const userKey = req.rut || req.user?.rut || 'anonymous';
+    const key = `${userKey}:${req.path}:${JSON.stringify(req.query)}`;
     
     // Intentar obtener del caché
     const cachedResponse = get(categoria, key);

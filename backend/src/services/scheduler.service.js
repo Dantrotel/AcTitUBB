@@ -366,7 +366,7 @@ const verificarEvaluacionesPendientes = async () => {
     const [evaluacionesPendientes] = await pool.execute(`
       SELECT 
         hc.id as hito_id,
-        hc.nombre as hito_nombre,
+        hc.nombre_hito as hito_nombre,
         hc.fecha_entrega_real,
         hc.proyecto_id,
         p.titulo as proyecto_titulo,

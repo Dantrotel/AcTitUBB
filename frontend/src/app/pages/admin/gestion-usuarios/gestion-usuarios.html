@@ -178,7 +178,7 @@
             <td class="nombre-col">
               <div class="usuario-nombre">
                 <i class="fas fa-user"></i>
-                {{ usuario.nombre }}
+                <span>{{ usuario.nombre }}</span>
               </div>
             </td>
             <td class="email-col">{{ usuario.email }}</td>
@@ -197,16 +197,16 @@
             </td>
             <td class="acciones-col">
               <div class="acciones-grupo">
-                <button class="btn-icon btn-edit" (click)="abrirModalEditar(usuario)" matTooltip="Editar">
+                <button class="btn-icon btn-edit" (click)="abrirModalEditar(usuario)" title="Editar">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-icon btn-toggle" (click)="cambiarEstado(usuario)" matTooltip="Cambiar Estado">
+                <button class="btn-icon btn-toggle" (click)="cambiarEstado(usuario)" title="Cambiar Estado">
                   <i class="fas fa-toggle-on"></i>
                 </button>
-                <button *ngIf="esSuperAdmin" class="btn-icon btn-reset" (click)="abrirModalResetPassword(usuario)" matTooltip="Resetear Contraseña">
+                <button *ngIf="esSuperAdmin" class="btn-icon btn-reset" (click)="abrirModalResetPassword(usuario)" title="Resetear Contraseña">
                   <i class="fas fa-key"></i>
                 </button>
-                <button class="btn-icon btn-delete" (click)="abrirModalEliminar(usuario)" matTooltip="Eliminar">
+                <button class="btn-icon btn-delete" (click)="abrirModalEliminar(usuario)" title="Eliminar">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>

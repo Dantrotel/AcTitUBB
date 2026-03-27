@@ -156,16 +156,45 @@ export const aprobarCronogramaPorEstudiante = async (cronograma_id) => {
 // ============= FUNCIONES PARA HITOS DEL CRONOGRAMA =============
 
 // Crear hito en cronograma (SISTEMA UNIFICADO)
-export const crearHitoCronograma = async ({ cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut }) => {
+export const crearHitoCronograma = async ({ cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut, creado_por_rol = 'guia' }) => {
     const [result] = await pool.execute(
-        `INSERT INTO hitos_cronograma 
-         (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite, 
-          peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO hitos_cronograma
+         (cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite,
+          peso_en_proyecto, es_critico, hito_predecesor_id, creado_por_rut, creado_por_rol)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [cronograma_id, proyecto_id, nombre_hito, descripcion, tipo_hito, fecha_limite,
-         peso_en_proyecto || 0, es_critico || false, hito_predecesor_id || null, creado_por_rut]
+         peso_en_proyecto || 0, es_critico || false, hito_predecesor_id || null, creado_por_rut, creado_por_rol]
     );
     return result.insertId;
+};
+
+export const verificarHitoFinalAprobadoInformante = async (proyecto_id, informante_rut) => {
+    // Se desbloquea cuando el profesor guía aprueba el hito de tipo 'entrega_final'
+    const [rows] = await pool.execute(`
+        SELECT h.id FROM hitos_cronograma h
+        INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+        WHERE cp.proyecto_id = ?
+          AND h.tipo_hito = 'entrega_final'
+          AND h.estado IN ('aprobado', 'revisado')
+        LIMIT 1
+    `, [proyecto_id]);
+    return rows.length > 0;
+};
+
+export const obtenerHitosCreados = async (cronograma_id, creado_por_rol) => {
+    const [rows] = await pool.execute(`
+        SELECT h.*,
+               uc.nombre AS creado_por_nombre,
+               CASE
+                   WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado','revisado','aprobado')
+                   THEN 'retrasado' ELSE h.estado
+               END AS estado_real
+        FROM hitos_cronograma h
+        LEFT JOIN usuarios uc ON h.creado_por_rut = uc.rut
+        WHERE h.cronograma_id = ? AND h.creado_por_rol = ?
+        ORDER BY h.fecha_limite ASC
+    `, [cronograma_id, creado_por_rol]);
+    return rows;
 };
 
 // Obtener hitos de un cronograma (CON NUEVOS CAMPOS)
@@ -173,6 +202,7 @@ export const obtenerHitosCronograma = async (cronograma_id) => {
     const [rows] = await pool.execute(`
         SELECT h.*,
                u.nombre as estudiante_nombre,
+               uc.nombre as creado_por_nombre,
                CASE
                    WHEN h.fecha_limite < CURDATE() AND h.estado NOT IN ('entregado', 'revisado', 'aprobado')
                    THEN 'retrasado'
@@ -187,6 +217,7 @@ export const obtenerHitosCronograma = async (cronograma_id) => {
         LEFT JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
         LEFT JOIN proyectos p ON c.proyecto_id = p.id
         LEFT JOIN usuarios u ON p.estudiante_rut = u.rut
+        LEFT JOIN usuarios uc ON h.creado_por_rut = uc.rut
         WHERE h.cronograma_id = ?
         ORDER BY h.fecha_limite ASC
     `, [cronograma_id]);
@@ -197,12 +228,19 @@ export const obtenerHitosCronograma = async (cronograma_id) => {
 export const entregarHito = async (hito_id, { archivo_entrega, nombre_archivo_original, comentarios_estudiante }) => {
     try {
         const [hito] = await pool.execute(
-            `SELECT fecha_limite FROM hitos_cronograma WHERE id = ?`,
+            `SELECT fecha_limite, estado FROM hitos_cronograma WHERE id = ?`,
             [hito_id]
         );
 
         if (!hito[0]) {
             throw new Error('Hito no encontrado');
+        }
+
+        if (hito[0].estado === 'entregado') {
+            throw new Error('Ya realizaste una entrega para este hito. Debes esperar la revisión del profesor antes de volver a entregar.');
+        }
+        if (hito[0].estado === 'aprobado') {
+            throw new Error('Este hito ya fue aprobado y no puede modificarse.');
         }
 
         const fechaLimite = new Date(hito[0].fecha_limite);
@@ -347,7 +385,46 @@ export const actualizarRevisionInformante = async (revision_id, informante_rut, 
             updated_at = NOW()
         WHERE id = ? AND informante_rut = ?
     `, [estado, comentarios, archivo_retroalimentacion ?? null, nombre_archivo_retroalimentacion ?? null, revision_id, informante_rut]);
+
+    // Si el informante pide correcciones, resetear el hito para permitir nueva entrega
+    if (estado === 'rechazado' && result.affectedRows > 0) {
+        const [[rev]] = await pool.execute(
+            `SELECT hito_id FROM revisiones_informante WHERE id = ?`,
+            [revision_id]
+        );
+        if (rev) {
+            await pool.execute(
+                `UPDATE hitos_cronograma SET estado = 'pendiente' WHERE id = ?`,
+                [rev.hito_id]
+            );
+        }
+    }
+
     return result.affectedRows > 0;
+};
+
+export const obtenerRevisionesInformanteByProyecto = async (proyecto_id) => {
+    const [rows] = await pool.execute(`
+        SELECT
+            ri.id,
+            ri.hito_id,
+            ri.estado,
+            ri.comentarios,
+            ri.fecha_revision,
+            ri.archivo_retroalimentacion,
+            ri.nombre_archivo_retroalimentacion,
+            h.nombre_hito,
+            h.tipo_hito,
+            h.fecha_limite,
+            u_inf.nombre AS informante_nombre
+        FROM revisiones_informante ri
+        INNER JOIN hitos_cronograma h ON ri.hito_id = h.id
+        INNER JOIN cronogramas_proyecto cp ON h.cronograma_id = cp.id
+        LEFT JOIN usuarios u_inf ON ri.informante_rut = u_inf.rut
+        WHERE ri.proyecto_id = ?
+        ORDER BY ri.estado ASC, h.fecha_limite ASC
+    `, [proyecto_id]);
+    return rows;
 };
 
 export const obtenerDocumentosHitos = async (proyecto_id) => {
@@ -609,13 +686,22 @@ export const esProfesorGuiaDelHito = async (hito_id, profesor_rut) => {
         SELECT COUNT(*) as count
         FROM hitos_cronograma h
         INNER JOIN cronogramas_proyecto c ON h.cronograma_id = c.id
-        INNER JOIN asignaciones_proyectos ap ON c.proyecto_id = ap.proyecto_id
-        INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
         WHERE h.id = ?
-          AND ap.profesor_rut = ?
-          AND ap.activo = TRUE
-          AND (rp.nombre LIKE '%guia%' OR rp.nombre LIKE '%guía%' OR rp.nombre LIKE '%Guía%' OR rp.nombre = 'profesor_guia')
-    `, [hito_id, profesor_rut]);
+          AND (
+            -- Es profesor guía del proyecto
+            EXISTS (
+                SELECT 1 FROM asignaciones_proyectos ap
+                INNER JOIN roles_profesores rp ON ap.rol_profesor_id = rp.id
+                WHERE ap.proyecto_id = c.proyecto_id
+                  AND ap.profesor_rut = ?
+                  AND ap.activo = TRUE
+                  AND (rp.nombre LIKE '%guia%' OR rp.nombre LIKE '%guía%' OR rp.nombre LIKE '%Guía%' OR rp.nombre = 'profesor_guia')
+            )
+            OR
+            -- Es el informante que creó este hito
+            h.creado_por_rut = ?
+          )
+    `, [hito_id, profesor_rut, profesor_rut]);
     return rows[0].count > 0;
 };
 

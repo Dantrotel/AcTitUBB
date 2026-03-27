@@ -153,8 +153,11 @@ export class GestionEntidadesComponent implements OnInit {
       ${entidad.activo ? '🟢 Activa' : '🔴 Inactiva'}
     `;
 
-    alert(detalles);
-    console.log('Detalles completos de la entidad:', entidad);
+    this.snackBar.open(
+      `${entidad.nombre} — ${this.getTipoLabel(entidad.tipo)} | ${entidad.activo ? 'Activa' : 'Inactiva'}`,
+      'Cerrar',
+      { duration: 5000 }
+    );
   }
 
   editarEntidad(entidad: EntidadExterna): void {

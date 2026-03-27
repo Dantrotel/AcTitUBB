@@ -117,6 +117,7 @@
             <th><i class="fas fa-envelope"></i> Email</th>
             <th><i class="fas fa-graduation-cap"></i> Carrera</th>
             <th><i class="fas fa-chalkboard-teacher"></i> Profesor Guía</th>
+            <th><i class="fas fa-user-friends"></i> Co-Guía</th>
             <th><i class="fas fa-book-open"></i> Ramo</th>
             <th><i class="fas fa-circle"></i> Estado</th>
             <th class="th-actions">Acciones</th>
@@ -141,16 +142,24 @@
               </a>
             </td>
             <td>
-              <span class="carrera-text" *ngIf="estudiante.carrera_nombre">
-                {{ estudiante.carrera_nombre }}
+              <span class="carrera-text" *ngIf="estudiante.carrera_codigo || estudiante.carrera_nombre" [title]="estudiante.carrera_nombre">
+                {{ estudiante.carrera_codigo || estudiante.carrera_nombre }}
               </span>
-              <span class="no-data" *ngIf="!estudiante.carrera_nombre">—</span>
+              <span class="no-data" *ngIf="!estudiante.carrera_codigo && !estudiante.carrera_nombre">—</span>
             </td>
             <td>
               <select class="inline-select"
                       [(ngModel)]="guiaSelects[estudiante.rut]"
                       (ngModelChange)="cambiarGuia(estudiante, $event)">
                 <option value="">— Sin guía —</option>
+                <option *ngFor="let prof of profesores" [value]="prof.rut">{{ prof.nombre }}</option>
+              </select>
+            </td>
+            <td>
+              <select class="inline-select"
+                      [(ngModel)]="coGuiaSelects[estudiante.rut]"
+                      (ngModelChange)="cambiarCoGuia(estudiante, $event)">
+                <option value="">— Sin co-guía —</option>
                 <option *ngFor="let prof of profesores" [value]="prof.rut">{{ prof.nombre }}</option>
               </select>
             </td>

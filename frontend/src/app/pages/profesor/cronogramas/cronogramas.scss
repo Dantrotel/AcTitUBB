@@ -208,6 +208,31 @@ $p-critica: #dc3545;
   }
 }
 
+.project-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-top: .35rem;
+}
+
+.btn-ver-detalle {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .2rem .55rem;
+  border-radius: 1rem;
+  border: 1px solid rgba($primary, .3);
+  background: rgba($primary, .07);
+  color: $primary;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  &:hover { background: $primary; color: $white; border-color: $primary; }
+}
+
 // Card de vista global
 .global-card {
   display: flex;

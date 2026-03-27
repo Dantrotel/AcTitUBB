@@ -109,13 +109,13 @@ export class RevisarPropuestaComponent implements OnInit {
   guardarRevision() {
     // Validar que se haya seleccionado un estado
     if (!this.estado) {
-      this.notificationService.warning('Debes seleccionar un estado.');
+      this.notificationService.warning('Campo requerido', 'Debe seleccionar el estado de la revisión antes de continuar.');
       return;
     }
     
     // Los comentarios son opcionales cuando el estado es 'aprobada'
     if (this.estado !== 'aprobada' && (!this.comentarios || this.comentarios.trim().length === 0)) {
-      this.notificationService.warning('Debes ingresar comentarios cuando el estado no es "aprobada".');
+      this.notificationService.warning('Campo requerido', 'El campo "Comentarios" es obligatorio cuando el estado no es Aprobada.');
       return;
     }
     
@@ -136,12 +136,12 @@ export class RevisarPropuestaComponent implements OnInit {
           // Propuesta aprobada - mostrar mensaje sobre proyecto creado
           if (response.proyecto_creado && response.proyecto_id) {
             this.notificationService.success(
-              `Se ha creado automáticamente el proyecto con ID: ${response.proyecto_id}. El proyecto está en estado "Esperando Asignación de Profesores". Los administradores deben asignar los 3 roles (Profesor Guía, Revisor y de Asignatura) para activarlo.`,
-              '✅ Propuesta Aprobada',
+              'Propuesta aprobada',
+              `El proyecto ha sido creado (ID: ${response.proyecto_id}) y está en espera de asignación de profesores.`,
               8000
             );
           } else {
-            this.notificationService.success('Se ha iniciado el proceso de creación automática del proyecto.', '✅ Propuesta Aprobada');
+            this.notificationService.success('Propuesta aprobada', 'Se ha iniciado el proceso de creación del proyecto.');
           }
         } else {
           this.notificationService.success('Revisión guardada correctamente');
@@ -150,7 +150,7 @@ export class RevisarPropuestaComponent implements OnInit {
         // Redirigir a la ruta de retorno configurada
         this.router.navigate([this.backRoute]);
       },
-      error: () => this.notificationService.error('No se pudo guardar la revisión')
+      error: () => this.notificationService.error('Error al guardar revisión', 'No fue posible guardar la revisión de la propuesta. Intente nuevamente.')
     });
   }
 

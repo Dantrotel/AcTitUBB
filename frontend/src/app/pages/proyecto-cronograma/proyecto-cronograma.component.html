@@ -54,7 +54,23 @@
         (click)="cambiarTab('revisiones')"
         *ngIf="userRole === '2' || userRole === '3'">
         <i class="fas fa-clipboard-check"></i>
-        Revisiones
+        Revisiones Guía
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="tabActiva === 'revisiones-informante'"
+        (click)="cambiarTab('revisiones-informante')"
+        *ngIf="userRole === '2' || userRole === '3'">
+        <i class="fas fa-user-check"></i>
+        Revisiones Informante
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="tabActiva === 'retroalimentacion'"
+        (click)="cambiarTab('retroalimentacion')"
+        *ngIf="userRole === '1'">
+        <i class="fas fa-comment-dots"></i>
+        Retroalimentación
       </button>
       <button
         class="tab-button"
@@ -96,6 +112,20 @@
           [projectId]="projectId.toString()"
           [cronogramaId]="cronogramaId">
         </app-revision-hitos-profesor>
+      </div>
+
+      <div *ngIf="tabActiva === 'revisiones-informante'" class="tab-pane active">
+        <app-revision-hitos-informante
+          [proyectoId]="projectId.toString()"
+          [cronogramaId]="cronogramaId">
+        </app-revision-hitos-informante>
+      </div>
+
+      <div *ngIf="tabActiva === 'retroalimentacion'" class="tab-pane active">
+        <app-retroalimentacion-estudiante
+          [projectId]="projectId.toString()"
+          [cronogramaId]="cronogramaId">
+        </app-retroalimentacion-estudiante>
       </div>
 
       <div *ngIf="tabActiva === 'documentos'" class="tab-pane active">

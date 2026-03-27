@@ -54,6 +54,8 @@ table {
 .btn-delete { @include btn($red); padding: 5px 9px; font-size: .78rem; margin-right: 4px; }
 .btn-warning { @include btn($orange); padding: 5px 9px; font-size: .78rem; }
 .btn-success { @include btn($green); padding: 5px 9px; font-size: .78rem; }
+.btn-reactivar { @include btn(#2e7d32); padding: 5px 9px; font-size: .78rem; margin-right: 4px; }
+.btn-eliminar-permanente { @include btn(#b71c1c); padding: 5px 9px; font-size: .78rem; margin-right: 4px; }
 
 .actions { display: flex; gap: 4px; flex-wrap: wrap; }
 .btn-icon { padding: 5px 9px; border-radius: 6px; border: none; cursor: pointer; font-size: .78rem; display: inline-flex; align-items: center; transition: background .15s; }

@@ -135,3 +135,165 @@
 .btn-cancelar { background: #f1f5f9; color: #374151; }
 .btn-aprobar:hover:not(:disabled)  { background: #059669; }
 .btn-rechazar:hover:not(:disabled) { background: #dc2626; }
+
+// ── Hitos del Informante ────────────────────────────────
+
+.hitos-informante-seccion {
+  border-top: 2px solid #e2e8f0;
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+.seccion-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-nuevo-hito {
+  padding: 0.45rem 1rem; border-radius: 20px;
+  background: #6366f1; color: #fff;
+  border: none; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+  &:hover { background: #4f46e5; }
+}
+
+.locked-state {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px;
+  padding: 1rem 1.25rem; color: #64748b; font-size: 0.875rem;
+  i { font-size: 1.4rem; color: #94a3b8; margin-top: 2px; }
+  strong { display: block; color: #475569; margin-bottom: 0.2rem; }
+  p { margin: 0; }
+}
+
+.hito-form-panel {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 1.25rem; margin-bottom: 1.25rem;
+  h4 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0 0 1rem; }
+}
+
+.form-check {
+  display: flex; align-items: center; gap: 0.5rem;
+  input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+  label { font-size: 0.85rem; color: #374151; cursor: pointer; }
+}
+
+.btn-guardar {
+  background: #6366f1; color: #fff;
+  &:hover:not(:disabled) { background: #4f46e5; }
+}
+
+.hito-informante-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  border-left: 4px solid #6366f1; padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.hito-card-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap;
+}
+
+.hito-card-info {
+  h4 { margin: 0 0 0.2rem; font-size: 0.95rem; font-weight: 600; color: #1e293b; }
+  .hito-desc { font-size: 0.82rem; color: #64748b; margin: 0; }
+}
+
+.hito-card-meta {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+}
+
+.fecha-tag, .peso-tag, .critico-tag {
+  font-size: 0.78rem; color: #64748b;
+  display: flex; align-items: center; gap: 0.3rem;
+  i { font-size: 0.75rem; }
+}
+
+.critico-tag { color: #f59e0b; font-weight: 600; }
+
+.badge-info { background: #3b82f6; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; }
+.badge-warning { background: #f59e0b; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; }
+.badge-success { background: #10b981; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; }
+.badge-danger  { background: #ef4444; color: #fff; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; }
+
+.empty-state.small {
+  padding: 1rem; font-size: 0.85rem;
+  i { font-size: 1.2rem; }
+}
+
+.form-group select {
+  border: 1px solid #d1d5db; border-radius: 6px;
+  padding: 0.5rem 0.75rem; font-size: 0.875rem;
+  background: #fff;
+  &:focus { outline: none; border-color: #3b82f6; }
+}
+
+// ── Divisor entre secciones ─────────────────────────────────
+
+.seccion-divider {
+  border: none; border-top: 2px dashed #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+// ── Historial table (igual que revisiones guía) ─────────────
+
+.historial-table-wrap {
+  overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0;
+}
+
+.historial-table {
+  width: 100%; border-collapse: collapse; font-size: 0.875rem;
+  th {
+    background: #f8fafc; padding: 0.6rem 1rem;
+    text-align: left; font-size: 0.78rem; font-weight: 700;
+    color: #475569; text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+}
+
+.hist-nombre { display: block; font-weight: 600; color: #1e293b; }
+.hist-tipo { display: block; font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+.hist-comentario { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hist-fecha { color: #64748b; font-size: 0.8rem; white-space: nowrap; }
+
+// ── Sub-sección de revisión de hitos propios ────────────────
+
+.sub-seccion { margin-top: 1.25rem; }
+
+.sub-seccion-title {
+  font-size: 0.85rem; font-weight: 600; color: #475569;
+  display: flex; align-items: center; gap: 0.4rem;
+  margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+
+.hito-informante-card.entregado {
+  border-left-color: #3b82f6;
+}
+
+.entrega-meta {
+  display: flex; align-items: center; gap: 0.35rem;
+  font-size: 0.78rem; color: #64748b; margin-top: 0.25rem;
+  i { color: #3b82f6; }
+}
+
+.comentarios-est {
+  font-size: 0.8rem; color: #475569; margin: 0.3rem 0 0; padding: 0;
+}
+
+.btn-revisar-hito {
+  padding: 0.4rem 0.8rem; border-radius: 6px;
+  background: #3b82f6; color: #fff;
+  border: none; font-size: 0.8rem; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 0.3rem;
+  &:hover { background: #2563eb; }
+}
+
+.retro-previa {
+  display: flex; gap: 0.5rem; align-items: flex-start;
+  padding: 0.6rem 1rem 0.75rem; border-top: 1px solid #f1f5f9;
+  i { color: #6366f1; font-size: 0.85rem; margin-top: 2px; flex-shrink: 0; }
+  p { margin: 0; font-size: 0.82rem; color: #475569; }
+}

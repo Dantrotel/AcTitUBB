@@ -22,14 +22,11 @@ import { AdminChatComponent } from './pages/admin/chat/admin-chat.component';
 import { GestionComisionComponent } from './pages/admin/gestion-comision/gestion-comision';
 import { GestionExtensionesComponent } from './pages/admin/gestion-extensiones/gestion-extensiones.component';
 import { GestionPeriodoPropuestasComponent } from './pages/admin/gestion-periodo-propuestas/gestion-periodo-propuestas.component';
-import { FechasImportantesComponent } from './pages/admin/fechas-importantes/fechas-importantes.component';
 import { CalendarioUnificadoComponent } from './pages/admin/calendario-unificado/calendario-unificado.component';
 import { SolicitarExtensionComponent } from './pages/estudiante/solicitar-extension/solicitar-extension.component';
 import { MiProyectoComponent } from './pages/estudiante/mi-proyecto/mi-proyecto.component';
 import { PerfilEstudianteComponent } from './pages/estudiante/perfil/perfil';
 import { CalendarioEstudianteComponent } from './pages/estudiante/calendario-estudiante/calendario-estudiante.component';
-import { FechasImportantesProfesorComponent } from './pages/profesor/fechas-importantes/fechas-importantes-profesor.component';
-
 // Layout Component
 import { AppLayoutComponent } from './components/app-layout/app-layout.component';
 
@@ -169,7 +166,6 @@ export const routes: Routes = [
           { path: 'comision', component: GestionComisionComponent, data: { requiredRoles: [3, 4] } },
           { path: 'extensiones', component: GestionExtensionesComponent, data: { requiredRoles: [3, 4] } },
           { path: 'gestion-periodo-propuestas', component: GestionPeriodoPropuestasComponent, data: { requiredRoles: [3, 4] } },
-          { path: 'fechas-importantes', component: FechasImportantesComponent, data: { requiredRoles: [3, 4] } },
           { path: 'calendario-unificado', component: CalendarioUnificadoComponent, data: { requiredRoles: [3, 4] } },
           { path: 'chat', component: AdminChatComponent, data: { requiredRoles: [3, 4] } },
           { 
@@ -222,7 +218,6 @@ export const routes: Routes = [
           { path: 'calendario/solicitudes', component: SolicitudesReunionComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'calendario/gestion', component: GestionReunionesComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'reuniones', component: ReunionesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
-          { path: 'fechas-importantes', component: FechasImportantesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'reportes', component: ReportesProfesorComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'proyecto/:id/documentos', component: DocumentosProyectoComponent, data: { requiredRoles: [2, 3, 4] } },
           { path: 'chat', component: AdminChatComponent, data: { requiredRoles: [2, 3, 4] } }

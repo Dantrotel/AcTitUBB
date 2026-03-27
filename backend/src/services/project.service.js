@@ -1,5 +1,4 @@
 import { ProjectModel, actualizarEstadoProyecto, obtenerProfesoresProyecto } from '../models/project.model.js';
-import * as fechasImportantesModel from '../models/fechas-importantes.model.js';
 import * as asignacionesProfesoresModel from '../models/asignaciones-profesores.model.js';
 import * as AvanceModel from '../models/avance.model.js';
 import { crearRevisionesInformante } from '../models/avance.model.js';
@@ -399,85 +398,6 @@ const puedeVerProyecto = async (proyecto_id, usuario_rut, rol_usuario) => {
     return await ProjectModel.puedeVerProyecto(proyecto_id, usuario_rut, rol_usuario);
 };
 
-// ===== SERVICIOS DE FECHAS IMPORTANTES =====
-
-/**
- * Crear fechas importantes para un proyecto con fechas personalizadas
- * NOTA: Las fechas automáticas están deshabilitadas. Solo se crean fechas personalizadas manualmente.
- * @param {number} proyecto_id - ID del proyecto
- * @param {Array} fechasPersonalizadas - Array de fechas personalizadas (requerido)
- * @returns {Promise<Array>} - IDs de las fechas creadas
- */
-const crearFechasImportantesProyecto = async (proyecto_id, fechasPersonalizadas = null) => {
-    if (fechasPersonalizadas && fechasPersonalizadas.length > 0) {
-        const idsCreados = [];
-        for (const fecha of fechasPersonalizadas) {
-            const fechaId = await fechasImportantesModel.crearFechaImportante({
-                proyecto_id,
-                ...fecha
-            });
-            idsCreados.push(fechaId);
-        }
-        return idsCreados;
-    } else {
-        // Ya no se crean fechas automáticas por defecto
-        logger.info('No se crearon fechas automáticas para proyecto, deben crearse manualmente', { proyecto_id });
-        return [];
-    }
-};
-
-/**
- * Crear una fecha importante para un proyecto
- * @param {Object} fechaData - Datos de la fecha importante
- * @returns {Promise<number>} - ID de la fecha creada
- */
-const crearFechaImportante = async (fechaData) => {
-    return await fechasImportantesModel.crearFechaImportante(fechaData);
-};
-
-/**
- * Actualizar fecha importante
- * @param {number} fecha_id - ID de la fecha a actualizar
- * @param {Object} updateData - Datos a actualizar
- * @returns {Promise<boolean>} - True si se actualizó correctamente
- */
-const actualizarFechaImportante = async (fecha_id, updateData) => {
-    return await fechasImportantesModel.actualizarFechaImportante(fecha_id, updateData);
-};
-
-/**
- * Eliminar fecha importante
- * @param {number} fecha_id - ID de la fecha a eliminar
- * @returns {Promise<boolean>} - True si se eliminó correctamente
- */
-const eliminarFechaImportante = async (fecha_id) => {
-    return await fechasImportantesModel.eliminarFechaImportante(fecha_id);
-};
-
-/**
- * Obtener fechas importantes de un proyecto con notificaciones
- * @param {number} proyecto_id - ID del proyecto
- * @returns {Promise<Object>} - Fechas con estadísticas
- */
-const obtenerFechasConNotificaciones = async (proyecto_id) => {
-    const fechas = await fechasImportantesModel.obtenerFechasImportantesPorProyecto(proyecto_id);
-    const fechasProximas = await fechasImportantesModel.obtenerFechasProximasAVencer(proyecto_id, 7);
-    
-    const estadisticas = {
-        total: fechas.length,
-        completadas: fechas.filter(f => f.completada).length,
-        pendientes: fechas.filter(f => !f.completada).length,
-        vencidas: fechas.filter(f => f.estado === 'vencida').length,
-        proximasVencer: fechasProximas.length
-    };
-    
-    return {
-        fechas,
-        fechasProximas,
-        estadisticas
-    };
-};
-
 // ===== SERVICIOS DE ASIGNACIONES DE PROFESORES =====
 
 /**
@@ -522,17 +442,15 @@ const asignarProfesoresAProyecto = async (proyecto_id, asignaciones) => {
  */
 const obtenerProyectoCompleto = async (proyecto_id) => {
     const proyecto = await ProjectModel.getDetailProject(proyecto_id);
-    
+
     if (!proyecto) {
         return null;
     }
-    
-    const fechasInfo = await obtenerFechasConNotificaciones(proyecto_id);
+
     const profesores = await asignacionesProfesoresModel.obtenerProfesoresProyecto(proyecto_id);
-    
+
     return {
         ...proyecto,
-        fechasImportantes: fechasInfo,
         profesores
     };
 };
@@ -552,9 +470,6 @@ const crearProyectoCompleto = async (proyectoData, fechasPersonalizadas = null, 
         proyectoData.estudiante_rut
     );
     
-    // Crear fechas importantes
-    const fechasCreadas = await crearFechasImportantesProyecto(proyectoId, fechasPersonalizadas);
-    
     // Asignar profesores si se proporcionaron
     let asignacionesCreadas = [];
     if (asignacionesProfesores.length > 0) {
@@ -566,7 +481,6 @@ const crearProyectoCompleto = async (proyectoData, fechasPersonalizadas = null, 
     
     return {
         ...proyectoCompleto,
-        fechasCreadas,
         asignacionesCreadas
     };
 };
@@ -781,34 +695,6 @@ const crearHitoCronograma = async (hitoData) => {
 
     const hito = await AvanceModel.crearHitoCronograma(hitoData);
 
-    // Sincronizar con fechas importantes automáticamente
-    try {
-        const tipoMap = {
-            entrega_documento: 'entrega',
-            revision_avance:   'revision',
-            reunion_seguimiento: 'reunion',
-            defensa:           'defensa',
-            entrega_final:     'entrega'
-        };
-        await pool.execute(
-            `INSERT INTO fechas (proyecto_id, tipo_fecha, titulo, descripcion, fecha,
-                creado_por_rut, habilitada, permite_extension, requiere_entrega,
-                es_global, activa, hito_cronograma_id)
-             VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE, TRUE, FALSE, TRUE, ?)`,
-            [
-                hitoData.proyecto_id,
-                tipoMap[hitoData.tipo_hito] || 'otro',
-                hitoData.nombre_hito,
-                hitoData.descripcion ?? null,
-                hitoData.fecha_limite,
-                hitoData.creado_por_rut ?? null,
-                hito.id ?? hito
-            ]
-        );
-    } catch (e) {
-        logger.warn('No se pudo sincronizar hito con fechas importantes', { error: e.message });
-    }
-
     return hito;
 };
 
@@ -883,6 +769,18 @@ const obtenerRevisionesInformante = async (informante_rut) => {
 
 const revisarHitoComoInformante = async (revision_id, informante_rut, revisionData) => {
     return await AvanceModel.actualizarRevisionInformante(revision_id, informante_rut, revisionData);
+};
+
+const puedeInformanteCrearHitos = async (proyecto_id, informante_rut) => {
+    return await AvanceModel.verificarHitoFinalAprobadoInformante(proyecto_id, informante_rut);
+};
+
+const obtenerHitosInformante = async (cronograma_id) => {
+    return await AvanceModel.obtenerHitosCreados(cronograma_id, 'informante');
+};
+
+const obtenerRevisionesInformanteProyecto = async (proyecto_id) => {
+    return await AvanceModel.obtenerRevisionesInformanteByProyecto(proyecto_id);
 };
 
 const obtenerDocumentosHitos = async (proyecto_id) => {
@@ -1064,11 +962,6 @@ export const ProjectService = {
     obtenerProyectoPorIdConPermisos,
     puedeVerProyecto,
     // Funciones existentes
-    crearFechasImportantesProyecto,
-    crearFechaImportante,
-    actualizarFechaImportante,
-    eliminarFechaImportante,
-    obtenerFechasConNotificaciones,
     asignarProfesoresAProyecto,
     obtenerProyectoCompleto,
     crearProyectoCompleto,
@@ -1096,6 +989,9 @@ export const ProjectService = {
     entregarHito,
     revisarHito,
     obtenerRevisionesInformante,
+    obtenerRevisionesInformanteProyecto,
+    puedeInformanteCrearHitos,
+    obtenerHitosInformante,
     revisarHitoComoInformante,
     obtenerDocumentosHitos,
     obtenerInfoHito,

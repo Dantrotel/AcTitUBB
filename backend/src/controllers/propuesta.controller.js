@@ -214,15 +214,13 @@ export const asignarProfesor = async (req, res) => {
     const resultado = await PropuestasService.asignarProfesor(id, profesor_rut, asignado_por);
     if (!resultado) return res.status(404).json({ message: 'Propuesta no encontrada' });
 
-    // 🔔 Notificar al estudiante sobre la asignación del profesor
+    // 🔔 Notificar al profesor sobre su asignación a la propuesta
     if (resultado.estudiante_rut) {
       // WebSocket notification
-      notifyAsignacionProfesor(resultado.estudiante_rut, {
-        propuesta_id: id,
-        titulo: resultado.titulo || 'Tu propuesta',
-        profesor_rut: profesor_rut,
-        profesor_nombre: resultado.profesor_nombre || 'Profesor asignado'
-      });
+      notifyAsignacionProfesor(profesor_rut, {
+        id: id,
+        nombre: resultado.titulo || 'Propuesta sin título'
+      }, 'Evaluador');
       
       // 📧 Email notification
       try {

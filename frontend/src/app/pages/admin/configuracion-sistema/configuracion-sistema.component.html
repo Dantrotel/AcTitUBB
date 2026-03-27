@@ -1,0 +1,89 @@
+<div class="configuracion-container">
+  <div class="page-header">
+    <div>
+      <h1>
+        <i class="fas fa-cog"></i>
+        Configuración del Sistema
+      </h1>
+      <p>Gestiona los parámetros globales de la plataforma</p>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Cargando configuraciones...</p>
+    </div>
+  } @else {
+    <div class="configuraciones-grid">
+      @for (config of configuraciones(); track config.clave) {
+        <div class="config-card">
+          <div class="config-card-header">
+            <h3>
+              <i class="fas fa-sliders-h"></i>
+              {{ formatearClave(config.clave) }}
+            </h3>
+          </div>
+
+          <div class="config-card-body">
+            <p class="descripcion">{{ config.descripcion }}</p>
+
+            @if (config.tipo_valor === 'entero') {
+              <div class="form-group">
+                <label class="form-label">Valor (días)</label>
+                <div class="input-with-suffix">
+                  <input
+                    class="form-input"
+                    type="number"
+                    [(ngModel)]="config.valor"
+                    min="0"
+                    [disabled]="guardando().has(config.clave)"
+                  />
+                  <span class="input-suffix"><i class="fas fa-calendar-alt"></i></span>
+                </div>
+              </div>
+            } @else if (config.tipo_valor === 'booleano') {
+              <div class="toggle-control">
+                <label class="toggle-label">
+                  <input
+                    type="checkbox"
+                    class="toggle-input"
+                    [checked]="config.valor === 'true'"
+                    (change)="onToggleChange($event, config)"
+                    [disabled]="guardando().has(config.clave)"
+                  />
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-text">{{ config.valor === 'true' ? 'Activado' : 'Desactivado' }}</span>
+                </label>
+              </div>
+            } @else {
+              <div class="form-group">
+                <label class="form-label">Valor</label>
+                <input
+                  class="form-input"
+                  [(ngModel)]="config.valor"
+                  [disabled]="guardando().has(config.clave)"
+                />
+              </div>
+            }
+
+            <div class="config-actions">
+              <button
+                class="btn btn-primary"
+                (click)="guardarConfiguracion(config)"
+                [disabled]="guardando().has(config.clave)"
+              >
+                @if (guardando().has(config.clave)) {
+                  <span class="spinner-sm"></span>
+                } @else {
+                  <i class="fas fa-save"></i>
+                }
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
