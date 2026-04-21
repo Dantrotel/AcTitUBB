@@ -12,8 +12,23 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green?logo=node.js)](https://nodejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange?logo=mysql)](https://www.mysql.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
+<br>
+[![Último Commit](https://img.shields.io/github/last-commit/Dantrotel/AcTitUBB)](https://github.com/Dantrotel/AcTitUBB/commits/main)
+[![Tamaño del Repo](https://img.shields.io/github/repo-size/Dantrotel/AcTitUBB)](https://github.com/Dantrotel/AcTitUBB)
 
 </div>
+
+---
+
+## 📑 Índice
+- [📖 Descripción](#-descripción)
+- [🛠️ Stack Tecnológico Avanzado](#️-stack-tecnológico-avanzado)
+- [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
+- [👥 Roles y Funcionalidades Detalladas](#-roles-y-funcionalidades-detalladas)
+- [🚀 Instalación y Despliegue](#-instalación-y-despliegue)
+- [⚙️ Configuración Avanzada](#️-configuración-avanzada)
+- [🔗 Documentación de API Completa](#-documentación-de-api-completa)
+- [📚 Recursos Adicionales y Documentación](#-recursos-adicionales-y-referencias)
 
 ---
 
@@ -89,6 +104,22 @@
 ---
 
 ## 🏗️ Arquitectura del Sistema
+
+### 🔄 Flujo de Datos
+
+```mermaid
+graph TD
+    A[Estudiante / Profesor] -->|HTTPS| B(Nginx / Angular Frontend)
+    B -->|API REST| C{Node.js + Express Backend}
+    C -->|Validaciones| D[JWT / Middlewares]
+    D -->|Lectura/Escritura| E[(MySQL Database)]
+    C -->|Subida de Archivos| F[Uploads Storage]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#dd0031,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#026e00,stroke:#333,stroke-width:2px,color:#fff
+    style E fill:#00758f,stroke:#333,stroke-width:2px,color:#fff
+```
 
 ### 📁 Estructura Completa del Proyecto
 
@@ -853,6 +884,12 @@ networks:
 ---
 
 ## 📚 Recursos Adicionales y Referencias
+
+### 📑 Documentación Extendida del Proyecto
+Para no saturar este archivo principal, hemos dividido algunas documentaciones específicas en la carpeta `documentacion/`:
+- 👥 **[Manual de Usuarios Externos](documentacion/USUARIOS_EXTERNOS.md)**
+- 👨‍🏫 **[Guía de Revisión de Hitos para Profesores](documentacion/GUIA-REVISION-HITOS-PROFESOR.md)**
+- 🗄️ **[Historial de Cambios de la Base de Datos](documentacion/CAMBIOS-DATABASE-UNIFICACION.md)**
 
 ### Documentación Técnica
 - [📖 Angular Documentation](https://angular.io/docs)
