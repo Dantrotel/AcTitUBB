@@ -1,10 +1,10 @@
-# 📋 Sistema de Revisión de Hitos para Profesores
+#  Sistema de Revisión de Hitos para Profesores
 
-## ✅ Problema Resuelto
+##  Problema Resuelto
 
 Se ha implementado una nueva funcionalidad completa que permite a los profesores **ver las entregas de los alumnos** y **subir revisiones** de los hitos del proyecto.
 
-## 🎯 Funcionalidades Implementadas
+##  Funcionalidades Implementadas
 
 ### Para Profesores
 
@@ -30,7 +30,7 @@ Se ha implementado una nueva funcionalidad completa que permite a los profesores
    - Filtrar por estado (con entrega, sin entrega, pendiente revisión)
    - Filtrar por tipo de hito (entrega documento, revisión, evaluación, etc.)
 
-## 📍 Cómo Acceder
+##  Cómo Acceder
 
 ### Como Profesor:
 
@@ -56,7 +56,7 @@ Se ha implementado una nueva funcionalidad completa que permite a los profesores
    - Escribe tu retroalimentación (obligatorio)
    - Haz clic en **"Guardar Revisión"**
 
-## 🗂️ Archivos Creados
+##  Archivos Creados
 
 ### Componente Principal
 - `frontend/src/app/components/revision-hitos-profesor/revision-hitos-profesor.component.ts`
@@ -67,7 +67,7 @@ Se ha implementado una nueva funcionalidad completa que permite a los profesores
 - Actualizado: `frontend/src/app/pages/proyecto-cronograma/proyecto-cronograma.component.ts`
 - Actualizado: `frontend/src/app/pages/proyecto-cronograma/proyecto-cronograma.component.html`
 
-## 🔄 Flujo de Trabajo
+##  Flujo de Trabajo
 
 ```
 1. Estudiante entrega hito
@@ -85,24 +85,24 @@ Se ha implementado una nueva funcionalidad completa que permite a los profesores
 7. Estudiante recibe notificación con la revisión
 ```
 
-## 🎨 Características de Diseño
+##  Características de Diseño
 
 - **Estadísticas visuales**: Tarjetas con iconos y colores distintivos
 - **Filtros intuitivos**: Permite encontrar rápidamente entregas específicas
 - **Modal de revisión**: Interfaz limpia y centrada en la tarea
 - **Indicadores visuales**: 
-  - 🟡 Amarillo: Pendiente de revisión
-  - 🟢 Verde: Aprobado
-  - 🔴 Rojo: Requiere correcciones
-  - ⚪ Gris: Sin entrega
+  -  Amarillo: Pendiente de revisión
+  -  Verde: Aprobado
+  -  Rojo: Requiere correcciones
+  -  Gris: Sin entrega
 
-## 🔐 Permisos
+##  Permisos
 
 - **Estudiantes**: No ven la pestaña de revisiones
 - **Profesores**: Pueden ver y revisar entregas de sus proyectos asignados
 - **Administradores**: Pueden ver y revisar cualquier proyecto
 
-## 📊 APIs Utilizadas
+##  APIs Utilizadas
 
 El componente utiliza los siguientes endpoints del backend:
 
@@ -110,7 +110,7 @@ El componente utiliza los siguientes endpoints del backend:
 - `PATCH /api/v1/projects/hitos/:hitoId/revisar` - Enviar revisión del hito
 - `GET /api/v1/descargar/:nombreArchivo` - Descargar archivo de entrega
 
-## 🚀 Próximos Pasos Sugeridos
+##  Próximos Pasos Sugeridos
 
 1. **Notificaciones en tiempo real** cuando llega una nueva entrega
 2. **Historial de revisiones** para ver todas las versiones revisadas
@@ -118,7 +118,7 @@ El componente utiliza los siguientes endpoints del backend:
 4. **Estadísticas por estudiante** y gráficos de progreso
 5. **Plantillas de comentarios** para acelerar la revisión
 
-## 🐛 Solución de Problemas
+##  Solución de Problemas
 
 ### No veo la pestaña "Revisiones"
 - Verifica que tengas rol de profesor (rol_id = 2) o administrador (rol_id = 3)
@@ -134,7 +134,7 @@ El componente utiliza los siguientes endpoints del backend:
 - Revisa los permisos del backend para la ruta de descargas
 - Verifica que el archivo exista en el servidor
 
-## 📝 Notas Técnicas
+##  Notas Técnicas
 
 - El componente es **standalone** y puede reutilizarse en otras vistas
 - Utiliza **reactive forms** para validación del formulario de revisión

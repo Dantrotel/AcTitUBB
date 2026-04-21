@@ -1,4 +1,4 @@
-# 🎓 AcTitUBB - Sistema para las actividades de titulación en la Universidad del Bío-Bío
+#  AcTitUBB - Sistema para las actividades de titulación en la Universidad del Bío-Bío
 ## Universidad del Bío-Bío
 
 <div align="center">
@@ -20,59 +20,134 @@
 
 ---
 
-## 📑 Índice
-- [📖 Descripción](#-descripción)
-- [🛠️ Stack Tecnológico Avanzado](#️-stack-tecnológico-avanzado)
-- [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
-- [👥 Roles y Funcionalidades Detalladas](#-roles-y-funcionalidades-detalladas)
-- [🚀 Instalación y Despliegue](#-instalación-y-despliegue)
-- [⚙️ Configuración Avanzada](#️-configuración-avanzada)
-- [🔗 Documentación de API Completa](#-documentación-de-api-completa)
-- [📚 Recursos Adicionales y Documentación](#-recursos-adicionales-y-referencias)
+##  Índice
+- [ Capturas de Pantalla](#capturas-de-pantalla-del-sistema)
+- [ Descripción](#descripción)
+- [ Stack Tecnológico Avanzado](#stack-tecnológico-avanzado)
+- [ Arquitectura del Sistema](#arquitectura-del-sistema)
+- [ Roles y Funcionalidades Detalladas](#roles-y-funcionalidades-detalladas)
+- [ Instalación y Despliegue](#instalación-y-despliegue)
+- [ Configuración Avanzada](#configuración-avanzada)
+- [ Documentación de API Completa](#documentación-de-api-completa)
+- [ Recursos Adicionales y Documentación](#recursos-adicionales-y-referencias)
 
 ---
 
-## 📖 Descripción
+##  Capturas de Pantalla del Sistema
+
+A continuación se muestran todas las vistas y flujos principales de la plataforma:
+
+<details>
+<summary><b> Acceso y Páginas Principales (Haz clic para expandir)</b></summary>
+<br>
+<div align="center">
+
+### Login
+![Login](frontend/public/login.png)
+### Home Estudiante
+![Home Estudiante](frontend/public/Home%20estudiante.png)
+### Home Profesor
+![Home Profesor](frontend/public/Home%20profesor.png)
+### Home Jefe de Curso
+![Home Jefe de Curso](frontend/public/Home%20jefe%20de%20curso.png)
+
+</div>
+</details>
+
+<details>
+<summary><b> Gestión de Propuestas y Proyectos (Haz clic para expandir)</b></summary>
+<br>
+<div align="center">
+
+### Formulario de Propuesta
+![Formulario Propuesta](frontend/public/formulario%20propuesta.png)
+### Periodo de Propuestas
+![Periodo Propuestas](frontend/public/periodo%20propuestas.png)
+### Gestión de Proyecto
+![Gestión de Proyecto](frontend/public/gestion%20de%20proyecto.png)
+### Gestión Proyectos (Vista Profesor)
+![Gestión Proyectos Profe](frontend/public/gestion%20proyectos%20profe.png)
+### Propuestas Asignadas
+![Propuestas Asignadas](frontend/public/propuestas%20asignadas.png)
+
+</div>
+</details>
+
+<details>
+<summary><b> Asignaciones y Comisiones (Haz clic para expandir)</b></summary>
+<br>
+<div align="center">
+
+### Asignación de Evaluador
+![Asignacion Evaluador](frontend/public/asignacion%20evaluador.png)
+### Asignación de Informante
+![Asignacion Informante](frontend/public/asignacion%20informante.png)
+### Comisión
+![Comision](frontend/public/comision.png)
+
+</div>
+</details>
+
+<details>
+<summary><b> Administración y Calendario (Haz clic para expandir)</b></summary>
+<br>
+<div align="center">
+
+### Gestión de Alumnos
+![Gestion de Alumnos](frontend/public/gestion%20de%20alumnos.png)
+### Gestión de Profesores
+![Gestion de Profesores](frontend/public/gestion%20profesores.png)
+### Gestión de Horarios
+![Gestion de Horarios](frontend/public/gestion%20de%20horarios.png)
+### Calendario General
+![Calendario](frontend/public/calendario.png)
+
+</div>
+</details>
+
+---
+
+##  Descripción
 
 **AcTitUBB** es una aplicación web avanzada diseñada para el apoyo de la gestión académica en la Universidad del Bío-Bío. El sistema abarca desde la creación de propuestas de tesis hasta el seguimiento de hitos, calendario académico, y gestión de archivos, proporcionando una experiencia integral para estudiantes, profesores y administradores.
 
-### ✨ Características Principales
+###  Características Principales
 
-#### 🎯 **Gestión de Propuestas**
-- 📝 Creación, edición y seguimiento completo de propuestas
-- 🔄 Estados de propuesta: Borrador, En Revisión, Aprobada, Rechazada
-- 📁 Gestión avanzada de archivos con validaciones estrictas
-- 💬 Sistema de comentarios bidireccional profesor-estudiante
+####  **Gestión de Propuestas**
+-  Creación, edición y seguimiento completo de propuestas
+-  Estados de propuesta: Borrador, En Revisión, Aprobada, Rechazada
+-  Gestión avanzada de archivos con validaciones estrictas
+-  Sistema de comentarios bidireccional profesor-estudiante
 
-#### 📊 **Sistema de Hitos de Proyectos**
-- 🎯 Definición y seguimiento de hitos por proyecto
-- 📤 Entrega de archivos con validaciones automáticas
-- ⏰ Control de fechas límite y estados dinámicos
-- 📈 Visualización de progreso en tiempo real
-- 🔍 Revisión y calificación por parte de profesores
+####  **Sistema de Hitos de Proyectos**
+-  Definición y seguimiento de hitos por proyecto
+-  Entrega de archivos con validaciones automáticas
+-  Control de fechas límite y estados dinámicos
+-  Visualización de progreso en tiempo real
+-  Revisión y calificación por parte de profesores
 
-#### 📅 **Sistema de Fechas Importantes**
-- 🗓️ Gestión centralizada del calendario académico
-- 📌 Fechas específicas por proyecto y globales
-- ✅ Marcado de fechas como completadas
-- 🔔 Notificaciones automáticas de vencimientos
-- 📱 Vista responsive para móviles y escritorio
+####  **Sistema de Fechas Importantes**
+-  Gestión centralizada del calendario académico
+-  Fechas específicas por proyecto y globales
+-  Marcado de fechas como completadas
+-  Notificaciones automáticas de vencimientos
+-  Vista responsive para móviles y escritorio
 
-#### 👥 **Gestión de Usuarios Avanzada**
-- 🔐 Autenticación JWT segura con blacklist
-- 👨‍🎓 **Estudiantes**: Dashboard personalizado, entrega de hitos, seguimiento
-- 👨‍🏫 **Profesores**: Revisión de entregas, gestión de cronogramas
-- 🏛️ **Administradores**: Control total del sistema y asignaciones
+####  **Gestión de Usuarios Avanzada**
+-  Autenticación JWT segura con blacklist
+- ‍ **Estudiantes**: Dashboard personalizado, entrega de hitos, seguimiento
+- ‍ **Profesores**: Revisión de entregas, gestión de cronogramas
+-  **Administradores**: Control total del sistema y asignaciones
 
-#### 📈 **Dashboard Inteligente**
-- 📊 Estadísticas en tiempo real por rol
-- 📋 Resumen de actividades pendientes
-- 🎯 Métricas de progreso visual
-- 📱 Interfaz completamente responsive
+####  **Dashboard Inteligente**
+-  Estadísticas en tiempo real por rol
+-  Resumen de actividades pendientes
+-  Métricas de progreso visual
+-  Interfaz completamente responsive
 
 ---
 
-## 🛠️ Stack Tecnológico Avanzado
+##  Stack Tecnológico Avanzado
 
 ### Frontend (Angular 18+)
 | Tecnología | Versión | Propósito |
@@ -103,9 +178,9 @@
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+##  Arquitectura del Sistema
 
-### 🔄 Flujo de Datos
+###  Flujo de Datos
 
 ```mermaid
 graph TD
@@ -121,25 +196,25 @@ graph TD
     style E fill:#00758f,stroke:#333,stroke-width:2px,color:#fff
 ```
 
-### 📁 Estructura Completa del Proyecto
+###  Estructura Completa del Proyecto
 
 ```
 AcTitUBB/
-├── 📂 backend/                          # API REST con Node.js
-│   ├── 📂 src/
-│   │   ├── 📂 controllers/              # Controladores MVC
+├──  backend/                          # API REST con Node.js
+│   ├──  src/
+│   │   ├──  controllers/              # Controladores MVC
 │   │   │   ├── admin.controller.js      # Gestión administrativa
 │   │   │   ├── calendario.controller.js  # Fechas importantes
 │   │   │   ├── login.controller.js      # Autenticación
 │   │   │   ├── project.controller.js    # Proyectos y hitos
 │   │   │   ├── propuesta.controller.js  # Propuestas de tesis
 │   │   │   └── role.controller.js       # Gestión de roles
-│   │   ├── 📂 services/                 # Lógica de negocio
+│   │   ├──  services/                 # Lógica de negocio
 │   │   │   ├── email.service.js         # Notificaciones por email
 │   │   │   ├── project.service.js       # Lógica de proyectos
 │   │   │   ├── propuesta.service.js     # Lógica de propuestas
 │   │   │   └── RutVal.service.js        # Validación RUT chileno
-│   │   ├── 📂 models/                   # Modelos de datos
+│   │   ├──  models/                   # Modelos de datos
 │   │   │   ├── avance.model.js          # Modelo de avances
 │   │   │   ├── calendario.model.js      # Modelo de fechas
 │   │   │   ├── fecha-importante.model.js # Fechas importantes
@@ -147,7 +222,7 @@ AcTitUBB/
 │   │   │   ├── propuesta.model.js       # Modelo de propuestas
 │   │   │   ├── role.model.js            # Modelo de roles
 │   │   │   └── user.model.js            # Modelo de usuarios
-│   │   ├── 📂 routes/                   # Definición de endpoints
+│   │   ├──  routes/                   # Definición de endpoints
 │   │   │   ├── admin.route.js           # Rutas administrativas
 │   │   │   ├── calendario.route.js      # Rutas de calendario
 │   │   │   ├── download.route.js        # Descarga de archivos
@@ -155,42 +230,42 @@ AcTitUBB/
 │   │   │   ├── project.route.js         # Rutas de proyectos
 │   │   │   ├── propuesta.routes.js      # Rutas de propuestas
 │   │   │   └── role.route.js            # Rutas de roles
-│   │   ├── 📂 middlewares/              # Middlewares personalizados
+│   │   ├──  middlewares/              # Middlewares personalizados
 │   │   │   ├── blacklist.js             # JWT blacklist
 │   │   │   ├── uploader.js              # Subida de archivos
 │   │   │   └── verifySession.js         # Verificación de sesión
-│   │   ├── 📂 db/                       # Base de datos
+│   │   ├──  db/                       # Base de datos
 │   │   │   ├── connectionDB.js          # Pool de conexiones
 │   │   │   └── database.sql             # Schema completo
 │   │   └── index.js                     # Servidor principal
-│   ├── 📂 uploads/                      # Archivos del sistema
-│   │   └── 📂 propuestas/               # Documentos de propuestas
+│   ├──  uploads/                      # Archivos del sistema
+│   │   └──  propuestas/               # Documentos de propuestas
 │   ├── dockerfile                       # Imagen Docker backend
 │   └── package.json                     # Dependencias Node.js
 │
-├── 📂 frontend/                         # Aplicación Angular
-│   ├── 📂 src/app/
-│   │   ├── 📂 pages/                    # Páginas principales
-│   │   │   ├── 📂 estudiante/           # Módulo estudiante
-│   │   │   │   └── 📂 home/             # Dashboard estudiante
-│   │   │   ├── 📂 profesor/             # Módulo profesor
-│   │   │   │   └── 📂 cronograma/       # Gestión de cronogramas
-│   │   │   ├── 📂 admin/                # Panel administrativo
-│   │   │   │   ├── 📂 asignaciones/     # Asignación profesor-estudiante
-│   │   │   │   ├── 📂 gestion-calendario/ # Calendario global
-│   │   │   │   └── 📂 gestion-profesores/ # Gestión de profesores
-│   │   │   ├── 📂 propuestas/           # CRUD de propuestas
-│   │   │   ├── 📂 login/                # Autenticación
-│   │   │   └── 📂 register/             # Registro de usuarios
-│   │   ├── 📂 services/                 # Servicios Angular
+├──  frontend/                         # Aplicación Angular
+│   ├──  src/app/
+│   │   ├──  pages/                    # Páginas principales
+│   │   │   ├──  estudiante/           # Módulo estudiante
+│   │   │   │   └──  home/             # Dashboard estudiante
+│   │   │   ├──  profesor/             # Módulo profesor
+│   │   │   │   └──  cronograma/       # Gestión de cronogramas
+│   │   │   ├──  admin/                # Panel administrativo
+│   │   │   │   ├──  asignaciones/     # Asignación profesor-estudiante
+│   │   │   │   ├──  gestion-calendario/ # Calendario global
+│   │   │   │   └──  gestion-profesores/ # Gestión de profesores
+│   │   │   ├──  propuestas/           # CRUD de propuestas
+│   │   │   ├──  login/                # Autenticación
+│   │   │   └──  register/             # Registro de usuarios
+│   │   ├──  services/                 # Servicios Angular
 │   │   │   └── api.ts                   # Cliente HTTP centralizado
-│   │   ├── 📂 guards/                   # Guards de seguridad
+│   │   ├──  guards/                   # Guards de seguridad
 │   │   │   └── auth.guard.ts            # Protección de rutas
-│   │   ├── 📂 interceptors/             # Interceptors HTTP
+│   │   ├──  interceptors/             # Interceptors HTTP
 │   │   │   └── auth.interceptor.ts      # Inyección automática de JWT
-│   │   └── 📂 components/               # Componentes reutilizables
-│   │       └── 📂 calendar-modal/       # Modal de calendario
-│   ├── 📂 public/                       # Recursos estáticos
+│   │   └──  components/               # Componentes reutilizables
+│   │       └──  calendar-modal/       # Modal de calendario
+│   ├──  public/                       # Recursos estáticos
 │   │   ├── Escudo_Universidad_del_Bío-Bío.png
 │   │   └── favicon.ico
 │   ├── dockerfile                       # Imagen Docker frontend
@@ -199,75 +274,75 @@ AcTitUBB/
 │   ├── vite.config.ts                   # Configuración Vite
 │   └── package.json                     # Dependencias Angular
 │
-├── 📂 mysql/                            # Configuración MySQL
-│   └── 📂 init.sql/                     # Scripts de inicialización
+├──  mysql/                            # Configuración MySQL
+│   └──  init.sql/                     # Scripts de inicialización
 ├── docker-compose.yml                   # Orquestación completa
 └── README.md                            # Documentación (este archivo)
 ```
 
 ---
 
-## 👥 Roles y Funcionalidades Detalladas
+##  Roles y Funcionalidades Detalladas
 
-### 🎓 **Estudiante**
+###  **Estudiante**
 #### Dashboard Personalizado
-- 📊 **Vista general**: Resumen de propuestas, hitos y fechas importantes
-- 📈 **Progreso visual**: Indicadores de avance por proyecto
-- 🔔 **Notificaciones**: Alertas de vencimientos y actualizaciones
+-  **Vista general**: Resumen de propuestas, hitos y fechas importantes
+-  **Progreso visual**: Indicadores de avance por proyecto
+-  **Notificaciones**: Alertas de vencimientos y actualizaciones
 
 #### Gestión de Propuestas
-- ✍️ **Crear propuestas**: Formulario completo con validaciones
-- 📁 **Adjuntar archivos**: PDF, Word con validaciones de tamaño
-- 👀 **Seguimiento**: Estados en tiempo real y comentarios
+-  **Crear propuestas**: Formulario completo con validaciones
+-  **Adjuntar archivos**: PDF, Word con validaciones de tamaño
+-  **Seguimiento**: Estados en tiempo real y comentarios
 
 #### Sistema de Hitos
-- 📤 **Entrega de hitos**: Subida de archivos con validaciones estrictas
-- ⏰ **Control de fechas**: Visualización de deadlines y tiempo restante
-- 📋 **Estados dinámicos**: Pendiente, Entregado, En Revisión, Aprobado, Vencido
-- 💬 **Comentarios**: Comunicación bidireccional con profesores
+-  **Entrega de hitos**: Subida de archivos con validaciones estrictas
+-  **Control de fechas**: Visualización de deadlines y tiempo restante
+-  **Estados dinámicos**: Pendiente, Entregado, En Revisión, Aprobado, Vencido
+-  **Comentarios**: Comunicación bidireccional con profesores
 
 #### Calendario Personal
-- 📅 **Fechas importantes**: Vista personalizada por proyecto
-- ✅ **Completar fechas**: Marcado de hitos cumplidos
-- 🔍 **Filtros avanzados**: Por proyecto, estado, fecha
+-  **Fechas importantes**: Vista personalizada por proyecto
+-  **Completar fechas**: Marcado de hitos cumplidos
+-  **Filtros avanzados**: Por proyecto, estado, fecha
 
-### 👨‍🏫 **Profesor**
+### ‍ **Profesor**
 #### Panel de Gestión
-- 📋 **Propuestas asignadas**: Lista completa con filtros
-- 👥 **Estudiantes**: Vista de todos los estudiantes asignados
-- 📊 **Estadísticas**: Métricas de desempeño y progreso
+-  **Propuestas asignadas**: Lista completa con filtros
+-  **Estudiantes**: Vista de todos los estudiantes asignados
+-  **Estadísticas**: Métricas de desempeño y progreso
 
 #### Revisión de Hitos
-- 🔍 **Evaluar entregas**: Sistema de calificación integrado
-- 💬 **Feedback detallado**: Comentarios estructurados
-- ✅ **Aprobación/Rechazo**: Flujo de trabajo simplificado
-- 📈 **Seguimiento de progreso**: Vista cronológica de avances
+-  **Evaluar entregas**: Sistema de calificación integrado
+-  **Feedback detallado**: Comentarios estructurados
+-  **Aprobación/Rechazo**: Flujo de trabajo simplificado
+-  **Seguimiento de progreso**: Vista cronológica de avances
 
 #### Gestión de Cronogramas
-- 📅 **Crear fechas específicas**: Por estudiante o proyecto
-- ⏰ **Definir hitos**: Configuración de deliverables
-- 🔔 **Notificaciones automáticas**: Alertas de vencimientos
-- 📊 **Dashboard de seguimiento**: Vista general de todos los proyectos
+-  **Crear fechas específicas**: Por estudiante o proyecto
+-  **Definir hitos**: Configuración de deliverables
+-  **Notificaciones automáticas**: Alertas de vencimientos
+-  **Dashboard de seguimiento**: Vista general de todos los proyectos
 
-### 🏛️ **Administrador**
+###  **Administrador**
 #### Gestión de Usuarios
-- 👥 **CRUD completo**: Crear, editar, eliminar usuarios
-- 🔐 **Gestión de roles**: Asignación y modificación de permisos
-- 📊 **Estadísticas de uso**: Métricas del sistema
+-  **CRUD completo**: Crear, editar, eliminar usuarios
+-  **Gestión de roles**: Asignación y modificación de permisos
+-  **Estadísticas de uso**: Métricas del sistema
 
 #### Asignaciones Académicas
-- 🔗 **Profesor-Estudiante**: Sistema de asignación inteligente
-- 📋 **Gestión de proyectos**: Vista global de todos los proyectos
-- 📈 **Reportes**: Estadísticas de rendimiento académico
+-  **Profesor-Estudiante**: Sistema de asignación inteligente
+-  **Gestión de proyectos**: Vista global de todos los proyectos
+-  **Reportes**: Estadísticas de rendimiento académico
 
 #### Calendario Global
-- 🗓️ **Fechas institucionales**: Gestión del calendario académico
-- 📅 **Eventos globales**: Fechas que afectan a todos los usuarios
-- 🔔 **Notificaciones masivas**: Comunicados importantes
+-  **Fechas institucionales**: Gestión del calendario académico
+-  **Eventos globales**: Fechas que afectan a todos los usuarios
+-  **Notificaciones masivas**: Comunicados importantes
 
 ---
 
-## 🚀 Instalación y Despliegue
+##  Instalación y Despliegue
 
 ### Prerrequisitos
 
@@ -276,7 +351,7 @@ AcTitUBB/
 - Git
 - 4GB RAM mínimo recomendado
 
-### 🐳 Instalación con Docker (Recomendado)
+###  Instalación con Docker (Recomendado)
 
 1. **Clonar el repositorio**
    ```bash
@@ -296,11 +371,11 @@ AcTitUBB/
    ```
 
 4. **Acceder a la aplicación**
-   - 🌐 **Frontend**: [http://localhost](http://localhost)
-   - 🔌 **API Backend**: [http://localhost:3000](http://localhost:3000)
-   - 🗄️ **Base de datos**: localhost:3306 (usuario: `actitubb_user`)
+   -  **Frontend**: [http://localhost](http://localhost)
+   -  **API Backend**: [http://localhost:3000](http://localhost:3000)
+   -  **Base de datos**: localhost:3306 (usuario: `actitubb_user`)
 
-### 🔧 Desarrollo Local (Sin Docker)
+###  Desarrollo Local (Sin Docker)
 
 <details>
 <summary>Click para expandir instrucciones de desarrollo local</summary>
@@ -343,7 +418,7 @@ DB_PASSWORD=tu_password
 
 ---
 
-## ⚙️ Configuración Avanzada
+##  Configuración Avanzada
 
 ### Variables de Entorno Completas
 
@@ -440,9 +515,9 @@ services:
 
 ---
 
-## 🔗 Documentación de API Completa
+##  Documentación de API Completa
 
-### 🔐 Autenticación
+###  Autenticación
 
 | Endpoint | Método | Descripción | Body | Respuesta |
 |----------|--------|-------------|------|-----------|
@@ -474,7 +549,7 @@ POST /api/v1/login
 }
 ```
 
-### 📝 Gestión de Propuestas
+###  Gestión de Propuestas
 
 | Endpoint | Método | Descripción | Rol Requerido | Parámetros |
 |----------|--------|-------------|---------------|------------|
@@ -485,7 +560,7 @@ POST /api/v1/login
 | `/api/v1/propuestas/:id/comentarios` | POST | Agregar comentario | Profesor/Admin | `{comentario}` |
 | `/api/v1/propuestas/:id/estado` | PUT | Cambiar estado | Profesor/Admin | `{estado}` |
 
-### 🎯 Sistema de Hitos
+###  Sistema de Hitos
 
 | Endpoint | Método | Descripción | Rol Requerido | Body/Params |
 |----------|--------|-------------|---------------|-------------|
@@ -495,7 +570,7 @@ POST /api/v1/login
 | `/api/v1/hitos/:hitoId/revisar` | POST | Revisar hito | Profesor | `{aprobado, calificacion, comentarios}` |
 | `/api/v1/hitos/:hitoId/detalle` | GET | Detalle del hito | Todos | - |
 
-### 📅 Sistema de Fechas Importantes
+###  Sistema de Fechas Importantes
 
 | Endpoint | Método | Descripción | Rol Requerido | Body/Params |
 |----------|--------|-------------|---------------|-------------|
@@ -505,7 +580,7 @@ POST /api/v1/login
 | `/api/v1/fechas-importantes/:fechaId` | DELETE | Eliminar fecha | Admin | - |
 | `/api/v1/fechas-importantes/:fechaId/completar` | POST | Marcar completada | Estudiante | - |
 
-### 🏛️ Administración
+###  Administración
 
 | Endpoint | Método | Descripción | Rol Requerido | Body/Params |
 |----------|--------|-------------|---------------|-------------|
@@ -516,7 +591,7 @@ POST /api/v1/login
 
 ---
 
-## 🧪 Testing y Calidad de Código
+##  Testing y Calidad de Código
 
 ### Ejecución de Tests
 
@@ -551,19 +626,19 @@ npm run format           # Prettier formatting
 
 ### Métricas de Calidad
 
-- ✅ **Coverage**: >80% en componentes críticos
-- ✅ **Linting**: Configuración ESLint estricta
-- ✅ **TypeScript**: Strict mode habilitado
-- ✅ **Security**: Dependencias auditadas regularmente
+-  **Coverage**: >80% en componentes críticos
+-  **Linting**: Configuración ESLint estricta
+-  **TypeScript**: Strict mode habilitado
+-  **Security**: Dependencias auditadas regularmente
 
 ---
 
-## 🛠️ Troubleshooting Avanzado
+##  Troubleshooting Avanzado
 
 ### Problemas Comunes y Soluciones
 
 <details>
-<summary><strong>❌ Error: "JWT token expired" o "Invalid token"</strong></summary>
+<summary><strong> Error: "JWT token expired" o "Invalid token"</strong></summary>
 
 **Problema**: Token de autenticación expirado o inválido.
 
@@ -580,7 +655,7 @@ localStorage.clear();
 </details>
 
 <details>
-<summary><strong>❌ Error: "File upload failed" o "File too large"</strong></summary>
+<summary><strong> Error: "File upload failed" o "File too large"</strong></summary>
 
 **Problema**: Error en subida de archivos.
 
@@ -598,7 +673,7 @@ docker-compose restart backend
 </details>
 
 <details>
-<summary><strong>❌ Error: "Email notification failed"</strong></summary>
+<summary><strong> Error: "Email notification failed"</strong></summary>
 
 **Problema**: Las notificaciones por email no funcionan.
 
@@ -616,7 +691,7 @@ EMAIL_PASS=tu_contraseña_aplicacion  # No la contraseña normal
 </details>
 
 <details>
-<summary><strong>🐳 Error: "Docker container keeps restarting"</strong></summary>
+<summary><strong> Error: "Docker container keeps restarting"</strong></summary>
 
 **Problema**: Contenedores en loop de reinicio.
 
@@ -647,7 +722,7 @@ docker-compose up --build
 </details>
 
 <details>
-<summary><strong>📱 Error: "Responsive design issues"</strong></summary>
+<summary><strong> Error: "Responsive design issues"</strong></summary>
 
 **Problema**: Interfaz no se ve bien en móviles.
 
@@ -722,7 +797,7 @@ docker-compose logs --since="2024-01-01T00:00:00" backend
 
 ---
 
-## 📊 Métricas y Monitoring
+##  Métricas y Monitoring
 
 ### Estadísticas del Sistema
 
@@ -760,20 +835,20 @@ EXPLAIN SELECT * FROM propuestas;  # Query analysis
 
 ---
 
-## 🔒 Seguridad
+##  Seguridad
 
 ### Características de Seguridad Implementadas
 
 #### Autenticación y Autorización
-- ✅ **JWT con blacklist**: Tokens seguros con invalidación
-- ✅ **Bcrypt**: Hash de contraseñas con salt rounds configurable
-- ✅ **CORS configurado**: Origen específico para producción
+-  **JWT con blacklist**: Tokens seguros con invalidación
+-  **Bcrypt**: Hash de contraseñas con salt rounds configurable
+-  **CORS configurado**: Origen específico para producción
 
 #### Validación de Datos
-- ✅ **Sanitización**: Input sanitization en backend
-- ✅ **Validación de RUT**: Algoritmo específico para RUT chileno
-- ✅ **Validación de archivos**: Tipo y tamaño
-- ✅ **SQL Injection**: Prepared statements en todas las queries
+-  **Sanitización**: Input sanitization en backend
+-  **Validación de RUT**: Algoritmo específico para RUT chileno
+-  **Validación de archivos**: Tipo y tamaño
+-  **SQL Injection**: Prepared statements en todas las queries
 
 
 ### Configuración de Seguridad
@@ -789,7 +864,7 @@ RATE_LIMIT_REQUESTS=100
 
 ---
 
-## 🚀 Deployment en Producción
+##  Deployment en Producción
 
 ### Preparación para Producción
 
@@ -883,29 +958,29 @@ networks:
 
 ---
 
-## 📚 Recursos Adicionales y Referencias
+##  Recursos Adicionales y Referencias
 
-### 📑 Documentación Extendida del Proyecto
+###  Documentación Extendida del Proyecto
 Para no saturar este archivo principal, hemos dividido algunas documentaciones específicas en la carpeta `documentacion/`:
-- 👥 **[Manual de Usuarios Externos](documentacion/USUARIOS_EXTERNOS.md)**
-- 👨‍🏫 **[Guía de Revisión de Hitos para Profesores](documentacion/GUIA-REVISION-HITOS-PROFESOR.md)**
-- 🗄️ **[Historial de Cambios de la Base de Datos](documentacion/CAMBIOS-DATABASE-UNIFICACION.md)**
+-  **[Manual de Usuarios Externos](documentacion/USUARIOS_EXTERNOS.md)**
+- ‍ **[Guía de Revisión de Hitos para Profesores](documentacion/GUIA-REVISION-HITOS-PROFESOR.md)**
+-  **[Historial de Cambios de la Base de Datos](documentacion/CAMBIOS-DATABASE-UNIFICACION.md)**
 
 ### Documentación Técnica
-- [📖 Angular Documentation](https://angular.io/docs)
-- [⚡ Vite Build Tool](https://vitejs.dev/guide/)
-- [🐳 Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-- [🗄️ MySQL 8.0 Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/)
-- [🔒 Node.js Security Checklist](https://nodejs.org/en/docs/guides/security/)
+- [ Angular Documentation](https://angular.io/docs)
+- [ Vite Build Tool](https://vitejs.dev/guide/)
+- [ Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+- [ MySQL 8.0 Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/)
+- [ Node.js Security Checklist](https://nodejs.org/en/docs/guides/security/)
 
 ### Recursos de Desarrollo
-- [🎨 Angular Material Components](https://material.angular.io/components)
-- [📝 TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [🧪 Jest Testing Framework](https://jestjs.io/docs/getting-started)
-- [🔍 Cypress E2E Testing](https://docs.cypress.io/)
+- [ Angular Material Components](https://material.angular.io/components)
+- [ TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [ Jest Testing Framework](https://jestjs.io/docs/getting-started)
+- [ Cypress E2E Testing](https://docs.cypress.io/)
 
 ### Herramientas Útiles
-- [🛠️ VS Code Extensions](https://marketplace.visualstudio.com/vscode) recomendadas:
+- [ VS Code Extensions](https://marketplace.visualstudio.com/vscode) recomendadas:
   - Angular Language Service
   - Docker
   - ESLint
@@ -914,7 +989,7 @@ Para no saturar este archivo principal, hemos dividido algunas documentaciones e
 
 ---
 
-## 🤝 Contribución y Desarrollo
+##  Contribución y Desarrollo
 
 ### Guía de Contribución
 
@@ -1041,22 +1116,22 @@ const FeatureController = {
 ```
 
 
-## 📄 Licencia y Términos de Uso
+##  Licencia y Términos de Uso
 
 ### Licencia Académica
 
 Este proyecto está desarrollado para uso académico en la **Universidad del Bío-Bío** bajo los siguientes términos:
 
-- ✅ **Uso académico**: Libre para investigación y educación
-- ✅ **Modificación**: Permitida para propósitos educativos
-- ✅ **Distribución**: Con atribución apropiada
-- ❌ **Uso comercial**: Requiere autorización expresa
+-  **Uso académico**: Libre para investigación y educación
+-  **Modificación**: Permitida para propósitos educativos
+-  **Distribución**: Con atribución apropiada
+-  **Uso comercial**: Requiere autorización expresa
 
 ---
 
-## 👨‍💻 Equipo de Desarrollo
+## ‍ Equipo de Desarrollo
 
-### 🏆 **Desarrollador Principal**
+###  **Desarrollador Principal**
 
 <div align="center">
 
@@ -1066,14 +1141,14 @@ Este proyecto está desarrollado para uso académico en la **Universidad del Bí
 [![GitHub](https://img.shields.io/badge/GitHub-Dantrotel-black?logo=github)](https://github.com/Dantrotel)
 [![Email](https://img.shields.io/badge/Email-daniel.aguayo2001%40alumnos.ubiobio.cl-red?logo=gmail)](mailto:daniel.aguayo2001@alumnos.ubiobio.cl)
 
-🏫 **Universidad del Bío-Bío**  
-📅 **2025**  
-🎓 **Ingeniería de ejecución en computación e Informática**
+ **Universidad del Bío-Bío**  
+ **2025**  
+ **Ingeniería de ejecución en computación e Informática**
 
 </div>
 
 
-### 🙏 **Agradecimientos**
+###  **Agradecimientos**
 
 - **Universidad del Bío-Bío** - Por el soporte académico
 - **Facultad de Ciencias empresariales** - Por los recursos y guidance
@@ -1082,28 +1157,28 @@ Este proyecto está desarrollado para uso académico en la **Universidad del Bí
 
 ---
 
-## 📞 Soporte y Contacto
+##  Soporte y Contacto
 
-### 🆘 **Soporte Técnico**
+###  **Soporte Técnico**
 
 ¿Encontraste un bug o tienes una pregunta técnica?
 
-1. **📋 Revisa Issues existentes**: [GitHub Issues](https://github.com/Dantrotel/AcTitUBB/issues)
-2. **📧 Contacto directo**: [daniel.aguayo2001@alumnos.ubiobio.cl](mailto:daniel.aguayo2001@alumnos.ubiobio.cl)
+1. ** Revisa Issues existentes**: [GitHub Issues](https://github.com/Dantrotel/AcTitUBB/issues)
+2. ** Contacto directo**: [daniel.aguayo2001@alumnos.ubiobio.cl](mailto:daniel.aguayo2001@alumnos.ubiobio.cl)
 
 ---
 
 <div align="center">
 
-## 🌟 **¡Gracias por usar AcTitUBB!** 🌟
+##  **¡Gracias por usar AcTitUBB!** 
 
-**Si este proyecto te ayuda en tu trabajo académico, ¡considera darle una estrella! ⭐**
+**Si este proyecto te ayuda en tu trabajo académico, ¡considera darle una estrella! **
 
 ---
 
-*Desarrollado con ❤️ para la comunidad académica de la Universidad del Bío-Bío*
+*Desarrollado con  para la comunidad académica de la Universidad del Bío-Bío*
 
-**© 2025 Daniel Aguayo - Universidad del Bío-Bío**
+** 2025 Daniel Aguayo - Universidad del Bío-Bío**
 
 ---
 

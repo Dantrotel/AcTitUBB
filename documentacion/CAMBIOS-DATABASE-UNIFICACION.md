@@ -1,34 +1,34 @@
-# 📊 Unificación de Base de Datos - AcTitUBB
+#  Unificación de Base de Datos - AcTitUBB
 
 **Fecha**: 29 de Diciembre de 2025  
 **Objetivo**: Unificar todos los archivos SQL dispersos en un solo archivo `database.sql`
 
 ---
 
-## ✅ Cambios Realizados
+##  Cambios Realizados
 
 ### 1. Archivo Principal Unificado
 
-**📁 `backend/src/db/database.sql`** (1,994 líneas)
+** `backend/src/db/database.sql`** (1,994 líneas)
 
 Este archivo ahora contiene:
 
-- ✅ **Estructura completa de la base de datos** (todas las tablas)
-- ✅ **Todas las migraciones integradas** (sin archivos separados)
-- ✅ **Datos iniciales** (roles, estados, configuraciones)
-- ✅ **Sistema de colaboradores externos** con autenticación
-- ✅ **Tablas de versionado** de documentos
-- ✅ **Sistema de notificaciones** completo
+-  **Estructura completa de la base de datos** (todas las tablas)
+-  **Todas las migraciones integradas** (sin archivos separados)
+-  **Datos iniciales** (roles, estados, configuraciones)
+-  **Sistema de colaboradores externos** con autenticación
+-  **Tablas de versionado** de documentos
+-  **Sistema de notificaciones** completo
 
 ### 2. Migraciones Integradas
 
 Las siguientes migraciones SQL fueron **integradas** en `database.sql`:
 
-#### ✅ `add_archivo_revision_to_historial.sql`
+####  `add_archivo_revision_to_historial.sql`
 - Columnas `archivo_revision` y `nombre_archivo_original` en `historial_revisiones_propuestas`
 - **Ubicación**: Líneas 145-146 del `database.sql`
 
-#### ✅ `add_colaboradores_auth.sql`
+####  `add_colaboradores_auth.sql`
 - Sistema completo de autenticación para colaboradores externos
 - Nuevas tablas:
   - `evaluaciones_colaboradores`
@@ -46,7 +46,7 @@ Las siguientes migraciones SQL fueron **integradas** en `database.sql`:
   - `evaluacion_completada`
   - `fecha_evaluacion_completada`
 
-#### ✅ `create_versiones_propuestas.sql`
+####  `create_versiones_propuestas.sql`
 - Tabla `versiones_propuestas` para historial completo
 - Ya estaba en el archivo base
 
@@ -55,11 +55,11 @@ Las siguientes migraciones SQL fueron **integradas** en `database.sql`:
 Los siguientes archivos SQL fueron **eliminados** porque ya están integrados:
 
 ```
-❌ backend/migrations/add_archivo_revision_to_historial.sql
-❌ backend/migrations/add_colaboradores_auth.sql
-❌ backend/migrations/create_versiones_propuestas.sql
-❌ backend/src/db/check-corrupted-data.sql
-❌ backend/src/db/fix-corrupted-data.sql
+ backend/migrations/add_archivo_revision_to_historial.sql
+ backend/migrations/add_colaboradores_auth.sql
+ backend/migrations/create_versiones_propuestas.sql
+ backend/src/db/check-corrupted-data.sql
+ backend/src/db/fix-corrupted-data.sql
 ```
 
 ### 4. Scripts JavaScript Deprecados
@@ -67,53 +67,53 @@ Los siguientes archivos SQL fueron **eliminados** porque ya están integrados:
 Los siguientes scripts JS **ya no son necesarios** (pero se mantienen por ahora):
 
 ```
-⚠️  backend/migrations/add_debe_cambiar_password.js
-⚠️  backend/migrations/fix_historial_columns.js
-⚠️  backend/migrations/run_add_archivo_revision.js
-⚠️  backend/migrations/run-colaboradores-auth.js
+  backend/migrations/add_debe_cambiar_password.js
+  backend/migrations/fix_historial_columns.js
+  backend/migrations/run_add_archivo_revision.js
+  backend/migrations/run-colaboradores-auth.js
 ```
 
 **Razón**: El campo `debe_cambiar_password` ya está en la tabla `usuarios` y todas las columnas están definidas en `database.sql`.
 
 ### 5. Documentación Actualizada
 
-#### ✅ `backend/src/db/README-DATABASE.md`
+####  `backend/src/db/README-DATABASE.md`
 - Actualizado para reflejar la unificación
 - Explica que las migraciones están integradas
 - Guía de uso del nuevo sistema
 
-#### ✅ `backend/migrations/README.md` (NUEVO)
+####  `backend/migrations/README.md` (NUEVO)
 - Explica por qué la carpeta está deprecada
 - Lista las migraciones integradas
 - Guía de limpieza recomendada
 
 ---
 
-## 🎯 Beneficios de la Unificación
+##  Beneficios de la Unificación
 
-### ✅ Simplicidad
+###  Simplicidad
 - **1 solo archivo** en lugar de múltiples archivos SQL dispersos
 - No necesitas ejecutar migraciones manualmente
 - No hay orden de ejecución que preocuparse
 
-### ✅ Mantenibilidad
+###  Mantenibilidad
 - Toda la estructura en un solo lugar
 - Fácil de revisar y entender
 - Menos posibilidad de errores
 
-### ✅ Automatización
+###  Automatización
 - Se ejecuta automáticamente al iniciar el backend
 - Detecta tablas faltantes y las crea
 - Idempotente (puede ejecutarse múltiples veces sin problemas)
 
-### ✅ Consistencia
+###  Consistencia
 - Todas las instalaciones tendrán la misma estructura
 - No hay riesgo de olvidar ejecutar una migración
 - Datos iniciales siempre presentes
 
 ---
 
-## 🚀 Cómo Usar el Nuevo Sistema
+##  Cómo Usar el Nuevo Sistema
 
 ### Inicialización (Automática)
 
@@ -160,19 +160,19 @@ npm run dev
 
 ---
 
-## 📋 Estructura Final
+##  Estructura Final
 
 ```
 backend/
 ├── src/
 │   └── db/
-│       ├── database.sql          ← ⭐ ARCHIVO PRINCIPAL UNIFICADO
+│       ├── database.sql          ←  ARCHIVO PRINCIPAL UNIFICADO
 │       ├── database.sql.backup   ← Respaldo del original
 │       ├── datos-prueba.sql      ← Datos de ejemplo (opcional)
 │       ├── connectionDB.js       ← Lógica de inicialización
 │       └── README-DATABASE.md    ← Documentación actualizada
 ├── migrations/
-│   ├── README.md                 ← ⭐ NUEVO: Explica deprecación
+│   ├── README.md                 ←  NUEVO: Explica deprecación
 │   ├── add_debe_cambiar_password.js  ← Deprecado (opcional eliminar)
 │   ├── fix_historial_columns.js      ← Deprecado (opcional eliminar)
 │   ├── run_add_archivo_revision.js   ← Deprecado (opcional eliminar)
@@ -183,7 +183,7 @@ backend/
 
 ---
 
-## 🔧 Tablas Incluidas en database.sql
+##  Tablas Incluidas en database.sql
 
 ### Tablas Principales (45 tablas)
 
@@ -244,14 +244,14 @@ backend/
    - `estudiantes_carreras`
    - `departamentos_carreras`
 
-9. **Colaboradores Externos** ⭐ CON AUTENTICACIÓN
+9. **Colaboradores Externos**  CON AUTENTICACIÓN
    - `entidades_externas`
    - `colaboradores_externos` (con campos de autenticación)
    - `colaboradores_proyectos` (con tracking de evaluaciones)
    - `evaluaciones_colaboradores_externos`
-   - `evaluaciones_colaboradores` ⭐ NUEVO
-   - `tokens_colaboradores` ⭐ NUEVO
-   - `notificaciones_colaboradores` ⭐ NUEVO
+   - `evaluaciones_colaboradores`  NUEVO
+   - `tokens_colaboradores`  NUEVO
+   - `notificaciones_colaboradores`  NUEVO
 
 10. **Sistema de Mensajería**
     - `conversaciones`
@@ -275,15 +275,15 @@ backend/
 
 ---
 
-## ⚠️ Notas Importantes
+##  Notas Importantes
 
-### ✅ Hacer
+###  Hacer
 - Usar `database.sql` como fuente única de verdad
 - Agregar nuevas tablas/columnas directamente en `database.sql`
 - Usar `CREATE TABLE IF NOT EXISTS` para evitar errores
 - Reiniciar el backend para aplicar cambios
 
-### ❌ No Hacer
+###  No Hacer
 - No crear archivos de migración separados
 - No ejecutar scripts SQL manualmente sin backup
 - No modificar tablas sin actualizar `database.sql`
@@ -291,7 +291,7 @@ backend/
 
 ---
 
-## 🎉 Resultado Final
+##  Resultado Final
 
 **Antes:**
 - 3 archivos SQL de migración dispersos
@@ -301,15 +301,15 @@ backend/
 - Riesgo de olvidar ejecutar alguna migración
 
 **Después:**
-- ✅ **1 solo archivo SQL** con toda la estructura
-- ✅ Inicialización **100% automática**
-- ✅ Sin necesidad de ejecutar migraciones manualmente
-- ✅ Documentación clara y actualizada
-- ✅ Sistema más simple y mantenible
+-  **1 solo archivo SQL** con toda la estructura
+-  Inicialización **100% automática**
+-  Sin necesidad de ejecutar migraciones manualmente
+-  Documentación clara y actualizada
+-  Sistema más simple y mantenible
 
 ---
 
-## 📚 Referencias
+##  Referencias
 
 - **Archivo principal**: `backend/src/db/database.sql`
 - **Documentación**: `backend/src/db/README-DATABASE.md`
@@ -318,7 +318,7 @@ backend/
 
 ---
 
-**✨ ¡Unificación completada exitosamente!**
+** ¡Unificación completada exitosamente!**
 
 Ahora tienes un sistema de base de datos más simple, mantenible y fácil de usar.
 
