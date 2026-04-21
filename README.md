@@ -8,7 +8,7 @@
 **Plataforma de apoyo completa para la gestión de propuestas de tesis, proyectos de título y seguimiento académico**
 
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
-[![Angular](https://img.shields.io/badge/Angular-18+-red?logo=angular)](https://angular.io/)
+[![Angular](https://img.shields.io/badge/Angular-21+-red?logo=angular)](https://angular.io/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green?logo=node.js)](https://nodejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange?logo=mysql)](https://www.mysql.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -418,100 +418,11 @@ DB_PASSWORD=tu_password
 
 ---
 
-##  Configuración Avanzada
+## Configuración Avanzada
 
-### Variables de Entorno Completas
-
-Crear archivo `backend/.env` para configuración personalizada:
-
-```bash
-# ============================================
-# CONFIGURACIÓN DEL SERVIDOR
-# ============================================
-PORT=3000
-NODE_ENV=production
-CORS_ORIGIN=http://localhost
-
-# ============================================
-# BASE DE DATOS
-# ============================================
-DB_HOST=mysql
-DB_PORT=3306
-DB_NAME=actitubb
-DB_USER=actitubb_user
-DB_PASSWORD=tu_contraseña_muy_segura
-
-# ============================================
-# AUTENTICACIÓN Y SEGURIDAD
-# ============================================
-JWT_SECRET=tu_clave_jwt_super_segura_de_al_menos_64_caracteres
-JWT_EXPIRES_IN=24h
-BCRYPT_ROUNDS=12
-
-# ============================================
-# CONFIGURACIÓN DE EMAIL
-# ============================================
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=tu_email@ubiobio.cl
-EMAIL_PASS=tu_contraseña_aplicacion
-EMAIL_FROM=noreply@ubiobio.cl
-
-# ============================================
-# CONFIGURACIÓN DE ARCHIVOS
-# ============================================
-MAX_FILE_SIZE=10485760  # 10MB en bytes
-ALLOWED_FILE_TYPES=pdf,doc,docx,jpg,jpeg,png
-UPLOAD_PATH=./uploads/
-
-# ============================================
-# CONFIGURACIÓN DE LOGS
-# ============================================
-LOG_LEVEL=info
-LOG_FILE=./logs/app.log
-```
-
-### Configuración para Producción
-
-#### 1. Frontend (Angular)
-Actualizar `frontend/src/app/services/api.ts`:
-```typescript
-// Para producción
-private apiUrl = 'https://tu-dominio.com/api/v1';
-
-// Para desarrollo
-private apiUrl = 'http://localhost:3000/api/v1';
-```
-
-#### 2. Backend (CORS)
-Actualizar `backend/src/index.js`:
-```javascript
-app.use(cors({
-  origin: ['https://tu-dominio.com', 'http://localhost'],
-  credentials: true
-}));
-```
-
-#### 3. Docker Compose para Producción
-```yaml
-version: '3.8'
-services:
-  backend:
-    environment:
-      - NODE_ENV=production
-      - DB_HOST=mysql
-      - JWT_SECRET=${JWT_SECRET}
-    ports:
-      - "3000:3000"
-    
-  frontend:
-    environment:
-      - NODE_ENV=production
-    ports:
-      - "80:80"
-      - "443:443"  # Para HTTPS
-```
+> [!NOTE]
+> La configuración detallada de Docker, NGINX y variables de entorno ha sido movida a su propio documento para mayor comodidad.
+> 📄 **[Ver Guía de Configuración Avanzada](documentacion/CONFIGURACION.md)**
 
 ---
 
@@ -633,167 +544,11 @@ npm run format           # Prettier formatting
 
 ---
 
-##  Troubleshooting Avanzado
+## Troubleshooting Avanzado
 
-### Problemas Comunes y Soluciones
-
-<details>
-<summary><strong> Error: "JWT token expired" o "Invalid token"</strong></summary>
-
-**Problema**: Token de autenticación expirado o inválido.
-
-**Solución**:
-```bash
-# Limpiar localStorage del navegador
-localStorage.clear();
-
-# O reiniciar sesión
-# El sistema automáticamente redirige al login
-```
-
-**Prevención**: El token se renueva automáticamente en el interceptor.
-</details>
-
-<details>
-<summary><strong> Error: "File upload failed" o "File too large"</strong></summary>
-
-**Problema**: Error en subida de archivos.
-
-**Causa común**: Archivo excede 10MB o formato no permitido.
-
-**Solución**:
-```bash
-# Verificar configuración en backend/.env
-MAX_FILE_SIZE=10485760  # 10MB
-ALLOWED_FILE_TYPES=pdf,doc,docx,jpg,jpeg,png
-
-# Reiniciar backend si se cambió configuración
-docker-compose restart backend
-```
-</details>
-
-<details>
-<summary><strong> Error: "Email notification failed"</strong></summary>
-
-**Problema**: Las notificaciones por email no funcionan.
-
-**Solución**:
-```bash
-# Verificar configuración de email en backend/.env
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=tu_email@gmail.com
-EMAIL_PASS=tu_contraseña_aplicacion  # No la contraseña normal
-
-# Para Gmail, habilitar "Contraseñas de aplicación"
-# Google Account > Security > 2-Step Verification > App passwords
-```
-</details>
-
-<details>
-<summary><strong> Error: "Docker container keeps restarting"</strong></summary>
-
-**Problema**: Contenedores en loop de reinicio.
-
-**Diagnóstico**:
-```bash
-# Ver logs detallados
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f mysql
-
-# Verificar estado de contenedores
-docker-compose ps
-
-# Verificar recursos del sistema
-docker system df
-docker system prune  # Limpiar si es necesario
-```
-
-**Solución común**:
-```bash
-# Reinicio completo
-docker-compose down -v
-docker-compose up --build
-
-# Si persiste, verificar recursos disponibles
-# MySQL necesita al menos 512MB RAM
-```
-</details>
-
-<details>
-<summary><strong> Error: "Responsive design issues"</strong></summary>
-
-**Problema**: Interfaz no se ve bien en móviles.
-
-**Verificación**:
-```bash
-# El CSS ya incluye media queries para:
-# - Móviles: < 768px
-# - Tablets: 768px - 1024px  
-# - Desktop: > 1024px
-
-# Verificar en DevTools del navegador
-# F12 > Toggle device toolbar
-```
-
-**Solución**: Los estilos responsive están implementados en cada componente.
-</details>
-
-### Comandos de Mantenimiento
-
-```bash
-# ============================================
-# MANTENIMIENTO DE LA BASE DE DATOS
-# ============================================
-
-# Backup de la base de datos
-docker exec mysql_container mysqldump -u actitubb_user -p actitubb > backup.sql
-
-# Restaurar backup
-docker exec -i mysql_container mysql -u actitubb_user -p actitubb < backup.sql
-
-# ============================================
-# LIMPIEZA DEL SISTEMA
-# ============================================
-
-# Limpiar Docker
-docker system prune -a              # Eliminar contenedores/imágenes no usadas
-docker volume prune                 # Eliminar volúmenes no usados
-
-# Limpiar logs
-docker-compose logs --tail=0 -f     # Ver solo logs nuevos
-
-# ============================================
-# MONITOREO
-# ============================================
-
-# Ver uso de recursos
-docker stats
-
-# Ver logs en tiempo real
-docker-compose logs -f --tail=100
-
-# Verificar salud de servicios
-docker-compose ps
-```
-
-### Logs y Debugging
-
-```bash
-# Backend logs
-docker-compose logs backend | grep ERROR
-docker-compose logs backend | grep -i "auth\|jwt\|token"
-
-# Frontend logs  
-docker-compose logs frontend | grep -i "error\|warning"
-
-# MySQL logs
-docker-compose logs mysql | grep -i "error\|warning"
-
-# Logs específicos por timestamp
-docker-compose logs --since="2024-01-01T00:00:00" backend
-```
+> [!NOTE]
+> La guía de solución de problemas comunes, errores de base de datos y comandos útiles ha sido movida a su propio documento.
+> 📄 **[Ver Guía de Troubleshooting](documentacion/TROUBLESHOOTING.md)**
 
 ---
 
@@ -989,132 +744,11 @@ Para no saturar este archivo principal, hemos dividido algunas documentaciones e
 
 ---
 
-##  Contribución y Desarrollo
+## Contribución y Desarrollo
 
-### Guía de Contribución
-
-1. **Fork del proyecto**
-   ```bash
-   git clone https://github.com/tu-usuario/AcTitUBB.git
-   cd AcTitUBB
-   git remote add upstream https://github.com/Dantrotel/AcTitUBB.git
-   ```
-
-2. **Crear rama de feature**
-   ```bash
-   git checkout -b feature/nueva-funcionalidad
-   ```
-
-3. **Desarrollo con convenciones**
-   - Usar TypeScript strict mode
-   - Seguir patrones Angular establecidos
-   - Escribir tests para nueva funcionalidad
-   - Documentar APIs nuevas
-
-4. **Testing antes de commit**
-   ```bash
-   # Backend
-   cd backend && npm test && npm run lint
-   
-   # Frontend  
-   cd frontend && ng test && ng lint
-   ```
-
-5. **Commit con mensaje descriptivo**
-   ```bash
-   git commit -m "feat: agregar sistema de notificaciones push
-   
-   - Implementar Service Worker para notificaciones
-   - Agregar configuración de Firebase
-   - Crear componente de configuración de notificaciones
-   - Agregar tests unitarios
-   
-   Closes #123"
-   ```
-
-6. **Pull Request**
-   - Descripción detallada de cambios
-   - Screenshots si hay cambios UI
-   - Lista de testing realizado
-   - Mencionar issues relacionadas
-
-### Convenciones de Código
-
-#### Frontend (Angular)
-```typescript
-// Estructura de componentes
-@Component({
-  selector: 'app-feature-name',
-  standalone: true,
-  imports: [CommonModule, /* otros imports */],
-  templateUrl: './feature-name.component.html',
-  styleUrls: ['./feature-name.component.scss']
-})
-export class FeatureNameComponent implements OnInit, OnDestroy {
-  // Propiedades públicas primero
-  public data: any[] = [];
-  
-  // Propiedades privadas después
-  private subscription$ = new Subject<void>();
-  
-  constructor(
-    private apiService: ApiService,
-    private router: Router
-  ) {}
-  
-  ngOnInit(): void {
-    this.loadData();
-  }
-  
-  ngOnDestroy(): void {
-    this.subscription$.next();
-    this.subscription$.complete();
-  }
-  
-  // Métodos públicos
-  public onAction(): void {
-    // implementación
-  }
-  
-  // Métodos privados
-  private loadData(): void {
-    // implementación
-  }
-}
-```
-
-#### Backend (Node.js)
-```javascript
-// Estructura de controladores
-const FeatureController = {
-  // GET /api/v1/features
-  async getAll(req, res) {
-    try {
-      const { page = 1, limit = 10 } = req.query;
-      const features = await FeatureService.getAll(page, limit);
-      
-      return res.status(200).json({
-        success: true,
-        message: 'Features retrieved successfully',
-        data: features,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: features.total
-        }
-      });
-    } catch (error) {
-      console.error('Error in FeatureController.getAll:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  }
-};
-```
-
+> [!IMPORTANT]
+> Hemos movido las directrices de contribución, ramas, y estándares de código a su propio archivo para facilitar la lectura. ¡Cualquier PR es bienvenido!
+> 🤝 **[Ver Guía de Contribución (CONTRIBUTING.md)](CONTRIBUTING.md)**
 
 ##  Licencia y Términos de Uso
 
@@ -1142,7 +776,7 @@ Este proyecto está desarrollado para uso académico en la **Universidad del Bí
 [![Email](https://img.shields.io/badge/Email-daniel.aguayo2001%40alumnos.ubiobio.cl-red?logo=gmail)](mailto:daniel.aguayo2001@alumnos.ubiobio.cl)
 
  **Universidad del Bío-Bío**  
- **2025**  
+ **2026**  
  **Ingeniería de ejecución en computación e Informática**
 
 </div>
