@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
@@ -19,6 +21,10 @@ export class CrearPropuestaComponent {
   archivo: File | null = null;
   isSubmitting = false;
 
+  // Estado de carga unificado
+  cargando = true;
+  errorCarga = false;
+
   // Tipo de proyecto
   tipo_proyecto: 'PT' | 'AP' = 'PT';
   continua_ap = false;
@@ -26,7 +32,7 @@ export class CrearPropuestaComponent {
 
   // Inscripción de ramo activa
   inscripcionActiva: { tipo_ramo: 'AP' | 'PT' } | null = null;
-  cargandoInscripcion = true;
+  cargandoInscripcion = false;
   tieneInscripcion = false;
 
   // Nuevos campos del modelo
@@ -44,11 +50,11 @@ export class CrearPropuestaComponent {
 
   // Semestre activo
   semestreActivo: { id: number; nombre: string } | null = null;
-  cargandoSemestre = true;
+  cargandoSemestre = false;
 
   // Guía pre-asignado
   guiaAsignado: { profesor_guia_rut: string; profesor_nombre: string; profesor_email: string } | null = null;
-  cargandoGuia = true;
+  cargandoGuia = false;
 
   get esAP()         { return this.tipo_proyecto === 'AP'; }
   get esContinuaAP() { return this.tipo_proyecto === 'PT' && this.continua_ap; }
@@ -56,7 +62,7 @@ export class CrearPropuestaComponent {
   get requiereDetalles() { return this.tipo_proyecto === 'PT' && !this.continua_ap; }
   get tieneGuia()        { return this.guiaAsignado !== null; }
   get haySemestreActivo() { return this.semestreActivo !== null; }
-  get puedeEnviar()    { return this.tieneGuia && this.haySemestreActivo && !this.cargandoGuia && !this.cargandoSemestre && !this.cargandoInscripcion; }
+  get puedeEnviar()    { return this.tieneGuia && this.haySemestreActivo && !this.cargando && !this.isSubmitting; }
 
   constructor(
     private apiService: ApiService,
@@ -64,74 +70,82 @@ export class CrearPropuestaComponent {
     private notificationService: NotificationService
   ) {
     this.obtenerCarreraUsuario();
-    this.verificarAPCompletado();
-    this.cargarGuia();
-    this.cargarSemestreActivo();
-    this.cargarInscripcionActiva();
+    
+    this.cargando = true;
+    this.cargandoSemestre = true;
+    this.cargandoGuia = true;
+    this.cargandoInscripcion = true;
+    
+    forkJoin({
+      apCompletado: this.verificarAPCompletado(),
+      guia: this.cargarGuia(),
+      semestreActivo: this.cargarSemestreActivo(),
+      inscripcion: this.cargarInscripcionActiva()
+    }).subscribe({
+      next: (result) => {
+        this.tieneAPCompletado = result.apCompletado;
+        this.guiaAsignado = result.guia;
+        this.semestreActivo = result.semestreActivo;
+        
+        this.cargandoSemestre = false;
+        this.cargandoGuia = false;
+        
+        if (result.inscripcion) {
+          this.tieneInscripcion = result.inscripcion.tieneInscripcion;
+          this.inscripcionActiva = result.inscripcion.inscripcion;
+          if (this.inscripcionActiva) {
+            this.tipo_proyecto = this.inscripcionActiva.tipo_ramo;
+            this.configurarOpcionesDuracion();
+          }
+        }
+        this.cargandoInscripcion = false;
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar datos iniciales:', err);
+        this.errorCarga = true;
+        this.cargando = false;
+        this.cargandoSemestre = false;
+        this.cargandoGuia = false;
+        this.cargandoInscripcion = false;
+      }
+    });
   }
 
   /** Carga el semestre activo con inscripciones abiertas */
   cargarSemestreActivo() {
-    this.cargandoSemestre = true;
-    this.apiService.getSemestreActivo().subscribe({
-      next: (res: any) => {
-        this.semestreActivo = res.hayActivo ? res.data : null;
-        this.cargandoSemestre = false;
-      },
-      error: () => {
-        this.semestreActivo = null;
-        this.cargandoSemestre = false;
-      }
-    });
+    return this.apiService.getSemestreActivo().pipe(
+      map((res: any) => res.hayActivo ? res.data : null)
+    );
   }
 
   /** Carga el profesor guía pre-asignado al estudiante */
   cargarGuia() {
-    this.cargandoGuia = true;
-    this.apiService.getMiGuia().subscribe({
-      next: (res: any) => {
-        this.guiaAsignado = res.tieneGuia ? res.data : null;
-        this.cargandoGuia = false;
-      },
-      error: () => {
-        this.guiaAsignado = null;
-        this.cargandoGuia = false;
-      }
-    });
+    return this.apiService.getMiGuia().pipe(
+      map((res: any) => res.tieneGuia ? res.data : null)
+    );
   }
 
   /** Verifica si el estudiante tiene un AP en etapa 'final_ap' para habilitar continua_ap */
   verificarAPCompletado() {
-    this.apiService.getMisProyectos().subscribe({
-      next: (response: any) => {
+    return this.apiService.getMisProyectos().pipe(
+      map((response: any) => {
         const proyectos: any[] = response?.projects || [];
-        this.tieneAPCompletado = proyectos.some(
+        return proyectos.some(
           (p: any) => p.tipo_proyecto === 'AP' && p.estado_detallado === 'final_ap'
         );
-      },
-      error: () => { this.tieneAPCompletado = false; }
-    });
+      })
+    );
   }
 
   /** Carga la inscripción de ramo activa y ajusta tipo y duración automáticamente */
   cargarInscripcionActiva() {
-    this.cargandoInscripcion = true;
-    this.apiService.getInscripcionRamoActiva().subscribe({
-      next: (res: any) => {
-        this.tieneInscripcion = res.tieneInscripcion;
-        this.inscripcionActiva = res.tieneInscripcion ? res.data : null;
-        if (this.inscripcionActiva) {
-          this.tipo_proyecto = this.inscripcionActiva.tipo_ramo;
-          this.configurarOpcionesDuracion();
-        }
-        this.cargandoInscripcion = false;
-      },
-      error: () => {
-        this.inscripcionActiva = null;
-        this.tieneInscripcion = false;
-        this.cargandoInscripcion = false;
-      }
-    });
+    return this.apiService.getInscripcionRamoActiva().pipe(
+      map((res: any) => ({
+        tieneInscripcion: res.tieneInscripcion,
+        inscripcion: res.tieneInscripcion ? res.data : null
+      }))
+    );
   }
 
   onTipoProyectoChange() {

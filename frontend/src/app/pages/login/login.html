@@ -63,6 +63,10 @@
                 <i class="fas fa-user-plus"></i> Ir a Registro
               </button>
             </div>
+            
+            <div *ngIf="mostrarError" class="error-message" role="alert">
+              <i class="fas fa-exclamation-circle"></i> {{ mensajeError }}
+            </div>
           </form>
 
           <div class="forgot-password-link">

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { jwtDecode } from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +18,13 @@ export class ApiService {
     });
   }
 
+  private getAuthHeadersForMultipart(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+  }
+
   constructor(private http: HttpClient, private router: Router) {}
 
   // ===== MÉTODOS DE AUTENTICACIÓN =====
@@ -26,7 +34,7 @@ export class ApiService {
     if (!tokenToCheck) return true;
     
     try {
-      const payload = JSON.parse(atob(tokenToCheck.split('.')[1]));
+      const payload = jwtDecode(tokenToCheck);
       const currentTime = Math.floor(Date.now() / 1000);
       return payload.exp < currentTime;
     } catch (error) {
@@ -64,8 +72,8 @@ export class ApiService {
     
     if (token) {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        rol = payload.rol;
+        const payload = jwtDecode(token);
+        rol = payload.rol as string;
       } catch (error) {
         console.error('Error al decodificar token:', error);
       }
@@ -263,164 +271,111 @@ export class ApiService {
   }
 
   getPropuestas() {
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   // Nuevo método: obtener solo las propuestas del estudiante autenticado
   getMisPropuestas() {
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/estudiante/mis-propuestas`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   getPropuestaById(id: string) {
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/get/${id}`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
  createPropuesta(data: FormData) {
-  const token = localStorage.getItem('token');
   return this.http.post(`${this.baseUrl}/propuestas/`, data, {
-    headers: new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    })
+    headers: this.getHeaders()
   });
 }
 
   updatePropuesta(id: string, data: any) {
-    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}`, data, {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   updatePropuestaWithFile(id: string, formData: FormData) {
-    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}`, formData, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-        // No incluir Content-Type para que el navegador establezca el boundary automáticamente
-      })
+      headers: this.getAuthHeadersForMultipart()
     });
   }
 
   revisarPropuesta(id: string, data: { comentarios_profesor: string, estado: string }) {
-    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}/revisar`, data, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   revisarPropuestaConArchivo(id: string, formData: FormData) {
-    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}/revisar`, formData, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getAuthHeadersForMultipart()
     });
   }
 
   subirCorreccion(id: number, formData: FormData) {
-    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}/subir-correccion`, formData, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getAuthHeadersForMultipart()
     });
   }
 
   asignarPropuesta(id: string, data: any) {
-    const token = localStorage.getItem('token');
     return this.http.put(`${this.baseUrl}/propuestas/${id}/asignar-profesor`, data, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   deletePropuesta(id: string) {
-    const token = localStorage.getItem('token');
     return this.http.delete(`${this.baseUrl}/propuestas/${id}`, {
-       headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   // ========== PROYECTOS ==========
 
   getProyectos() {
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/projects/`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   deleteProyecto(id: string) {
-    const token = localStorage.getItem('token');
     return this.http.delete(`${this.baseUrl}/projects/${id}`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   descargarArchivo(nombreArchivo: string) {
-    const token = localStorage.getItem('token');
     const url = `${this.baseUrl}/descargar/${nombreArchivo}`;
     return this.http.get(url, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      }),
-      responseType: 'blob' // Muy importante para descargar archivos binarios
+      headers: this.getHeaders(),
+      responseType: 'blob'
     });
   }
 
   descargarArchivoVersionado(archivoId: number) {
-    const token = localStorage.getItem('token');
     const url = `${this.baseUrl}/propuestas/archivos/${archivoId}/download`;
     return this.http.get(url, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      }),
+      headers: this.getHeaders(),
       responseType: 'blob'
     });
   }
 
   buscaruserByrut(rut:string){
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/users/${rut}`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
   getPropuestasAsignadasProfesor(profesor_rut: string) {
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/propuestas/profesor/${profesor_rut}`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
@@ -502,13 +457,8 @@ export class ApiService {
 
   // Gestión de profesores (ahora a través de usuarios)
   getProfesores() {
-    // Obtener todos los usuarios y filtrar profesores y admins (que también pueden ser profesores)
-    // No usamos rol_filter porque necesitamos tanto rol 2 (profesor) como rol 3 (admin/profesor)
-    const token = localStorage.getItem('token');
     return this.http.get(`${this.baseUrl}/admin/usuarios`, {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      })
+      headers: this.getHeaders()
     });
   }
 
@@ -620,14 +570,8 @@ export class ApiService {
     formData.append('archivo', archivo);
     formData.append('comentarios_estudiante', comentarios);
 
-    // Headers sin Content-Type para FormData
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
     return this.http.post(`${this.baseUrl}/projects/hitos/${hitoId}/entregar`, formData, {
-      headers: headers
+      headers: this.getAuthHeadersForMultipart()
     });
   }
 
@@ -673,10 +617,9 @@ export class ApiService {
   }
 
   revisarHitoInformante(revisionId: string, datos: { comentarios: string; estado: string } | FormData) {
-    const token = localStorage.getItem('token');
     if (datos instanceof FormData) {
       return this.http.patch(`${this.baseUrl}/projects/informante/revisiones/${revisionId}`, datos, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: this.getAuthHeadersForMultipart()
       });
     }
     return this.http.patch(`${this.baseUrl}/projects/informante/revisiones/${revisionId}`, datos, {
@@ -685,10 +628,9 @@ export class ApiService {
   }
 
   revisarHitoCompleto(hitoId: string, datos: { comentarios_profesor: string; estado: string } | FormData) {
-    const token = localStorage.getItem('token');
     if (datos instanceof FormData) {
       return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, datos, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: this.getAuthHeadersForMultipart()
       });
     }
     return this.http.patch(`${this.baseUrl}/projects/hitos/${hitoId}/revisar`, datos, {
@@ -1703,13 +1645,10 @@ export class ApiService {
   }
 
   post(endpoint: string, data: any) {
-    // Para FormData, no agregar Content-Type header
     if (data instanceof FormData) {
-      const token = localStorage.getItem('token');
-      const headers = new HttpHeaders({
-        'Authorization': `Bearer ${token}`
+      return this.http.post(`${this.baseUrl}${endpoint}`, data, {
+        headers: this.getAuthHeadersForMultipart()
       });
-      return this.http.post(`${this.baseUrl}${endpoint}`, data, { headers });
     }
     return this.http.post(`${this.baseUrl}${endpoint}`, data, {
       headers: this.getHeaders()

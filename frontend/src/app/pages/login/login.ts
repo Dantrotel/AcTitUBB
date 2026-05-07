@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api';
 import { Router, RouterLink } from '@angular/router';
+import { jwtDecode } from 'jwt-decode';
 
 
 @Component({
@@ -16,6 +17,8 @@ export class LoginComponent {
   usuario = '';
   password = '';
   currentYear: number;
+  mostrarError = false;
+  mensajeError = '';
 
   constructor(private apiService: ApiService, private router:Router) {
     this.currentYear = new Date().getFullYear();
@@ -45,7 +48,16 @@ login() {
         return;
       }
 
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      let payload: any;
+      try {
+        payload = jwtDecode(token);
+      } catch (error) {
+        console.error('Token inválido:', error);
+        this.mostrarError = true;
+        this.mensajeError = 'Error al procesar la sesión. Intenta nuevamente.';
+        return;
+      }
+
       // Guardar el token y refresh token en localStorage
       localStorage.setItem('token', token);
       if (res.refreshToken) {
@@ -79,6 +91,9 @@ login() {
   
     },
     (err) => {
+      console.error('Error en login:', err);
+      this.mostrarError = true;
+      this.mensajeError = err.error?.message || 'Error al iniciar sesión. Intenta nuevamente.';
     }
   );
 
