@@ -39,16 +39,34 @@ const storageDocumentos = multer.diskStorage({
   }
 });
 
-// Filtro para tipos de archivo permitidos
+// Filtro para tipos de archivo permitidos (extensión Y MIME type)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['.pdf', '.docx', '.doc', '.ppt', '.pptx', '.zip', '.rar'];
+  const allowedExtensions = ['.pdf', '.docx', '.doc', '.ppt', '.pptx', '.zip', '.rar'];
+  const allowedMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-rar-compressed',
+    'application/vnd.rar'
+  ];
+  
   const ext = path.extname(file.originalname).toLowerCase();
 
-  if (allowedTypes.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Solo se permiten archivos PDF, Word, PowerPoint o ZIP (.pdf, .docx, .doc, .ppt, .pptx, .zip, .rar)'));
+  // Validar extensión
+  if (!allowedExtensions.includes(ext)) {
+    return cb(new Error('Extensión no permitida. Solo se permiten: .pdf, .docx, .doc, .ppt, .pptx, .zip, .rar'));
   }
+
+  // Validar MIME type
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    return cb(new Error('Tipo de archivo no permitido. El contenido del archivo no corresponde a un documento válido'));
+  }
+
+  cb(null, true);
 };
 
 // Configuración de almacenamiento para versiones

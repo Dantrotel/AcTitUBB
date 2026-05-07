@@ -50,7 +50,7 @@ const register = async (req, res) => {
 
     } catch (error) {
         logger.error('Error en registro de usuario', { error: error.message, stack: error.stack });
-        return res.status(500).json({ message: "Internal server error", error });
+        return res.status(500).json({ message: "Internal server error" });
     }
 };
 
@@ -153,7 +153,7 @@ const login = async (req, res) => {
 
     } catch (error) {
         logger.error('Error en login', { error: error.message, stack: error.stack });
-        return res.status(500).json({ message: "Internal server error", error });
+        return res.status(500).json({ message: "Internal server error" });
     }
 };
 
@@ -169,8 +169,8 @@ const logout = async (req, res) => {
 
     return res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
-    logger.error('Error en logout', { error: error.message });
-    return res.status(500).json({ message: "Internal server error", error });
+    logger.error('Error en logout', { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -298,8 +298,8 @@ const actualizarPerfil = async (req, res) => {
       res.status(404).json({ message: 'No se pudo actualizar el perfil' });
     }
   } catch (error) {
-    logger.error('Error al actualizar perfil', { rut: req.rut, error: error.message });
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    logger.error('Error al actualizar perfil', { rut: req.rut, error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -347,8 +347,8 @@ const cambiarPasswordPropia = async (req, res) => {
       res.status(500).json({ message: 'No se pudo actualizar la contraseña' });
     }
   } catch (error) {
-    logger.error('Error al cambiar contraseña', { rut: req.rut, error: error.message });
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    logger.error('Error al cambiar contraseña', { rut: req.rut, error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -379,8 +379,10 @@ const forgotPassword = async (req, res) => {
       });
     }
     
-    // Generar contraseña temporal aleatoria (8 caracteres)
-    const passwordTemporal = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase();
+    // Generar contraseña temporal segura con crypto.randomBytes (8 caracteres en base64url)
+    const crypto = await import('crypto');
+    const bytes = crypto.randomBytes(6); // 6 bytes = 8 caracteres en base64url
+    const passwordTemporal = bytes.toString('base64url');
     
     // Hashear la contraseña temporal
     const salt = await bcrypt.genSalt(10);
@@ -406,8 +408,8 @@ const forgotPassword = async (req, res) => {
       res.status(500).json({ message: 'Error al resetear la contraseña' });
     }
   } catch (error) {
-    logger.error('Error en forgot password', { error: error.message });
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    logger.error('Error en forgot password', { error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -455,8 +457,8 @@ const cambiarPasswordObligatorio = async (req, res) => {
       res.status(500).json({ message: 'No se pudo actualizar la contraseña' });
     }
   } catch (error) {
-    logger.error('Error al cambiar contraseña obligatoria', { rut: req.rut, error: error.message });
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    logger.error('Error al cambiar contraseña obligatoria', { rut: req.rut, error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 

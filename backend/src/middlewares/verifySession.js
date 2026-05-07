@@ -81,8 +81,11 @@ const verifySession = async (req, res, next) => {
         }
       }
     } catch (dbError) {
-      
-      // Continuar sin estos datos, no es crítico
+      logger.error('Error al obtener datos de usuario', { 
+        rut, 
+        error: dbError.message,
+        stack: dbError.stack 
+      });
     }
     
     // Crear objeto user para compatibilidad con controladores

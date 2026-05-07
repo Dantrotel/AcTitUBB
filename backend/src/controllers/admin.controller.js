@@ -256,16 +256,15 @@ export const resetearPasswordUsuario = async (req, res) => {
       
       res.json({ 
         success: true,
-        message: 'Contraseña reseteada correctamente. Se ha enviado un email al usuario.',
-        password_temporal: nueva_password // Enviar la contraseña SIN HASHEAR al admin
+        message: 'Contraseña reseteada correctamente. Se ha enviado un email al usuario.'
       });
     } else {
       
       res.status(500).json({ message: 'Error al actualizar la contraseña' });
     }
   } catch (error) {
-    
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    logger.error('Error al resetear password', { rut: req.params.rut, error: error.message, stack: error.stack });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
