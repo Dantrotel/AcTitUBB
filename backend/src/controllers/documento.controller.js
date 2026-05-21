@@ -148,7 +148,12 @@ export const descargarDocumento = async (req, res) => {
       return res.status(403).json({ message: 'No tienes permiso para descargar este documento' });
     }
 
+    const uploadsDir = path.resolve(process.cwd(), 'uploads');
     const filePath = path.resolve(documento.ruta_archivo);
+
+    if (!filePath.startsWith(uploadsDir)) {
+      return res.status(403).json({ message: 'Acceso denegado: ruta de archivo no permitida' });
+    }
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
@@ -238,8 +243,14 @@ export const eliminarDocumento = async (req, res) => {
 
     // Admin (3) puede eliminar cualquier documento sin restricciones
 
-    // Eliminar archivo físico
+    // Eliminar archivo físico con validación de path traversal
+    const uploadsDir = path.resolve(process.cwd(), 'uploads');
     const filePath = path.resolve(documento.ruta_archivo);
+    
+    if (!filePath.startsWith(uploadsDir)) {
+      return res.status(403).json({ message: 'Acceso denegado: ruta de archivo no permitida' });
+    }
+    
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }

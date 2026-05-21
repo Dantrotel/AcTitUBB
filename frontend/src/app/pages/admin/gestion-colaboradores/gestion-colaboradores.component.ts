@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,6 +20,7 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./gestion-colaboradores.component.scss']
 })
 export class GestionColaboradoresComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   private colaboradoresService = inject(ColaboradoresExternosService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
@@ -45,7 +47,7 @@ export class GestionColaboradoresComponent implements OnInit {
   }
 
   cargarEntidades() {
-    this.colaboradoresService.obtenerEntidades(true).subscribe({
+    this.colaboradoresService.obtenerEntidades(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.entidades.set(response.entidades);
       },
@@ -59,7 +61,7 @@ export class GestionColaboradoresComponent implements OnInit {
     this.cargando.set(true);
     const filtros = this.busqueda ? { busqueda: this.busqueda } : {};
     
-    this.colaboradoresService.obtenerColaboradores(filtros).subscribe({
+    this.colaboradoresService.obtenerColaboradores(filtros).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.colaboradores.set(response.colaboradores);
         this.cargando.set(false);
@@ -97,7 +99,7 @@ export class GestionColaboradoresComponent implements OnInit {
     }
 
     this.cargando.set(true);
-    this.colaboradoresService.crearColaborador(this.nuevoColaborador).subscribe({
+    this.colaboradoresService.crearColaborador(this.nuevoColaborador).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.snackBar.open('Colaborador creado exitosamente', 'Cerrar', { duration: 3000 });
         this.cargarColaboradores();
@@ -116,7 +118,7 @@ export class GestionColaboradoresComponent implements OnInit {
     if (!colaborador.id) return;
 
     this.cargando.set(true);
-    this.colaboradoresService.verificarColaborador(colaborador.id).subscribe({
+    this.colaboradoresService.verificarColaborador(colaborador.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.snackBar.open('Colaborador verificado exitosamente', 'Cerrar', { duration: 3000 });
         this.cargarColaboradores();
@@ -157,7 +159,7 @@ export class GestionColaboradoresComponent implements OnInit {
     
     this.http.get<any>(
       `${environment.apiUrl}/colaboradores-externos/proyectos-colaborador/${colaborador.id}`
-    ).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.cargando.set(false);
         

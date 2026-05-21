@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
@@ -35,6 +36,8 @@ export class GestionSemestresComponent implements OnInit {
 
   resultadosValidos = ['en_curso', 'aprobado', 'reprobado', 'retirado'];
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private apiService: ApiService,
     private notificationService: NotificationService,
@@ -47,7 +50,7 @@ export class GestionSemestresComponent implements OnInit {
 
   cargarSemestres(): void {
     this.loading = true;
-    this.apiService.getSemestres().subscribe({
+    this.apiService.getSemestres().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         this.semestres = res.data || [];
         this.loading = false;
@@ -96,7 +99,7 @@ export class GestionSemestresComponent implements OnInit {
       ? this.apiService.actualizarSemestre(this.semestreeditandoId!, payload)
       : this.apiService.crearSemestre(payload);
 
-    observable.subscribe({
+    observable.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success(this.modoEdicion ? 'Semestre actualizado' : 'Semestre creado exitosamente');
         this.procesando = false;
@@ -111,7 +114,7 @@ export class GestionSemestresComponent implements OnInit {
   }
 
   activar(s: any): void {
-    this.apiService.activarSemestre(s.id).subscribe({
+    this.apiService.activarSemestre(s.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success(`Semestre ${s.nombre} activado`);
         this.cargarSemestres();
@@ -126,7 +129,7 @@ export class GestionSemestresComponent implements OnInit {
       'Eliminar Semestre', 'Eliminar', 'Cancelar'
     );
     if (!confirmed) return;
-    this.apiService.eliminarSemestre(s.id).subscribe({
+    this.apiService.eliminarSemestre(s.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Semestre eliminado');
         this.cargarSemestres();
@@ -140,7 +143,7 @@ export class GestionSemestresComponent implements OnInit {
     this.mostrarHistorial = true;
     this.historial = [];
     this.loadingHistorial = true;
-    this.apiService.getHistorialSemestre(s.id).subscribe({
+    this.apiService.getHistorialSemestre(s.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         this.historial = res.data || [];
         this.loadingHistorial = false;
@@ -182,7 +185,7 @@ export class GestionSemestresComponent implements OnInit {
     if (!confirmed) return;
 
     this.generandoInscripciones = true;
-    this.apiService.generarInscripcionesSiguienteSemestre(semestreOrigen.id, semestreDestino.id).subscribe({
+    this.apiService.generarInscripcionesSiguienteSemestre(semestreOrigen.id, semestreDestino.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         this.notificationService.success(res.message || 'Inscripciones generadas');
         this.generandoInscripciones = false;
@@ -195,7 +198,7 @@ export class GestionSemestresComponent implements OnInit {
   }
 
   cambiarResultado(semestreId: number, proyectoId: number, resultado: string): void {
-    this.apiService.actualizarResultadoProyecto(semestreId, proyectoId, resultado).subscribe({
+    this.apiService.actualizarResultadoProyecto(semestreId, proyectoId, resultado).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.notificationService.success('Resultado actualizado', 'El resultado del proyecto ha sido registrado correctamente.'),
       error: () => this.notificationService.error('Error al actualizar resultado', 'No fue posible actualizar el resultado del proyecto. Intente nuevamente.')
     });

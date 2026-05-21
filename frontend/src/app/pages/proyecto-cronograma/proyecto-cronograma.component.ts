@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { CronogramaCompletoComponent } from '../../components/cronograma-completo/cronograma-completo.component';
 import { DocumentosProyectoComponent } from '../../components/documentos-proyecto/documentos-proyecto.component';
 import { ColaboradoresProyectoComponent } from '../../components/colaboradores-proyecto/colaboradores-proyecto.component';
@@ -51,7 +52,7 @@ export class ProyectoCronogramaComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.tabActiva = params['tab'];
-        console.log('📑 Pestaña activa desde URL:', this.tabActiva);
+        if (!environment.production) { console.log('📑 Pestaña activa desde URL:', this.tabActiva); }
         this.cdr.detectChanges();
       }
     });
@@ -74,18 +75,18 @@ export class ProyectoCronogramaComponent implements OnInit {
   }
 
   obtenerCronograma() {
-    console.log('🔄 Obteniendo cronograma del proyecto:', this.projectId);
+    if (!environment.production) { console.log('🔄 Obteniendo cronograma del proyecto:', this.projectId); }
     this.apiService.obtenerCronograma(this.projectId.toString()).subscribe({
       next: (response: any) => {
-        console.log('✅ Respuesta de cronograma recibida:', response);
+        if (!environment.production) { console.log('✅ Respuesta de cronograma recibida:', response); }
         // Aceptar diferentes formatos de respuesta del backend
         const cronograma = response?.cronograma || response?.data?.cronograma || response?.data || null;
-        console.log('📋 Cronograma extraído:', cronograma);
+        if (!environment.production) { console.log('📋 Cronograma extraído:', cronograma); }
         if (cronograma && cronograma.id) {
           this.cronogramaId = cronograma.id.toString();
-          console.log('✅ CronogramaId asignado:', this.cronogramaId);
+          if (!environment.production) { console.log('✅ CronogramaId asignado:', this.cronogramaId); }
         } else {
-          console.warn('⚠️ No se encontró cronograma activo');
+          if (!environment.production) { console.warn('⚠️ No se encontró cronograma activo'); }
         }
         this.cdr.detectChanges();
       },

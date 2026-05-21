@@ -1,9 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone, ApplicationRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, ApplicationRef, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   standalone: true,
@@ -13,6 +15,7 @@ import { NotificationService } from '../../../services/notification.service';
   styleUrls: ['./asignaciones.scss']
 })
 export class AsignacionesComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   asignaciones: any[] = [];
   rolesProfesores: any[] = [];
   profesores: any[] = [];
@@ -68,14 +71,14 @@ export class AsignacionesComponent implements OnInit {
   }
 
   cargarDatosIniciales() {
-    console.log('🚀 Iniciando carga de datos del componente asignaciones...');
+    if (!environment.production) { console.log('🚀 Iniciando carga de datos del componente asignaciones...'); }
     
     // Cargar en paralelo los datos básicos
     Promise.all([
       this.cargarRolesProfesoresPromise(),
       this.cargarProfesoresPromise()
     ]).then(() => {
-      console.log('✅ Datos básicos cargados, procediendo con datos complejos...');
+      if (!environment.production) { console.log('✅ Datos básicos cargados, procediendo con datos complejos...'); }
       this.cargarAsignaciones();
       this.cargarProyectos();
       this.cargarEstadisticas();
@@ -86,7 +89,7 @@ export class AsignacionesComponent implements OnInit {
 
   cargarRolesProfesoresPromise(): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.apiService.getRolesProfesores().subscribe({
+      this.apiService.getRolesProfesores().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (response: any) => {
           this.rolesProfesores = response.data || response || [];
           resolve(true);
@@ -102,7 +105,7 @@ export class AsignacionesComponent implements OnInit {
 
   cargarProfesoresPromise(): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.apiService.getProfesores().subscribe({
+      this.apiService.getProfesores().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data: any) => {
           const usuarios = Array.isArray(data) ? data : [];
           this.profesores = usuarios.filter((u: any) => {
@@ -122,9 +125,9 @@ export class AsignacionesComponent implements OnInit {
 
   cargarProyectos() {
     // Usar el endpoint correcto de proyectos para admin
-    this.apiService.getAllProyectos().subscribe({
+    this.apiService.getAllProyectos().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        console.log('✅ Proyectos cargados:', response);
+        if (!environment.production) { console.log('✅ Proyectos cargados:', response); }
         if (response && response.projects) {
           this.proyectos = response.projects;
         } else {
@@ -141,10 +144,10 @@ export class AsignacionesComponent implements OnInit {
   }
 
   cargarProyectosFallback() {
-    this.apiService.getPropuestas().subscribe({
+    this.apiService.getPropuestas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.proyectos = (data || []).filter((p: any) => p.estado === 'aprobada');
-        console.log('⚠️ Usando propuestas como fallback para proyectos:', this.proyectos.length);
+        if (!environment.production) { console.log('⚠️ Usando propuestas como fallback para proyectos:', this.proyectos.length); }
       },
       error: (err: any) => {
         console.error('❌ Error cargando propuestas fallback:', err);
@@ -156,12 +159,12 @@ export class AsignacionesComponent implements OnInit {
   cargarEstadisticas() {
     this.loadingEstadisticas = true;
     this.cdr.detectChanges();
-    console.log('🔄 Cargando estadísticas de asignaciones de profesores...');
+    if (!environment.production) { console.log('🔄 Cargando estadísticas de asignaciones de profesores...'); }
     
     // Usar el método específico para estadísticas de asignaciones-profesores
-    this.apiService.getEstadisticasAsignacionesProfesores().subscribe({
+    this.apiService.getEstadisticasAsignacionesProfesores().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        console.log('✅ Estadísticas de asignaciones-profesores cargadas:', response);
+        if (!environment.production) { console.log('✅ Estadísticas de asignaciones-profesores cargadas:', response); }
         this.estadisticasAsignaciones = response.data || response.estadisticas || response;
         this.loadingEstadisticas = false;
         this.cdr.detectChanges();
@@ -175,9 +178,9 @@ export class AsignacionesComponent implements OnInit {
   }
 
   cargarEstadisticasFallback() {
-    this.apiService.getEstadisticasAsignaciones().subscribe({
+    this.apiService.getEstadisticasAsignaciones().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
-        console.log('⚠️ Estadísticas cargadas con fallback:', data);
+        if (!environment.production) { console.log('⚠️ Estadísticas cargadas con fallback:', data); }
         this.estadisticasAsignaciones = data.estadisticas || null;
         this.loadingEstadisticas = false;
         this.cdr.detectChanges();
@@ -193,11 +196,11 @@ export class AsignacionesComponent implements OnInit {
   cargarHistorial() {
     this.loadingHistorial = true;
     this.cdr.detectChanges();
-    console.log('🔄 Cargando historial de asignaciones...');
+    if (!environment.production) { console.log('🔄 Cargando historial de asignaciones...'); }
     
-    this.apiService.getHistorialAsignaciones().subscribe({
+    this.apiService.getHistorialAsignaciones().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
-        console.log('✅ Historial cargado:', data);
+        if (!environment.production) { console.log('✅ Historial cargado:', data); }
         this.historialAsignaciones = data.historial || [];
         this.loadingHistorial = false;
         this.cdr.detectChanges();
@@ -217,9 +220,9 @@ export class AsignacionesComponent implements OnInit {
     this.cdr.detectChanges();
 
     // Usar el método específico para asignaciones de profesores
-    this.apiService.getAllAsignacionesProfesores().subscribe({
+    this.apiService.getAllAsignacionesProfesores().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        console.log('✅ Asignaciones de profesores cargadas:', response);
+        if (!environment.production) { console.log('✅ Asignaciones de profesores cargadas:', response); }
         this.asignaciones = response.data || response || [];
         this.loading = false;
         this.cdr.detectChanges();
@@ -234,13 +237,13 @@ export class AsignacionesComponent implements OnInit {
 
   // Método fallback usando el sistema anterior
   cargarAsignacionesFallback(): void {
-    console.log('⚠️ Usando método fallback para cargar asignaciones');
-    this.apiService.getAsignaciones().subscribe({
+    if (!environment.production) { console.log('⚠️ Usando método fallback para cargar asignaciones'); }
+    this.apiService.getAsignaciones().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.asignaciones = data;
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('⚠️ Asignaciones cargadas con fallback:', data);
+        if (!environment.production) { console.log('⚠️ Asignaciones cargadas con fallback:', data); }
       },
       error: (err) => {
         this.error = 'Error al cargar las asignaciones. Verifique su conexión.';
@@ -265,13 +268,13 @@ export class AsignacionesComponent implements OnInit {
 
   reasignarProfesor(asignacion: any) {
     // Implementar reasignación de profesor
-    console.log('Reasignar profesor:', asignacion);
+    if (!environment.production) { console.log('Reasignar profesor:', asignacion); }
     this.router.navigate(['/admin/asignar-profesor', asignacion.propuesta_id]);
   }
 
   verDetalle(asignacion: any) {
     // Implementar vista de detalle
-    console.log('Ver detalle asignación:', asignacion);
+    if (!environment.production) { console.log('Ver detalle asignación:', asignacion); }
     this.router.navigate(['/propuestas/ver-detalle', asignacion.propuesta_id], {
       queryParams: { from: '/admin/asignaciones' }
     });
@@ -286,7 +289,7 @@ export class AsignacionesComponent implements OnInit {
     );
     if (!confirmed) return;
 
-    this.apiService.eliminarAsignacion(asignacion.asignacion_id).subscribe({
+    this.apiService.eliminarAsignacion(asignacion.asignacion_id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Asignación eliminada correctamente');
         this.cargarAsignaciones();
@@ -308,10 +311,10 @@ export class AsignacionesComponent implements OnInit {
   }
 
   mostrarFormularioAsignacion() {
-    console.log('📋 Abriendo formulario de asignación');
-    console.log('📊 Proyectos disponibles:', this.proyectos);
-    console.log('👥 Profesores disponibles:', this.profesores);
-    console.log('🎭 Roles disponibles:', this.rolesProfesores);
+    if (!environment.production) { console.log('📋 Abriendo formulario de asignación'); }
+    if (!environment.production) { console.log('📊 Proyectos disponibles:', this.proyectos); }
+    if (!environment.production) { console.log('👥 Profesores disponibles:', this.profesores); }
+    if (!environment.production) { console.log('🎭 Roles disponibles:', this.rolesProfesores); }
     
     this.mostrarFormulario = true;
     this.nuevaAsignacion = {
@@ -357,7 +360,7 @@ export class AsignacionesComponent implements OnInit {
   }
 
   crearAsignacion() {
-    console.log('📝 Valores del formulario antes de convertir:', {
+    if (!environment.production) { console.log('📝 Valores del formulario antes de convertir:', {
       proyecto_id: this.nuevaAsignacion.proyecto_id,
       profesor_rut: this.nuevaAsignacion.profesor_rut,
       rol_profesor_id: this.nuevaAsignacion.rol_profesor_id,
@@ -366,17 +369,17 @@ export class AsignacionesComponent implements OnInit {
         profesor_rut: typeof this.nuevaAsignacion.profesor_rut,
         rol_profesor_id: typeof this.nuevaAsignacion.rol_profesor_id
       }
-    });
+    }); }
     
     // Convertir valores del formulario a tipos correctos
     const proyecto_id = this.nuevaAsignacion.proyecto_id ? Number(this.nuevaAsignacion.proyecto_id) : null;
     const rol_profesor_id = this.nuevaAsignacion.rol_profesor_id ? Number(this.nuevaAsignacion.rol_profesor_id) : null;
     
-    console.log('🔢 Valores después de convertir:', { proyecto_id, rol_profesor_id });
+    if (!environment.production) { console.log('🔢 Valores después de convertir:', { proyecto_id, rol_profesor_id }); }
     
     // Validar después de la conversión
     if (!proyecto_id || !this.nuevaAsignacion.profesor_rut || !rol_profesor_id) {
-      console.log('❌ Validación falló:', { proyecto_id, profesor_rut: this.nuevaAsignacion.profesor_rut, rol_profesor_id });
+      if (!environment.production) { console.log('❌ Validación falló:', { proyecto_id, profesor_rut: this.nuevaAsignacion.profesor_rut, rol_profesor_id }); }
       this.notificationService.warning('Campos incompletos', 'Debe seleccionar el proyecto, el profesor y el rol antes de continuar.');
       return;
     }
@@ -391,10 +394,10 @@ export class AsignacionesComponent implements OnInit {
     this.loadingAsignacion = true;
     this.cdr.detectChanges();
     
-    console.log('🔄 Creando asignación profesor-proyecto:', asignacionData);
-    this.apiService.asignarProfesorAProyecto(asignacionData).subscribe({
+    if (!environment.production) { console.log('🔄 Creando asignación profesor-proyecto:', asignacionData); }
+    this.apiService.asignarProfesorAProyecto(asignacionData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        console.log('✅ Asignación profesor-proyecto creada:', response);
+        if (!environment.production) { console.log('✅ Asignación profesor-proyecto creada:', response); }
         this.notificationService.success('Profesor asignado exitosamente al proyecto');
         this.ocultarFormularioAsignacion();
         this.cargarAsignaciones();
@@ -413,7 +416,7 @@ export class AsignacionesComponent implements OnInit {
   }
 
   async desasignarProfesor(asignacion: any): Promise<void> {
-    console.log('🎯 Botón desasignar presionado para:', asignacion);
+    if (!environment.production) { console.log('🎯 Botón desasignar presionado para:', asignacion); }
     
     // Ejecutar dentro de NgZone para asegurar que Angular detecte los cambios
     this.ngZone.run(async () => {
@@ -432,22 +435,22 @@ export class AsignacionesComponent implements OnInit {
           'Cancelar'
         );
         
-        console.log('📋 Usuario confirmó:', confirmed);
+        if (!environment.production) { console.log('📋 Usuario confirmó:', confirmed); }
         
         if (!confirmed) {
-          console.log('❌ Operación cancelada por el usuario');
+          if (!environment.production) { console.log('❌ Operación cancelada por el usuario'); }
           return;
         }
 
-        console.log('🔄 Desasignando profesor de proyecto:', asignacion);
+        if (!environment.production) { console.log('🔄 Desasignando profesor de proyecto:', asignacion); }
         
         // Mostrar indicador de carga
         this.loadingAsignacion = true;
         this.cdr.detectChanges();
         
-        this.apiService.desasignarProfesorDeProyecto(asignacion.proyecto_id, asignacion.profesor_rut).subscribe({
+        this.apiService.desasignarProfesorDeProyecto(asignacion.proyecto_id, asignacion.profesor_rut).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (response: any) => {
-            console.log('✅ Profesor desasignado del proyecto exitosamente:', response);
+            if (!environment.production) { console.log('✅ Profesor desasignado del proyecto exitosamente:', response); }
             
             this.ngZone.run(() => {
               this.notificationService.success('Profesor desasignado exitosamente del proyecto');
@@ -490,10 +493,10 @@ export class AsignacionesComponent implements OnInit {
   }
 
   cargarAsignacionesProyecto(proyectoId: string) {
-    console.log('🔄 Cargando asignaciones del proyecto:', proyectoId);
-    this.apiService.getProfesoresProyecto(proyectoId).subscribe({
+    if (!environment.production) { console.log('🔄 Cargando asignaciones del proyecto:', proyectoId); }
+    this.apiService.getProfesoresProyecto(proyectoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        console.log('✅ Profesores del proyecto cargados:', response);
+        if (!environment.production) { console.log('✅ Profesores del proyecto cargados:', response); }
         this.asignacionesProyecto = response.data || response || [];
         this.cdr.detectChanges();
       },

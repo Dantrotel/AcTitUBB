@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, inject, HostListener } from '@angular/core';
+import { Component, OnInit, signal, inject, HostListener, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { NotificationService } from '../../../services/notification.service';
@@ -12,6 +13,7 @@ import { VersionesPlantillasService, PlantillaDocumento } from '../../../service
   styleUrl: './gestion-plantillas.component.scss'
 })
 export class GestionPlantillasComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private versionesService = inject(VersionesPlantillasService);
   private notificationService = inject(NotificationService);
@@ -61,7 +63,7 @@ export class GestionPlantillasComponent implements OnInit {
 
   cargarPlantillas() {
     this.cargando.set(true);
-    this.versionesService.obtenerPlantillas().subscribe({
+    this.versionesService.obtenerPlantillas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.plantillas.set(response.plantillas);
         this.cargando.set(false);
@@ -131,7 +133,7 @@ export class GestionPlantillasComponent implements OnInit {
       ? this.versionesService.actualizarPlantilla(editando.id, formData)
       : this.versionesService.subirPlantilla(formData);
 
-    operacion.subscribe({
+    operacion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success(
           editando ? 'Plantilla actualizada' : 'Plantilla creada',
@@ -149,7 +151,7 @@ export class GestionPlantillasComponent implements OnInit {
   }
 
   descargarPlantilla(plantilla: PlantillaDocumento) {
-    this.versionesService.descargarPlantilla(plantilla.id).subscribe({
+    this.versionesService.descargarPlantilla(plantilla.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -174,7 +176,7 @@ export class GestionPlantillasComponent implements OnInit {
 
     if (!confirmed) return;
 
-    this.versionesService.desactivarPlantilla(plantilla.id).subscribe({
+    this.versionesService.desactivarPlantilla(plantilla.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Plantilla desactivada', 'La plantilla ya no estará disponible para los estudiantes.');
         this.cargarPlantillas();

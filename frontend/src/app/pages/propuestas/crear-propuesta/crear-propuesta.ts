@@ -1,11 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 import { ApiService } from '../../../services/api';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-crear-propuesta',
@@ -15,6 +18,7 @@ import { NotificationService } from '../../../services/notification.service';
   styleUrls: ['./crear-propuesta.scss']
 })
 export class CrearPropuestaComponent {
+  private destroyRef = inject(DestroyRef);
   // Campos básicos existentes
   titulo = '';
   descripcion = '';
@@ -81,7 +85,7 @@ export class CrearPropuestaComponent {
       guia: this.cargarGuia(),
       semestreActivo: this.cargarSemestreActivo(),
       inscripcion: this.cargarInscripcionActiva()
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         this.tieneAPCompletado = result.apCompletado;
         this.guiaAsignado = result.guia;
@@ -321,7 +325,7 @@ export class CrearPropuestaComponent {
       formData.append('estudiantes_adicionales', JSON.stringify(estudiantesLimpios));
     }
 
-    this.apiService.createPropuesta(formData).subscribe({
+    this.apiService.createPropuesta(formData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         this.notificationService.success('¡Propuesta creada!', 'Tu propuesta ha sido enviada exitosamente');
         this.isSubmitting = false;

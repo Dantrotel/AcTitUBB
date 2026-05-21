@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
@@ -13,6 +14,7 @@ import { NotificationService } from '../../../services/notification.service';
   styleUrls: ['./gestion-calendario.scss']
 })
 export class GestionCalendarioComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   loading = false;
   error = '';
   fechasGlobales: any[] = [];
@@ -82,7 +84,7 @@ export class GestionCalendarioComponent implements OnInit {
     this.loading = true;
     this.error = '';
     
-    this.apiService.getFechasGlobales().subscribe({
+    this.apiService.getFechasGlobales().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         this.fechasGlobales = response;
         this.loading = false;
@@ -95,7 +97,7 @@ export class GestionCalendarioComponent implements OnInit {
   }
 
   cargarEstadisticas() {
-    this.apiService.getEstadisticasFechas().subscribe({
+    this.apiService.getEstadisticasFechas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         this.estadisticas = response;
       },
@@ -210,7 +212,7 @@ export class GestionCalendarioComponent implements OnInit {
     };
     
     
-    this.apiService.crearFechaGlobal(fechaData).subscribe({
+    this.apiService.crearFechaGlobal(fechaData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         this.notificationService.success('Fecha global creada exitosamente');
         this.limpiarFormulario();
@@ -273,7 +275,7 @@ export class GestionCalendarioComponent implements OnInit {
 
     this.guardandoEdicion = true;
 
-    this.apiService.actualizarFecha(this.fechaEnEdicion.id, this.fechaEnEdicion).subscribe({
+    this.apiService.actualizarFecha(this.fechaEnEdicion.id, this.fechaEnEdicion).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         this.notificationService.success('Fecha actualizada exitosamente');
         this.fechaEnEdicion = null;
@@ -303,7 +305,7 @@ export class GestionCalendarioComponent implements OnInit {
 
     this.eliminando = true;
     
-    this.apiService.eliminarFecha(this.fechaAEliminar.id).subscribe({
+    this.apiService.eliminarFecha(this.fechaAEliminar.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         this.notificationService.success('Fecha eliminada exitosamente');
         this.cancelarEliminar();
@@ -352,7 +354,7 @@ export class GestionCalendarioComponent implements OnInit {
   cargarCalendarioGeneral() {
     this.cargandoCalendario = true;
     
-    this.apiService.get('/fechas-importantes/admin/calendario-general').subscribe({
+    this.apiService.get('/fechas-importantes/admin/calendario-general').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         if (response.success) {
           this.calendarioGeneral = response.data;
@@ -375,7 +377,7 @@ export class GestionCalendarioComponent implements OnInit {
     
     if (!confirmed) return;
 
-    this.apiService.post('/fechas-importantes/alertas/generar', {}).subscribe({
+    this.apiService.post('/fechas-importantes/alertas/generar', {}).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         if (response.success) {
           this.notificationService.success(

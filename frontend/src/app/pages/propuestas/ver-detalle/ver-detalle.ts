@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
@@ -12,6 +13,7 @@ import { NotificationService } from '../../../services/notification.service';
   styleUrls: ['./ver-detalle.scss']
 })
 export class VerPropuestaComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   propuesta: any = null;
   loading = true;
   error = '';
@@ -68,7 +70,7 @@ export class VerPropuestaComponent implements OnInit {
     }
 
 
-    this.api.getPropuestaById(id).subscribe({
+    this.api.getPropuestaById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.propuesta = data;
         this.loading = false;
@@ -88,7 +90,7 @@ export class VerPropuestaComponent implements OnInit {
   }
 
   private cargarArchivosVersionados(propuestaId: string): void {
-    this.api.get(`/propuestas/${propuestaId}/archivos`).subscribe({
+    this.api.get(`/propuestas/${propuestaId}/archivos`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.archivosVersionados = data || [];
         this.cdr.detectChanges();
@@ -124,7 +126,7 @@ export class VerPropuestaComponent implements OnInit {
       return;
     }
 
-    this.api.descargarArchivo(nombreArchivo).subscribe({
+    this.api.descargarArchivo(nombreArchivo).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -293,7 +295,7 @@ export class VerPropuestaComponent implements OnInit {
     );
     
     if (confirmed) {
-      this.api.deletePropuesta(id.toString()).subscribe({
+      this.api.deletePropuesta(id.toString()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.notificationService.success('Propuesta eliminada exitosamente');
           this.volver();
@@ -332,7 +334,7 @@ export class VerPropuestaComponent implements OnInit {
         const formData = new FormData();
         formData.append('archivo_revision', file);
 
-        this.api.subirCorreccion(id, formData).subscribe({
+        this.api.subirCorreccion(id, formData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => {
             this.notificationService.success('Corrección subida exitosamente. La propuesta ha sido enviada nuevamente a revisión.');
             this.cargarPropuesta(); // Recargar propuesta
@@ -348,7 +350,7 @@ export class VerPropuestaComponent implements OnInit {
   }
 
   descargarArchivoVersionado(archivoId: number, nombreOriginal: string): void {
-    this.api.descargarArchivoVersionado(archivoId).subscribe({
+    this.api.descargarArchivoVersionado(archivoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

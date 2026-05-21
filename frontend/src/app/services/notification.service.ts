@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Notification {
   id: string;
@@ -52,13 +53,15 @@ export class NotificationService {
       timestamp: new Date()
     };
 
-    console.log('🔔 NotificationService.show() llamado:', {
-      type,
-      title,
-      message,
-      duration,
-      notificationId: notification.id
-    });
+    if (!environment.production) {
+      console.log('🔔 NotificationService.show() llamado:', {
+        type,
+        title,
+        message,
+        duration,
+        notificationId: notification.id
+      });
+    }
 
     const current = this.notifications$.value;
     this.notifications$.next([...current, notification]);

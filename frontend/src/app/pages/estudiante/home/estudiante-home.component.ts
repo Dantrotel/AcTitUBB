@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 import { ApiService } from '../../../services/api';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 
@@ -139,7 +140,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     // Verificar token cada 5 minutos (300000 ms)
     this.tokenCheckInterval = setInterval(() => {
       if (!this.ApiService.isAuthenticated()) {
-        console.warn('Token expirado durante verificación periódica');
+        if (!environment.production) { console.warn('Token expirado durante verificación periódica'); }
         this.ApiService.logout();
       }
     }, 300000); // 5 minutos
@@ -153,7 +154,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
         setTimeout(() => {
           this.dashboard = response.data;
-          console.log('✅ Dashboard estudiante cargado:', this.dashboard);
+          if (!environment.production) { console.log('✅ Dashboard estudiante cargado:', this.dashboard); }
           this.cdr.detectChanges();
         }, 0);
       }
@@ -167,11 +168,11 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   buscarUserByRut(rut: string) {
     this.loadingEstudiante = true;
-    console.log('🔍 Buscando usuario con RUT:', rut);
+    if (!environment.production) { console.log('🔍 Buscando usuario con RUT:', rut); }
     
     this.ApiService.buscaruserByrut(rut).subscribe({
       next: (data: any) => {
-        console.log('✅ Respuesta del servidor:', data);
+        if (!environment.production) { console.log('✅ Respuesta del servidor:', data); }
         this.estudiante = data;
         this.loadingEstudiante = false;
         this.cdr.detectChanges();
@@ -184,11 +185,11 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         this.mostrarError('No se pudo cargar la información del usuario');
       },
       complete: () => {
-        console.log('✅ Observable completado - loadingEstudiante:', this.loadingEstudiante);
+        if (!environment.production) { console.log('✅ Observable completado - loadingEstudiante:', this.loadingEstudiante); }
         // Asegurar que el flag se resetee incluso si hay problemas
         setTimeout(() => {
           if (this.loadingEstudiante) {
-            console.warn('⚠️ Forcing loadingEstudiante to false');
+            if (!environment.production) { console.warn('⚠️ Forcing loadingEstudiante to false'); }
             this.loadingEstudiante = false;
             this.cdr.detectChanges();
           }
@@ -199,12 +200,12 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   cargarPropuestas(rut: string) {
     this.loadingPropuestas = true;
-    console.log('🔍 Cargando propuestas...');
+    if (!environment.production) { console.log('🔍 Cargando propuestas...'); }
     
     // Timeout de seguridad
     setTimeout(() => {
       if (this.loadingPropuestas) {
-        console.warn('⚠️ Forcing loadingPropuestas to false');
+        if (!environment.production) { console.warn('⚠️ Forcing loadingPropuestas to false'); }
         this.loadingPropuestas = false;
         this.cdr.detectChanges();
       }
@@ -216,17 +217,18 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         this.propuestas = Array.isArray(data) ? data : [];
         this.loadingPropuestas = false;
         this.cdr.detectChanges();
-        console.log('✅ Propuestas cargadas:', this.propuestas.length);
-        // // // // // // // // // // console.log('✅ Propuestas del estudiante cargadas:', this.propuestas);
+        if (!environment.production) { console.log('✅ Propuestas cargadas:', this.propuestas.length); }
         
         // Debug información del profesor
         if (this.propuestas.length > 0) {
-          console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
-          console.log('🔍 Campos relacionados al profesor:');
-          console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
-          console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
-          console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
-          console.log('  - profesor_email:', this.propuestas[0].profesor_email);
+          if (!environment.production) {
+            console.log('🔍 Primera propuesta completa:', this.propuestas[0]);
+            console.log('🔍 Campos relacionados al profesor:');
+            console.log('  - profesor_rut:', this.propuestas[0].profesor_rut);
+            console.log('  - profesor_nombre:', this.propuestas[0].profesor_nombre);
+            console.log('  - nombre_profesor:', this.propuestas[0].nombre_profesor);
+            console.log('  - profesor_email:', this.propuestas[0].profesor_email);
+          }
         }
         
         this.calcularEstadisticas();
@@ -246,12 +248,12 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   cargarProyectos() {
     this.loadingProyectos = true;
-    console.log('🔍 Cargando proyectos...');
+    if (!environment.production) { console.log('🔍 Cargando proyectos...'); }
     
     // Timeout de seguridad
     setTimeout(() => {
       if (this.loadingProyectos) {
-        console.warn('⚠️ Forcing loadingProyectos to false');
+        if (!environment.production) { console.warn('⚠️ Forcing loadingProyectos to false'); }
         this.loadingProyectos = false;
         this.cdr.detectChanges();
       }
@@ -259,24 +261,24 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
     
     this.ApiService.getMisProyectos().subscribe({
       next: (response: any) => {
-        console.log('✅ Respuesta proyectos:', response);
+        if (!environment.production) { console.log('✅ Respuesta proyectos:', response); }
         this.loadingProyectos = false;
         this.cdr.detectChanges();
         
         if (response && response.projects) {
           this.proyectos = response.projects;
-          console.log('📁 Proyectos cargados:', this.proyectos.length);
+          if (!environment.production) { console.log('📁 Proyectos cargados:', this.proyectos.length); }
           
           // Encontrar proyecto activo (el más reciente o el único)
           if (this.proyectos.length > 0) {
             this.proyectoActivo = this.proyectos[0];
-            console.log('🎯 Proyecto activo:', this.proyectoActivo);
+            if (!environment.production) { console.log('🎯 Proyecto activo:', this.proyectoActivo); }
             this.cargarDashboardProyecto();
             this.cargarFechasImportantes();
           }
         } else {
           this.proyectos = [];
-          console.log('📭 No se encontraron proyectos');
+          if (!environment.production) { console.log('📭 No se encontraron proyectos'); }
         }
       },
       error: (error) => {
@@ -288,7 +290,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
         this.mostrarError('No se pudieron cargar los proyectos');
       },
       complete: () => {
-        console.log('✅ Observable getMisProyectos completado - loadingProyectos:', this.loadingProyectos);
+        if (!environment.production) { console.log('✅ Observable getMisProyectos completado - loadingProyectos:', this.loadingProyectos); }
       }
     });
   }
@@ -354,7 +356,7 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
 
   // Método fallback por si el nuevo endpoint falla
   private cargarPropuestasFallback(rut: string) {
-    console.warn('⚠️ Usando método fallback para cargar propuestas');
+    if (!environment.production) { console.warn('⚠️ Usando método fallback para cargar propuestas'); }
     this.ApiService.getPropuestas().subscribe({
       next: (data: any) => {
         const todasLasPropuestas = Array.isArray(data) ? data : [];
@@ -412,11 +414,13 @@ export class EstudianteHomeComponent implements OnInit, OnDestroy {
       });
       this.ultimaPropuesta = this.propuestas[0];
       
-      console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
-      console.log('🔍 Info profesor en última propuesta:');
-      console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
-      console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
-      console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
+      if (!environment.production) {
+        console.log('🔍 Última propuesta seleccionada:', this.ultimaPropuesta);
+        console.log('🔍 Info profesor en última propuesta:');
+        console.log('  - nombre_profesor:', this.ultimaPropuesta.nombre_profesor);
+        console.log('  - profesor_rut:', this.ultimaPropuesta.profesor_rut);
+        console.log('  - profesor_email:', this.ultimaPropuesta.profesor_email);
+      }
     }
   }
 

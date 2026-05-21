@@ -674,7 +674,7 @@ export class ApiService {
   // ⚠️ MÉTODOS DEPRECATED (Sistema Antiguo - Usar cronogramas) ⚠️
   /** @deprecated Usar getCronogramaProyecto() y getHitosCronograma() en su lugar */
   getHitosProyecto(id: string) {
-    console.warn('⚠️ getHitosProyecto() está DEPRECATED. Usar getCronogramaProyecto() + getHitosCronograma()');
+    if (!environment.production) { console.warn('⚠️ getHitosProyecto() está DEPRECATED. Usar getCronogramaProyecto() + getHitosCronograma()'); }
     return this.http.get(`${this.baseUrl}/projects/${id}/hitos`, {
       headers: this.getHeaders()
     });
@@ -682,7 +682,7 @@ export class ApiService {
 
   /** @deprecated Usar crearHitoCronograma() en su lugar */
   crearHitoProyecto(id: string, data: any) {
-    console.warn('⚠️ crearHitoProyecto() está DEPRECATED. Usar crearHitoCronograma()');
+    if (!environment.production) { console.warn('⚠️ crearHitoProyecto() está DEPRECATED. Usar crearHitoCronograma()'); }
     return this.http.post(`${this.baseUrl}/projects/${id}/hitos`, data, {
       headers: this.getHeaders()
     });
@@ -690,7 +690,7 @@ export class ApiService {
 
   /** @deprecated Sistema unificado maneja esto automáticamente */
   actualizarHitoProyecto(id: string, hitoId: string, data: any) {
-    console.warn('⚠️ actualizarHitoProyecto() está DEPRECATED');
+    if (!environment.production) { console.warn('⚠️ actualizarHitoProyecto() está DEPRECATED'); }
     return this.http.put(`${this.baseUrl}/projects/${id}/hitos/${hitoId}`, data, {
       headers: this.getHeaders()
     });
@@ -698,7 +698,7 @@ export class ApiService {
 
   /** @deprecated Usar entregarHito() en su lugar */
   completarHito(id: string, hitoId: string) {
-    console.warn('⚠️ completarHito() está DEPRECATED. Usar entregarHito()');
+    if (!environment.production) { console.warn('⚠️ completarHito() está DEPRECATED. Usar entregarHito()'); }
     return this.http.patch(`${this.baseUrl}/projects/${id}/hitos/${hitoId}/completar`, {}, {
       headers: this.getHeaders()
     });
@@ -706,7 +706,7 @@ export class ApiService {
 
   /** @deprecated Los hitos se obtienen del cronograma */
   getDetalleHito(proyectoId: string, hitoId: string) {
-    console.warn('⚠️ getDetalleHito() está DEPRECATED');
+    if (!environment.production) { console.warn('⚠️ getDetalleHito() está DEPRECATED'); }
     return this.http.get(`${this.baseUrl}/projects/${proyectoId}/hitos/${hitoId}`, {
       headers: this.getHeaders()
     });
@@ -769,7 +769,7 @@ export class ApiService {
 
   // Obtener roles de profesores disponibles
   getRolesProfesores() {
-    console.log('🌐 Llamando a:', `${this.baseUrl}/admin/roles-profesores`);
+    if (!environment.production) { console.log('🌐 Llamando a:', `${this.baseUrl}/admin/roles-profesores`); }
     return this.http.get(`${this.baseUrl}/admin/roles-profesores`, {
       headers: this.getHeaders()
     });

@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -26,6 +27,8 @@ export class GestionPropuestasComponent implements OnInit {
   
   propuestaSeleccionada: any = null;
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     protected router: Router,
     protected route: ActivatedRoute,
@@ -49,7 +52,7 @@ export class GestionPropuestasComponent implements OnInit {
   }
 
   cargarProfesores(): void {
-    this.apiService.getProfesores().subscribe({
+    this.apiService.getProfesores().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         // Filtrar solo profesores (rol 2) y admins con rol de profesor (rol 3)
         this.profesores = (data || []).filter((u: any) => u.rol_id === 2 || u.rol_id === 3);
@@ -67,7 +70,7 @@ export class GestionPropuestasComponent implements OnInit {
     }
 
     this.asignandoEvaluador[propuesta.id] = true;
-    this.apiService.asignarPropuesta(propuesta.id.toString(), { profesor_rut }).subscribe({
+    this.apiService.asignarPropuesta(propuesta.id.toString(), { profesor_rut }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         const prof = this.profesores.find(p => p.rut === profesor_rut);
         propuesta.profesor_rut = profesor_rut;
@@ -99,7 +102,7 @@ export class GestionPropuestasComponent implements OnInit {
     this.error = '';
     this.cdr.detectChanges();
 
-    this.apiService.getPropuestas().subscribe({
+    this.apiService.getPropuestas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         // Log detallado de la primera propuesta para ver la estructura
         if (data.length > 0) {
@@ -171,7 +174,7 @@ export class GestionPropuestasComponent implements OnInit {
     
     if (!confirmed) return;
     
-    this.apiService.deletePropuesta(id.toString()).subscribe({
+    this.apiService.deletePropuesta(id.toString()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Propuesta eliminada exitosamente');
         this.cargarPropuestas(); // Recargar la lista

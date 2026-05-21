@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { environment } from '../../../environments/environment';
 
 @Component({
   standalone: true,
@@ -113,11 +114,13 @@ export class HomeAdminComponent implements OnInit {
         this.userName = payload.nombre || '';
         this.userRole = payload.rol_id || '';
         
-        console.log('🔍 Admin - Datos usuario:', {
-          rut: this.userRut,
-          nombre: this.userName,
-          rol: this.userRole
-        });
+        if (!environment.production) {
+          console.log('🔍 Admin - Datos usuario:', {
+            rut: this.userRut,
+            nombre: this.userName,
+            rol: this.userRole
+          });
+        }
         
         this.cdr.detectChanges();
       } catch (error) {
@@ -419,7 +422,9 @@ export class HomeAdminComponent implements OnInit {
 
   verProyectosRiesgo(): void {
     this.mostrarModalProyectosRiesgo = true;
-    console.log('📊 Mostrando modal de proyectos en riesgo:', this.proyectosRiesgo);
+    if (!environment.production) {
+      console.log('📊 Mostrando modal de proyectos en riesgo:', this.proyectosRiesgo);
+    }
   }
   
   cerrarModalProyectosRiesgo(): void {
@@ -428,7 +433,9 @@ export class HomeAdminComponent implements OnInit {
 
   verInformantesPendientes(): void {
     this.mostrarModalInformantesPendientes = true;
-    console.log('📋 Mostrando modal de informantes pendientes:', this.informantesPendientes);
+    if (!environment.production) {
+      console.log('📋 Mostrando modal de informantes pendientes:', this.informantesPendientes);
+    }
   }
   
   cerrarModalInformantesPendientes(): void {
@@ -437,7 +444,9 @@ export class HomeAdminComponent implements OnInit {
 
   verAlertasAbandono(): void {
     this.mostrarModalAlertasAbandono = true;
-    console.log('📢 Mostrando modal de alertas de abandono:', this.alertasAbandono);
+    if (!environment.production) {
+      console.log('📢 Mostrando modal de alertas de abandono:', this.alertasAbandono);
+    }
   }
   
   cerrarModalAlertasAbandono(): void {

@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
@@ -13,6 +14,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./revisar-propuesta.scss']
 })
 export class RevisarPropuestaComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   propuestaId!: string;
   propuesta: any = null;
   comentarios = '';
@@ -91,7 +93,7 @@ export class RevisarPropuestaComponent implements OnInit {
       return;
     }
 
-    this.api.getPropuestaById(this.propuestaId).subscribe({
+    this.api.getPropuestaById(this.propuestaId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.propuesta = data;
         this.estado = data.estado;
@@ -130,7 +132,7 @@ export class RevisarPropuestaComponent implements OnInit {
       formData.append('archivo_revision', this.archivoRevisado);
     }
     
-    this.api.revisarPropuestaConArchivo(this.propuestaId, formData).subscribe({
+    this.api.revisarPropuestaConArchivo(this.propuestaId, formData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         if (this.estado === 'aprobada') {
           // Propuesta aprobada - mostrar mensaje sobre proyecto creado
@@ -218,7 +220,7 @@ export class RevisarPropuestaComponent implements OnInit {
   // ===== HISTORIAL DE REVISIONES =====
   cargarHistorialRevisiones(): void {
     this.cargandoHistorial = true;
-    this.api.get(`/propuestas/${this.propuestaId}/historial-revisiones`).subscribe({
+    this.api.get(`/propuestas/${this.propuestaId}/historial-revisiones`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.historialRevisiones = data || [];
         this.cargandoHistorial = false;
@@ -233,7 +235,7 @@ export class RevisarPropuestaComponent implements OnInit {
   }
 
   cargarArchivosVersionados(): void {
-    this.api.get(`/propuestas/${this.propuestaId}/archivos`).subscribe({
+    this.api.get(`/propuestas/${this.propuestaId}/archivos`).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.archivosVersionados = data || [];
       },
@@ -255,7 +257,7 @@ export class RevisarPropuestaComponent implements OnInit {
       return;
     }
 
-    this.api.descargarArchivo(revision.archivo_revision).subscribe({
+    this.api.descargarArchivo(revision.archivo_revision).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -273,7 +275,7 @@ export class RevisarPropuestaComponent implements OnInit {
   }
 
   descargarArchivoVersionado(archivoId: number, nombreOriginal: string): void {
-    this.api.descargarArchivoVersionado(archivoId).subscribe({
+    this.api.descargarArchivoVersionado(archivoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

@@ -1,8 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services/api';
+import { environment } from '../../../../environments/environment';
 
 interface FechaImportante {
   id: number;
@@ -23,6 +25,7 @@ interface FechaImportante {
   styleUrl: './solicitar-extension.component.scss'
 })
 export class SolicitarExtensionComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   proyectoId: number = 0;
   proyectoTitulo: string = '';
   
@@ -51,14 +54,14 @@ export class SolicitarExtensionComponent implements OnInit {
 
   ngOnInit() {
     // Obtener parámetros de la ruta y query params
-    this.route.params.subscribe(params => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['proyectoId']) {
         this.proyectoId = +params['proyectoId'];
       }
     });
 
     // Obtener query params (para prellenar desde fechas-limite)
-    this.route.queryParams.subscribe(queryParams => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(queryParams => {
       if (queryParams['proyectoId']) {
         this.proyectoId = +queryParams['proyectoId'];
       }
@@ -188,7 +191,7 @@ export class SolicitarExtensionComponent implements OnInit {
         formData.append('documento_respaldo', this.archivoSeleccionado);
       }
       
-      this.api.post('/extensiones/', formData).subscribe({
+      this.api.post('/extensiones/', formData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (response: any) => {
           this.mensaje = 'Solicitud de extensión enviada correctamente. Será revisada por el administrador.';
           this.loading = false;

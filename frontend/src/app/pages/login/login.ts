@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../environments/environment';
 import { ApiService } from '../../services/api';
 import { Router, RouterLink } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 @Component({
@@ -14,6 +17,7 @@ import { jwtDecode } from 'jwt-decode';
   styleUrls: ['./login.scss']
 })
 export class LoginComponent {
+  private destroyRef = inject(DestroyRef);
   usuario = '';
   password = '';
   currentYear: number;
@@ -41,7 +45,7 @@ login() {
   
 
 
-  this.apiService.login(payload).subscribe(
+  this.apiService.login(payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(
     (res: any) => {
       const token = res.token;
       if (!token) {

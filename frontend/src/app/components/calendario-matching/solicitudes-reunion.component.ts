@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api';
 import { NotificationService } from '../../services/notification.service';
+import { environment } from '../../../environments/environment';
 
 interface Profesor {
   rut: string;
@@ -132,7 +133,9 @@ export class SolicitudesReunionComponent implements OnInit {
       const roleId = user.rol_id || user.role_id;
       this.userRole = roleId === 1 ? 'estudiante' : 
                     roleId === 2 ? 'profesor' : 'admin';
-      console.log('👤 User Role detectado:', this.userRole, '(rol_id:', roleId, ')');
+      if (!environment.production) {
+        console.log('👤 User Role detectado:', this.userRole, '(rol_id:', roleId, ')');
+      }
     }
   }
 
@@ -152,7 +155,9 @@ export class SolicitudesReunionComponent implements OnInit {
     this.isLoading = true;
     this.apiService.getProfesoresAsignados().subscribe({
       next: (response: any) => {
-        console.log('Profesores asignados:', response);
+        if (!environment.production) {
+          console.log('Profesores asignados:', response);
+        }
         this.profesores = response.data || [];
         this.isLoading = false;
       },
@@ -165,28 +170,33 @@ export class SolicitudesReunionComponent implements OnInit {
   }
 
   cargarSolicitudes() {
-    console.log('🔄 Cargando solicitudes...');
+    if (!environment.production) {
+      console.log('🔄 Cargando solicitudes...');
+    }
     this.isLoading = true;
     const request$ = this.userRole === 'profesor'
       ? this.apiService.getSolicitudesPendientes()
       : this.apiService.getMisSolicitudes();
     request$.subscribe({
       next: (response: any) => {
-        console.log('✅ Mis solicitudes (raw):', response);
+        if (!environment.production) {
+          console.log('✅ Mis solicitudes (raw):', response);
+        }
         this.solicitudes = response.data || [];
         this.isLoading = false;
         
-        // Debug: Verificar fecha_propuesta de cada solicitud
-        this.solicitudes.forEach((sol, index) => {
-          console.log(`Solicitud ${index}:`, {
-            id: sol.id,
-            fecha_propuesta: sol.fecha_propuesta,
-            hora_propuesta: sol.hora_propuesta,
-            estado: sol.estado
+        if (!environment.production) {
+          this.solicitudes.forEach((sol, index) => {
+            console.log(`Solicitud ${index}:`, {
+              id: sol.id,
+              fecha_propuesta: sol.fecha_propuesta,
+              hora_propuesta: sol.hora_propuesta,
+              estado: sol.estado
+            });
           });
-        });
-        
-        console.log('📊 Total de solicitudes:', this.solicitudes.length);
+          
+          console.log('📊 Total de solicitudes:', this.solicitudes.length);
+        }
         this.cdr.detectChanges(); // Force UI update
       },
       error: (error) => {
@@ -199,7 +209,9 @@ export class SolicitudesReunionComponent implements OnInit {
   }
 
   cargarHorariosDisponibles(profesorRut: string) {
-    console.log('🔄 Cargando horarios disponibles para:', profesorRut);
+    if (!environment.production) {
+      console.log('🔄 Cargando horarios disponibles para:', profesorRut);
+    }
     this.isCargandoHorarios = true;
     this.errorMessage = '';
     this.horariosDisponibles = [];
@@ -207,12 +219,16 @@ export class SolicitudesReunionComponent implements OnInit {
 
     this.apiService.getHorariosDisponibles(profesorRut, this.diasAdelante).subscribe({
       next: (response: any) => {
-        console.log('✅ Horarios disponibles recibidos:', response);
+        if (!environment.production) {
+          console.log('✅ Horarios disponibles recibidos:', response);
+        }
         this.horariosDisponibles = response.data || [];
         this.proyectoActual = response.proyecto || null;
         this.mostrarHorarios = true;
         this.isCargandoHorarios = false;
-        console.log('📊 Total horarios:', this.horariosDisponibles.length);
+        if (!environment.production) {
+          console.log('📊 Total horarios:', this.horariosDisponibles.length);
+        }
 
         if (this.horariosDisponibles.length === 0) {
           this.errorMessage = `${this.profesorSeleccionado?.nombre} no tiene horarios disponibles en los próximos ${this.diasAdelante} días.`;
@@ -291,7 +307,9 @@ export class SolicitudesReunionComponent implements OnInit {
 
     this.apiService.reservarHorario(reservaData).subscribe({
       next: (response: any) => {
-        console.log('Reserva exitosa:', response);
+        if (!environment.production) {
+          console.log('Reserva exitosa:', response);
+        }
         this.successMessage = '✅ Horario reservado exitosamente. El profesor debe aceptar la solicitud.';
         
         // Recargar datos

@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
 
@@ -76,19 +77,19 @@ export class GestionProyectosComponent implements OnInit {
 
     this.apiService.getProyectos().subscribe({
       next: (data: any) => {
-        console.log('🔍 Admin - Proyectos cargados:', data);
+        if (!environment.production) { console.log('🔍 Admin - Proyectos cargados:', data); }
         // La respuesta viene en formato { total, projects, usuario_rol }
         const proyectos = data.projects || data;
         // Log detallado del primer proyecto para ver la estructura
         if (proyectos.length > 0) {
-          console.log('🔍 Admin - Estructura del primer proyecto:', JSON.stringify(proyectos[0], null, 2));
+          if (!environment.production) { console.log('🔍 Admin - Estructura del primer proyecto:', JSON.stringify(proyectos[0], null, 2)); }
         }
         this.proyectos = proyectos;
         this.loading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('🔍 Admin - Error al cargar proyectos:', err);
+        if (!environment.production) { console.error('🔍 Admin - Error al cargar proyectos:', err); }
         this.error = 'Error al cargar los proyectos';
         this.loading = false;
         this.cdr.detectChanges();
@@ -160,12 +161,12 @@ export class GestionProyectosComponent implements OnInit {
     
     this.apiService.deleteProyecto(id.toString()).subscribe({
       next: () => {
-        console.log('Proyecto eliminado exitosamente');
+        if (!environment.production) { console.log('Proyecto eliminado exitosamente'); }
         this.notificationService.success('Proyecto eliminado exitosamente');
         this.cargarProyectos(); // Recargar la lista
       },
       error: (err) => {
-        console.error('Error al eliminar proyecto:', err);
+        if (!environment.production) { console.error('Error al eliminar proyecto:', err); }
         this.notificationService.error('Error al eliminar el proyecto');
       }
     });

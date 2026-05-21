@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
 import { CalendarModalComponent } from '../../../components/calendar-modal/calendar-modal.component';
 import { RevisionHitosInformanteComponent } from '../../../components/revision-hitos-informante/revision-hitos-informante.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-home-profesor',
@@ -19,6 +22,7 @@ import { RevisionHitosInformanteComponent } from '../../../components/revision-h
   styleUrls: ['./home-profesor.scss']
 })
 export class HomeProfesor implements OnInit {
+  private destroyRef = inject(DestroyRef);
   // Referencia a Math para usar en el template
   mathHelper = Math;
   
@@ -130,7 +134,7 @@ export class HomeProfesor implements OnInit {
   }
 
   cargarRevisionesInformante() {
-    this.ApiService.getRevisionesInformante().subscribe({
+    this.ApiService.getRevisionesInformante().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         this.revisionesInformante = res?.data || [];
         this.revisionesInformantePendientes = this.revisionesInformante.filter((r: any) => r.estado === 'pendiente').length;
@@ -145,7 +149,7 @@ export class HomeProfesor implements OnInit {
 
   cargarReunionesHome() {
     this.loadingReuniones = true;
-    this.ApiService.getReunionesProgramadas().subscribe({
+    this.ApiService.getReunionesProgramadas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         const todas = response.data || [];
         this.reunionesExpiradas = todas.filter((r: any) => r.expirada && r.estado === 'programada');
@@ -190,7 +194,7 @@ export class HomeProfesor implements OnInit {
   }
 
   buscarUserByRut(rut: string) {
-    this.ApiService.buscaruserByrut(rut).subscribe({
+    this.ApiService.buscaruserByrut(rut).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user: any) => {
         if (user && user.success) {
           this.profesor = user.data;
@@ -225,7 +229,7 @@ export class HomeProfesor implements OnInit {
 
     // Cargar propuestas asignadas al profesor
     if (profesorRut) {
-      this.ApiService.getPropuestasAsignadasProfesor(profesorRut).subscribe({
+      this.ApiService.getPropuestasAsignadasProfesor(profesorRut).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data: any) => {
           if (data && data.success) {
             this.estadisticas = {
@@ -243,7 +247,7 @@ export class HomeProfesor implements OnInit {
     }
 
     // Cargar proyectos asignados
-    this.ApiService.getProyectosAsignados().subscribe({
+    this.ApiService.getProyectosAsignados().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         // ✅ FIX: Backend devuelve { total, projects }, no { success, data }
         if (response && response.projects) {
@@ -268,9 +272,9 @@ export class HomeProfesor implements OnInit {
       }
     });
   }
-
+  
   cargarProyectosRecientes() {
-    this.ApiService.getProyectosAsignados().subscribe({
+    this.ApiService.getProyectosAsignados().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         if (data && data.projects && Array.isArray(data.projects)) {
           this.proyectosRecientes = data.projects.slice(0, 5).map((proyecto: any) => ({
@@ -283,7 +287,7 @@ export class HomeProfesor implements OnInit {
             this.cargarDatosProyecto(proyecto);
           });
         } else {
-          console.warn('data.projects no es un array:', data);
+          if (!environment.production) { console.warn('data.projects no es un array:', data); }
           this.proyectosRecientes = [];
         }
       },
@@ -295,7 +299,7 @@ export class HomeProfesor implements OnInit {
   }
 
   cargarFechasCalendario() {
-    this.ApiService.getMisFechasProfesor().subscribe({
+    this.ApiService.getMisFechasProfesor().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.fechasCalendario = data?.data || [];
         
@@ -331,7 +335,7 @@ export class HomeProfesor implements OnInit {
   }
 
   cargarDatosProyecto(proyecto: any) {
-    this.ApiService.getDashboardProyecto(proyecto.id.toString()).subscribe({
+    this.ApiService.getDashboardProyecto(proyecto.id.toString()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (dashboard: any) => {
         if (dashboard && dashboard.success) {
           proyecto.progreso = dashboard.data.progreso ?? dashboard.data.proyecto?.porcentaje_avance ?? 0;
@@ -389,13 +393,13 @@ export class HomeProfesor implements OnInit {
         if (response && response.projects) {
           response.projects.forEach((proyecto: any) => {
             // Usar el nuevo sistema de cronogramas
-            this.ApiService.getCronogramaProyecto(proyecto.id.toString()).subscribe({
+            this.ApiService.getCronogramaProyecto(proyecto.id.toString()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
               next: (cronogramaResponse: any) => {
                 if (cronogramaResponse && cronogramaResponse.success && cronogramaResponse.cronograma) {
                   const cronogramaId = cronogramaResponse.cronograma.id;
                   
                   // Obtener hitos del cronograma
-                  this.ApiService.getHitosCronograma(cronogramaId.toString()).subscribe({
+                  this.ApiService.getHitosCronograma(cronogramaId.toString()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
                     next: (hitosResponse: any) => {
                       if (hitosResponse && hitosResponse.success && hitosResponse.hitos) {
                         const hitosProximos = hitosResponse.hitos
@@ -521,7 +525,7 @@ export class HomeProfesor implements OnInit {
         proyectoId.toString(), 
         this.hitoEditando.id.toString(), 
         this.nuevoHito
-      ).subscribe({
+      ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (response: any) => {
           if (response && response.success) {
             this.cargarHitosProximos();
@@ -537,7 +541,7 @@ export class HomeProfesor implements OnInit {
       this.ApiService.crearHitoProyecto(
         proyectoId.toString(), 
         this.nuevoHito
-      ).subscribe({
+      ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (response: any) => {
           if (response && response.success) {
             this.cargarHitosProximos();
@@ -607,7 +611,7 @@ export class HomeProfesor implements OnInit {
       tipo_asignacion: 'guia'
     };
 
-    this.ApiService.asignarProfesorAProyecto(profesorData).subscribe({
+    this.ApiService.asignarProfesorAProyecto(profesorData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         if (response && response.success) {
           // Recargar estadísticas y proyectos
@@ -698,7 +702,7 @@ export class HomeProfesor implements OnInit {
       this.proyectoSeleccionado.id.toString(),
       hito.id.toString(),
       hitoActualizado
-    ).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         if (response && response.success) {
           this.cargarHitosProximos();

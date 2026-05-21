@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api';
@@ -30,6 +31,7 @@ interface Reunion {
   styleUrls: ['./reuniones-profesor.component.scss']
 })
 export class ReunionesProfesorComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   // Listas de reuniones
   reunionesExpiradas: Reunion[] = [];
   reunionesProximas: Reunion[] = [];
@@ -64,7 +66,7 @@ export class ReunionesProfesorComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     
-    this.api.getReunionesProgramadas().subscribe({
+    this.api.getReunionesProgramadas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         const todasReuniones = response.data || [];
         
@@ -131,7 +133,7 @@ export class ReunionesProfesorComponent implements OnInit {
       modalidad: this.modalidadReunion
     };
     
-    this.api.marcarReunionRealizada(this.reunionSeleccionada.id.toString(), data).subscribe({
+    this.api.marcarReunionRealizada(this.reunionSeleccionada.id.toString(), data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.successMessage = 'Reunión marcada como realizada exitosamente';
         this.cerrarModal();
@@ -170,7 +172,7 @@ export class ReunionesProfesorComponent implements OnInit {
       motivo: motivo || 'Reunión no realizada'
     };
     
-    this.api.cancelarReunion(reunion.id.toString(), data).subscribe({
+    this.api.cancelarReunion(reunion.id.toString(), data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.successMessage = 'Reunión cancelada exitosamente';
         this.cargarReuniones();

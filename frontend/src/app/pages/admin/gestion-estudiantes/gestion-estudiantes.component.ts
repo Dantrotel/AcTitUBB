@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -41,6 +42,8 @@ export class GestionEstudiantesComponent implements OnInit {
   coGuiaSelects: Record<string, string> = {};
   ramoSelects: Record<string, string> = {};
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private apiService: ApiService,
     private notificationService: NotificationService,
@@ -60,7 +63,7 @@ export class GestionEstudiantesComponent implements OnInit {
   cargarEstudiantes(): void {
     this.loading = true;
     this.error = '';
-    this.apiService.getUsuarios().subscribe({
+    this.apiService.getUsuarios().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         const todos = Array.isArray(data) ? data : [];
         this.estudiantes = todos.filter((u: any) => parseInt(u.rol_id) === 1);
@@ -76,7 +79,7 @@ export class GestionEstudiantesComponent implements OnInit {
   }
 
   cargarCarreras(): void {
-    this.apiService.getCarreras(true).subscribe({
+    this.apiService.getCarreras(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.carreras = Array.isArray(data) ? data : (data?.carreras ?? []);
         this.cdr.detectChanges();
@@ -86,7 +89,7 @@ export class GestionEstudiantesComponent implements OnInit {
   }
 
   cargarProfesores(): void {
-    this.apiService.getProfesores().subscribe({
+    this.apiService.getProfesores().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         const todos = Array.isArray(data) ? data : [];
         this.profesores = todos.filter((u: any) =>
@@ -100,7 +103,7 @@ export class GestionEstudiantesComponent implements OnInit {
   }
 
   cargarGuiasEstudiantes(): void {
-    this.apiService.getAllGuiasEstudiantes().subscribe({
+    this.apiService.getAllGuiasEstudiantes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         const list: any[] = res.data || [];
         this.guiasMap = {};
@@ -116,7 +119,7 @@ export class GestionEstudiantesComponent implements OnInit {
   }
 
   cargarCoGuiasEstudiantes(): void {
-    this.apiService.getAllCoGuiasEstudiantes().subscribe({
+    this.apiService.getAllCoGuiasEstudiantes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         const list: any[] = res.data || [];
         this.coGuiasMap = {};
@@ -132,7 +135,7 @@ export class GestionEstudiantesComponent implements OnInit {
   }
 
   cargarInscripcionesRamo(): void {
-    this.apiService.getAllInscripcionesRamo().subscribe({
+    this.apiService.getAllInscripcionesRamo().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res: any) => {
         const list: any[] = res.data || [];
         this.inscripcionesMap = {};
@@ -155,13 +158,12 @@ export class GestionEstudiantesComponent implements OnInit {
     this.apiService.asignarGuiaEstudiante({
       estudiante_rut: estudiante.rut,
       profesor_guia_rut: profesorRut
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Profesor guía actualizado', 'El profesor guía del estudiante ha sido asignado correctamente.');
         this.cargarGuiasEstudiantes();
       },
       error: (err: any) => {
-        // Revertir el select al valor anterior
         this.guiaSelects[estudiante.rut] = this.guiasMap[estudiante.rut]?.profesor_guia_rut || '';
         this.notificationService.error('Error al asignar guía', err.error?.message || 'No fue posible actualizar el profesor guía. Intente nuevamente.');
         this.cdr.detectChanges();
@@ -174,7 +176,7 @@ export class GestionEstudiantesComponent implements OnInit {
     this.apiService.asignarCoGuiaEstudiante({
       estudiante_rut: estudiante.rut,
       profesor_co_guia_rut: profesorRut
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Profesor co-guía actualizado', 'El profesor co-guía del estudiante ha sido asignado correctamente.');
         this.cargarCoGuiasEstudiantes();
@@ -193,7 +195,7 @@ export class GestionEstudiantesComponent implements OnInit {
     const obs = inscActual
       ? this.apiService.actualizarInscripcionRamo(inscActual.id, tipo as 'AP' | 'PT')
       : this.apiService.crearInscripcionRamo(tipo as 'AP' | 'PT', estudiante.rut);
-    obs.subscribe({
+    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Ramo actualizado', 'El ramo del estudiante ha sido actualizado correctamente.');
         this.cargarInscripcionesRamo();
@@ -245,7 +247,7 @@ export class GestionEstudiantesComponent implements OnInit {
       nombre: this.estudianteEditar.nombre,
       email: this.estudianteEditar.email,
       carrera_id: this.estudianteEditar.carrera_id
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Estudiante actualizado correctamente');
         this.procesando = false;
@@ -277,7 +279,7 @@ export class GestionEstudiantesComponent implements OnInit {
       return;
     }
     this.procesando = true;
-    this.apiService.resetearPasswordUsuario(this.estudiantePassword.rut, this.nuevaPassword).subscribe({
+    this.apiService.resetearPasswordUsuario(this.estudiantePassword.rut, this.nuevaPassword).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Contraseña restablecida correctamente');
         this.procesando = false;
@@ -296,7 +298,7 @@ export class GestionEstudiantesComponent implements OnInit {
       'Eliminar Estudiante', 'Eliminar', 'Cancelar'
     );
     if (!confirmed) return;
-    this.apiService.eliminarUsuario(estudiante.rut).subscribe({
+    this.apiService.eliminarUsuario(estudiante.rut).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.notificationService.success('Estudiante eliminado correctamente');
         this.cargarEstudiantes();

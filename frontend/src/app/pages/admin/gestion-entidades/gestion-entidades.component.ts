@@ -1,9 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ColaboradoresExternosService, EntidadExterna } from '../../../services/colaboradores-externos.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-gestion-entidades',
@@ -17,6 +19,7 @@ import { ColaboradoresExternosService, EntidadExterna } from '../../../services/
   styleUrls: ['./gestion-entidades.component.scss']
 })
 export class GestionEntidadesComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   private colaboradoresService = inject(ColaboradoresExternosService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
@@ -53,7 +56,7 @@ export class GestionEntidadesComponent implements OnInit {
 
   cargarEntidades() {
     this.cargando.set(true);
-    this.colaboradoresService.obtenerEntidades().subscribe({
+    this.colaboradoresService.obtenerEntidades().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.entidades.set(response.entidades);
         this.cargando.set(false);
@@ -80,7 +83,7 @@ export class GestionEntidadesComponent implements OnInit {
     }
 
     this.cargando.set(true);
-    this.colaboradoresService.crearEntidad(this.nuevaEntidad).subscribe({
+    this.colaboradoresService.crearEntidad(this.nuevaEntidad).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.snackBar.open('Entidad creada exitosamente', 'Cerrar', { duration: 3000 });
         this.cargarEntidades();

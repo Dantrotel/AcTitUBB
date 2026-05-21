@@ -1,5 +1,6 @@
 ﻿import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../../environments/environment';
 import { GestionHitosComponent } from '../gestion-hitos/gestion-hitos.component';
 import { ApiService } from '../../services/api';
 import { NotificationService } from '../../services/notification.service';
@@ -47,24 +48,24 @@ export class CronogramaCompletoComponent implements OnInit {
     this.verificarAlertas();
   }
 
-  cargarCronograma() {
-    console.log('ðŸ”„ Cargando cronograma del proyecto:', this.projectId);
+cargarCronograma() {
+    if (!environment.production) { console.log('ðŸ"„ Cargando cronograma del proyecto:', this.projectId); }
     this.apiService.obtenerCronograma(this.projectId).subscribe({
       next: (response: any) => {
-        console.log('âœ… Respuesta de cronograma recibida:', response);
+        if (!environment.production) { console.log('âœ… Respuesta de cronograma recibida:', response); }
         this.cronograma = response.cronograma || response.data?.cronograma || null;
-        console.log('ðŸ“‹ Cronograma cargado:', this.cronograma);
+        if (!environment.production) { console.log('ðŸ"‹ Cronograma cargado:', this.cronograma); }
 
       },
       error: (error: any) => {
-        console.error('âŒ Error al cargar cronograma:', error);
+        if (!environment.production) { console.error('â�Œ Error al cargar cronograma:', error); }
         this.cronograma = null;
       }
     });
   }
 
   crearCronograma() {
-    console.log('ðŸ”¨ Creando cronograma para proyecto:', this.projectId);
+    if (!environment.production) { console.log('ðŸ"¨ Creando cronograma para proyecto:', this.projectId); }
     
     // Crear un cronograma bÃ¡sico con fechas por defecto
     const hoy = new Date();
@@ -79,19 +80,19 @@ export class CronogramaCompletoComponent implements OnInit {
       dias_alerta_previa: 3
     };
     
-    console.log('ðŸ“‹ Datos del cronograma a crear:', cronogramaData);
+    if (!environment.production) { console.log('ðŸ"‹ Datos del cronograma a crear:', cronogramaData); }
     
     this.apiService.crearCronograma(this.projectId, cronogramaData).subscribe({
       next: (response: any) => {
-        console.log('âœ… Cronograma creado exitosamente:', response);
+        if (!environment.production) { console.log('âœ… Cronograma creado exitosamente:', response); }
         this.notificationService.success('Cronograma creado', 'El cronograma ha sido creado exitosamente. Ya puede agregar hitos y entregas.');
         this.cargarCronograma(); // Recargar el cronograma
       },
       error: (error: any) => {
-        console.error('Error al crear cronograma:', error);
+        if (!environment.production) { console.error('Error al crear cronograma:', error); }
         const mensaje = error.error?.message || 'Error al crear el cronograma';
         this.notificationService.error('Error al crear cronograma', mensaje);
-      }
+}
     });
   }
 

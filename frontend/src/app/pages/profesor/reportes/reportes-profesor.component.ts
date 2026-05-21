@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api';
 import { NotificationService } from '../../../services/notification.service';
+import { environment } from '../../../environments/environment';
 interface MetricasProfesor {
   // Propuestas
   totalPropuestasRevisadas: number;
@@ -116,7 +117,9 @@ export class ReportesProfesorComponent implements OnInit {
 
   cargarReportes() {
     this.loading = true;
-    console.log('🔄 Cargando reportes del profesor...');
+    if (!environment.production) {
+      console.log('🔄 Cargando reportes del profesor...');
+    }
     
     Promise.all([
       this.cargarMetricas(),
@@ -126,7 +129,9 @@ export class ReportesProfesorComponent implements OnInit {
     ]).then(() => {
       this.loading = false;
       this.cdr.detectChanges();
-      console.log('✅ Reportes cargados');
+      if (!environment.production) {
+        console.log('✅ Reportes cargados');
+      }
     }).catch(error => {
       console.error('❌ Error al cargar reportes:', error);
       this.loading = false;
@@ -139,7 +144,9 @@ export class ReportesProfesorComponent implements OnInit {
     try {
       const response = await this.apiService.getMetricasProfesor(this.periodoSeleccionado).toPromise();
       this.metricas = response.data || response;
-      console.log('📊 Métricas:', this.metricas);
+      if (!environment.production) {
+        console.log('📊 Métricas:', this.metricas);
+      }
     } catch (error) {
       console.error('Error al cargar métricas:', error);
       // Datos de ejemplo si falla
@@ -178,7 +185,9 @@ export class ReportesProfesorComponent implements OnInit {
         fecha_inicio: p.fecha_inicio,
         progreso: p.progreso || 0
       }));
-      console.log('📁 Proyectos:', this.proyectos.length);
+      if (!environment.production) {
+        console.log('📁 Proyectos:', this.proyectos.length);
+      }
     } catch (error) {
       console.error('Error al cargar proyectos:', error);
       this.proyectos = [];
@@ -189,7 +198,9 @@ export class ReportesProfesorComponent implements OnInit {
     try {
       const response = await this.apiService.getPropuestasRevisadas().toPromise();
       this.propuestas = (response.data || response || []).slice(0, 10);
-      console.log('📝 Propuestas:', this.propuestas.length);
+      if (!environment.production) {
+        console.log('📝 Propuestas:', this.propuestas.length);
+      }
     } catch (error) {
       console.error('Error al cargar propuestas:', error);
       this.propuestas = [];
@@ -200,7 +211,9 @@ export class ReportesProfesorComponent implements OnInit {
     try {
       const response = await this.apiService.getReunionesProfesor().toPromise();
       this.reuniones = (response.data || response || []).slice(0, 10);
-      console.log('👥 Reuniones:', this.reuniones.length);
+      if (!environment.production) {
+        console.log('👥 Reuniones:', this.reuniones.length);
+      }
     } catch (error) {
       console.error('Error al cargar reuniones:', error);
       this.reuniones = [];
@@ -271,7 +284,9 @@ export class ReportesProfesorComponent implements OnInit {
       
       this.notificationService.success('Reporte descargado', 'Archivo CSV generado exitosamente');
     } catch (error) {
-      console.error('Error al exportar Excel:', error);
+      if (!environment.production) {
+        console.error('Error al exportar Excel:', error);
+      }
       this.notificationService.error('Error al generar el reporte', 'Intenta de nuevo');
     }
   }
